@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../design/lockspire_spacing.dart';
 import '../vault_session_controller.dart';
 import '../vault_session_state.dart';
 import 'create_vault_screen.dart';

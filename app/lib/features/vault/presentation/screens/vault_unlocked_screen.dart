@@ -34,9 +34,9 @@ class VaultUnlockedScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.lock_open, size: 48),
-            const SizedBox(height: 16),
+            const SizedBox(height: LockspireSpacing.md),
             const Text('Bóveda desbloqueada'),
-            const SizedBox(height: 8),
+            const SizedBox(height: LockspireSpacing.sm),
             Text(
               '${vault.entries.length} entradas · ${vault.folders.length} carpetas',
             ),
