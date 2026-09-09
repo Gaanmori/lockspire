@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../design/lockspire_spacing.dart';
 import '../vault_session_controller.dart';
 
 class UnlockVaultScreen extends ConsumerStatefulWidget {
@@ -42,7 +43,7 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(LockspireSpacing.lg),
             child: Form(
               key: _formKey,
               child: Column(
