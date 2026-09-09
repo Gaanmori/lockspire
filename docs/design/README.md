@@ -61,8 +61,20 @@ Escala en px: `4, 8, 12, 16, 20, 24, 32, 40`.
 ## Pantallas ya maquetadas con este sistema
 
 - "Desbloquear bóveda" — móvil y escritorio.
+- "Crear bóveda" — móvil y escritorio.
+
+## Implementado en Flutter (no solo mockup)
+
+- "Desbloquear bóveda" y "Crear bóveda" comparten el componente `AuthCard`
+  (`lib/features/vault/presentation/widgets/auth_card.dart`): chip de icono,
+  título, subtítulo y contenido, sobre tarjeta elevada — la misma
+  composición del mockup, no solo los tokens de color/espaciado sueltos.
 
 ## Pendiente
 
-- Aplicar estos tokens al `ThemeData`/`ColorScheme` real de Flutter.
-- Extender el sistema a las pantallas restantes: crear bóveda, bóveda desbloqueada, y las futuras (lista de entradas, agregar/editar entrada, configuración, setup de sync).
+- "Bóveda desbloqueada" queda con el tratamiento ligero (colores/espaciado
+  heredados del tema, sin maquetar a medida) — es un placeholder a
+  propósito hasta que exista la feature real de gestión de entradas; no
+  tiene sentido diseñarla a medida antes de eso.
+- Extender el sistema a las futuras pantallas: lista de entradas,
+  agregar/editar entrada, configuración, setup de sync.

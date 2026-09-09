@@ -1,6 +1,6 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-09 (Fase 4 en curso — sync con WebDAV, primera pasada)
+Última actualización: 2026-09-09 (Fase 4 en curso — sync con WebDAV; sistema de diseño extendido a "Crear bóveda")
 
 ## Fase actual
 
@@ -112,11 +112,17 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
   - **Nota de troubleshooting de esta sesión (útil si se repite):** el primer intento fue desde el Redmi vía Wi-Fi (`http://192.168.1.200:8080`) y dio `SocketException: Connection timed out` (errno 110) — timeout silencioso, no "rechazada", consistente con aislamiento de clientes (AP/client isolation) en el router, común en redes corporativas. Se resolvió probando desde la app de escritorio Windows contra `127.0.0.1:8080` (mismo código, sin red de por medio) — confirmó que no era un bug de la app. Quedó sin resolver el problema de red en sí (no es algo que se arregle desde el código).
   - **Dos problemas de toolchain de Windows desktop encontrados y corregidos en el camino** (no estaban en el plan): (1) `flutter_secure_storage` exige `compileSdk 37` en Android — el proyecto estaba en 36 vía `flutter.compileSdkVersion`; se fijó explícito a 37 en `android/app/build.gradle.kts` (afecta también al build de Android, no solo Windows). (2) El plugin nativo de Windows de `flutter_secure_storage` necesita el componente **ATL de Visual Studio** (`Microsoft.VisualStudio.Component.VC.ATL`), no instalado con el Build Tools original — instalado vía `vs_installer.exe modify` (necesitó permisos de administrador, igual que el Modo desarrollador y la regla de firewall antes en la sesión).
   - Servidor WebDAV de prueba (`rclone serve webdav`) y la regla de firewall asociada son temporales para esta sesión — no forman parte del repo ni de la configuración permanente del proyecto.
+- **Sistema de diseño — "Crear bóveda" maquetada e implementada:**
+  - Mockups nuevos en el canvas vivo (`docs/design/README.md`), mismo patrón visual que "Desbloquear bóveda": `CreateVaultMobile`/`CreateVaultDesktop`, página "Pantallas".
+  - **Decisión de alcance con el usuario:** "Bóveda desbloqueada" (`vault_unlocked_screen.dart`) queda sin maquetar a medida — es un placeholder a propósito hasta que exista la feature real de gestión de entradas, así que no tiene sentido diseñarla ahora.
+  - **Implementado en código, no solo mockup:** se extrajo el componente compartido `AuthCard` (`lib/features/vault/presentation/widgets/auth_card.dart` — chip de icono + título + subtítulo + contenido, sobre tarjeta elevada) y se aplicó tanto a `create_vault_screen.dart` como a `unlock_vault_screen.dart` (esta última solo tenía el tratamiento ligero de tokens hasta ahora, pese a que su mockup ya existía desde antes — quedaba inconsistente aplicar la composición completa solo a la pantalla nueva).
+  - **Bug propio encontrado y corregido antes de terminar:** la tarjeta más alta (icono+título+subtítulo+campos) desbordaba (`RenderFlex overflowed`) en viewports chicos — ambas pantallas pasaron de `Padding` suelto a `SingleChildScrollView` (mismo patrón que ya usa `sync_settings_screen.dart`), detectado por el test existente `widget_test.dart`.
+  - Verificado: `dart format --set-exit-if-changed`, `flutter analyze`, `flutter test` (31 tests, todos pasan) y `flutter build windows --debug` compila. Pendiente confirmación visual del usuario en dispositivo real.
 
 ## Pendiente / próximo paso
 
 - Siguiente pasada de sync: el merge automático por entrada del ADR 0006 (3-way merge con snapshot desencriptado del ancestro común) — esta pasada solo detecta el conflicto, no lo resuelve.
-- Extender el sistema de diseño a las pantallas que todavía no se maquetaron en el canvas: crear bóveda, bóveda desbloqueada, y ahora también sync (trabajo de diseño/mockup, no de código). Oportunístico, no prioritario mientras haya fase activa (ver memoria de sesión).
+- "Bóveda desbloqueada" queda con tratamiento ligero hasta que exista la feature de gestión de entradas — recién ahí tiene sentido maquetarla a medida. Futuras pantallas por maquetar: lista de entradas, agregar/editar entrada, configuración, setup de sync.
 - Elegir qué sigue después de la siguiente pasada de sync: otro proveedor (Drive/OneDrive/Dropbox, con OAuth) o el bridge de native-messaging (`native-host/` + extensión, ADR 0005).
 - Reservar usuario/organización `lockspire` en GitHub, dominio `lockspire.com`, y hacer búsqueda formal de marca registrada antes de hacer público el repo.
 
