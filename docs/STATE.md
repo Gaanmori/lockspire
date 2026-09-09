@@ -77,7 +77,9 @@ Fase 2 completa (verificada de punta a punta en el Redmi, incluido el ciclo cerr
   - Limitación conocida documentada en el ADR (no resuelta, fuera de alcance): "bloquear" limpia la referencia al `Vault` en el estado — sin zeroing explícito de memoria, porque el dominio guarda el contenido desencriptado como objetos Dart planos, no `SecureKey`.
   - Tests nuevos: `test/features/vault/presentation/vault_session_controller_test.dart` (4 tests, usa `ProviderContainer` + overrides con los fakes existentes y `autoLockTimeoutProvider` a 60ms) — timeout dispara lock, `registerActivity()` reinicia el timer, `paused` bloquea inmediato, `inactive` no bloquea. Usan `Timer` real con duración corta: funcionan pero son inherentemente un poco flaky bajo carga — si aparece flakiness intermitente más adelante, migrar a `fake_async`.
   - Verificado: `dart format --set-exit-if-changed`, `flutter analyze`, `flutter test` — los 20 tests pasan (16 de Fase 2 + 4 nuevos), sin issues.
-  - **Pendiente de verificar manualmente:** que el auto-lock funcione en el Redmi real (dejar la app desbloqueada sin tocar 5 minutos, y minimizarla) — no se hizo en esta sesión.
+  - **Verificado en el Redmi real por el usuario, los dos disparadores:**
+    - Segundo plano: al apagarse la pantalla del teléfono por su propio timeout (Android manda la app a `AppLifecycleState.paused`), Lockspire se bloqueó de inmediato — confirma que reaccionar a backgrounding funciona, más allá de que haya sido el usuario minimizando la app o el propio SO durmiendo la pantalla.
+    - Inactividad: con el tiempo de espera de pantalla del teléfono subido para que no interfiera, a los 5 minutos exactos sin tocar la pantalla la app se bloqueó sola y pidió la contraseña maestra de nuevo. Confirma el timer de inactividad con el timeout real de producción (no el acortado de los tests).
 - **Sistema de diseño (`docs/design/README.md`):**
   - Dirección visual elegida por el usuario, entre tres bocetos: **cálido y cercano** (frente a minimalista/clínico estilo 1Password y técnico/directo estilo KeePassXC, descartadas) — prioriza bajar la barrera de entrada a alguien sin experiencia con gestores de contraseñas.
   - Definidos: paleta de color (acento `#EA6C4D`, fondo `#FFF8F1`, ver `docs/design/README.md` para la tabla completa), tipografía (Quicksand para títulos/botones + Karla para texto), escala de espaciado y radios, y componentes base (botón, campo de texto con sus 3 estados, tarjeta, fila de lista para futuras entradas, barra superior).
@@ -89,7 +91,6 @@ Fase 2 completa (verificada de punta a punta en el Redmi, incluido el ciclo cerr
 
 - Traducir el sistema de diseño (`docs/design/README.md`) a un `ColorScheme`/`ThemeData` real de Flutter, y aplicar los estilos a las pantallas ya existentes de `vault/presentation/` (hoy usan `Material` genérico, no esta paleta).
 - Extender el sistema de diseño a las pantallas que todavía no se maquetaron: crear bóveda, bóveda desbloqueada.
-- Verificación manual del auto-lock en el Redmi (inactividad real de 5 min, y minimizar la app).
 - Elegir la siguiente feature: sync (`SyncPort`, ADR 0006) o el bridge de native-messaging (`native-host/` + extensión, ADR 0005) — replicando el mismo patrón Hexagonal ya establecido con `vault`.
 - Reservar usuario/organización `lockspire` en GitHub, dominio `lockspire.com`, y hacer búsqueda formal de marca registrada antes de hacer público el repo.
 
