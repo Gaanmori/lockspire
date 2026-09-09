@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
 import '../vault_session_controller.dart';
+import '../widgets/auth_card.dart';
 
 class UnlockVaultScreen extends ConsumerStatefulWidget {
   const UnlockVaultScreen({super.key});
@@ -42,72 +43,80 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(LockspireSpacing.lg),
             child: Form(
               key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscure,
-                    autofocus: true,
-                    enabled: !isLoading,
-                    decoration: InputDecoration(
-                      labelText: 'Contraseña maestra',
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscure ? Icons.visibility : Icons.visibility_off,
-                        ),
-                        onPressed: () => setState(() => _obscure = !_obscure),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingresá tu contraseña maestra';
-                      }
-                      return null;
-                    },
-                    onFieldSubmitted: (_) => isLoading ? null : _submit(),
-                  ),
-                  const SizedBox(height: LockspireSpacing.lg),
-                  if (isLoading)
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: LockspireSpacing.md,
-                      ),
-                      child: Column(
-                        children: [
-                          const CircularProgressIndicator(),
-                          const SizedBox(height: LockspireSpacing.smMd),
-                          const Text(
-                            'Desbloqueando… esto puede tardar unos segundos '
-                            '(derivación de clave Argon2id)',
-                            textAlign: TextAlign.center,
+              child: AuthCard(
+                icon: Icons.lock_outline,
+                title: '¡Hola de nuevo!',
+                subtitle: 'Ingresá tu contraseña para entrar a tu bóveda',
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscure,
+                      autofocus: true,
+                      enabled: !isLoading,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña maestra',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscure ? Icons.visibility : Icons.visibility_off,
                           ),
-                        ],
-                      ),
-                    )
-                  else if (sessionState.hasError)
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: LockspireSpacing.md,
-                      ),
-                      child: Text(
-                        'Contraseña incorrecta',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                          onPressed: () => setState(() => _obscure = !_obscure),
                         ),
-                        textAlign: TextAlign.center,
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ingresá tu contraseña maestra';
+                        }
+                        return null;
+                      },
+                      onFieldSubmitted: (_) => isLoading ? null : _submit(),
                     ),
-                  if (!isLoading)
-                    FilledButton(
-                      onPressed: _submit,
-                      child: const Text('Desbloquear'),
-                    ),
-                ],
+                    const SizedBox(height: LockspireSpacing.lg),
+                    if (isLoading)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: LockspireSpacing.md,
+                        ),
+                        child: Column(
+                          children: [
+                            const CircularProgressIndicator(),
+                            const SizedBox(height: LockspireSpacing.smMd),
+                            const Text(
+                              'Desbloqueando… esto puede tardar unos segundos '
+                              '(derivación de clave Argon2id)',
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (sessionState.hasError)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: LockspireSpacing.md,
+                        ),
+                        child: Text(
+                          'Contraseña incorrecta',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    if (!isLoading)
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: _submit,
+                          child: const Text('Desbloquear'),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
 import '../vault_session_controller.dart';
+import '../widgets/auth_card.dart';
 
 class CreateVaultScreen extends ConsumerStatefulWidget {
   const CreateVaultScreen({super.key});
@@ -44,82 +45,88 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(LockspireSpacing.lg),
             child: Form(
               key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
+              child: AuthCard(
+                icon: Icons.gpp_good_outlined,
+                title: 'Creá tu bóveda',
+                subtitle:
                     'Elegí una contraseña maestra. Nunca se envía ni se '
-                    'almacena — si la olvidás, no hay forma de recuperar '
-                    'tu bóveda.',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: LockspireSpacing.lg),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscure,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      labelText: 'Contraseña maestra',
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscure ? Icons.visibility : Icons.visibility_off,
+                    'guarda — si la olvidás, no hay forma de recuperarla.',
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscure,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña maestra',
+                        helperText: 'Mínimo 8 caracteres',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscure ? Icons.visibility : Icons.visibility_off,
+                          ),
+                          onPressed: () => setState(() => _obscure = !_obscure),
                         ),
-                        onPressed: () => setState(() => _obscure = !_obscure),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ingresá una contraseña';
+                        }
+                        if (value.length < 8) {
+                          return 'Usá al menos 8 caracteres';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingresá una contraseña';
-                      }
-                      if (value.length < 8) {
-                        return 'Usá al menos 8 caracteres';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: LockspireSpacing.md),
-                  TextFormField(
-                    controller: _confirmController,
-                    obscureText: _obscure,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirmar contraseña',
-                    ),
-                    validator: (value) {
-                      if (value != _passwordController.text) {
-                        return 'No coincide con la contraseña anterior';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: LockspireSpacing.lg),
-                  if (sessionState.hasError)
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: LockspireSpacing.md,
+                    const SizedBox(height: LockspireSpacing.md),
+                    TextFormField(
+                      controller: _confirmController,
+                      obscureText: _obscure,
+                      decoration: const InputDecoration(
+                        labelText: 'Confirmar contraseña',
                       ),
-                      child: Text(
-                        'No se pudo crear la bóveda: ${sessionState.error}',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                      validator: (value) {
+                        if (value != _passwordController.text) {
+                          return 'No coincide con la contraseña anterior';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: LockspireSpacing.lg),
+                    if (sessionState.hasError)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: LockspireSpacing.md,
                         ),
-                        textAlign: TextAlign.center,
+                        child: Text(
+                          'No se pudo crear la bóveda: ${sessionState.error}',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: isLoading ? null : _submit,
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Crear bóveda'),
                       ),
                     ),
-                  FilledButton(
-                    onPressed: isLoading ? null : _submit,
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Crear bóveda'),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
