@@ -40,7 +40,17 @@ Sin backend centralizado: la bóveda es un archivo local fuertemente cifrado que
 
 ## Para empezar (entorno de desarrollo)
 
-Ver `docs/adr/` y `CLAUDE.md` para el contexto completo de arquitectura y decisiones. Instrucciones de setup del entorno (Flutter SDK, VS Code, dispositivo de pruebas) se añadirán aquí a medida que la Fase 0 avance.
+Ver `docs/adr/` y `CLAUDE.md` para el contexto completo de arquitectura y decisiones, y `docs/STATE.md` para el estado actual y el historial de la sesión de desarrollo.
+
+Requisitos: Flutter SDK 3.47.2+ (channel stable) con el Android toolchain configurado (ver `flutter doctor`). En Windows hace falta además un `make` compatible con MSYS (no el nativo de Windows) para compilar el binding de libsodium — instalar [MSYS2](https://www.msys2.org/) y `pacman -S make`, con `<msys64>\usr\bin` al final del PATH (nunca al principio, para no romper la detección del Android SDK de Flutter).
+
+```
+cd app
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+flutter test
+flutter run -d <device-id>
+```
 
 ## Licencia
 
