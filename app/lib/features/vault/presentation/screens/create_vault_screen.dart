@@ -45,7 +45,7 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(LockspireSpacing.lg),
             child: Form(
               key: _formKey,
               child: Column(
@@ -57,7 +57,7 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                     'tu bóveda.',
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: LockspireSpacing.lg),
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscure,
@@ -81,7 +81,7 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: LockspireSpacing.md),
                   TextFormField(
                     controller: _confirmController,
                     obscureText: _obscure,
@@ -95,10 +95,10 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: LockspireSpacing.lg),
                   if (sessionState.hasError)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.only(bottom: LockspireSpacing.md),
                       child: Text(
                         'No se pudo crear la bóveda: ${sessionState.error}',
                         style: TextStyle(
