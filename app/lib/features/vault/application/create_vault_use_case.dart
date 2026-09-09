@@ -9,14 +9,23 @@ import '../domain/entities/vault.dart';
 import '../domain/ports/crypto_port.dart';
 import '../domain/ports/vault_storage_port.dart';
 
-/// Parámetros de Argon2id por defecto para bóvedas nuevas — mínimos fijados
-/// en docs/adr/0002-motor-criptografico.md (memoria ≥256 MiB, iteraciones
-/// ≥3-4). Deben validarse con benchmarking real en el dispositivo de
-/// pruebas antes de v1 final; nunca bajarlos por rendimiento.
+/// Parámetros de Argon2id por defecto para bóvedas nuevas.
+///
+/// Memoria e iteraciones: mínimos de docs/adr/0002-motor-criptografico.md,
+/// subidos (256→512 MiB) para compensar la limitación descrita en
+/// docs/adr/0007-paralelismo-argon2id-libsodium.md. Deben validarse con
+/// benchmarking real en el dispositivo de pruebas antes de v1 final; nunca
+/// bajarlos por rendimiento.
+///
+/// `parallelism: 1` es literal, no aspiracional — es el único valor que la
+/// API pública de libsodium usa realmente (ver ADR 0007). Debe coincidir
+/// siempre con lo que el adaptador de `CryptoPort` deriva de verdad, porque
+/// este valor viaja dentro del header persistido (AAD) y cualquier lector
+/// futuro lo necesita para re-derivar la misma clave.
 const defaultArgon2Params = Argon2Params(
-  memoryKib: 262144, // 256 MiB
+  memoryKib: 524288, // 512 MiB
   iterations: 4,
-  parallelism: 4,
+  parallelism: 1,
 );
 
 const _currentFormatVersion = 1;
@@ -41,6 +50,7 @@ class CreateVaultUseCase {
     final key = await crypto.deriveKey(
       masterPassword: masterPassword,
       salt: salt,
+      params: defaultArgon2Params,
     );
 
     final vault = Vault(vaultId: uuid.v4(), schemaVersion: 1);

@@ -4,20 +4,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-/// Parámetros de Argon2id usados para derivar la clave de una bóveda.
-/// Ver docs/adr/0002-motor-criptografico.md para los valores mínimos
-/// recomendados (memoria ≥256 MiB, iteraciones ≥3-4).
-class Argon2Params {
-  final int memoryKib;
-  final int iterations;
-  final int parallelism;
+import 'argon2_params.dart';
 
-  const Argon2Params({
-    required this.memoryKib,
-    required this.iterations,
-    required this.parallelism,
-  });
-}
+export 'argon2_params.dart';
 
 /// Header del archivo de bóveda: va sin cifrar pero autenticado como AAD
 /// del AEAD (ver docs/adr/0004-formato-boveda-v1.md). Cualquier
@@ -41,6 +30,19 @@ class VaultHeader {
     required this.kdfParams,
   });
 
+  Map<String, dynamic> _baseJson() => {
+    'format_version': formatVersion,
+    'format_min_reader_version': formatMinReaderVersion,
+    'salt': base64Encode(salt),
+    'vault_id': vaultId,
+    'created_at': createdAt.toIso8601String(),
+    'kdf_params': {
+      'memory_kib': kdfParams.memoryKib,
+      'iterations': kdfParams.iterations,
+      'parallelism': kdfParams.parallelism,
+    },
+  };
+
   /// Serialización determinista del header, usada como AAD del AEAD (ver
   /// docs/adr/0004-formato-boveda-v1.md): cualquier manipulación de estos
   /// campos invalida la autenticación del archivo en vez de degradarla en
@@ -50,20 +52,32 @@ class VaultHeader {
   /// (lo devuelve [CryptoPort.encrypt]), y alterarlo ya rompe el descifrado
   /// por sí solo — no necesita autenticarse aparte, lo que evita una
   /// dependencia circular entre "calcular el AAD" y "cifrar".
-  Uint8List toAadBytes() {
-    final map = {
-      'format_version': formatVersion,
-      'format_min_reader_version': formatMinReaderVersion,
-      'salt': base64Encode(salt),
-      'vault_id': vaultId,
-      'created_at': createdAt.toIso8601String(),
-      'kdf_params': {
-        'memory_kib': kdfParams.memoryKib,
-        'iterations': kdfParams.iterations,
-        'parallelism': kdfParams.parallelism,
-      },
-    };
-    return Uint8List.fromList(utf8.encode(jsonEncode(map)));
+  Uint8List toAadBytes() =>
+      Uint8List.fromList(utf8.encode(jsonEncode(_baseJson())));
+
+  /// Serialización completa del header tal como se persiste en disco (a
+  /// diferencia de [toAadBytes], sí incluye [nonce] — un lector necesita
+  /// recuperarlo para poder desencriptar).
+  Map<String, dynamic> toJson() => {
+    ..._baseJson(),
+    'nonce': base64Encode(nonce),
+  };
+
+  factory VaultHeader.fromJson(Map<String, dynamic> json) {
+    final kdf = json['kdf_params'] as Map<String, dynamic>;
+    return VaultHeader(
+      formatVersion: json['format_version'] as int,
+      formatMinReaderVersion: json['format_min_reader_version'] as int,
+      salt: base64Decode(json['salt'] as String),
+      nonce: base64Decode(json['nonce'] as String),
+      vaultId: json['vault_id'] as String,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      kdfParams: Argon2Params(
+        memoryKib: kdf['memory_kib'] as int,
+        iterations: kdf['iterations'] as int,
+        parallelism: kdf['parallelism'] as int,
+      ),
+    );
   }
 }
 

@@ -1,10 +1,10 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-09 (Fase 2 en curso — primera feature con estructura Hexagonal)
+Última actualización: 2026-09-09 (Fase 2 en curso — feature `vault` con adaptadores reales de infraestructura)
 
 ## Fase actual
 
-Fase 2 en curso. Feature `vault` scaffolded con estructura Hexagonal completa (domain + application con tests; infrastructure/presentation aún sin adaptadores reales). Próximo paso: adaptadores reales de infraestructura.
+Fase 2 en curso. Feature `vault` completa de punta a punta: domain + application + infrastructure real (libsodium + storage atómico), con tests unitarios, de infraestructura e integración end-to-end. Falta `presentation/` (providers Riverpod + pantallas).
 
 ## Completado
 
@@ -14,7 +14,8 @@ Fase 2 en curso. Feature `vault` scaffolded con estructura Hexagonal completa (d
 - Decisiones de arquitectura, stack criptográfico y modelo de seguridad documentadas en `docs/adr/`.
 - Repo privado creado en GitHub (`github.com/Gaanmori/lockspire`), remoto `origin` configurado, rama por defecto `main` (renombrada desde `master`, HEAD remoto y local actualizado).
 - Android Studio instalado (winget) y setup wizard completado manualmente por el usuario.
-- Flutter SDK 3.44.1 (channel stable) instalado y verificado con `flutter doctor` — sin issues:
+- Flutter SDK actualizado a 3.47.2 / Dart 3.13.2 (channel stable) el 2026-09-09, sobre la instalación inicial 3.44.1 — `flutter upgrade` limpio, `flutter doctor` sigue sin issues, CI (`.github/workflows/flutter-ci.yml`) actualizado al mismo pin. Motivo: destrabar el SDK constraint de `riverpod_lint` (ver más abajo, sigue sin poder añadirse por otra razón).
+- Flutter SDK 3.44.1 (channel stable) instalado originalmente y verificado con `flutter doctor` — sin issues:
   - Android toolchain: SDK en `%LOCALAPPDATA%\Android\sdk`, cmdline-tools instalado manualmente (no lo incluye el wizard de Android Studio por defecto), todas las licencias del SDK aceptadas.
   - Soporte confirmado para Android, Windows desktop, Chrome/Edge (web).
   - Visual Studio Build Tools 2026 detectado (necesario para builds de Windows desktop).
@@ -32,20 +33,29 @@ Fase 2 en curso. Feature `vault` scaffolded con estructura Hexagonal completa (d
   - `docs/adr/0005-protocolo-native-messaging.md`: `native-host/` como relay delgado hacia la app Flutter vía IPC local (named pipe/unix socket) autenticado con token de sesión; mensajes v1 (`PING`, `UNLOCK_REQUIRED`, `GET_CREDENTIALS_FOR_ORIGIN`, `SAVE_CREDENTIAL`, `GENERATE_PASSWORD`); el native-host nunca maneja la contraseña maestra. Passkeys/WebAuthn quedan pendientes de un ADR aparte cuando se implementen.
   - `docs/adr/0006-modelo-resolucion-conflictos.md`: Last-Write-Wins por entrada + tombstones + merge manual solo ante choque real en la misma entrada (3-way merge con snapshot local de la última sync exitosa como ancestro común). CRDT completo descartado por complejidad/superficie de auditoría injustificada.
 - **Fase 2 — estructura Hexagonal, feature `vault` (primera feature real, patrón a replicar para las demás):**
-  - Dependencias añadidas a `app/pubspec.yaml`: `flutter_riverpod`, `riverpod_annotation`, `uuid` (runtime); `riverpod_generator`, `build_runner` (dev). `riverpod_lint`/`custom_lint` quedaron fuera: incompatibles con el Dart SDK 3.12.1 actual (piden >=3.13.0) en combinación con las versiones de `riverpod_annotation`/`riverpod_generator` disponibles — no bloquea nada, es tooling de lint opcional.
+  - Dependencias añadidas a `app/pubspec.yaml`: `flutter_riverpod`, `riverpod_annotation`, `uuid` (runtime); `riverpod_generator`, `build_runner` (dev). `riverpod_lint`/`custom_lint` quedaron fuera por dos razones distintas: primero pedían Dart SDK ≥3.13.0 (resuelto con el upgrade de Flutter a 3.47.2 arriba); pero tras el upgrade apareció un segundo choque real de ecosistema — `custom_lint` todavía no soporta la versión de `analyzer` que exige `riverpod_generator` 4.0.9 (vía `riverpod_analyzer_utils`). No es cosa nuestra de arreglar ahora; no bloquea nada, es tooling de lint opcional. Revisar en una futura sesión si el ecosistema ya se alineó.
   - `lib/features/vault/domain/`: entidades `Vault`, `VaultEntry`, `VaultFolder` (con `toJson`/`fromJson`, 1:1 con el payload de ADR 0004) y puertos `CryptoPort`, `VaultStoragePort` (con `VaultHeader.toAadBytes()` para el AAD del AEAD).
   - `lib/features/vault/application/`: `CreateVaultUseCase`, `UnlockVaultUseCase` — dependen solo de los puertos, sin imports de infraestructura.
   - Decisión de diseño surgida durante la implementación (no estaba en el plan original): el `nonce` se excluye del AAD del header — se conoce recién al cifrar (lo devuelve `CryptoPort.encrypt`), así que incluirlo en el AAD creaba una dependencia circular con "calcular el AAD antes de cifrar". Alterar el nonce ya rompe el descifrado por sí solo, no necesita autenticarse aparte.
-  - `lib/features/vault/infrastructure/` y `presentation/`: solo un `README.md` marcando qué falta (adaptador libsodium, adaptador de archivo atómico, providers Riverpod, pantallas) — deliberadamente sin implementación todavía.
+  - `lib/features/vault/presentation/`: solo un `README.md` marcando qué falta (providers Riverpod, pantallas) — deliberadamente sin implementación todavía.
   - Tests en `app/test/features/vault/application/` con fakes en memoria (`FakeCryptoPort`, `FakeVaultStoragePort`), incluye un test que verifica que manipular el header (AAD) rompe la autenticación.
   - Cabecera SPDX (`// SPDX-License-Identifier: AGPL-3.0-or-later` + `// Copyright (C) 2026 Lockspire`) aplicada a todos los archivos `.dart` nuevos y a los dos preexistentes (`main.dart`, `widget_test.dart`).
   - `main.dart` envuelto en `ProviderScope` (composition root de Riverpod), UI de demo sin tocar.
-  - Verificado: `dart format --set-exit-if-changed`, `flutter analyze`, `flutter test` — los 4 tests pasan, sin issues.
+- **Fase 2 (cont.) — adaptadores reales de infraestructura de `vault`:**
+  - **`docs/adr/0007-paralelismo-argon2id-libsodium.md` (nuevo ADR):** la API pública de libsodium (`crypto_pwhash`, la única que exponen los bindings de Dart) fija el paralelismo de Argon2id en 1 hilo por diseño — no depende de la librería Dart elegida. Se acepta la limitación (igual que Bitwarden) y se compensa subiendo memoria de 256→512 MiB. `defaultArgon2Params.parallelism` se fija literalmente en `1` (no un valor aspiracional "acorde a núcleos" del ADR 0002) para que el valor que viaja en el header persistido (AAD) nunca pueda divergir del que realmente se usó — evita un bug de pérdida de datos irreversible, no solo un problema de seguridad. `SodiumCryptoAdapter.deriveKey()` valida esto y lanza si recibe otro valor.
+  - **Corrección de un vacío en el dominio (no estaba en el plan, necesario para poder implementar el adaptador):** `CryptoPort.deriveKey()` no recibía los parámetros de Argon2id — no había forma de que un adaptador supiera qué `opsLimit`/`memLimit` usar. Se le añadió `required Argon2Params params`, y `Argon2Params` se extrajo de `vault_storage_port.dart` a su propio archivo (`domain/ports/argon2_params.dart`, re-exportado para no romper imports existentes). `UnlockVaultUseCase` ahora pasa `file.header.kdfParams`; `CreateVaultUseCase` pasa `defaultArgon2Params`.
+  - **`lib/features/vault/infrastructure/sodium_crypto_adapter.dart`:** implementa `CryptoPort` con el paquete `sodium` (bindings FFI/build-hooks nativos de libsodium). Nota: `sodium_libs` (mencionado como ejemplo en ADR 0002) está deprecado — el propio paquete indica migrar a `sodium` directamente; sigue cumpliendo la decisión real del ADR (bindings nativos, no reimplementación pura en Dart), así que no hizo falta un ADR nuevo por esto. Requiere la variante `SodiumSumo` (`SodiumSumoInit.init()`) porque `crypto_pwhash` (Argon2id) solo está expuesto ahí, no en el `Sodium` base.
+  - **`lib/features/vault/infrastructure/atomic_file_vault_storage_adapter.dart`:** implementa `VaultStoragePort` sobre `dart:io` con el framing binario de ADR 0004 (magic `LKSP` + versión + longitud de header + header JSON + payload cifrado). Escritura atómica real: temp file en el mismo directorio + `RandomAccessFile.flush()` (fsync/`FlushFileBuffers`) + `File.rename()`. `VaultHeader` ganó `toJson()`/`fromJson()` en el dominio (serialización completa con nonce incluido, distinta de `toAadBytes()` que lo excluye a propósito) para que el adaptador no tuviera que reimplementar ese mapeo.
+  - **Riesgo del plan ya resuelto empíricamente:** `flutter test` (VM plano, sin `-d windows`) sí logra cargar el binario nativo de libsodium vía build hooks sin configuración extra — no hizo falta ningún target especial.
+  - **Pendiente de confirmar, no verificado en esta sesión:** si el runner `ubuntu-latest` del CI de GitHub Actions puede compilar los build hooks nativos de `sodium` sin pasos adicionales (debería, trae `build-essential`, pero no se ha corrido el workflow real todavía).
+  - Tests nuevos: `test/features/vault/infrastructure/sodium_crypto_adapter_test.dart` (round-trip real, tamper en AAD/ciphertext lanza `SodiumException`, determinismo de `deriveKey`, y un test explícito que confirma que `parallelism != 1` es rechazado), `test/features/vault/infrastructure/atomic_file_vault_storage_adapter_test.dart` (round-trip en disco, sin archivos temporales huérfanos, rechazo de formato futuro, y confirma que el `parallelism` leído de vuelta del archivo es exactamente 1), `test/features/vault/integration/vault_roundtrip_test.dart` (end-to-end con los dos adaptadores reales conectados — `CreateVaultUseCase` + `UnlockVaultUseCase` — pedido explícitamente por el usuario para atrapar bugs de integración que los tests aislados no verían).
+  - Verificado: `dart format --set-exit-if-changed`, `flutter analyze`, `flutter test` — los 16 tests pasan, sin issues.
 
 ## Pendiente / próximo paso
 
-- Adaptadores reales de infraestructura de `vault`: integración de libsodium para `CryptoPort` (ver ADR 0002) y adaptador de archivo con escritura atómica para `VaultStoragePort` (temp + fsync + rename, `CLAUDE.md`).
-- Primera pantalla real (crear/desbloquear bóveda) en `vault/presentation/`, con sus providers Riverpod como composition root.
+- Confirmar en un run real de CI (GitHub Actions, `ubuntu-latest`) que los build hooks nativos de `sodium` compilan sin pasos adicionales.
+- Primera pantalla real (crear/desbloquear bóveda) en `vault/presentation/`, con sus providers Riverpod como composition root (inyectando `SodiumCryptoAdapter`/`AtomicFileVaultStorageAdapter` en producción).
+- Benchmarking real de los parámetros de Argon2id (512 MiB / 4 iteraciones / paralelismo 1) en el dispositivo de pruebas (Redmi Note 15 Pro+ 5G) — pendiente desde ADR 0002, ahora también condicionado por ADR 0007.
 - Replicar el mismo patrón Hexagonal para las siguientes features cuando les toque: sesión/auto-lock, sync, native-messaging bridge.
 - Reservar usuario/organización `lockspire` en GitHub, dominio `lockspire.com`, y hacer búsqueda formal de marca registrada antes de hacer público el repo.
 

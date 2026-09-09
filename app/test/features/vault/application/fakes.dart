@@ -24,7 +24,15 @@ class FakeCryptoPort implements CryptoPort {
   Future<Uint8List> deriveKey({
     required String masterPassword,
     required Uint8List salt,
+    required Argon2Params params,
   }) async {
+    if (params.parallelism != 1) {
+      throw ArgumentError.value(
+        params.parallelism,
+        'params.parallelism',
+        'debe ser 1 (ver ADR 0007)',
+      );
+    }
     return Uint8List.fromList(utf8.encode(masterPassword));
   }
 

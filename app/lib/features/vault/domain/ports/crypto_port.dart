@@ -3,6 +3,8 @@
 
 import 'dart:typed_data';
 
+import 'argon2_params.dart';
+
 /// Resultado de una operación de cifrado autenticado (AEAD).
 ///
 /// [ciphertext] incluye el tag de autenticación de Poly1305 al final,
@@ -22,10 +24,16 @@ class EncryptedPayload {
 /// Los adaptadores que implementen este puerto (infrastructure/) deben usar
 /// bindings nativos de libsodium — nunca una reimplementación pura en Dart.
 abstract class CryptoPort {
-  /// Deriva la clave simétrica de [masterPassword] vía Argon2id usando [salt].
+  /// Deriva la clave simétrica de [masterPassword] vía Argon2id usando
+  /// [salt] y [params].
+  ///
+  /// Implementaciones deben validar que `params.parallelism == 1` y lanzar
+  /// si no lo es — nunca derivar en silencio con un paralelismo distinto al
+  /// que la primitiva realmente usa (ver docs/adr/0007-paralelismo-argon2id-libsodium.md).
   Future<Uint8List> deriveKey({
     required String masterPassword,
     required Uint8List salt,
+    required Argon2Params params,
   });
 
   /// Cifra [plaintext] con XChaCha20-Poly1305, autenticando (sin cifrar) [aad].

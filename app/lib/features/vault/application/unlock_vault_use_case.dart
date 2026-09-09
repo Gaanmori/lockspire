@@ -21,6 +21,7 @@ class UnlockVaultUseCase {
     final key = await crypto.deriveKey(
       masterPassword: masterPassword,
       salt: file.header.salt,
+      params: file.header.kdfParams,
     );
 
     final plaintext = await crypto.decrypt(
