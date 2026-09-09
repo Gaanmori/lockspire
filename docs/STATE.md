@@ -1,10 +1,10 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-09 (proyecto Flutter scaffolded en `app/`, aún sin estructura hexagonal ni código de dominio)
+Última actualización: 2026-09-09 (Fase 0 completa; arrancando Fase 1)
 
 ## Fase actual
 
-Fase 0 — Entorno de desarrollo. Repo remoto en GitHub sincronizado, entorno Flutter + Android SDK verificado con dispositivo físico real, y proyecto Flutter creado en `app/` con el scaffold estándar (todavía no con la estructura Hexagonal por feature).
+Fase 0 completa. Arrancando Fase 1 — Threat Model + specs (formato de bóveda v1, protocolo Native Messaging, modelo de resolución de conflictos) como ADRs.
 
 ## Completado
 
@@ -24,13 +24,13 @@ Fase 0 — Entorno de desarrollo. Repo remoto en GitHub sincronizado, entorno Fl
   - Package/bundle ID: `com.lockspire.lockspire` (cambiable sin costo mientras no se publique en tiendas).
   - `app/README.md` preexistente se conservó, no fue sobrescrito.
   - `flutter analyze` sin issues sobre el scaffold generado.
-  - Pendiente antes de considerarlo "listo": el scaffold es la plantilla estándar de Flutter (`lib/main.dart` de ejemplo) — **no** tiene todavía la estructura Hexagonal por feature (`lib/features/<feature>/{domain,application,infrastructure,presentation}`) exigida por `CLAUDE.md`, ni cabeceras de licencia AGPLv3 en los archivos de código.
+  - Pendiente antes de considerarlo "listo": el scaffold es la plantilla estándar de Flutter (`lib/main.dart` de ejemplo) — **no** tiene todavía la estructura Hexagonal por feature (`lib/features/<feature>/{domain,application,infrastructure,presentation}`) exigida por `CLAUDE.md`, ni cabeceras de licencia AGPLv3 en los archivos de código. Se deja así a propósito: esa estructura se arma cuando el Threat Model (Fase 1) defina qué features/dominio existen, para no tener que rehacerla.
+- CI configurado: `.github/workflows/flutter-ci.yml`, corre en push/PR a `main` — `dart format --set-exit-if-changed`, `flutter analyze`, `flutter test` sobre `app/` con Flutter 3.44.1 pinneado. Los 3 pasos verificados localmente contra el scaffold actual (pasan).
 
 ## Pendiente / próximo paso
 
-- Añadir estructura Hexagonal por feature en `lib/` y cabeceras de licencia AGPLv3 a los archivos de código antes de escribir la primera feature real.
-- Configurar CI (GitHub Actions) con `flutter test` + `flutter analyze`.
-- Empezar Fase 1: Threat Model + specs (formato de bóveda v1, protocolo Native Messaging, modelo de resolución de conflictos) como ADRs.
+- Fase 1: escribir ADRs de Threat Model + specs — formato de bóveda v1, protocolo Native Messaging, modelo de resolución de conflictos.
+- Una vez cerrado el Threat Model: estructura Hexagonal por feature en `lib/` y cabeceras de licencia AGPLv3 en los archivos de código.
 - Reservar usuario/organización `lockspire` en GitHub, dominio `lockspire.com`, y hacer búsqueda formal de marca registrada antes de hacer público el repo.
 
 ## Bloqueos / preguntas abiertas
