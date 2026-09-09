@@ -71,15 +71,15 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                     },
                     onFieldSubmitted: (_) => isLoading ? null : _submit(),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: LockspireSpacing.lg),
                   if (isLoading)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 16),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: LockspireSpacing.md),
                       child: Column(
                         children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 12),
-                          Text(
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: LockspireSpacing.smMd),
+                          const Text(
                             'Desbloqueando… esto puede tardar unos segundos '
                             '(derivación de clave Argon2id)',
                             textAlign: TextAlign.center,
@@ -89,7 +89,7 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                     )
                   else if (sessionState.hasError)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.only(bottom: LockspireSpacing.md),
                       child: Text(
                         'Contraseña incorrecta',
                         style: TextStyle(
