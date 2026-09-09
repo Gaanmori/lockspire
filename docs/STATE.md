@@ -85,12 +85,18 @@ Fase 2 completa (verificada de punta a punta en el Redmi, incluido el ciclo cerr
   - Definidos: paleta de color (acento `#EA6C4D`, fondo `#FFF8F1`, ver `docs/design/README.md` para la tabla completa), tipografía (Quicksand para títulos/botones + Karla para texto), escala de espaciado y radios, y componentes base (botón, campo de texto con sus 3 estados, tarjeta, fila de lista para futuras entradas, barra superior).
   - Canvas editable vivo (fuente de verdad visual): https://claude.ai/code/artifact/3066d5e2-2452-4cf6-af99-e51ec83f0f0f — `docs/design/README.md` es el resumen en texto para no depender de abrirlo.
   - Aplicado como mockup (no como código todavía) a la pantalla "Desbloquear bóveda" en móvil y escritorio.
-  - **No implementado en Flutter todavía:** `main.dart` sigue con `ColorScheme.fromSeed(seedColor: Colors.deepPurple)` del scaffold original, que no coincide con esta paleta.
+  - **Implementado en Flutter** (`lib/design/`, carpeta cross-cutting fuera de `features/` — no es una feature, no tiene ADR propio):
+    - `lockspire_colors.dart` (los 11 tokens de color), `lockspire_spacing.dart` (escala de espaciado y radios), `lockspire_theme.dart` (construye el `ThemeData` real: `ColorScheme.light` explícito, `TextTheme` con Quicksand/Karla mapeados a los slots de Material, temas de botón/input/card/appbar).
+    - Fuentes Quicksand y Karla empaquetadas como assets locales (`app/assets/fonts/*[wght].ttf`, variable fonts, licencia OFL, descargadas del repo oficial de Google Fonts) — **decisión deliberada de no usar el paquete `google_fonts`**, que por defecto descarga las fuentes en tiempo de ejecución desde `fonts.gstatic.com`: no tiene sentido que la UI de un gestor de contraseñas local-first dependa de una llamada de red a Google en el primer arranque.
+    - `main.dart` usa `LockspireTheme.themeData` en vez del `ColorScheme.fromSeed(seedColor: Colors.deepPurple)` del scaffold original.
+    - Pantallas existentes (`create_vault_screen.dart`, `unlock_vault_screen.dart`, `vault_unlocked_screen.dart`, `vault_gate_screen.dart`): ajuste ligero, no rediseño — ya usaban widgets estándar (`FilledButton`, `TextFormField`, `Theme.of(context).colorScheme.error`) que heredan el tema nuevo automáticamente; solo se reemplazaron los valores de espaciado hardcodeados por las constantes de `lockspire_spacing.dart`.
+    - Verificado: `dart format --set-exit-if-changed`, `flutter analyze`, `flutter test` — los 20 tests siguen pasando sin issues (ninguno depende del tema visual).
+    - **Pendiente de verificar manualmente:** que se vea bien en el Redmi/desktop real — no se hizo en esta sesión.
 
 ## Pendiente / próximo paso
 
-- Traducir el sistema de diseño (`docs/design/README.md`) a un `ColorScheme`/`ThemeData` real de Flutter, y aplicar los estilos a las pantallas ya existentes de `vault/presentation/` (hoy usan `Material` genérico, no esta paleta).
-- Extender el sistema de diseño a las pantallas que todavía no se maquetaron: crear bóveda, bóveda desbloqueada.
+- Verificación visual manual del tema nuevo en el Redmi o Windows desktop.
+- Extender el sistema de diseño a las pantallas que todavía no se maquetaron en el canvas: crear bóveda, bóveda desbloqueada (trabajo de diseño/mockup, no de código — hacerlo antes de traducir esas pantallas a Flutter).
 - Elegir la siguiente feature: sync (`SyncPort`, ADR 0006) o el bridge de native-messaging (`native-host/` + extensión, ADR 0005) — replicando el mismo patrón Hexagonal ya establecido con `vault`.
 - Reservar usuario/organización `lockspire` en GitHub, dominio `lockspire.com`, y hacer búsqueda formal de marca registrada antes de hacer público el repo.
 
