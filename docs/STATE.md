@@ -1,10 +1,10 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-09 (Fase 2 completa — feature `vault` de punta a punta, incluida la UI)
+Última actualización: 2026-09-09 (Fase 3 en curso — sesión / auto-lock)
 
 ## Fase actual
 
-Fase 2 completa. Feature `vault` con los 4 pilares de la arquitectura Hexagonal terminados: domain, application, infrastructure (libsodium + storage atómico reales) y presentation (providers Riverpod + pantallas de crear/desbloquear bóveda). Arrancando Fase 3 — a definir qué feature sigue.
+Fase 2 completa (verificada de punta a punta en el Redmi, incluido el ciclo cerrar/reabrir la app). Fase 3 en curso: auto-lock por inactividad y al pasar a segundo plano (ADR 0008), cerrando el adversario 4 del Threat Model que había quedado explícitamente sin mitigar.
 
 ## Completado
 
@@ -65,12 +65,32 @@ Fase 2 completa. Feature `vault` con los 4 pilares de la arquitectura Hexagonal 
   - `test/widget_test.dart`: el test del contador ya no aplicaba, se reemplazó por un smoke test que sobreescribe `vaultFilePathProvider` con una ruta en `Directory.systemTemp` (evita depender del canal de plataforma real de `path_provider`, no disponible en `flutter test`). Detalle de testing no trivial: no se puede usar `pumpAndSettle()` aquí — el `CircularProgressIndicator` indeterminado del estado de carga nunca "asienta" (animación infinita) y agota el timeout; además `pump(duration)` solo adelanta el reloj simulado de animaciones, no el tiempo real que necesita la cadena de providers para resolver I/O real de `dart:io` — la solución fue `tester.runAsync()` para dejar correr el I/O real antes de re-pintar.
   - Verificado: `dart format --set-exit-if-changed`, `flutter analyze`, `flutter test` — los 17 tests pasan (16 anteriores + el nuevo smoke test), sin issues.
   - **Verificación manual en el Redmi real (`flutter run -d 2510ERA8BG`), confirmada por el usuario:** creó una bóveda con contraseña maestra desde la UI real, llegó a la pantalla de "Bóveda desbloqueada" mostrando "0 entradas · 0 carpetas" — exactamente lo esperado para una bóveda recién creada. Confirma el flujo completo de punta a punta con hardware y UI reales (Argon2id + XChaCha20-Poly1305 + escritura atómica + composition root de Riverpod), no solo los tests automatizados.
-  - **Pendiente de verificar todavía:** cerrar y reabrir la app para confirmar que la segunda vez muestra la pantalla de desbloqueo (no la de creación) y que persiste correctamente contra el archivo ya guardado en disco.
+  - **Verificado en el Redmi:** el usuario cerró y reabrió la app manualmente — la segunda vez mostró la pantalla de desbloqueo (no la de creación) y desbloqueó correctamente contra el archivo ya persistido en disco. Cierra la verificación manual completa de Fase 2.
+  - Después del cierre de Fase 2, el CI se rompió en dos pushes seguidos ("Target of URI hasn't been generated" en cascada para los 5 `.g.dart` de `presentation/`): los `.g.dart` están en `.gitignore` (correcto, no deben versionarse) pero el workflow nunca los regeneraba antes de `flutter analyze`/`flutter test`. Fix: paso nuevo `Generate code` (`dart run build_runner build --delete-conflicting-outputs`) en `.github/workflows/flutter-ci.yml`, entre `flutter pub get` y `Verify formatting`. Confirmado en verde (run tras el fix, 3m17s).
+  - **READMEs quedaron desactualizados tras el cierre de Fase 2** — encontrados y corregidos en esta sesión: `vault/presentation/README.md` (eliminado, contenido ya implementado — se había borrado el de `infrastructure/` al implementar los adaptadores reales pero no este), `app/README.md` (ya no decía "pendiente de scaffolding"), `README.md` raíz (sección "Para empezar" tenía una promesa vacía de instrucciones que nunca se añadieron — ahora tiene comandos reales), `native-host/README.md` (decía "pendiente de definir spec" cuando ADR 0005 ya la define). Lección para futuras sesiones: revisar READMEs de carpetas tocadas al cerrar una fase, no solo `docs/STATE.md`.
+- **Fase 3 — Sesión / auto-lock (`docs/adr/0008-sesion-auto-lock.md`):**
+  - Se mantiene dentro de la feature `vault` (no una feature nueva) — extiende `VaultSessionController`, que ya existía.
+  - Dos disparadores: inactividad (lo que pedía el Threat Model explícitamente) y app en segundo plano (`AppLifecycleState.paused`/`.hidden`; `.inactive` se ignora a propósito — dispara por interrupciones breves del sistema, no representa "salir de la app"). Timeout fijo de 5 minutos (configurable queda para una fase de settings futura).
+  - Detección de actividad por tres vías, no solo tap — el ADR original que planifiqué solo cubría punteros; el usuario lo corrigió antes de aprobar el plan: `Listener` (`onPointerDown` + `onPointerSignal` para scroll/trackpad) y `HardwareKeyboard.instance.addHandler` (tipeo sin volver a tocar la pantalla). Todo vive en el widget nuevo `activity_and_lifecycle_watcher.dart`, montado una vez en `main.dart` envolviendo `VaultGateScreen`.
+  - `providers/auto_lock_timeout_provider.dart` (`@Riverpod(keepAlive: true) Duration`) — sobreescribible en tests para no esperar minutos reales.
+  - **Bug real encontrado y corregido durante la implementación (no estaba en el plan):** `VaultSessionController` estaba anotado `@riverpod` simple (auto-dispose), no `@Riverpod(keepAlive: true)` como el resto de providers de composition root — a diferencia de esos, este SÍ se había pasado por alto en Fase 2. Un controller de sesión que maneja la bóveda desbloqueada en memoria auto-disponiéndose al quedar momentáneamente sin listeners es un riesgo real (pérdida impredecible de estado), no solo un problema de testing — se detectó porque los tests nuevos fallaban con "Cannot use Ref after disposed" al usar `ProviderContainer.read()` directo (que no mantiene vivo un provider auto-dispose). Corregido a `keepAlive: true`.
+  - Limitación conocida documentada en el ADR (no resuelta, fuera de alcance): "bloquear" limpia la referencia al `Vault` en el estado — sin zeroing explícito de memoria, porque el dominio guarda el contenido desencriptado como objetos Dart planos, no `SecureKey`.
+  - Tests nuevos: `test/features/vault/presentation/vault_session_controller_test.dart` (4 tests, usa `ProviderContainer` + overrides con los fakes existentes y `autoLockTimeoutProvider` a 60ms) — timeout dispara lock, `registerActivity()` reinicia el timer, `paused` bloquea inmediato, `inactive` no bloquea. Usan `Timer` real con duración corta: funcionan pero son inherentemente un poco flaky bajo carga — si aparece flakiness intermitente más adelante, migrar a `fake_async`.
+  - Verificado: `dart format --set-exit-if-changed`, `flutter analyze`, `flutter test` — los 20 tests pasan (16 de Fase 2 + 4 nuevos), sin issues.
+  - **Pendiente de verificar manualmente:** que el auto-lock funcione en el Redmi real (dejar la app desbloqueada sin tocar 5 minutos, y minimizarla) — no se hizo en esta sesión.
+- **Sistema de diseño (`docs/design/README.md`):**
+  - Dirección visual elegida por el usuario, entre tres bocetos: **cálido y cercano** (frente a minimalista/clínico estilo 1Password y técnico/directo estilo KeePassXC, descartadas) — prioriza bajar la barrera de entrada a alguien sin experiencia con gestores de contraseñas.
+  - Definidos: paleta de color (acento `#EA6C4D`, fondo `#FFF8F1`, ver `docs/design/README.md` para la tabla completa), tipografía (Quicksand para títulos/botones + Karla para texto), escala de espaciado y radios, y componentes base (botón, campo de texto con sus 3 estados, tarjeta, fila de lista para futuras entradas, barra superior).
+  - Canvas editable vivo (fuente de verdad visual): https://claude.ai/code/artifact/3066d5e2-2452-4cf6-af99-e51ec83f0f0f — `docs/design/README.md` es el resumen en texto para no depender de abrirlo.
+  - Aplicado como mockup (no como código todavía) a la pantalla "Desbloquear bóveda" en móvil y escritorio.
+  - **No implementado en Flutter todavía:** `main.dart` sigue con `ColorScheme.fromSeed(seedColor: Colors.deepPurple)` del scaffold original, que no coincide con esta paleta.
 
 ## Pendiente / próximo paso
 
-- Verificación manual del flujo completo (crear → cerrar app → reabrir → desbloquear) en el Redmi conectado — los use cases y adaptadores están probados por separado y en integración, pero no se ha ejercitado la UI real en un dispositivo todavía.
-- Elegir la siguiente feature para Fase 3: sesión/auto-lock (mencionada como pendiente en `docs/THREAT_MODEL.md`, adversario 4), sync (`SyncPort`), o el bridge de native-messaging (ADR 0005) — replicando el mismo patrón Hexagonal ya establecido con `vault`.
+- Traducir el sistema de diseño (`docs/design/README.md`) a un `ColorScheme`/`ThemeData` real de Flutter, y aplicar los estilos a las pantallas ya existentes de `vault/presentation/` (hoy usan `Material` genérico, no esta paleta).
+- Extender el sistema de diseño a las pantallas que todavía no se maquetaron: crear bóveda, bóveda desbloqueada.
+- Verificación manual del auto-lock en el Redmi (inactividad real de 5 min, y minimizar la app).
+- Elegir la siguiente feature: sync (`SyncPort`, ADR 0006) o el bridge de native-messaging (`native-host/` + extensión, ADR 0005) — replicando el mismo patrón Hexagonal ya establecido con `vault`.
 - Reservar usuario/organización `lockspire` en GitHub, dominio `lockspire.com`, y hacer búsqueda formal de marca registrada antes de hacer público el repo.
 
 ## Bloqueos / preguntas abiertas

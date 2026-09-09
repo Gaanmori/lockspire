@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
+import 'features/vault/presentation/widgets/activity_and_lifecycle_watcher.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const VaultGateScreen(),
+      home: const ActivityAndLifecycleWatcher(child: VaultGateScreen()),
     );
   }
 }
