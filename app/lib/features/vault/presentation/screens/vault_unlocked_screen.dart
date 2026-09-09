@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lockspire/features/sync/presentation/screens/sync_settings_screen.dart';
 
 import '../../../../design/lockspire_spacing.dart';
 import '../../domain/entities/vault.dart';
@@ -21,6 +22,13 @@ class VaultUnlockedScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Lockspire'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.sync),
+            tooltip: 'Sincronización',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SyncSettingsScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.lock),
             tooltip: 'Bloquear',
