@@ -114,7 +114,6 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
 
 ## Pendiente / próximo paso
 
-- Verificación manual de sync contra un servidor WebDAV real.
 - Siguiente pasada de sync: el merge automático por entrada del ADR 0006 (3-way merge con snapshot desencriptado del ancestro común) — esta pasada solo detecta el conflicto, no lo resuelve.
 - Extender el sistema de diseño a las pantallas que todavía no se maquetaron en el canvas: crear bóveda, bóveda desbloqueada, y ahora también sync (trabajo de diseño/mockup, no de código). Oportunístico, no prioritario mientras haya fase activa (ver memoria de sesión).
 - Elegir qué sigue después de la siguiente pasada de sync: otro proveedor (Drive/OneDrive/Dropbox, con OAuth) o el bridge de native-messaging (`native-host/` + extensión, ADR 0005).

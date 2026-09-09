@@ -23,6 +23,14 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // Los campos se precargan con las credenciales guardadas una sola vez.
+  // build() se vuelve a ejecutar cada vez que cambia syncControllerProvider
+  // (ej. al presionar "Sincronizar ahora") — sin este flag, ese rebuild
+  // pisaría cualquier edición sin guardar en curso (ej. el usuario cambia
+  // la URL del servidor y, antes de tocar "Guardar", presiona "Sincronizar
+  // ahora" para probar la conexión actual primero).
+  bool _prefilled = false;
+
   @override
   void dispose() {
     _serverController.dispose();
@@ -84,9 +92,10 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
               error: (error, _) =>
                   Text('Ocurrió un error: $error', textAlign: TextAlign.center),
               data: (credentials) {
-                if (credentials != null) {
+                if (!_prefilled && credentials != null) {
                   _serverController.text = credentials.serverUrl;
                   _usernameController.text = credentials.username;
+                  _prefilled = true;
                 }
                 return Form(
                   key: _formKey,
