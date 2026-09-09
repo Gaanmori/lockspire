@@ -1,10 +1,10 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-09 (Fase 3 en curso — sesión / auto-lock)
+Última actualización: 2026-09-09 (Fase 4 en curso — sync con WebDAV, primera pasada)
 
 ## Fase actual
 
-Fase 2 completa (verificada de punta a punta en el Redmi, incluido el ciclo cerrar/reabrir la app). Fase 3 en curso: auto-lock por inactividad y al pasar a segundo plano (ADR 0008), cerrando el adversario 4 del Threat Model que había quedado explícitamente sin mitigar.
+Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta en el Redmi. Fase 4 en curso: primera feature de sync (`SyncPort`), proveedor WebDAV — subir/bajar la bóveda con seguridad ante conflictos, sin el merge automático por entrada del ADR 0006 todavía (pasada siguiente).
 
 ## Completado
 
