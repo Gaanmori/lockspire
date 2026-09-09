@@ -122,5 +122,33 @@ void main() {
         );
       },
     );
+
+    test('registerActivity() y onAppLifecycleChanged() durante el await de '
+        'createVault()/unlock() (state == AsyncLoading, sin valor previo) '
+        'no lanzan excepción', () async {
+      final container = _buildContainer(timeout: const Duration(minutes: 5));
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
+
+      // No se espera el Future — se dispara actividad/lifecycle mientras
+      // sigue pendiente, exactamente la ventana de los ~3.5s de Argon2id.
+      final createFuture = notifier.createVault(_masterPassword);
+      expect(
+        container.read(vaultSessionControllerProvider),
+        isA<AsyncLoading<VaultSessionState>>(),
+      );
+
+      expect(() => notifier.registerActivity(), returnsNormally);
+      expect(
+        () => notifier.onAppLifecycleChanged(AppLifecycleState.paused),
+        returnsNormally,
+      );
+
+      await createFuture;
+      expect(
+        container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionUnlocked>(),
+      );
+    });
   });
 }
