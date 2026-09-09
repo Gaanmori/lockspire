@@ -1,33 +1,45 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:lockspire/features/vault/presentation/providers/vault_file_path_provider.dart';
 import 'package:lockspire/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets(
+    'Sin bóveda existente, la app arranca en la pantalla de creación',
+    (WidgetTester tester) async {
+      final vaultPath =
+          '${Directory.systemTemp.path}${Platform.pathSeparator}'
+          'lockspire_widget_test_${DateTime.now().microsecondsSinceEpoch}.vault';
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      await tester.pumpWidget(
+        ProviderScope(
+          // Evita depender del canal de plataforma real de path_provider,
+          // que no está disponible en el entorno de `flutter test`.
+          overrides: [
+            vaultFilePathProvider.overrideWith((ref) async => vaultPath),
+          ],
+          child: const MyApp(),
+        ),
+      );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      // No se usa pumpAndSettle: mientras el estado inicial está "loading"
+      // se muestra un CircularProgressIndicator indeterminado, cuya
+      // animación nunca "asienta" — pumpAndSettle esperaría hasta agotar
+      // su timeout. Además, pump(duration) solo adelanta el reloj
+      // simulado de las animaciones, no el tiempo real: la cadena de
+      // providers hace I/O real (dart:io), así que hace falta
+      // runAsync para dejarla completar de verdad antes de re-pintar.
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 300)),
+      );
+      await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
-  });
+      expect(find.text('Crear bóveda'), findsWidgets);
+    },
+  );
 }

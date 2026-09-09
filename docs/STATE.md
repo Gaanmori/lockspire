@@ -1,10 +1,10 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-09 (Fase 2 en curso — feature `vault` con adaptadores reales de infraestructura)
+Última actualización: 2026-09-09 (Fase 2 completa — feature `vault` de punta a punta, incluida la UI)
 
 ## Fase actual
 
-Fase 2 en curso. Feature `vault` completa de punta a punta: domain + application + infrastructure real (libsodium + storage atómico), con tests unitarios, de infraestructura e integración end-to-end. Falta `presentation/` (providers Riverpod + pantallas).
+Fase 2 completa. Feature `vault` con los 4 pilares de la arquitectura Hexagonal terminados: domain, application, infrastructure (libsodium + storage atómico reales) y presentation (providers Riverpod + pantallas de crear/desbloquear bóveda). Arrancando Fase 3 — a definir qué feature sigue.
 
 ## Completado
 
@@ -50,12 +50,26 @@ Fase 2 en curso. Feature `vault` completa de punta a punta: domain + application
   - **Confirmado en CI real:** tras el push, el workflow `Flutter CI` corrió en verde sobre `ubuntu-latest` (run `34383244747`, 2m21s) — los build hooks nativos de `sodium` compilan sin pasos adicionales en el runner de GitHub Actions, sin necesidad de instalar toolchain extra.
   - Tests nuevos: `test/features/vault/infrastructure/sodium_crypto_adapter_test.dart` (round-trip real, tamper en AAD/ciphertext lanza `SodiumException`, determinismo de `deriveKey`, y un test explícito que confirma que `parallelism != 1` es rechazado), `test/features/vault/infrastructure/atomic_file_vault_storage_adapter_test.dart` (round-trip en disco, sin archivos temporales huérfanos, rechazo de formato futuro, y confirma que el `parallelism` leído de vuelta del archivo es exactamente 1), `test/features/vault/integration/vault_roundtrip_test.dart` (end-to-end con los dos adaptadores reales conectados — `CreateVaultUseCase` + `UnlockVaultUseCase` — pedido explícitamente por el usuario para atrapar bugs de integración que los tests aislados no verían).
   - Verificado: `dart format --set-exit-if-changed`, `flutter analyze`, `flutter test` — los 16 tests pasan, sin issues.
+- **Benchmarking real de Argon2id en el dispositivo de pruebas (Redmi Note 15 Pro+ 5G, Snapdragon 7s Gen 4)** — pendiente desde ADR 0002/0007, ahora medido:
+  - `app/integration_test/argon2_benchmark_test.dart` (paquete `integration_test`, corre EN el dispositivo, no en el host — a diferencia de `flutter test` normal).
+  - **Resultado: `defaultArgon2Params` (512 MiB, 4 iteraciones, paralelismo 1) → ~3500 ms.** Mínimos de ADR 0002 (256 MiB, 3 iteraciones) → ~1165 ms. 3.5s es perceptible pero razonable para un desbloqueo con indicador de progreso en la UI (orden de magnitud similar a Bitwarden/1Password); no se ajustaron los defaults, se deja como dato de referencia para cuando se diseñe la pantalla de desbloqueo.
+  - **Toolchain de build nuevo para este equipo, necesario para compilar la librería nativa de `sodium` para Android desde Windows:** se requiere `make` compatible con MSYS (no el `make` nativo de Windows) porque el build hook de `sodium` corre `./configure && make` en un entorno estilo Unix. Se instaló MSYS2 (`winget install MSYS2.MSYS2`) y `make` dentro vía `pacman -S make`, con `C:\msys64\usr\bin` añadido **al final** del PATH (nunca al principio — anteponerlo rompe la detección del Android SDK de Flutter, lo confirmamos al depurar un fallo intermitente que en realidad no era del USB del dispositivo sino de esto). Se probó primero con GnuWin32 Make (versión nativa de Windows sin soporte de rutas estilo `/usr/bin/...`), que no sirve para este caso — se desinstaló.
+  - Building nota aparte: al desactivar la VPN corporativa (Zscaler/BBVA) que el usuario usa para trabajo remoto, se resolvió un error de SSL (`PKIX path building failed`) que impedía a Gradle descargar su propia distribución — la VPN hacía inspección TLS con un certificate no confiable para el JDK. No fue necesario ningún workaround permanente una vez desactivada.
+- **Fase 2 (cierre) — `vault/presentation/`: providers Riverpod + pantallas de crear/desbloquear bóveda:**
+  - Dependencia nueva: `path_provider` (directorio privado de la app para el archivo de bóveda, vía `getApplicationSupportDirectory()` — placeholder hasta que exista la feature de sync propia). Requirió activar el "Modo desarrollador" de Windows (el usuario lo hizo manualmente — necesario para que Flutter compile plugins con symlinks; no se pudo activar por script, pide permisos de administrador).
+  - `lib/features/vault/presentation/providers/`: `sodium_provider.dart`, `vault_file_path_provider.dart`, `crypto_port_provider.dart`, `vault_storage_port_provider.dart` — todos `@Riverpod(keepAlive: true)`, composition root real (ADR 0003) que inyecta `SodiumCryptoAdapter`/`AtomicFileVaultStorageAdapter` en producción.
+  - `vault_session_state.dart` (sealed class `NoVault`/`Locked`/`Unlocked(Vault)`) + `vault_session_controller.dart` (`@riverpod class VaultSessionController`, único lugar que conecta `CreateVaultUseCase`/`UnlockVaultUseCase` con los adaptadores reales; usa `AsyncValue.guard` para que errores de autenticación — contraseña incorrecta — lleguen a la UI como `AsyncError` sin try/catch manual).
+  - `screens/`: `vault_gate_screen.dart` (swap condicional sin `Navigator`), `create_vault_screen.dart` (contraseña + confirmación, mínimo 8 caracteres), `unlock_vault_screen.dart` (con el texto de progreso explícito que sugería el benchmark de ~3.5s), `vault_unlocked_screen.dart` (confirmación mínima, sin gestión real de entradas — feature futura aparte).
+  - `main.dart`: se reemplazó el demo del contador de `flutter create` por `VaultGateScreen` como home real de la app.
+  - Codegen corrido (`dart run build_runner build`) para los 5 providers/controller `@riverpod`.
+  - `test/widget_test.dart`: el test del contador ya no aplicaba, se reemplazó por un smoke test que sobreescribe `vaultFilePathProvider` con una ruta en `Directory.systemTemp` (evita depender del canal de plataforma real de `path_provider`, no disponible en `flutter test`). Detalle de testing no trivial: no se puede usar `pumpAndSettle()` aquí — el `CircularProgressIndicator` indeterminado del estado de carga nunca "asienta" (animación infinita) y agota el timeout; además `pump(duration)` solo adelanta el reloj simulado de animaciones, no el tiempo real que necesita la cadena de providers para resolver I/O real de `dart:io` — la solución fue `tester.runAsync()` para dejar correr el I/O real antes de re-pintar.
+  - Verificado: `dart format --set-exit-if-changed`, `flutter analyze`, `flutter test` — los 17 tests pasan (16 anteriores + el nuevo smoke test), sin issues.
+  - **Pendiente de verificación manual** (no se hizo en esta sesión): correr la app real en el Redmi (`flutter run -d 2510ERA8BG`) para confirmar el flujo completo con UI — crear bóveda, cerrar y reabrir la app, desbloquear con la contraseña correcta y ver el error con una incorrecta.
 
 ## Pendiente / próximo paso
 
-- Primera pantalla real (crear/desbloquear bóveda) en `vault/presentation/`, con sus providers Riverpod como composition root (inyectando `SodiumCryptoAdapter`/`AtomicFileVaultStorageAdapter` en producción).
-- Benchmarking real de los parámetros de Argon2id (512 MiB / 4 iteraciones / paralelismo 1) en el dispositivo de pruebas (Redmi Note 15 Pro+ 5G) — pendiente desde ADR 0002, ahora también condicionado por ADR 0007.
-- Replicar el mismo patrón Hexagonal para las siguientes features cuando les toque: sesión/auto-lock, sync, native-messaging bridge.
+- Verificación manual del flujo completo (crear → cerrar app → reabrir → desbloquear) en el Redmi conectado — los use cases y adaptadores están probados por separado y en integración, pero no se ha ejercitado la UI real en un dispositivo todavía.
+- Elegir la siguiente feature para Fase 3: sesión/auto-lock (mencionada como pendiente en `docs/THREAT_MODEL.md`, adversario 4), sync (`SyncPort`), o el bridge de native-messaging (ADR 0005) — replicando el mismo patrón Hexagonal ya establecido con `vault`.
 - Reservar usuario/organización `lockspire` en GitHub, dominio `lockspire.com`, y hacer búsqueda formal de marca registrada antes de hacer público el repo.
 
 ## Bloqueos / preguntas abiertas

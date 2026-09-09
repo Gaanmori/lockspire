@@ -16,59 +16,61 @@ import 'package:sodium/sodium_sumo.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Argon2id — defaultArgon2Params (512 MiB, 4 iter, paralelismo 1)', (
-    tester,
-  ) async {
-    final sodium = await SodiumSumoInit.init();
-    final adapter = SodiumCryptoAdapter(sodium);
-    final salt = adapter.generateSalt();
+  testWidgets(
+    'Argon2id — defaultArgon2Params (512 MiB, 4 iter, paralelismo 1)',
+    (tester) async {
+      final sodium = await SodiumSumoInit.init();
+      final adapter = SodiumCryptoAdapter(sodium);
+      final salt = adapter.generateSalt();
 
-    final stopwatch = Stopwatch()..start();
-    await adapter.deriveKey(
-      masterPassword: 'correcto-caballo-batería-grapa',
-      salt: salt,
-      params: defaultArgon2Params,
-    );
-    stopwatch.stop();
+      final stopwatch = Stopwatch()..start();
+      await adapter.deriveKey(
+        masterPassword: 'correcto-caballo-batería-grapa',
+        salt: salt,
+        params: defaultArgon2Params,
+      );
+      stopwatch.stop();
 
-    // ignore: avoid_print
-    print(
-      'BENCHMARK Argon2id defaultArgon2Params: '
-      '${stopwatch.elapsedMilliseconds} ms '
-      '(memoria=${defaultArgon2Params.memoryKib} KiB, '
-      'iteraciones=${defaultArgon2Params.iterations}, '
-      'paralelismo=${defaultArgon2Params.parallelism})',
-    );
+      // ignore: avoid_print
+      print(
+        'BENCHMARK Argon2id defaultArgon2Params: '
+        '${stopwatch.elapsedMilliseconds} ms '
+        '(memoria=${defaultArgon2Params.memoryKib} KiB, '
+        'iteraciones=${defaultArgon2Params.iterations}, '
+        'paralelismo=${defaultArgon2Params.parallelism})',
+      );
 
-    // No fijamos un límite estricto aquí (el benchmark es informativo, no
-    // un gate de CI) — el resultado se registra en docs/STATE.md para
-    // decidir si los parámetros por defecto son aceptables en UX.
-  });
+      // No fijamos un límite estricto aquí (el benchmark es informativo, no
+      // un gate de CI) — el resultado se registra en docs/STATE.md para
+      // decidir si los parámetros por defecto son aceptables en UX.
+    },
+  );
 
-  testWidgets('Argon2id — mínimos de ADR 0002 (256 MiB, 3 iter, paralelismo 1)', (
-    tester,
-  ) async {
-    final sodium = await SodiumSumoInit.init();
-    final adapter = SodiumCryptoAdapter(sodium);
-    final salt = adapter.generateSalt();
-    const minParams = Argon2Params(
-      memoryKib: 262144,
-      iterations: 3,
-      parallelism: 1,
-    );
+  testWidgets(
+    'Argon2id — mínimos de ADR 0002 (256 MiB, 3 iter, paralelismo 1)',
+    (tester) async {
+      final sodium = await SodiumSumoInit.init();
+      final adapter = SodiumCryptoAdapter(sodium);
+      final salt = adapter.generateSalt();
+      const minParams = Argon2Params(
+        memoryKib: 262144,
+        iterations: 3,
+        parallelism: 1,
+      );
 
-    final stopwatch = Stopwatch()..start();
-    await adapter.deriveKey(
-      masterPassword: 'correcto-caballo-batería-grapa',
-      salt: salt,
-      params: minParams,
-    );
-    stopwatch.stop();
+      final stopwatch = Stopwatch()..start();
+      await adapter.deriveKey(
+        masterPassword: 'correcto-caballo-batería-grapa',
+        salt: salt,
+        params: minParams,
+      );
+      stopwatch.stop();
 
-    // ignore: avoid_print
-    print(
-      'BENCHMARK Argon2id minParams (ADR 0002): '
-      '${stopwatch.elapsedMilliseconds} ms',
-    );
-  });
+      // ignore: avoid_print
+      print(
+        'BENCHMARK Argon2id minParams (ADR 0002): '
+        '${stopwatch.elapsedMilliseconds} ms',
+      );
+    },
+  );
 }
