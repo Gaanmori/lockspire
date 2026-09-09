@@ -98,7 +98,9 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                   const SizedBox(height: LockspireSpacing.lg),
                   if (sessionState.hasError)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: LockspireSpacing.md),
+                      padding: const EdgeInsets.only(
+                        bottom: LockspireSpacing.md,
+                      ),
                       child: Text(
                         'No se pudo crear la bóveda: ${sessionState.error}',
                         style: TextStyle(

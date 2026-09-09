@@ -74,7 +74,9 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                   const SizedBox(height: LockspireSpacing.lg),
                   if (isLoading)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: LockspireSpacing.md),
+                      padding: const EdgeInsets.only(
+                        bottom: LockspireSpacing.md,
+                      ),
                       child: Column(
                         children: [
                           const CircularProgressIndicator(),
@@ -89,7 +91,9 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                     )
                   else if (sessionState.hasError)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: LockspireSpacing.md),
+                      padding: const EdgeInsets.only(
+                        bottom: LockspireSpacing.md,
+                      ),
                       child: Text(
                         'Contraseña incorrecta',
                         style: TextStyle(

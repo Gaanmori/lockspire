@@ -27,12 +27,12 @@ class VaultGateScreen extends ConsumerWidget {
       error: (error, stackTrace) => Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(LockspireSpacing.lg),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('Ocurrió un error: $error', textAlign: TextAlign.center),
-                const SizedBox(height: 16),
+                const SizedBox(height: LockspireSpacing.md),
                 FilledButton(
                   onPressed: () =>
                       ref.invalidate(vaultSessionControllerProvider),
