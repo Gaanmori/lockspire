@@ -14,8 +14,7 @@ class SyncSettingsScreen extends ConsumerStatefulWidget {
   const SyncSettingsScreen({super.key});
 
   @override
-  ConsumerState<SyncSettingsScreen> createState() =>
-      _SyncSettingsScreenState();
+  ConsumerState<SyncSettingsScreen> createState() => _SyncSettingsScreenState();
 }
 
 class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
@@ -81,8 +80,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(LockspireSpacing.lg),
             child: credentialsAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) =>
                   Text('Ocurrió un error: $error', textAlign: TextAlign.center),
               data: (credentials) {
@@ -109,9 +107,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                       const SizedBox(height: LockspireSpacing.md),
                       TextFormField(
                         controller: _usernameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Usuario',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Usuario'),
                         validator: (value) => (value == null || value.isEmpty)
                             ? 'Ingresá el usuario'
                             : null,
