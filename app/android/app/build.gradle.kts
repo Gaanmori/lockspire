@@ -6,7 +6,10 @@ plugins {
 
 android {
     namespace = "com.lockspire.lockspire"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_secure_storage exige compileSdk >= 37 (ver docs/STATE.md) —
+    // se fija explícito en vez de usar flutter.compileSdkVersion, que
+    // todavía apunta a 36 en esta versión del Flutter SDK.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
