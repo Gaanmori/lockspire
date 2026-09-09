@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'design/lockspire_theme.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
 import 'features/vault/presentation/widgets/activity_and_lifecycle_watcher.dart';
 
@@ -18,9 +19,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Lockspire',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
+      theme: LockspireTheme.themeData,
       home: const ActivityAndLifecycleWatcher(child: VaultGateScreen()),
     );
   }
