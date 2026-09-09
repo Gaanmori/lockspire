@@ -1,0 +1,47 @@
+# Flutter / Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/build/
+**/.pub-cache/
+**/.pub/
+*.g.dart
+*.freezed.dart
+
+# Android
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+*.jks
+*.keystore
+
+# iOS
+**/ios/Flutter/.last_build_id
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+
+# Node / extensión TypeScript
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Secretos / entorno local
+*.env
+.env.local
+
+# SO
+.DS_Store
+Thumbs.db
