@@ -137,9 +137,7 @@ class VaultSessionController extends _$VaultSessionController {
     final current = state.value;
     if (current is! VaultSessionUnlocked) return;
     await _persist(
-      current.vault.copyWith(
-        entries: [...current.vault.entries, ...entries],
-      ),
+      current.vault.copyWith(entries: [...current.vault.entries, ...entries]),
     );
   }
 

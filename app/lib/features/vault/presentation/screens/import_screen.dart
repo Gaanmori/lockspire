@@ -34,7 +34,8 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   bool _busy = false;
   String? _errorMessage;
 
-  bool get _hasTransitionalData => _candidates?.any(
+  bool get _hasTransitionalData =>
+      _candidates?.any(
         (e) => e.fields['notes']?.contains('[$transitionalPrefix ') ?? false,
       ) ??
       false;
@@ -218,10 +219,8 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           child: ListView.builder(
             shrinkWrap: true,
             itemCount: candidates.length,
-            itemBuilder: (context, index) => ListTile(
-              dense: true,
-              title: Text(candidates[index].title),
-            ),
+            itemBuilder: (context, index) =>
+                ListTile(dense: true, title: Text(candidates[index].title)),
           ),
         ),
         const SizedBox(height: LockspireSpacing.lg),

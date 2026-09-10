@@ -219,6 +219,30 @@ void main() {
       expect(state.vault.entries.first.fields['username'], 'gaan');
     });
 
+    test('importEntries() agrega varias entradas de una vez, sin perder lo '
+        'que ya había', () async {
+      final built = _buildContainer(timeout: const Duration(minutes: 5));
+      final container = built.container;
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
+      await notifier.createVault(_masterPassword);
+      await notifier.addEntry(title: 'Ya existía', fields: {});
+
+      await notifier.importEntries([
+        VaultEntry.create(title: 'Importada 1', fields: {'username': 'a'}),
+        VaultEntry.create(title: 'Importada 2', fields: {'username': 'b'}),
+      ]);
+
+      final state =
+          container.read(vaultSessionControllerProvider).value
+              as VaultSessionUnlocked;
+      expect(state.vault.entries, hasLength(3));
+      expect(
+        state.vault.entries.map((e) => e.title),
+        containsAll(['Ya existía', 'Importada 1', 'Importada 2']),
+      );
+    });
+
     test(
       'updateEntry() edita título y campos sin duplicar la entrada',
       () async {

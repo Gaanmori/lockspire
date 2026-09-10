@@ -258,7 +258,12 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                     TextFormField(
                       controller: _notesController,
                       decoration: const InputDecoration(labelText: 'Notas'),
-                      maxLines: 3,
+                      // 8 en vez de 3: una entrada importada de SafeInCloud
+                      // puede traer varias líneas transicionales (TOTP,
+                      // PIN, tarjeta) además del texto libre — con 3 no se
+                      // veían sin hacer scroll dentro del campo (el dato
+                      // seguía completo, solo estaba recortado a la vista).
+                      maxLines: 8,
                     ),
                     const SizedBox(height: LockspireSpacing.lg),
                     if (_errorMessage != null)

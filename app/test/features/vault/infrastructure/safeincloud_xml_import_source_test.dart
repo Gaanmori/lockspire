@@ -49,21 +49,18 @@ void main() {
       source = SafeInCloudXmlImportSource();
     });
 
-    test(
-      'login/password/website mapean a los fields correctos, texto libre '
-      'se agrega a notes sin prefijo, sin pisarse entre sí',
-      () async {
-        final entries = await source.parse(_fixtureXml);
-        final entry = entries.firstWhere((e) => e.title == 'Ejemplo Login');
+    test('login/password/website mapean a los fields correctos, texto libre '
+        'se agrega a notes sin prefijo, sin pisarse entre sí', () async {
+      final entries = await source.parse(_fixtureXml);
+      final entry = entries.firstWhere((e) => e.title == 'Ejemplo Login');
 
-        expect(entry.fields['username'], 'usuario.ejemplo');
-        expect(entry.fields['password'], 'correcto-caballo-batería');
-        expect(entry.fields['url'], 'https://ejemplo.test');
-        expect(entry.fields['notes'], contains('Primera nota libre.'));
-        expect(entry.fields['notes'], contains('Segunda nota libre.'));
-        expect(entry.fields['notes'], isNot(contains('[$transitionalPrefix')));
-      },
-    );
+      expect(entry.fields['username'], 'usuario.ejemplo');
+      expect(entry.fields['password'], 'correcto-caballo-batería');
+      expect(entry.fields['url'], 'https://ejemplo.test');
+      expect(entry.fields['notes'], contains('Primera nota libre.'));
+      expect(entry.fields['notes'], contains('Segunda nota libre.'));
+      expect(entry.fields['notes'], isNot(contains('[$transitionalPrefix')));
+    });
 
     test(
       'campos no soportados (TOTP, PIN, tarjeta) quedan en notes con el '
@@ -85,8 +82,8 @@ void main() {
           'application',
         ]) {
           final line = lines.firstWhere(
-            (l) => transitionalLineRegExp.firstMatch(l)?.group(1) ==
-                expectedType,
+            (l) =>
+                transitionalLineRegExp.firstMatch(l)?.group(1) == expectedType,
             orElse: () => '',
           );
           expect(
@@ -124,9 +121,7 @@ void main() {
         isFalse,
       );
       expect(
-        entries.any(
-          (e) => e.fields['username'] == 'tampoco-debe-importarse',
-        ),
+        entries.any((e) => e.fields['username'] == 'tampoco-debe-importarse'),
         isFalse,
       );
     });
@@ -136,20 +131,16 @@ void main() {
       expect(entries, hasLength(3));
     });
 
-    test(
-      'un payload XXE (DOCTYPE + ENTITY apuntando a un archivo local real) '
-      'no filtra el contenido de ese archivo al valor parseado',
-      () async {
-        final tempDir = await Directory.systemTemp.createTemp(
-          'lockspire_xxe_',
-        );
-        final secretFile = File('${tempDir.path}/secreto.txt');
-        const marker = 'CONTENIDO-SECRETO-QUE-NO-DEBE-FILTRARSE';
-        await secretFile.writeAsString(marker);
+    test('un payload XXE (DOCTYPE + ENTITY apuntando a un archivo local real) '
+        'no filtra el contenido de ese archivo al valor parseado', () async {
+      final tempDir = await Directory.systemTemp.createTemp('lockspire_xxe_');
+      final secretFile = File('${tempDir.path}/secreto.txt');
+      const marker = 'CONTENIDO-SECRETO-QUE-NO-DEBE-FILTRARSE';
+      await secretFile.writeAsString(marker);
 
-        final secretUri = secretFile.uri.toString();
-        final xxeXml =
-            '''
+      final secretUri = secretFile.uri.toString();
+      final xxeXml =
+          '''
 <?xml version="1.0"?>
 <!DOCTYPE database [
   <!ENTITY xxe SYSTEM "$secretUri">
@@ -161,19 +152,18 @@ void main() {
 </database>
 ''';
 
-        try {
-          final entries = await source.parse(xxeXml);
-          for (final entry in entries) {
-            for (final value in entry.fields.values) {
-              expect(value, isNot(contains(marker)));
-            }
+      try {
+        final entries = await source.parse(xxeXml);
+        for (final entry in entries) {
+          for (final value in entry.fields.values) {
+            expect(value, isNot(contains(marker)));
           }
-        } on FormatException {
-          // Rechazar el documento de plano también es un resultado seguro.
-        } finally {
-          await tempDir.delete(recursive: true);
         }
-      },
-    );
+      } on FormatException {
+        // Rechazar el documento de plano también es un resultado seguro.
+      } finally {
+        await tempDir.delete(recursive: true);
+      }
+    });
   });
 }

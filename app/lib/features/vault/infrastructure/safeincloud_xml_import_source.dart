@@ -26,7 +26,11 @@ final transitionalLineRegExp = RegExp(
 /// `'`) y el valor nunca lleva saltos de línea (se reemplazan por
 /// espacios), para que la línea completa sea siempre parseable con
 /// [transitionalLineRegExp].
-String buildTransitionalNoteLine({required String type, required String name, required String value}) {
+String buildTransitionalNoteLine({
+  required String type,
+  required String name,
+  required String value,
+}) {
   final safeName = name.replaceAll('"', "'");
   final safeValue = value.replaceAll('\n', ' ').replaceAll('\r', ' ');
   return '[$transitionalPrefix type="$type" name="$safeName"] $safeValue';

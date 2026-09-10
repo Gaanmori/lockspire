@@ -60,9 +60,9 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
           IconButton(
             icon: const Icon(Icons.upload_file_outlined),
             tooltip: 'Importar desde SafeInCloud',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ImportScreen()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const ImportScreen())),
           ),
           IconButton(
             icon: const Icon(Icons.sync),
