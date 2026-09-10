@@ -68,4 +68,49 @@ class SecureStorageSyncSettingsAdapter
   @override
   Future<void> saveLastSyncedHash(String hash) =>
       _storage.write(key: _keyLastSyncedHash, value: hash);
+
+  @override
+  Future<SyncProviderId?> activeProvider() async {
+    final value = await _storage.read(key: _keyActiveProvider);
+    return switch (value) {
+      'webdav' => SyncProviderId.webdav,
+      'googleDrive' => SyncProviderId.googleDrive,
+      _ => null,
+    };
+  }
+
+  @override
+  Future<void> saveActiveProvider(SyncProviderId id) =>
+      _storage.write(key: _keyActiveProvider, value: id.name);
+
+  @override
+  Future<void> clearActiveProvider() =>
+      _storage.delete(key: _keyActiveProvider);
+
+  @override
+  Future<GoogleDriveAccount?> googleDriveAccount() async {
+    final email = await _storage.read(key: _keyGoogleDriveEmail);
+    if (email == null) return null;
+    final refreshToken = await _storage.read(
+      key: _keyGoogleDriveRefreshToken,
+    );
+    return GoogleDriveAccount(email: email, refreshToken: refreshToken);
+  }
+
+  @override
+  Future<void> saveGoogleDriveAccount(GoogleDriveAccount account) async {
+    await _storage.write(key: _keyGoogleDriveEmail, value: account.email);
+    if (account.refreshToken != null) {
+      await _storage.write(
+        key: _keyGoogleDriveRefreshToken,
+        value: account.refreshToken,
+      );
+    }
+  }
+
+  @override
+  Future<void> clearGoogleDriveAccount() async {
+    await _storage.delete(key: _keyGoogleDriveEmail);
+    await _storage.delete(key: _keyGoogleDriveRefreshToken);
+  }
 }
