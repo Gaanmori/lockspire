@@ -71,6 +71,7 @@ class SyncController extends _$SyncController {
     ref.invalidate(currentGoogleDriveAccountProvider);
     ref.invalidate(currentActiveSyncProviderProvider);
     ref.invalidate(activeSyncPortProvider);
+    ref.invalidate(isSyncConfiguredProvider);
   }
 
   /// Desconecta la cuenta de Google — si era el proveedor activo, deja de
