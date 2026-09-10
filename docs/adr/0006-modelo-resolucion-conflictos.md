@@ -1,6 +1,6 @@
 # 0006 — Modelo de resolución de conflictos de sincronización
 
-- Estado: Aceptado
+- Estado: Aceptado — punto 3 de la Decisión (conflicto real → picker manual) reemplazado por [ADR 0009](0009-merge-automatico-por-campo.md); el resto (LWW por entrada, tombstones, merge de 3 vías con ancestro común) sigue vigente sin cambios.
 - Fecha: 2026-09-09
 
 ## Contexto

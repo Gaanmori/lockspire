@@ -8,13 +8,13 @@ import 'package:lockspire/features/sync/domain/ports/sync_state_port.dart';
 import 'package:lockspire/features/sync/domain/vault_merge.dart';
 import 'package:lockspire/features/vault/application/save_vault_use_case.dart';
 import 'package:lockspire/features/vault/domain/entities/vault.dart';
-import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 import 'package:lockspire/features/vault/domain/ports/crypto_port.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 import 'package:lockspire/features/vault/domain/vault_file_codec.dart';
 
 /// Resultado de una sincronización. Ver
-/// docs/adr/0006-modelo-resolucion-conflictos.md.
+/// docs/adr/0006-modelo-resolucion-conflictos.md y
+/// docs/adr/0009-merge-automatico-por-campo.md.
 sealed class SyncResult {
   const SyncResult();
 }
@@ -34,51 +34,26 @@ class SyncUpToDate extends SyncResult {
   const SyncUpToDate();
 }
 
-/// Cambiaron los dos lados, pero el merge automático por entrada (ADR
-/// 0006) pudo resolver todo solo (ediciones en un solo lado, tombstones) —
-/// [autoResolvedCount] entradas resueltas sin intervención del usuario.
+/// Cambiaron los dos lados — el merge automático (por entrada, ADR 0006, y
+/// por campo cuando hace falta, ADR 0009) resolvió todo solo, sin
+/// intervención del usuario. [autoResolvedCount] son entradas completas
+/// resueltas porque solo cambió un lado o fue un tombstone;
+/// [fieldConflictsResolved] son campos individuales que chocaron de
+/// verdad en ambos lados y se resolvieron automáticamente (el valor
+/// perdedor queda en `VaultEntry.fieldHistory` de esa entrada).
 class SyncMerged extends SyncResult {
   final int autoResolvedCount;
-  const SyncMerged({required this.autoResolvedCount});
-}
+  final int fieldConflictsResolved;
 
-/// Cambiaron los dos lados y al menos una entrada cambió distinto de
-/// verdad en cada lado — conflicto real que solo puede resolver el
-/// usuario (picker manual, ver `ConflictResolutionScreen`). **No se
-/// escribió ni subió nada todavía** — [autoMerged]/[conflicts] quedan acá
-/// para que la UI junte las resoluciones y llame
-/// `SyncVaultUseCase.completeMerge`.
-class SyncNeedsResolution extends SyncResult {
-  final Vault autoMerged;
-  final List<EntryConflict> conflicts;
-  final int autoResolvedCount;
-  final String localHashAtAnalysis;
-  final String remoteHashAtAnalysis;
-
-  const SyncNeedsResolution({
-    required this.autoMerged,
-    required this.conflicts,
+  const SyncMerged({
     required this.autoResolvedCount,
-    required this.localHashAtAnalysis,
-    required this.remoteHashAtAnalysis,
+    required this.fieldConflictsResolved,
   });
 }
 
-/// Lanzada por [SyncVaultUseCase.completeMerge] si el local o el remoto
-/// cambiaron de nuevo mientras el usuario tenía el picker de conflictos
-/// abierto — nunca se sube un merge calculado sobre datos que ya
-/// quedaron viejos. El llamador debe volver a sincronizar desde cero
-/// (`call()`), no reintentar `completeMerge` con la misma resolución.
-class SyncStaleMergeException implements Exception {
-  @override
-  String toString() =>
-      'La bóveda cambió (local o remota) mientras se resolvían los '
-      'conflictos — hay que volver a sincronizar.';
-}
-
 /// Sincroniza la bóveda local con el proveedor remoto configurado,
-/// resolviendo automáticamente lo que se pueda (ADR 0006) y devolviendo
-/// los conflictos reales para que la UI los resuelva con el usuario.
+/// resolviendo automáticamente todo lo que haga falta (ADR 0006 + ADR
+/// 0009) — nunca deja nada pendiente de que el usuario decida.
 class SyncVaultUseCase {
   final VaultStoragePort localStorage;
   final VaultStoragePort ancestorStorage;
@@ -146,7 +121,9 @@ class SyncVaultUseCase {
       return const SyncDownloaded();
     }
 
-    // Cambiaron los dos: merge de 3 vías (ADR 0006).
+    // Cambiaron los dos: merge de 3 vías (ADR 0006) + merge por campo para
+    // cualquier choque real (ADR 0009) — siempre termina resuelto, nunca
+    // hace falta un segundo paso.
     final ancestorFile = await ancestorStorage.exists()
         ? await ancestorStorage.read()
         : null;
@@ -162,42 +139,11 @@ class SyncVaultUseCase {
       remote: remoteVault,
     );
 
-    if (!analysis.hasConflicts) {
-      await _saveAndUpload(analysis.autoMerged);
-      return SyncMerged(autoResolvedCount: analysis.autoResolvedCount);
-    }
-
-    return SyncNeedsResolution(
-      autoMerged: analysis.autoMerged,
-      conflicts: analysis.conflicts,
+    await _saveAndUpload(analysis.autoMerged);
+    return SyncMerged(
       autoResolvedCount: analysis.autoResolvedCount,
-      localHashAtAnalysis: localHash,
-      remoteHashAtAnalysis: remoteHash,
+      fieldConflictsResolved: analysis.fieldConflictsResolved,
     );
-  }
-
-  /// Segundo paso tras [SyncNeedsResolution]: aplica lo que el usuario
-  /// eligió para cada conflicto y termina la sincronización. Antes de
-  /// escribir, vuelve a comprobar que ni local ni remoto cambiaron desde
-  /// el análisis — si cambiaron, lanza [SyncStaleMergeException] sin
-  /// escribir nada (ver ese comentario para el porqué).
-  Future<SyncResult> completeMerge(
-    SyncNeedsResolution pending,
-    Map<String, VaultEntry> resolutions,
-  ) async {
-    final currentLocal = await localStorage.read();
-    final currentRemoteFile = await remote.downloadVault();
-    final currentLocalHash = VaultFileCodec.sha256Hex(currentLocal);
-    final currentRemoteHash = VaultFileCodec.sha256Hex(currentRemoteFile);
-
-    if (currentLocalHash != pending.localHashAtAnalysis ||
-        currentRemoteHash != pending.remoteHashAtAnalysis) {
-      throw SyncStaleMergeException();
-    }
-
-    final merged = applyConflictResolutions(pending.autoMerged, resolutions);
-    await _saveAndUpload(merged);
-    return SyncMerged(autoResolvedCount: pending.autoResolvedCount);
   }
 
   Future<VaultFile> _saveAndUpload(Vault vault) async {

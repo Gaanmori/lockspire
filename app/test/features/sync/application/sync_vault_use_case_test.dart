@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/sync/application/sync_vault_use_case.dart';
 import 'package:lockspire/features/vault/domain/entities/vault.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
+import 'package:lockspire/features/vault/domain/ports/crypto_port.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 import 'package:lockspire/features/vault/domain/vault_file_codec.dart';
 
@@ -266,76 +267,18 @@ void main() {
         ).call();
 
         expect(result, isA<SyncMerged>());
-        expect((result as SyncMerged).autoResolvedCount, 2);
+        final merged = result as SyncMerged;
+        expect(merged.autoResolvedCount, 2);
+        expect(merged.fieldConflictsResolved, 0);
         expect(remotePort.remoteFile, isNotNull);
         expect(ancestorStorage.stored, isNotNull);
       },
     );
 
-    test('cambiaron los dos con conflicto real → SyncNeedsResolution, sin '
-        'escribir ni subir nada', () async {
-      final crypto = FakeCryptoPort();
-      final ancestor = Vault(
-        vaultId: 'vault-1',
-        schemaVersion: 1,
-        entries: [_entry('a', 'Original')],
-      );
-      final ancestorFile = await _encryptVault(ancestor, crypto);
-
-      final local = Vault(
-        vaultId: 'vault-1',
-        schemaVersion: 1,
-        entries: [
-          _entry('a', 'Editada en local', modifiedAt: DateTime.utc(2026, 2)),
-        ],
-      );
-      final localFile = await _encryptVault(local, crypto);
-
-      final remote = Vault(
-        vaultId: 'vault-1',
-        schemaVersion: 1,
-        entries: [
-          _entry(
-            'a',
-            'Editada distinto en remoto',
-            modifiedAt: DateTime.utc(2026, 3),
-          ),
-        ],
-      );
-      final remoteFile = await _encryptVault(remote, crypto);
-
-      final localStorage = FakeVaultStoragePort()..stored = localFile;
-      final ancestorStorage = FakeVaultStoragePort()..stored = ancestorFile;
-      final remotePort = FakeSyncPort()..remoteFile = remoteFile;
-      final syncState = FakeSyncStatePort();
-      await syncState.saveLastSyncedHash(_hashOf(ancestorFile));
-
-      final result = await SyncVaultUseCase(
-        localStorage: localStorage,
-        ancestorStorage: ancestorStorage,
-        remote: remotePort,
-        syncState: syncState,
-        crypto: crypto,
-        key: _testKey,
-        header: _testHeader(),
-      ).call();
-
-      expect(result, isA<SyncNeedsResolution>());
-      final pending = result as SyncNeedsResolution;
-      expect(pending.conflicts, hasLength(1));
-      expect(pending.conflicts.single.local.title, 'Editada en local');
-      expect(
-        pending.conflicts.single.remote.title,
-        'Editada distinto en remoto',
-      );
-      // Nada se escribió ni se subió todavía.
-      expect(localStorage.stored, same(localFile));
-      expect(remotePort.remoteFile, same(remoteFile));
-      expect(ancestorStorage.stored, same(ancestorFile));
-    });
-
     test(
-      'completeMerge aplica las resoluciones, escribe y sube el resultado',
+      'cambiaron los dos con conflicto real → se resuelve automático (ADR '
+      '0009), sin picker: SyncMerged con fieldConflictsResolved > 0, y el '
+      'valor perdedor queda en fieldHistory de lo que se sube/guarda',
       () async {
         final crypto = FakeCryptoPort();
         final ancestor = Vault(
@@ -344,6 +287,7 @@ void main() {
           entries: [_entry('a', 'Original')],
         );
         final ancestorFile = await _encryptVault(ancestor, crypto);
+
         final local = Vault(
           vaultId: 'vault-1',
           schemaVersion: 1,
@@ -352,6 +296,7 @@ void main() {
           ],
         );
         final localFile = await _encryptVault(local, crypto);
+
         final remote = Vault(
           vaultId: 'vault-1',
           schemaVersion: 1,
@@ -359,7 +304,7 @@ void main() {
             _entry(
               'a',
               'Editada distinto en remoto',
-              modifiedAt: DateTime.utc(2026, 3),
+              modifiedAt: DateTime.utc(2026, 3), // más nueva que local
             ),
           ],
         );
@@ -371,7 +316,7 @@ void main() {
         final syncState = FakeSyncStatePort();
         await syncState.saveLastSyncedHash(_hashOf(ancestorFile));
 
-        final useCase = SyncVaultUseCase(
+        final result = await SyncVaultUseCase(
           localStorage: localStorage,
           ancestorStorage: ancestorStorage,
           remote: remotePort,
@@ -379,82 +324,35 @@ void main() {
           crypto: crypto,
           key: _testKey,
           header: _testHeader(),
-        );
-
-        final pending = await useCase.call() as SyncNeedsResolution;
-        final chosen = pending.conflicts.single.remote;
-
-        final result = await useCase.completeMerge(pending, {'a': chosen});
+        ).call();
 
         expect(result, isA<SyncMerged>());
+        expect((result as SyncMerged).fieldConflictsResolved, 1);
+        // Ya se escribió y subió — a diferencia del picker manual viejo,
+        // acá nunca queda nada pendiente de una segunda llamada.
         expect(localStorage.stored, isNot(same(localFile)));
         expect(remotePort.remoteFile, isNot(same(remoteFile)));
+
+        final writtenVault = Vault.fromJsonBytes(
+          await crypto.decrypt(
+            key: _testKey,
+            payload: EncryptedPayload(
+              nonce: localStorage.stored!.header.nonce,
+              ciphertext: localStorage.stored!.encryptedPayload,
+            ),
+            aad: localStorage.stored!.header.toAadBytes(),
+          ),
+        );
+        final mergedEntry = writtenVault.entries.single;
+        expect(
+          mergedEntry.title,
+          'Editada distinto en remoto',
+        ); // ganó el más nuevo
+        expect(
+          mergedEntry.fieldHistory[titleFieldKey]!.map((r) => r.value),
+          contains('Editada en local'),
+        );
       },
     );
-
-    test('completeMerge cuando el remoto cambió de nuevo mientras se '
-        'resolvía → SyncStaleMergeException, sin escribir nada', () async {
-      final crypto = FakeCryptoPort();
-      final ancestor = Vault(
-        vaultId: 'vault-1',
-        schemaVersion: 1,
-        entries: [_entry('a', 'Original')],
-      );
-      final ancestorFile = await _encryptVault(ancestor, crypto);
-      final local = Vault(
-        vaultId: 'vault-1',
-        schemaVersion: 1,
-        entries: [
-          _entry('a', 'Editada en local', modifiedAt: DateTime.utc(2026, 2)),
-        ],
-      );
-      final localFile = await _encryptVault(local, crypto);
-      final remote = Vault(
-        vaultId: 'vault-1',
-        schemaVersion: 1,
-        entries: [
-          _entry(
-            'a',
-            'Editada distinto en remoto',
-            modifiedAt: DateTime.utc(2026, 3),
-          ),
-        ],
-      );
-      final remoteFile = await _encryptVault(remote, crypto);
-
-      final localStorage = FakeVaultStoragePort()..stored = localFile;
-      final ancestorStorage = FakeVaultStoragePort()..stored = ancestorFile;
-      final remotePort = FakeSyncPort()..remoteFile = remoteFile;
-      final syncState = FakeSyncStatePort();
-      await syncState.saveLastSyncedHash(_hashOf(ancestorFile));
-
-      final useCase = SyncVaultUseCase(
-        localStorage: localStorage,
-        ancestorStorage: ancestorStorage,
-        remote: remotePort,
-        syncState: syncState,
-        crypto: crypto,
-        key: _testKey,
-        header: _testHeader(),
-      );
-
-      final pending = await useCase.call() as SyncNeedsResolution;
-
-      // El remoto sigue moviéndose mientras el usuario resolvía.
-      final remoteAgain = Vault(
-        vaultId: 'vault-1',
-        schemaVersion: 1,
-        entries: [
-          _entry('a', 'Cambió de nuevo', modifiedAt: DateTime.utc(2026, 4)),
-        ],
-      );
-      remotePort.remoteFile = await _encryptVault(remoteAgain, crypto);
-
-      await expectLater(
-        useCase.completeMerge(pending, {'a': pending.conflicts.single.remote}),
-        throwsA(isA<SyncStaleMergeException>()),
-      );
-      expect(localStorage.stored, same(localFile));
-    });
   });
 }

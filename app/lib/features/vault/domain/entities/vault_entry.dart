@@ -6,6 +6,39 @@ import 'package:uuid/uuid.dart';
 /// Tipo de una entrada de bóveda, ver formato v1 (docs/adr/0004-formato-boveda-v1.md).
 enum VaultEntryType { password, passkey, note }
 
+/// Key reservada para tratar `title` como un campo más en el merge por
+/// campo (ver docs/adr/0009-merge-automatico-por-campo.md) sin mezclarlo en
+/// el mapa [VaultEntry.fields] — el prefijo `$` no puede colisionar con una
+/// key real de `fields` (usuario/contraseña/url/notas/etc.).
+const titleFieldKey = r'$title';
+
+/// Cuántos valores anteriores se retienen por campo en
+/// [VaultEntry.fieldHistory] — acotado a propósito, no versionado
+/// ilimitado (ver ADR 0009).
+const maxFieldHistoryPerField = 3;
+
+/// Un valor de campo descartado por un merge automático de Nivel 2 (ADR
+/// 0009) — se conserva para que el usuario pueda verlo en el detalle de la
+/// entrada, nunca se pierde en silencio.
+class FieldHistoryRecord {
+  final String value;
+  final DateTime replacedAt;
+
+  const FieldHistoryRecord({required this.value, required this.replacedAt});
+
+  Map<String, dynamic> toJson() => {
+    'value': value,
+    'replaced_at': replacedAt.toIso8601String(),
+  };
+
+  factory FieldHistoryRecord.fromJson(Map<String, dynamic> json) {
+    return FieldHistoryRecord(
+      value: json['value'] as String,
+      replacedAt: DateTime.parse(json['replaced_at'] as String),
+    );
+  }
+}
+
 /// Una entrada de la bóveda (credencial, passkey o nota).
 ///
 /// Los campos específicos por [type] (usuario, contraseña, URL, etc.) se
@@ -20,16 +53,17 @@ class VaultEntry {
 
   /// Tombstone de borrado suave: una entrada borrada se marca acá en vez de
   /// quitarse de [Vault.entries], para que un futuro sync sepa propagar el
-  /// borrado a otros dispositivos.
-  ///
-  /// Restricción de diseño para el ADR 0006 (merge automático), todavía sin
-  /// escribir: este campo solo es directamente reusable por ese merge si
-  /// termina siendo last-write-wins por entrada (comparando [modifiedAt]/
-  /// [deletedAt] entrada por entrada) — no un diff estructural del archivo
-  /// completo. No se debe asumir resuelto hasta que ese ADR se escriba.
+  /// borrado a otros dispositivos. Ver `sync/domain/vault_merge.dart` para
+  /// cómo lo usa el merge (ADR 0006).
   final bool deleted;
   final DateTime? deletedAt;
   final Map<String, String> fields;
+
+  /// Valores descartados por un merge automático de Nivel 2 (ADR 0009),
+  /// por key de campo (incluye [titleFieldKey] para el título) — acotado a
+  /// [maxFieldHistoryPerField] por campo. Vacío para la enorme mayoría de
+  /// las entradas, que nunca tuvieron un choque real.
+  final Map<String, List<FieldHistoryRecord>> fieldHistory;
 
   const VaultEntry({
     required this.id,
@@ -40,6 +74,7 @@ class VaultEntry {
     this.deleted = false,
     this.deletedAt,
     this.fields = const {},
+    this.fieldHistory = const {},
   });
 
   /// Crea una entrada nueva de tipo [VaultEntryType.password] (único tipo
@@ -67,6 +102,7 @@ class VaultEntry {
     bool? deleted,
     DateTime? deletedAt,
     Map<String, String>? fields,
+    Map<String, List<FieldHistoryRecord>>? fieldHistory,
   }) {
     return VaultEntry(
       id: id,
@@ -77,6 +113,7 @@ class VaultEntry {
       deleted: deleted ?? this.deleted,
       deletedAt: deletedAt ?? this.deletedAt,
       fields: fields ?? this.fields,
+      fieldHistory: fieldHistory ?? this.fieldHistory,
     );
   }
 
@@ -89,9 +126,15 @@ class VaultEntry {
     'deleted': deleted,
     'deleted_at': deletedAt?.toIso8601String(),
     'fields': fields,
+    if (fieldHistory.isNotEmpty)
+      'field_history': {
+        for (final entry in fieldHistory.entries)
+          entry.key: entry.value.map((r) => r.toJson()).toList(),
+      },
   };
 
   factory VaultEntry.fromJson(Map<String, dynamic> json) {
+    final historyJson = json['field_history'] as Map?;
     return VaultEntry(
       id: json['id'] as String,
       type: VaultEntryType.values.byName(json['type'] as String),
@@ -103,6 +146,18 @@ class VaultEntry {
           ? null
           : DateTime.parse(json['deleted_at'] as String),
       fields: Map<String, String>.from(json['fields'] as Map? ?? const {}),
+      fieldHistory: historyJson == null
+          ? const {}
+          : {
+              for (final entry in historyJson.entries)
+                entry.key as String: (entry.value as List)
+                    .map(
+                      (r) => FieldHistoryRecord.fromJson(
+                        r as Map<String, dynamic>,
+                      ),
+                    )
+                    .toList(),
+            },
     );
   }
 }

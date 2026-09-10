@@ -13,7 +13,6 @@ import '../providers/current_active_sync_provider_provider.dart';
 import '../providers/current_google_drive_account_provider.dart';
 import '../providers/current_sync_credentials_provider.dart';
 import '../sync_controller.dart';
-import 'conflict_resolution_screen.dart';
 
 class SyncSettingsScreen extends ConsumerStatefulWidget {
   const SyncSettingsScreen({super.key});
@@ -82,33 +81,21 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
 
   Future<void> _syncNow() async {
     await ref.read(syncControllerProvider.notifier).syncNow();
-
-    // Una sync disparada directo por el usuario que termina en conflicto
-    // real navega al picker de una — es una acción suya, a diferencia de
-    // una sync automática (ver VaultSessionController), que solo deja un
-    // indicador para que el usuario entre cuando quiera.
-    final result = ref.read(syncControllerProvider).value;
-    if (mounted && result is SyncNeedsResolution) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => ConflictResolutionScreen(pending: result),
-        ),
-      );
-    }
   }
 
   String _describeResult(SyncResult result) => switch (result) {
     SyncUploaded() => 'Se subió la bóveda al servidor.',
     SyncDownloaded() => 'Se bajó la bóveda del servidor.',
     SyncUpToDate() => 'Ya estaba al día — nada que hacer.',
-    SyncMerged(:final autoResolvedCount) =>
-      autoResolvedCount > 0
+    SyncMerged(:final autoResolvedCount, :final fieldConflictsResolved) =>
+      fieldConflictsResolved > 0
+          ? 'Se fusionaron los cambios — $fieldConflictsResolved campos se '
+                'resolvieron automáticamente (podés ver el valor anterior '
+                'en el historial de esa entrada).'
+          : autoResolvedCount > 0
           ? 'Se fusionaron los cambios: $autoResolvedCount entradas '
                 'resueltas automáticamente.'
           : 'Se fusionaron los cambios.',
-    SyncNeedsResolution(:final conflicts) =>
-      'Hay ${conflicts.length} entradas con cambios en ambos lados — '
-          'hace falta elegir qué versión conservar de cada una.',
   };
 
   Widget _buildProviderPicker() {
@@ -292,22 +279,6 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                   Text(
                     _describeResult(syncState.value!),
                     textAlign: TextAlign.center,
-                  ),
-                if (syncState.value case final SyncNeedsResolution pending)
-                  Padding(
-                    padding: const EdgeInsets.only(top: LockspireSpacing.md),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                ConflictResolutionScreen(pending: pending),
-                          ),
-                        ),
-                        child: const Text('Resolver conflictos'),
-                      ),
-                    ),
                   ),
               ],
             ),

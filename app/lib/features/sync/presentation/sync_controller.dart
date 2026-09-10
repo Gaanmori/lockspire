@@ -3,7 +3,6 @@
 
 import 'dart:io' show Platform;
 
-import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
@@ -103,22 +102,6 @@ class SyncController extends _$SyncController {
     });
   }
 
-  /// Segundo paso tras un `SyncNeedsResolution` — la UI (picker de
-  /// conflictos) junta una resolución por cada entrada en conflicto y
-  /// llama acá para terminar la sincronización.
-  Future<void> completeMerge(
-    SyncNeedsResolution pending,
-    Map<String, VaultEntry> resolutions,
-  ) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final useCase = await _buildUseCase();
-      final result = await useCase.completeMerge(pending, resolutions);
-      await _reloadSessionIfNeeded(result);
-      return result;
-    });
-  }
-
   Future<SyncVaultUseCase> _buildUseCase() async {
     final session = ref.read(vaultSessionControllerProvider).value;
     if (session is! VaultSessionUnlocked) {
@@ -148,8 +131,7 @@ class SyncController extends _$SyncController {
   /// Si la sync escribió contenido local nuevo (descarga o merge), la
   /// sesión en memoria queda desactualizada respecto al archivo en disco
   /// — se refresca acá. Nunca hace falta para `SyncUploaded`/`SyncUpToDate`
-  /// (el local no cambió) ni para `SyncNeedsResolution` (todavía no se
-  /// escribió nada).
+  /// (el local no cambió).
   Future<void> _reloadSessionIfNeeded(SyncResult result) async {
     if (result is SyncDownloaded || result is SyncMerged) {
       await ref.read(vaultSessionControllerProvider.notifier).reloadFromDisk();
