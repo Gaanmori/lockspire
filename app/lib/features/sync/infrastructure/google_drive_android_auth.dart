@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import 'google_drive_connection.dart';
 import 'google_drive_scopes.dart';
+import 'google_oauth_config.dart';
 
 const _scopes = [driveAppDataScope];
 
@@ -17,8 +18,15 @@ const _scopes = [driveAppDataScope];
 class GoogleDriveAndroidAuth {
   Future<void>? _initFuture;
 
+  /// `serverClientId` es obligatorio en Android — Credential Manager lo
+  /// exige aunque no haya backend propio (confirmado en runtime:
+  /// `GoogleSignInException(clientConfigurationError, "serverClientId
+  /// must be provided on Android")` sin él). Ver
+  /// `GoogleOAuthConfig.androidServerClientId`.
   Future<void> _ensureInitialized() {
-    return _initFuture ??= GoogleSignIn.instance.initialize();
+    return _initFuture ??= GoogleSignIn.instance.initialize(
+      serverClientId: GoogleOAuthConfig.androidServerClientId,
+    );
   }
 
   /// Conexión interactiva — muestra el selector de cuentas nativo. Solo
