@@ -8,6 +8,7 @@ import 'package:lockspire/features/vault/application/save_vault_use_case.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 import 'package:lockspire/features/vault/presentation/providers/auto_lock_timeout_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
+import 'package:lockspire/features/vault/presentation/providers/vault_auth_attempt_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
@@ -141,34 +142,49 @@ void main() {
       },
     );
 
-    test('registerActivity() y onAppLifecycleChanged() durante el await de '
-        'createVault()/unlock() (state == AsyncLoading, sin valor previo) '
-        'no lanzan excepción', () async {
-      final built = _buildContainer(timeout: const Duration(minutes: 5));
-      final container = built.container;
-      final notifier = container.read(vaultSessionControllerProvider.notifier);
-      await container.read(vaultSessionControllerProvider.future);
+    test(
+      'registerActivity() y onAppLifecycleChanged() durante el await de '
+      'createVault()/unlock() no lanzan excepción — y el estado de sesión '
+      '(a diferencia de vaultAuthAttemptProvider) ni se entera de que hay '
+      'un intento en curso, ver vault_auth_attempt_provider.dart',
+      () async {
+        final built = _buildContainer(timeout: const Duration(minutes: 5));
+        final container = built.container;
+        final notifier = container.read(
+          vaultSessionControllerProvider.notifier,
+        );
+        await container.read(vaultSessionControllerProvider.future);
 
-      // No se espera el Future — se dispara actividad/lifecycle mientras
-      // sigue pendiente, exactamente la ventana de los ~3.5s de Argon2id.
-      final createFuture = notifier.createVault(_masterPassword);
-      expect(
-        container.read(vaultSessionControllerProvider),
-        isA<AsyncLoading<VaultSessionState>>(),
-      );
+        // No se espera el Future — se dispara actividad/lifecycle mientras
+        // sigue pendiente, exactamente la ventana de los ~3.5s de Argon2id.
+        final createFuture = notifier.createVault(_masterPassword);
 
-      expect(() => notifier.registerActivity(), returnsNormally);
-      expect(
-        () => notifier.onAppLifecycleChanged(AppLifecycleState.paused),
-        returnsNormally,
-      );
+        // El estado de sesión sigue siendo el de antes de empezar — no pasa
+        // por AsyncLoading, así que .value nunca es null durante este
+        // intento (el progreso vive aparte, en vaultAuthAttemptProvider).
+        expect(
+          container.read(vaultSessionControllerProvider).value,
+          isA<VaultSessionNoVault>(),
+        );
+        expect(
+          container.read(vaultAuthAttemptProvider).isLoading,
+          isTrue,
+        );
 
-      await createFuture;
-      expect(
-        container.read(vaultSessionControllerProvider).value,
-        isA<VaultSessionUnlocked>(),
-      );
-    });
+        expect(() => notifier.registerActivity(), returnsNormally);
+        expect(
+          () => notifier.onAppLifecycleChanged(AppLifecycleState.paused),
+          returnsNormally,
+        );
+
+        await createFuture;
+        expect(
+          container.read(vaultSessionControllerProvider).value,
+          isA<VaultSessionUnlocked>(),
+        );
+        expect(container.read(vaultAuthAttemptProvider).hasError, isFalse);
+      },
+    );
   });
 
   group('VaultSessionController — gestión de entradas (Fase 5)', () {
