@@ -11,6 +11,7 @@ import '../../domain/entities/vault.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../vault_session_controller.dart';
 import 'entry_form_screen.dart';
+import 'import_screen.dart';
 
 /// Lista de entradas de la bóveda desbloqueada, con búsqueda y acceso a
 /// crear/editar (ver `EntryFormScreen`).
@@ -56,6 +57,13 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
       appBar: AppBar(
         title: const Text('Lockspire'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file_outlined),
+            tooltip: 'Importar desde SafeInCloud',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ImportScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.sync),
             tooltip: 'Sincronización',

@@ -9,13 +9,15 @@ import '../domain/ports/vault_import_source.dart';
 /// Prefijo de los campos de SafeInCloud que Lockspire todavía no modela
 /// como tipo estructurado propio (TOTP, tarjetas) — ver
 /// [buildTransitionalNoteLine]/[transitionalLineRegExp] para el formato.
-const _transitionalPrefix = 'safeincloud-import';
+/// Público a propósito: la UI lo usa para detectar si una entrada
+/// importada tiene datos transicionales, sin duplicar el literal.
+const transitionalPrefix = 'safeincloud-import';
 
 /// Regex para reprocesar una línea generada por [buildTransitionalNoteLine]
 /// — ej. cuando exista una fase futura de `VaultEntryType.totp`/`.card` que
 /// necesite migrar estos datos a un tipo estructurado.
 final transitionalLineRegExp = RegExp(
-  r'^\[' + _transitionalPrefix + r' type="([^"]*)" name="([^"]*)"\] (.*)$',
+  r'^\[' + transitionalPrefix + r' type="([^"]*)" name="([^"]*)"\] (.*)$',
 );
 
 /// Arma la línea de nota para un campo de SafeInCloud sin mapeo
@@ -27,7 +29,7 @@ final transitionalLineRegExp = RegExp(
 String buildTransitionalNoteLine({required String type, required String name, required String value}) {
   final safeName = name.replaceAll('"', "'");
   final safeValue = value.replaceAll('\n', ' ').replaceAll('\r', ' ');
-  return '[$_transitionalPrefix type="$type" name="$safeName"] $safeValue';
+  return '[$transitionalPrefix type="$type" name="$safeName"] $safeValue';
 }
 
 /// Implementa [VaultImportSource] para el export XML de SafeInCloud (ver

@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Lockspire
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -36,8 +35,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   String? _errorMessage;
 
   bool get _hasTransitionalData => _candidates?.any(
-        (e) =>
-            e.fields['notes']?.contains('[safeincloud-import ') ?? false,
+        (e) => e.fields['notes']?.contains('[$transitionalPrefix ') ?? false,
       ) ??
       false;
 
@@ -49,24 +47,19 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     });
 
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final picked = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['xml'],
       );
-      if (result == null) {
+      if (picked == null) {
         setState(() => _busy = false);
         return;
       }
 
-      final picked = result.files.single;
-      final String content;
-      if (picked.path != null) {
-        content = await File(picked.path!).readAsString();
-      } else if (picked.bytes != null) {
-        content = utf8.decode(picked.bytes!);
-      } else {
-        throw StateError('No se pudo leer el archivo elegido');
-      }
+      // readAsBytes() funciona igual haya un path local o no (web) — no
+      // hace falta manejar ambos casos por separado, y no se crea ninguna
+      // copia propia del archivo (ver docs/THREAT_MODEL.md, actor #8).
+      final content = utf8.decode(await picked.readAsBytes());
 
       final source = ref.read(vaultImportSourceProvider);
       final entries = await source.parse(content);
