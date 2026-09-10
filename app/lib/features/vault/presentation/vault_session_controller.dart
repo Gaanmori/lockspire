@@ -58,9 +58,10 @@ class VaultSessionController extends _$VaultSessionController {
     try {
       final storage = await ref.read(vaultStoragePortProvider.future);
       final crypto = await ref.read(cryptoPortProvider.future);
-      final created = await CreateVaultUseCase(storage: storage, crypto: crypto)(
-        masterPassword: masterPassword,
-      );
+      final created = await CreateVaultUseCase(
+        storage: storage,
+        crypto: crypto,
+      )(masterPassword: masterPassword);
       state = AsyncData(
         VaultSessionUnlocked(
           vault: created.vault,
@@ -84,9 +85,10 @@ class VaultSessionController extends _$VaultSessionController {
     try {
       final storage = await ref.read(vaultStoragePortProvider.future);
       final crypto = await ref.read(cryptoPortProvider.future);
-      final unlocked = await UnlockVaultUseCase(storage: storage, crypto: crypto)(
-        masterPassword: masterPassword,
-      );
+      final unlocked = await UnlockVaultUseCase(
+        storage: storage,
+        crypto: crypto,
+      )(masterPassword: masterPassword);
       state = AsyncData(
         VaultSessionUnlocked(
           vault: unlocked.vault,
