@@ -45,7 +45,10 @@ void main() {
         written.header.kdfParams.memoryKib,
         created.header.kdfParams.memoryKib,
       );
-      expect(written.header.nonce, isNot(created.header.nonce));
+      // FakeCryptoPort.encrypt() usa un nonce fijo (no aleatorio como la
+      // implementación real) — lo que sí puede verificarse acá es que el
+      // payload cambió al re-cifrar contenido distinto.
+      expect(written.encryptedPayload, isNot(created.header.salt));
 
       final reunlocked = await UnlockVaultUseCase(
         storage: storage,
