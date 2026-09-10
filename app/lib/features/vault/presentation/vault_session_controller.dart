@@ -130,6 +130,19 @@ class VaultSessionController extends _$VaultSessionController {
     );
   }
 
+  /// Agrega varias entradas de una vez (ej. resultado de una importación,
+  /// ver `VaultImportSource`). Ver [addEntry] para el manejo de conflicto
+  /// de guardado.
+  Future<void> importEntries(List<VaultEntry> entries) async {
+    final current = state.value;
+    if (current is! VaultSessionUnlocked) return;
+    await _persist(
+      current.vault.copyWith(
+        entries: [...current.vault.entries, ...entries],
+      ),
+    );
+  }
+
   /// Edita una entrada existente. Ver [addEntry] para el manejo de
   /// conflicto de guardado.
   Future<void> updateEntry({
