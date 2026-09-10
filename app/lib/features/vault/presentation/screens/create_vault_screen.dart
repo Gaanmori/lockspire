@@ -8,6 +8,7 @@ import '../../../../design/lockspire_spacing.dart';
 import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
+import 'restore_vault_screen.dart';
 
 class CreateVaultScreen extends ConsumerStatefulWidget {
   const CreateVaultScreen({super.key});
@@ -135,7 +136,7 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                    if (!isLoading)
+                    if (!isLoading) ...[
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton(
@@ -143,6 +144,18 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                           child: const Text('Crear bóveda'),
                         ),
                       ),
+                      const SizedBox(height: LockspireSpacing.md),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const RestoreVaultScreen(),
+                          ),
+                        ),
+                        child: const Text(
+                          '¿Ya tenés una bóveda? Restaurarla desde la nube',
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

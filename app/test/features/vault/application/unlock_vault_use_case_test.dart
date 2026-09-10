@@ -65,4 +65,53 @@ void main() {
       );
     });
   });
+
+  group('UnlockVaultUseCase.unlockFile (Fase 9 — restaurar bóveda)', () {
+    test(
+      'desbloquea un VaultFile pasado directo, sin pasar por storage.read()',
+      () async {
+        // Storage separado del que arma el VaultFile — unlockFile no debe
+        // tocarlo para nada, confirma que no depende de storage.read().
+        final creationStorage = FakeVaultStoragePort();
+        final untouchedStorage = FakeVaultStoragePort();
+        final crypto = FakeCryptoPort();
+        const masterPassword = 'correcto-caballo-batería-grapa';
+
+        await CreateVaultUseCase(storage: creationStorage, crypto: crypto)(
+          masterPassword: masterPassword,
+        );
+        final downloadedFile = creationStorage.stored!;
+
+        final unlocked = await UnlockVaultUseCase(
+          storage: untouchedStorage,
+          crypto: crypto,
+        ).unlockFile(file: downloadedFile, masterPassword: masterPassword);
+
+        expect(unlocked.vault.vaultId, downloadedFile.header.vaultId);
+        expect(unlocked.vault.entries, isEmpty);
+        expect(untouchedStorage.stored, isNull);
+      },
+    );
+
+    test('contraseña incorrecta lanza sin escribir nada', () async {
+      final creationStorage = FakeVaultStoragePort();
+      final crypto = FakeCryptoPort();
+
+      await CreateVaultUseCase(storage: creationStorage, crypto: crypto)(
+        masterPassword: 'correcto-caballo-batería-grapa',
+      );
+      final downloadedFile = creationStorage.stored!;
+
+      await expectLater(
+        UnlockVaultUseCase(
+          storage: FakeVaultStoragePort(),
+          crypto: crypto,
+        ).unlockFile(
+          file: downloadedFile,
+          masterPassword: 'contraseña-incorrecta',
+        ),
+        throwsA(isA<StateError>()),
+      );
+    });
+  });
 }

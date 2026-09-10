@@ -10,8 +10,10 @@ import 'package:lockspire/features/sync/presentation/providers/is_sync_configure
 import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_state_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/sync_controller.dart';
+import 'package:lockspire/features/vault/application/create_vault_use_case.dart';
 import 'package:lockspire/features/vault/application/save_vault_use_case.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
+import 'package:lockspire/features/vault/domain/vault_file_codec.dart';
 import 'package:lockspire/features/vault/presentation/providers/auto_lock_timeout_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/auto_sync_debounce_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
@@ -541,6 +543,82 @@ void main() {
         await Future<void>.delayed(_shortTimeout * 3);
 
         expect(built.fakes.syncPort.uploadVaultCalls, callsAfterCreate + 1);
+      },
+    );
+  });
+
+  group('VaultSessionController — restaurar bóveda existente (Fase 9)', () {
+    test(
+      'desbloquea un VaultFile descargado y lo siembra como bóveda local, '
+      'ancestro y hash de sync (para que la próxima sync dé SyncUpToDate, '
+      'no un conflicto falso)',
+      () async {
+        final built = _buildContainerWithSync();
+        final container = built.container;
+        final notifier = container.read(
+          vaultSessionControllerProvider.notifier,
+        );
+        await container.read(vaultSessionControllerProvider.future);
+
+        // Simula un VaultFile ya "descargado" de otro dispositivo — creado
+        // con la misma contraseña maestra, en un storage aparte que nunca
+        // toca el controller.
+        final remoteStorage = FakeVaultStoragePort();
+        await CreateVaultUseCase(
+          storage: remoteStorage,
+          crypto: built.fakes.crypto,
+        )(masterPassword: _masterPassword);
+        final downloadedFile = remoteStorage.stored!;
+
+        await notifier.restoreFromDownloadedFile(
+          file: downloadedFile,
+          masterPassword: _masterPassword,
+        );
+
+        expect(
+          container.read(vaultSessionControllerProvider).value,
+          isA<VaultSessionUnlocked>(),
+        );
+        expect(built.fakes.storage.stored, downloadedFile);
+        expect(built.fakes.ancestorStorage.stored, downloadedFile);
+        expect(
+          await built.fakes.syncState.lastSyncedHash(),
+          VaultFileCodec.sha256Hex(downloadedFile),
+        );
+        expect(container.read(vaultAuthAttemptProvider).hasError, isFalse);
+      },
+    );
+
+    test(
+      'contraseña incorrecta: no escribe nada localmente, el error queda '
+      'en vaultAuthAttemptProvider y la sesión sigue sin bóveda',
+      () async {
+        final built = _buildContainerWithSync();
+        final container = built.container;
+        final notifier = container.read(
+          vaultSessionControllerProvider.notifier,
+        );
+        await container.read(vaultSessionControllerProvider.future);
+
+        final remoteStorage = FakeVaultStoragePort();
+        await CreateVaultUseCase(
+          storage: remoteStorage,
+          crypto: built.fakes.crypto,
+        )(masterPassword: _masterPassword);
+        final downloadedFile = remoteStorage.stored!;
+
+        await notifier.restoreFromDownloadedFile(
+          file: downloadedFile,
+          masterPassword: 'contraseña-incorrecta',
+        );
+
+        expect(
+          container.read(vaultSessionControllerProvider).value,
+          isA<VaultSessionNoVault>(),
+        );
+        expect(built.fakes.storage.stored, isNull);
+        expect(built.fakes.ancestorStorage.stored, isNull);
+        expect(container.read(vaultAuthAttemptProvider).hasError, isTrue);
       },
     );
   });
