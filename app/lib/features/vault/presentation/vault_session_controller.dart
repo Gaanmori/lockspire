@@ -5,6 +5,8 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
+import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
+import 'package:lockspire/features/sync/presentation/providers/sync_state_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/sync_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -13,6 +15,7 @@ import '../application/save_vault_use_case.dart';
 import '../application/unlock_vault_use_case.dart';
 import '../domain/entities/vault.dart';
 import '../domain/entities/vault_entry.dart';
+import '../domain/ports/vault_storage_port.dart';
 import '../domain/vault_file_codec.dart';
 import 'providers/auto_lock_timeout_provider.dart';
 import 'providers/auto_sync_debounce_provider.dart';
@@ -107,6 +110,55 @@ class VaultSessionController extends _$VaultSessionController {
       );
       attempt.state = const AsyncData(null);
       _triggerAutoSync();
+    } catch (error, stackTrace) {
+      attempt.state = AsyncError(error, stackTrace);
+    }
+    _scheduleAutoLockIfUnlocked();
+  }
+
+  /// Restaura una bóveda descargada de un proveedor de sync en un
+  /// dispositivo sin bóveda local todavía (ver `RestoreVaultScreen`) —
+  /// alternativa a [createVault] para el caso "ya tengo una bóveda en la
+  /// nube, quiero traerla". Ver el comentario de [createVault]: mismo
+  /// motivo para no tocar `state` mientras corre.
+  ///
+  /// Si desbloquea bien, [file] pasa a ser la bóveda local **y** el
+  /// ancestro/hash de sync quedan sembrados con ese mismo archivo — no es
+  /// opcional: sin esto, la primera sync real después de restaurar vería
+  /// un cambio local falso (nada cambió, se acaba de traer tal cual) y
+  /// dispararía un conflicto espurio en vez de `SyncUpToDate`. No hace
+  /// falta disparar sync acá — sería redundante.
+  Future<void> restoreFromDownloadedFile({
+    required VaultFile file,
+    required String masterPassword,
+  }) async {
+    final attempt = ref.read(vaultAuthAttemptProvider.notifier);
+    attempt.state = const AsyncLoading();
+    try {
+      final storage = await ref.read(vaultStoragePortProvider.future);
+      final crypto = await ref.read(cryptoPortProvider.future);
+      final unlocked = await UnlockVaultUseCase(
+        storage: storage,
+        crypto: crypto,
+      ).unlockFile(file: file, masterPassword: masterPassword);
+
+      await storage.write(file);
+      final ancestorStorage = await ref.read(
+        syncAncestorStoragePortProvider.future,
+      );
+      await ancestorStorage.write(file);
+      final syncState = ref.read(syncStatePortProvider);
+      await syncState.saveLastSyncedHash(unlocked.fileHash);
+
+      state = AsyncData(
+        VaultSessionUnlocked(
+          vault: unlocked.vault,
+          key: unlocked.key,
+          header: unlocked.header,
+          fileHash: unlocked.fileHash,
+        ),
+      );
+      attempt.state = const AsyncData(null);
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }

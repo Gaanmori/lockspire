@@ -62,14 +62,9 @@ Si ese dispositivo nuevo después intenta sincronizar contra un proveedor donde 
 
 Encontrado durante la verificación manual de Fase 8 (proveedor de sync Google Drive), al intentar preparar una segunda instalación (Android) para sincronizar contra una bóveda ya creada en otro dispositivo (Windows) — antes de instalarla en el dispositivo real se identificó que el diseño actual no contempla este caso.
 
-**Propuesta:** agregar una segunda opción en el flujo de onboarding, junto a "Crear bóveda nueva": **"Restaurar bóveda existente"**, disponible cuando el estado es `VaultSessionNoVault` y hay un proveedor de sync configurado. El flujo:
+**Propuesta:** agregar una segunda opción en el flujo de onboarding, junto a "Crear bóveda nueva": **"Restaurar bóveda existente"**, disponible cuando el estado es `VaultSessionNoVault`, con conexión a un proveedor de sync (WebDAV o Google Drive) integrada en el mismo flujo — no requiere haberlo configurado de antemano.
 
-1. Descarga el `VaultFile` cifrado del proveedor activo (`SyncPort.downloadVault()`, ya existe, no hace falta ningún caso de uso nuevo).
-2. Pide la contraseña maestra y la usa para desbloquear ese archivo descargado (reusa `UnlockVaultUseCase`, mismo mecanismo que "Desbloquear bóveda" hoy — solo cambia el origen del `VaultFile`, no la lógica de desbloqueo).
-3. Si desbloquea bien: se persiste localmente y queda como una bóveda normal, ya sincronizada (mismo criterio que ya usa `SyncVaultUseCase` cuando descubre que solo existe la remota).
-4. Si la contraseña es incorrecta: mismo manejo de error inline que ya existe en "Desbloquear" — sin reintentos automáticos ni pistas sobre cuál de los dos datos (contraseña o archivo) está mal.
-
-No requiere cambios de dominio ni casos de uso nuevos — es una pantalla más una rama de UI en el punto de entrada, reusando piezas que ya existen. Alcance acotado, candidato a fase corta.
+Plan de trabajo detallado (pantallas, providers, métodos nuevos y manejo de errores) en `docs/STATE.md` → "Pendiente / próximo paso" → "Plan detallado — Fase 9: restaurar bóveda existente en un dispositivo nuevo". No requiere ADR nuevo ni cambios de dominio — solo un método de desbloqueo alternativo y un flujo de onboarding sobre puertos que ya existen. Alcance acotado, candidato a fase corta.
 
 ## Licencia
 

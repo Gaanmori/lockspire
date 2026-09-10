@@ -42,6 +42,24 @@ class UnlockVaultUseCase {
     return _decrypt(file: file, key: key);
   }
 
+  /// Desbloquea un [VaultFile] que no vino de [storage] — usado para
+  /// restaurar una bóveda descargada de un proveedor de sync en un
+  /// dispositivo sin bóveda local todavía (ver
+  /// `VaultSessionController.restoreFromDownloadedFile`). Deriva la clave
+  /// desde el propio header del archivo, igual que [call], solo que sin
+  /// pasar por `storage.read()`.
+  Future<UnlockedVaultResult> unlockFile({
+    required VaultFile file,
+    required String masterPassword,
+  }) async {
+    final key = await crypto.deriveKey(
+      masterPassword: masterPassword,
+      salt: file.header.salt,
+      params: file.header.kdfParams,
+    );
+    return _decrypt(file: file, key: key);
+  }
+
   Future<UnlockedVaultResult> _decrypt({
     required VaultFile file,
     required Uint8List key,

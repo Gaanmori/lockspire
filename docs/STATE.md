@@ -184,6 +184,41 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
 - Reservar usuario/organización `lockspire` en GitHub, dominio `lockspire.com`, y hacer búsqueda formal de marca registrada antes de hacer público el repo. **Ganó algo de urgencia con Fase 8:** si la verificación de Google (ver "Bloqueos" abajo) termina pidiendo una URL pública de política de privacidad, la opción más liviana es una página estática en GitHub Pages del futuro repo público — no hace falta resolver el dominio propio todavía para eso.
 - Elegir qué sigue después de cerrar la verificación de Fase 8: el bridge de native-messaging (`native-host/` + extensión, ADR 0005) u otro proveedor de sync (OneDrive/Dropbox). El backlog de SafeInCloud (ver sección aparte más abajo) también compite por prioridad — es al usuario a quien le toca decidir el orden.
 
+### Plan detallado — Fase 9: restaurar bóveda existente en un dispositivo nuevo
+
+Problema documentado en `README.md` ("Problemas conocidos / propuestas en revisión"), encontrado durante la verificación manual de Fase 8: un dispositivo sin bóveda local (`VaultSessionNoVault`) solo puede "Crear bóveda", lo que genera siempre un salt/`vaultId` nuevo — aunque el usuario tipee la misma contraseña maestra que ya usa en otro dispositivo sincronizado, el resultado es una bóveda incompatible (clave distinta, `Argon2id(contraseña, salt)` con salt distinto).
+
+**Confirmación de la causa raíz (auditoría, no verificado en dispositivo real):** si el usuario elige "Crear bóveda" por error en el dispositivo nuevo, `VaultSessionController.createVault()` dispara `_triggerAutoSync()` de inmediato. En ese dispositivo `syncState.lastSyncedHash()` todavía es `null`, así que `SyncVaultUseCase.call()` trata local y remoto como "cambiados los dos" y entra a la rama de merge de 3 vías — que intenta desencriptar el `VaultFile` remoto con la clave recién derivada en *este* dispositivo. Como el remoto fue cifrado con una clave distinta (otra derivación de Argon2id, otro salt), `crypto.decrypt()` lanza `SodiumException` (fallo de autenticación AEAD) sin capturar dentro de `mergeVaults`/`_decrypt`, que es exactamente el "error de desencriptado" que describe el problema. No hay pérdida de datos — la bóveda local recién creada queda intacta, solo falla la sync — pero confirma que el flujo actual empuja al usuario justo hacia el error si elige mal en el onboarding. Motivo extra para que "Restaurar bóveda existente" sea una opción visible desde el arranque, no escondida.
+
+**Diseño (verificado contra el código real, no solo el ADR):**
+
+`VaultGateScreen` no cambia — sigue siendo un swap sin `Navigator` (`VaultSessionNoVault → CreateVaultScreen`, etc.). El punto de entrada es un botón nuevo en `CreateVaultScreen` ("¿Ya tenés una bóveda? Restaurarla desde la nube") que hace `Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RestoreVaultScreen()))` — mismo patrón ya usado por `ImportScreen`/`ConflictResolutionScreen`, sin agregar ningún estado nuevo a `VaultSessionState`.
+
+`RestoreVaultScreen` (nueva, en `vault/presentation/screens/` — importa providers de `sync/`, mismo precedente que ya tiene `vault_session_controller.dart` con `is_sync_configured_provider.dart`/`sync_controller.dart`), pantalla propia con 3 pasos internos:
+
+1. **Configurar proveedor.** Reusa tal cual `SyncController.saveCredentials()` (WebDAV) / `.connectGoogleDrive()` (Drive) — verificado que ninguno de los dos requiere `VaultSessionUnlocked`, solo `SyncController._buildUseCase()` (usado por `syncNow()`/`completeMerge()`) lo exige. Sugerencia de refactor (no bloqueante): extraer el formulario WebDAV y la sección de Google Drive de `SyncSettingsScreen` a widgets compartidos para no duplicar ese UI acá.
+2. **Buscar bóveda remota.** Arma el `SyncPort` directo vía `activeSyncPortProvider` — **no** `SyncVaultUseCase` (ese caso de uso asume una bóveda local para hacer merge de 3 vías; acá no hay ninguna todavía, no es la herramienta correcta). Llama `syncPort.remoteVaultExists()`; si es `false`, error explícito ("No hay ninguna bóveda en este proveedor todavía"), distinto del de contraseña incorrecta. Si es `true`, `downloadVault()` — el `VaultFile` queda solo en memoria, nada se escribe a disco todavía.
+3. **Contraseña maestra.** Reusa `AuthCard` (mismo widget que `UnlockVaultScreen`). Al confirmar, llama a un método nuevo del controller (ver abajo). Loading/error vía `vaultAuthAttemptProvider`, mismo mensaje genérico "Contraseña incorrecta" que ya usa `UnlockVaultScreen` hoy para cualquier fallo de desencriptado (no es una regresión: hoy tampoco se distingue el tipo de error ahí).
+
+**Cambios de código concretos:**
+
+- `UnlockVaultUseCase`: nuevo método `unlockFile({required VaultFile file, required String masterPassword})` — deriva la clave desde `file.header.salt`/`file.header.kdfParams` y reusa el `_decrypt()` privado que ya existe, sin pasar por `storage.read()`. No toca `call()` ni `reloadWithKey()`.
+- `VaultSessionController`: nuevo método `restoreFromDownloadedFile({required VaultFile file, required String masterPassword})`, con el mismo patrón de `vaultAuthAttemptProvider` que `createVault()`/`unlock()` (no tocar `state` mientras corre, para no perder el contexto de pantalla). Al desbloquear con éxito:
+  1. `vaultStoragePortProvider` → `storage.write(file)` (pasa a ser la bóveda local).
+  2. `syncAncestorStoragePortProvider` → `ancestorStorage.write(file)`.
+  3. `syncStatePortProvider` → `syncState.saveLastSyncedHash(VaultFileCodec.sha256Hex(file))`.
+  Los pasos 2 y 3 son intencionales, no opcionales: replican exactamente lo que hace `SyncVaultUseCase._markSynced()`, así que la sync inmediatamente después de restaurar ve local == remoto == ancestro y devuelve `SyncUpToDate` en vez de un conflicto falso en la primera sync real. Sin esto, la restauración "funcionaría" pero generaría un conflicto espurio en la próxima sincronización.
+  4. `state = AsyncData(VaultSessionUnlocked(...))`, luego `_scheduleAutoLockIfUnlocked()`. No hace falta `_triggerAutoSync()` acá (sería redundante — reportaría `SyncUpToDate` de inmediato) aunque llamarlo no rompe nada.
+- Si `storage.write(file)` falla (disco lleno, permisos) después de un desbloqueo exitoso: `AtomicFileVaultStorageAdapter` escribe con temporal+fsync+rename (regla de `CLAUDE.md`), así que un fallo ahí no deja nada corrupto — la sesión queda en `VaultSessionNoVault` y el error se muestra inline, reintentable.
+
+**Tests a agregar** (mismo criterio que ya se usa en el resto del proyecto — casos de uso con fakes, sin cripto real):
+
+- `UnlockVaultUseCase.unlockFile`: éxito y contraseña incorrecta (`SodiumException`/equivalente del fake).
+- `VaultSessionController.restoreFromDownloadedFile`: escribe en `localStorage`/`ancestorStorage`, guarda el hash en `syncState`, transiciona a `VaultSessionUnlocked`.
+- Casos de error de `RestoreVaultScreen`: sin proveedor configurado, proveedor configurado sin bóveda remota, contraseña incorrecta — los tres deben dar mensajes distintos entre sí (los dos primeros nunca deben confundirse con "contraseña incorrecta").
+
+No requiere ADR nuevo — no cambia el modelo de resolución de conflictos (ADR 0006) ni el formato de bóveda (ADR 0004), solo agrega un método de desbloqueo alternativo y un flujo de onboarding nuevo sobre puertos que ya existen.
+
 ## Backlog — features de SafeInCloud a evaluar más adelante (no fases activas)
 
 El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.com/es/`) y decidió qué entra a considerar y qué no. Nada de esto está planificado como fase todavía — son candidatos confirmados para cuando corresponda, en el orden que se decida más adelante.
