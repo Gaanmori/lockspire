@@ -4,6 +4,8 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart' show AppLifecycleState;
+import 'package:lockspire/features/sync/presentation/providers/current_sync_credentials_provider.dart';
+import 'package:lockspire/features/sync/presentation/sync_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../application/create_vault_use_case.dart';
@@ -13,6 +15,7 @@ import '../domain/entities/vault.dart';
 import '../domain/entities/vault_entry.dart';
 import '../domain/vault_file_codec.dart';
 import 'providers/auto_lock_timeout_provider.dart';
+import 'providers/auto_sync_debounce_provider.dart';
 import 'providers/crypto_port_provider.dart';
 import 'providers/vault_auth_attempt_provider.dart';
 import 'providers/vault_storage_port_provider.dart';
@@ -36,10 +39,14 @@ part 'vault_session_controller.g.dart';
 @Riverpod(keepAlive: true)
 class VaultSessionController extends _$VaultSessionController {
   Timer? _inactivityTimer;
+  Timer? _autoSyncTimer;
 
   @override
   Future<VaultSessionState> build() async {
-    ref.onDispose(() => _inactivityTimer?.cancel());
+    ref.onDispose(() {
+      _inactivityTimer?.cancel();
+      _autoSyncTimer?.cancel();
+    });
 
     final storage = await ref.watch(vaultStoragePortProvider.future);
     final exists = await storage.exists();
@@ -71,6 +78,7 @@ class VaultSessionController extends _$VaultSessionController {
         ),
       );
       attempt.state = const AsyncData(null);
+      _triggerAutoSync();
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }
@@ -98,6 +106,7 @@ class VaultSessionController extends _$VaultSessionController {
         ),
       );
       attempt.state = const AsyncData(null);
+      _triggerAutoSync();
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }
@@ -106,11 +115,37 @@ class VaultSessionController extends _$VaultSessionController {
 
   void lock() {
     _inactivityTimer?.cancel();
+    _autoSyncTimer?.cancel();
     state = const AsyncData(VaultSessionLocked());
     // Limpia cualquier error/loading de un intento anterior — la próxima
     // vez que se muestre UnlockVaultScreen debe arrancar en blanco, no con
     // el "Contraseña incorrecta" de la sesión previa.
     ref.read(vaultAuthAttemptProvider.notifier).state = const AsyncData(null);
+  }
+
+  /// Vuelve a leer y descifrar el archivo actual con la key ya retenida —
+  /// usado después de que sync escribe contenido nuevo localmente
+  /// (descarga o merge, ver `SyncController`), para que la sesión en
+  /// memoria no quede desactualizada respecto al archivo en disco.
+  /// Deliberadamente **nunca** dispara sync — evita el loop obvio (sync
+  /// escribe local → dispara sync → ...).
+  Future<void> reloadFromDisk() async {
+    final current = state.value;
+    if (current is! VaultSessionUnlocked) return;
+    final storage = await ref.read(vaultStoragePortProvider.future);
+    final crypto = await ref.read(cryptoPortProvider.future);
+    final reloaded = await UnlockVaultUseCase(
+      storage: storage,
+      crypto: crypto,
+    ).reloadWithKey(key: current.key);
+    state = AsyncData(
+      VaultSessionUnlocked(
+        vault: reloaded.vault,
+        key: reloaded.key,
+        header: reloaded.header,
+        fileHash: reloaded.fileHash,
+      ),
+    );
   }
 
   /// Agrega una entrada nueva de tipo contraseña. Lanza
@@ -199,6 +234,7 @@ class VaultSessionController extends _$VaultSessionController {
           fileHash: VaultFileCodec.sha256Hex(file),
         ),
       );
+      _scheduleAutoSync();
     } on VaultWriteConflictException {
       // La contraseña maestra no cambió — solo el contenido en disco
       // (típicamente otro dispositivo sincronizó). Se recarga con la
@@ -244,5 +280,41 @@ class VaultSessionController extends _$VaultSessionController {
     if (state.value is! VaultSessionUnlocked) return;
     final timeout = ref.read(autoLockTimeoutProvider);
     _inactivityTimer = Timer(timeout, lock);
+  }
+
+  /// Dispara sync sin esperar (fire-and-forget) tras crear/desbloquear —
+  /// eventos únicos, sin riesgo de ráfaga, así que sin debounce.
+  void _triggerAutoSync() {
+    unawaited(_maybeSyncNow());
+  }
+
+  /// Igual que [_triggerAutoSync] pero con debounce corto — se llama tras
+  /// cada guardado de entradas, donde varios guardados seguidos (ej.
+  /// editar varias entradas rápido) no deberían disparar una sync por
+  /// cada uno.
+  void _scheduleAutoSync() {
+    _autoSyncTimer?.cancel();
+    final debounce = ref.read(autoSyncDebounceProvider);
+    _autoSyncTimer = Timer(debounce, _triggerAutoSync);
+  }
+
+  /// Sin credenciales configuradas: no hace nada, ni siquiera deja un
+  /// error guardado en `syncControllerProvider` — un intento automático
+  /// silencioso no debe generar un mensaje de error que el usuario nunca
+  /// pidió ver. Cualquier otra falla (red/servidor) queda en el estado de
+  /// `SyncController` de la forma normal (vía `syncNow()`, que ya envuelve
+  /// su propio cuerpo en `AsyncValue.guard`) — el `try/catch` de acá es
+  /// una segunda red, deliberada: un intento automático (disparado sin
+  /// esperar, `unawaited`) nunca debe convertirse en una excepción sin
+  /// manejar que interrumpa otra cosa — el guardado/desbloqueo local ya
+  /// tuvo éxito antes de llegar acá, pase lo que pase con la sync.
+  Future<void> _maybeSyncNow() async {
+    try {
+      final credentials = await ref.read(currentSyncCredentialsProvider.future);
+      if (credentials == null) return;
+      await ref.read(syncControllerProvider.notifier).syncNow();
+    } catch (_) {
+      // Silencioso a propósito — ver el comentario de arriba.
+    }
   }
 }

@@ -1,21 +1,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
+import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
+import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
+import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../application/sync_vault_use_case.dart';
 import '../domain/ports/sync_credentials_port.dart';
 import 'providers/current_sync_credentials_provider.dart';
+import 'providers/sync_ancestor_storage_port_provider.dart';
 import 'providers/sync_credentials_port_provider.dart';
 import 'providers/sync_state_port_provider.dart';
 import 'providers/webdav_sync_port_provider.dart';
 
 part 'sync_controller.g.dart';
 
-/// Guardar credenciales y disparar sync manual. `null` en el estado
-/// significa "todavía no se intentó sincronizar en esta sesión" — no es
-/// un error.
+/// Guardar credenciales y disparar sync manual (o automática, ver
+/// `VaultSessionController._maybeSyncNow`). `null` en el estado significa
+/// "todavía no se intentó sincronizar en esta sesión" — no es un error.
 @Riverpod(keepAlive: true)
 class SyncController extends _$SyncController {
   @override
@@ -30,18 +35,61 @@ class SyncController extends _$SyncController {
   Future<void> syncNow() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final syncPort = await ref.read(webdavSyncPortProvider.future);
-      if (syncPort == null) {
-        throw StateError('Configurá el servidor WebDAV primero');
-      }
-      final localStorage = await ref.read(vaultStoragePortProvider.future);
-      final syncState = ref.read(syncStatePortProvider);
-
-      return SyncVaultUseCase(
-        localStorage: localStorage,
-        remote: syncPort,
-        syncState: syncState,
-      )();
+      final useCase = await _buildUseCase();
+      final result = await useCase.call();
+      await _reloadSessionIfNeeded(result);
+      return result;
     });
+  }
+
+  /// Segundo paso tras un `SyncNeedsResolution` — la UI (picker de
+  /// conflictos) junta una resolución por cada entrada en conflicto y
+  /// llama acá para terminar la sincronización.
+  Future<void> completeMerge(
+    SyncNeedsResolution pending,
+    Map<String, VaultEntry> resolutions,
+  ) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final useCase = await _buildUseCase();
+      final result = await useCase.completeMerge(pending, resolutions);
+      await _reloadSessionIfNeeded(result);
+      return result;
+    });
+  }
+
+  Future<SyncVaultUseCase> _buildUseCase() async {
+    final session = ref.read(vaultSessionControllerProvider).value;
+    if (session is! VaultSessionUnlocked) {
+      throw StateError(
+        'La bóveda tiene que estar desbloqueada para sincronizar',
+      );
+    }
+
+    final syncPort = await ref.read(webdavSyncPortProvider.future);
+    if (syncPort == null) {
+      throw StateError('Configurá el servidor WebDAV primero');
+    }
+
+    return SyncVaultUseCase(
+      localStorage: await ref.read(vaultStoragePortProvider.future),
+      ancestorStorage: await ref.read(syncAncestorStoragePortProvider.future),
+      remote: syncPort,
+      syncState: ref.read(syncStatePortProvider),
+      crypto: await ref.read(cryptoPortProvider.future),
+      key: session.key,
+      header: session.header,
+    );
+  }
+
+  /// Si la sync escribió contenido local nuevo (descarga o merge), la
+  /// sesión en memoria queda desactualizada respecto al archivo en disco
+  /// — se refresca acá. Nunca hace falta para `SyncUploaded`/`SyncUpToDate`
+  /// (el local no cambió) ni para `SyncNeedsResolution` (todavía no se
+  /// escribió nada).
+  Future<void> _reloadSessionIfNeeded(SyncResult result) async {
+    if (result is SyncDownloaded || result is SyncMerged) {
+      await ref.read(vaultSessionControllerProvider.notifier).reloadFromDisk();
+    }
   }
 }

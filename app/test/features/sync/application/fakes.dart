@@ -9,6 +9,10 @@ import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 class FakeSyncPort implements SyncPort {
   VaultFile? remoteFile;
 
+  /// Cuántas veces se llamó [uploadVault] — algunos tests lo usan para
+  /// confirmar que un debounce colapsó varios disparos en una sola sync.
+  int uploadVaultCalls = 0;
+
   @override
   Future<bool> remoteVaultExists() async => remoteFile != null;
 
@@ -23,6 +27,7 @@ class FakeSyncPort implements SyncPort {
 
   @override
   Future<void> uploadVault(VaultFile file) async {
+    uploadVaultCalls++;
     remoteFile = file;
   }
 }

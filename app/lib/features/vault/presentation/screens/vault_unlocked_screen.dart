@@ -3,7 +3,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lockspire/features/sync/application/sync_vault_use_case.dart';
 import 'package:lockspire/features/sync/presentation/screens/sync_settings_screen.dart';
+import 'package:lockspire/features/sync/presentation/sync_controller.dart';
 
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
@@ -52,6 +54,8 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
   @override
   Widget build(BuildContext context) {
     final entries = _filteredEntries;
+    final hasPendingConflicts =
+        ref.watch(syncControllerProvider).value is SyncNeedsResolution;
 
     return Scaffold(
       appBar: AppBar(
@@ -65,8 +69,14 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
             ).push(MaterialPageRoute(builder: (_) => const ImportScreen())),
           ),
           IconButton(
-            icon: const Icon(Icons.sync),
-            tooltip: 'Sincronización',
+            icon: Badge(
+              isLabelVisible: hasPendingConflicts,
+              backgroundColor: LockspireColors.danger,
+              child: const Icon(Icons.sync),
+            ),
+            tooltip: hasPendingConflicts
+                ? 'Sincronización — hay conflictos por resolver'
+                : 'Sincronización',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SyncSettingsScreen()),
             ),

@@ -4,15 +4,24 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/features/sync/application/sync_vault_use_case.dart';
+import 'package:lockspire/features/sync/domain/ports/sync_credentials_port.dart';
+import 'package:lockspire/features/sync/presentation/providers/current_sync_credentials_provider.dart';
+import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
+import 'package:lockspire/features/sync/presentation/providers/sync_state_port_provider.dart';
+import 'package:lockspire/features/sync/presentation/providers/webdav_sync_port_provider.dart';
+import 'package:lockspire/features/sync/presentation/sync_controller.dart';
 import 'package:lockspire/features/vault/application/save_vault_use_case.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 import 'package:lockspire/features/vault/presentation/providers/auto_lock_timeout_provider.dart';
+import 'package:lockspire/features/vault/presentation/providers/auto_sync_debounce_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_auth_attempt_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
 
+import '../../sync/application/fakes.dart' as sync_fakes;
 import '../application/fakes.dart';
 
 // Duración corta para no esperar minutos reales en los tests — usa Timer
@@ -44,6 +53,72 @@ class _TestFakes {
   return (
     container: container,
     fakes: _TestFakes(crypto: crypto, storage: storage),
+  );
+}
+
+class _SyncTestFakes {
+  final FakeCryptoPort crypto;
+  final FakeVaultStoragePort storage;
+  final FakeVaultStoragePort ancestorStorage;
+  final sync_fakes.FakeSyncPort syncPort;
+  final sync_fakes.FakeSyncStatePort syncState;
+
+  _SyncTestFakes({
+    required this.crypto,
+    required this.storage,
+    required this.ancestorStorage,
+    required this.syncPort,
+    required this.syncState,
+  });
+}
+
+/// Igual que [_buildContainer], pero con credenciales de sync configuradas
+/// y todo el resto de las dependencias de `SyncVaultUseCase` fakeadas —
+/// para los tests de sync automática de más abajo. [hasCredentials] en
+/// `false` simula que el usuario nunca configuró sync.
+({ProviderContainer container, _SyncTestFakes fakes}) _buildContainerWithSync({
+  Duration timeout = const Duration(minutes: 5),
+  Duration syncDebounce = _shortTimeout,
+  bool hasCredentials = true,
+}) {
+  final crypto = FakeCryptoPort();
+  final storage = FakeVaultStoragePort();
+  final ancestorStorage = FakeVaultStoragePort();
+  final syncPort = sync_fakes.FakeSyncPort();
+  final syncState = sync_fakes.FakeSyncStatePort();
+
+  final container = ProviderContainer(
+    overrides: [
+      cryptoPortProvider.overrideWith((ref) async => crypto),
+      vaultStoragePortProvider.overrideWith((ref) async => storage),
+      autoLockTimeoutProvider.overrideWith((ref) => timeout),
+      autoSyncDebounceProvider.overrideWith((ref) => syncDebounce),
+      currentSyncCredentialsProvider.overrideWith(
+        (ref) async => hasCredentials
+            ? const WebDavCredentials(
+                serverUrl: 'https://example.test',
+                username: 'u',
+                password: 'p',
+              )
+            : null,
+      ),
+      webdavSyncPortProvider.overrideWith((ref) async => syncPort),
+      syncStatePortProvider.overrideWith((ref) => syncState),
+      syncAncestorStoragePortProvider.overrideWith(
+        (ref) async => ancestorStorage,
+      ),
+    ],
+  );
+  addTearDown(container.dispose);
+  return (
+    container: container,
+    fakes: _SyncTestFakes(
+      crypto: crypto,
+      storage: storage,
+      ancestorStorage: ancestorStorage,
+      syncPort: syncPort,
+      syncState: syncState,
+    ),
   );
 }
 
@@ -380,5 +455,102 @@ void main() {
       // No volvió a derivar: se recargó con la key ya retenida.
       expect(built.fakes.crypto.deriveKeyCalls, 1);
     });
+
+    test('reloadFromDisk() refresca la sesión con lo que haya en disco, sin '
+        'volver a derivar la clave', () async {
+      final built = _buildContainer(timeout: const Duration(minutes: 5));
+      final container = built.container;
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
+      await notifier.createVault(_masterPassword);
+
+      final stateBefore =
+          container.read(vaultSessionControllerProvider).value
+              as VaultSessionUnlocked;
+      final externalEntry = VaultEntry.create(title: 'Escrita por fuera');
+      await SaveVaultUseCase(
+        storage: built.fakes.storage,
+        crypto: built.fakes.crypto,
+      ).call(
+        vault: stateBefore.vault.copyWith(entries: [externalEntry]),
+        key: stateBefore.key,
+        header: stateBefore.header,
+        expectedFileHash: stateBefore.fileHash,
+      );
+
+      await notifier.reloadFromDisk();
+
+      final state =
+          container.read(vaultSessionControllerProvider).value
+              as VaultSessionUnlocked;
+      expect(
+        state.vault.entries.map((e) => e.title),
+        contains('Escrita por fuera'),
+      );
+      expect(state.fileHash, isNot(stateBefore.fileHash));
+      expect(built.fakes.crypto.deriveKeyCalls, 1);
+    });
+  });
+
+  group('VaultSessionController — sync automática (Fase 7)', () {
+    test(
+      'crear la bóveda con credenciales configuradas dispara sync sola',
+      () async {
+        final built = _buildContainerWithSync();
+        final container = built.container;
+        final notifier = container.read(
+          vaultSessionControllerProvider.notifier,
+        );
+        await container.read(vaultSessionControllerProvider.future);
+
+        await notifier.createVault(_masterPassword);
+        // El trigger es fire-and-forget (unawaited) — se le da margen.
+        await Future<void>.delayed(_shortTimeout * 3);
+
+        expect(built.fakes.syncPort.remoteFile, isNotNull);
+        expect(
+          container.read(syncControllerProvider).value,
+          isA<SyncUploaded>(),
+        );
+      },
+    );
+
+    test('sin credenciales configuradas, no dispara nada', () async {
+      final built = _buildContainerWithSync(hasCredentials: false);
+      final container = built.container;
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
+
+      await notifier.createVault(_masterPassword);
+      await Future<void>.delayed(_shortTimeout * 3);
+
+      expect(built.fakes.syncPort.remoteFile, isNull);
+      expect(container.read(syncControllerProvider).value, isNull);
+    });
+
+    test(
+      'varios guardados seguidos disparan una sola sync (debounce)',
+      () async {
+        final built = _buildContainerWithSync();
+        final container = built.container;
+        final notifier = container.read(
+          vaultSessionControllerProvider.notifier,
+        );
+        await container.read(vaultSessionControllerProvider.future);
+
+        await notifier.createVault(_masterPassword);
+        // Deja asentar el auto-sync propio de createVault() antes de medir.
+        await Future<void>.delayed(_shortTimeout * 3);
+        final callsAfterCreate = built.fakes.syncPort.uploadVaultCalls;
+
+        await notifier.addEntry(title: 'A');
+        await notifier.addEntry(title: 'B');
+        // Las dos quedan dentro de la misma ventana de debounce — solo
+        // debería correr una sync, no dos.
+        await Future<void>.delayed(_shortTimeout * 3);
+
+        expect(built.fakes.syncPort.uploadVaultCalls, callsAfterCreate + 1);
+      },
+    );
   });
 }
