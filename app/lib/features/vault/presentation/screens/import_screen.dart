@@ -1,0 +1,262 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Lockspire
+
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../design/lockspire_colors.dart';
+import '../../../../design/lockspire_spacing.dart';
+import '../../application/save_vault_use_case.dart';
+import '../../domain/entities/vault_entry.dart';
+import '../../infrastructure/safeincloud_xml_import_source.dart';
+import '../providers/vault_import_source_provider.dart';
+import '../vault_session_controller.dart';
+
+/// Importar contraseñas desde un export XML de SafeInCloud (ver
+/// docs/STATE.md — Fase 6, docs/THREAT_MODEL.md actor #8).
+///
+/// El archivo elegido se lee directo a memoria (sin copiarlo a ningún
+/// temporal propio de la app) y se descarta la referencia en cuanto
+/// termina el parseo — solo las [VaultEntry] candidatas quedan en el
+/// estado de esta pantalla hasta que el usuario confirma o cancela.
+class ImportScreen extends ConsumerStatefulWidget {
+  const ImportScreen({super.key});
+
+  @override
+  ConsumerState<ImportScreen> createState() => _ImportScreenState();
+}
+
+class _ImportScreenState extends ConsumerState<ImportScreen> {
+  List<VaultEntry>? _candidates;
+  bool _busy = false;
+  String? _errorMessage;
+
+  bool get _hasTransitionalData => _candidates?.any(
+        (e) =>
+            e.fields['notes']?.contains('[safeincloud-import ') ?? false,
+      ) ??
+      false;
+
+  Future<void> _pickFile() async {
+    setState(() {
+      _busy = true;
+      _errorMessage = null;
+      _candidates = null;
+    });
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['xml'],
+      );
+      if (result == null) {
+        setState(() => _busy = false);
+        return;
+      }
+
+      final picked = result.files.single;
+      final String content;
+      if (picked.path != null) {
+        content = await File(picked.path!).readAsString();
+      } else if (picked.bytes != null) {
+        content = utf8.decode(picked.bytes!);
+      } else {
+        throw StateError('No se pudo leer el archivo elegido');
+      }
+
+      final source = ref.read(vaultImportSourceProvider);
+      final entries = await source.parse(content);
+
+      setState(() {
+        _candidates = entries;
+        _busy = false;
+      });
+    } catch (e) {
+      setState(() {
+        _busy = false;
+        _errorMessage =
+            'No se pudo leer el archivo. ¿Es un export XML de SafeInCloud '
+            'válido? ($e)';
+      });
+    }
+  }
+
+  Future<void> _confirmImport() async {
+    final candidates = _candidates;
+    if (candidates == null) return;
+
+    setState(() {
+      _busy = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await ref
+          .read(vaultSessionControllerProvider.notifier)
+          .importEntries(candidates);
+      if (!mounted) return;
+      setState(() => _candidates = null);
+      await _showDeleteReminderDialog(candidates.length);
+      if (mounted) Navigator.of(context).pop();
+    } on VaultWriteConflictException catch (e) {
+      setState(() {
+        _busy = false;
+        _errorMessage = '$e Volvé a intentar importar.';
+      });
+    } catch (e) {
+      setState(() {
+        _busy = false;
+        _errorMessage = 'No se pudo importar: $e';
+      });
+    }
+  }
+
+  Future<void> _showDeleteReminderDialog(int count) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Importación completada'),
+        content: Text(
+          'Se importaron $count entradas. Por tu seguridad: el archivo de '
+          'exportación que elegiste no está cifrado — borralo del lugar '
+          'donde lo guardaste. Lockspire no puede borrarlo por vos.',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final candidates = _candidates;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Importar desde SafeInCloud')),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Padding(
+            padding: const EdgeInsets.all(LockspireSpacing.lg),
+            child: candidates == null
+                ? _buildPickerView(context)
+                : _buildPreviewView(context, candidates),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPickerView(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(
+          Icons.upload_file_outlined,
+          size: 48,
+          color: LockspireColors.textPlaceholder,
+        ),
+        const SizedBox(height: LockspireSpacing.md),
+        Text(
+          'Elegí el archivo XML exportado desde SafeInCloud. Se lee '
+          'directo en memoria, sin guardar ninguna copia.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: LockspireSpacing.lg),
+        if (_errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: LockspireSpacing.md),
+            child: Text(
+              _errorMessage!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: _busy ? null : _pickFile,
+            child: _busy
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Elegir archivo'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreviewView(BuildContext context, List<VaultEntry> candidates) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Se importarán ${candidates.length} entradas',
+          style: Theme.of(context).textTheme.headlineSmall,
+          textAlign: TextAlign.center,
+        ),
+        if (_hasTransitionalData) ...[
+          const SizedBox(height: LockspireSpacing.sm),
+          Text(
+            'Algunas tienen datos que Lockspire todavía no muestra de '
+            'forma estructurada (ej. TOTP, tarjetas) — quedan guardados '
+            'como texto en la nota de esa entrada.',
+            style: Theme.of(context).textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+        ],
+        const SizedBox(height: LockspireSpacing.md),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 300),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: candidates.length,
+            itemBuilder: (context, index) => ListTile(
+              dense: true,
+              title: Text(candidates[index].title),
+            ),
+          ),
+        ),
+        const SizedBox(height: LockspireSpacing.lg),
+        if (_errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: LockspireSpacing.md),
+            child: Text(
+              _errorMessage!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        FilledButton(
+          onPressed: _busy ? null : _confirmImport,
+          child: _busy
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Importar'),
+        ),
+        const SizedBox(height: LockspireSpacing.smMd),
+        OutlinedButton(
+          onPressed: _busy ? null : () => setState(() => _candidates = null),
+          child: const Text('Cancelar'),
+        ),
+      ],
+    );
+  }
+}
