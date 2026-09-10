@@ -30,6 +30,15 @@ enum _RestoreStep {
 /// bóveda local (lanza un error explícito si se lo toca antes de
 /// restaurar) — no es ideal, pero no rompe nada ni pierde datos;
 /// no bloqueante, se puede afinar más adelante.
+///
+/// **Automático a propósito (verificado en dispositivo real, Fase 9):**
+/// apenas `isSyncConfiguredProvider` pasa a `true` (se guardaron
+/// credenciales WebDAV o se conectó Google Drive) esta pantalla se cierra
+/// sola de vuelta desde `SyncSettingsScreen` y dispara la búsqueda —
+/// ningún usuario debería tener que acordarse de volver atrás y tocar
+/// "Buscar mi bóveda" a mano. El botón queda igual, como respaldo (ej. si
+/// el proveedor ya estaba configurado de antes al entrar a esta pantalla,
+/// caso en el que no hay una transición `false → true` que disparar).
 class RestoreVaultScreen extends ConsumerStatefulWidget {
   const RestoreVaultScreen({super.key});
 
@@ -114,6 +123,18 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Se dispara aunque `SyncSettingsScreen` esté encima en el Navigator —
+    // este widget sigue montado debajo, Riverpod no necesita que esté en
+    // primer plano para notificar. Ver el comentario de la clase.
+    ref.listen<AsyncValue<bool>>(isSyncConfiguredProvider, (previous, next) {
+      final justConfigured = next.value == true && previous?.value != true;
+      if (!justConfigured || _step != _RestoreStep.configureProvider) return;
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      _searchRemoteVault();
+    });
+
     return Scaffold(
       appBar: AppBar(title: const Text('Restaurar bóveda existente')),
       body: Center(
