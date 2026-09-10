@@ -16,14 +16,15 @@ const _masterPassword = 'correcto-caballo-batería-grapa';
 
 void main() {
   group('SaveVaultUseCase', () {
-    test('guarda cambios, reusa el header existente (mismo salt/vaultId/kdf, '
-        'nonce distinto) y lo que se guarda se puede releer', () async {
+    test('guarda cambios, reusa el header existente (mismo salt/vaultId/kdf) '
+        'y lo que se guarda se puede releer', () async {
       final storage = FakeVaultStoragePort();
       final crypto = FakeCryptoPort();
       final created = await CreateVaultUseCase(
         storage: storage,
         crypto: crypto,
       )(masterPassword: _masterPassword);
+      final payloadBeforeSave = storage.stored!.encryptedPayload;
 
       final entry = VaultEntry.create(
         title: 'Ejemplo',
@@ -45,10 +46,11 @@ void main() {
         written.header.kdfParams.memoryKib,
         created.header.kdfParams.memoryKib,
       );
-      // FakeCryptoPort.encrypt() usa un nonce fijo (no aleatorio como la
-      // implementación real) — lo que sí puede verificarse acá es que el
-      // payload cambió al re-cifrar contenido distinto.
-      expect(written.encryptedPayload, isNot(created.header.salt));
+      // El contenido cambió (se agregó una entrada), así que el payload
+      // cifrado también — aunque `FakeCryptoPort.encrypt()` use un nonce
+      // fijo (a diferencia de la implementación real, que lo aleatoriza en
+      // cada llamada).
+      expect(written.encryptedPayload, isNot(payloadBeforeSave));
 
       final reunlocked = await UnlockVaultUseCase(
         storage: storage,
