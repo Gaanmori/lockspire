@@ -13,7 +13,12 @@ import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
 
-enum _RestoreStep { configureProvider, searchingRemote, noRemoteVault, enterPassword }
+enum _RestoreStep {
+  configureProvider,
+  searchingRemote,
+  noRemoteVault,
+  enterPassword,
+}
 
 /// Alternativa a "Crear bóveda" para un dispositivo sin bóveda local que
 /// ya tiene una bóveda real sincronizada en otro lado (ver
@@ -48,9 +53,9 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
   }
 
   Future<void> _openSyncSettings() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SyncSettingsScreen()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const SyncSettingsScreen()));
   }
 
   Future<void> _searchRemoteVault() async {
@@ -156,10 +161,8 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
             ),
           configuredAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Text(
-              'Ocurrió un error: $error',
-              textAlign: TextAlign.center,
-            ),
+            error: (error, _) =>
+                Text('Ocurrió un error: $error', textAlign: TextAlign.center),
             data: (configured) => FilledButton(
               onPressed: configured ? _searchRemoteVault : null,
               child: const Text('Buscar mi bóveda'),
@@ -190,7 +193,8 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
       child: SizedBox(
         width: double.infinity,
         child: OutlinedButton(
-          onPressed: () => setState(() => _step = _RestoreStep.configureProvider),
+          onPressed: () =>
+              setState(() => _step = _RestoreStep.configureProvider),
           child: const Text('Volver'),
         ),
       ),
@@ -218,7 +222,9 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
               decoration: InputDecoration(
                 labelText: 'Contraseña maestra',
                 suffixIcon: IconButton(
-                  icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                  icon: Icon(
+                    _obscure ? Icons.visibility : Icons.visibility_off,
+                  ),
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),

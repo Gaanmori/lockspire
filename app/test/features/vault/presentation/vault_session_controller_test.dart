@@ -548,78 +548,68 @@ void main() {
   });
 
   group('VaultSessionController — restaurar bóveda existente (Fase 9)', () {
-    test(
-      'desbloquea un VaultFile descargado y lo siembra como bóveda local, '
-      'ancestro y hash de sync (para que la próxima sync dé SyncUpToDate, '
-      'no un conflicto falso)',
-      () async {
-        final built = _buildContainerWithSync();
-        final container = built.container;
-        final notifier = container.read(
-          vaultSessionControllerProvider.notifier,
-        );
-        await container.read(vaultSessionControllerProvider.future);
+    test('desbloquea un VaultFile descargado y lo siembra como bóveda local, '
+        'ancestro y hash de sync (para que la próxima sync dé SyncUpToDate, '
+        'no un conflicto falso)', () async {
+      final built = _buildContainerWithSync();
+      final container = built.container;
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
 
-        // Simula un VaultFile ya "descargado" de otro dispositivo — creado
-        // con la misma contraseña maestra, en un storage aparte que nunca
-        // toca el controller.
-        final remoteStorage = FakeVaultStoragePort();
-        await CreateVaultUseCase(
-          storage: remoteStorage,
-          crypto: built.fakes.crypto,
-        )(masterPassword: _masterPassword);
-        final downloadedFile = remoteStorage.stored!;
+      // Simula un VaultFile ya "descargado" de otro dispositivo — creado
+      // con la misma contraseña maestra, en un storage aparte que nunca
+      // toca el controller.
+      final remoteStorage = FakeVaultStoragePort();
+      await CreateVaultUseCase(
+        storage: remoteStorage,
+        crypto: built.fakes.crypto,
+      )(masterPassword: _masterPassword);
+      final downloadedFile = remoteStorage.stored!;
 
-        await notifier.restoreFromDownloadedFile(
-          file: downloadedFile,
-          masterPassword: _masterPassword,
-        );
+      await notifier.restoreFromDownloadedFile(
+        file: downloadedFile,
+        masterPassword: _masterPassword,
+      );
 
-        expect(
-          container.read(vaultSessionControllerProvider).value,
-          isA<VaultSessionUnlocked>(),
-        );
-        expect(built.fakes.storage.stored, downloadedFile);
-        expect(built.fakes.ancestorStorage.stored, downloadedFile);
-        expect(
-          await built.fakes.syncState.lastSyncedHash(),
-          VaultFileCodec.sha256Hex(downloadedFile),
-        );
-        expect(container.read(vaultAuthAttemptProvider).hasError, isFalse);
-      },
-    );
+      expect(
+        container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionUnlocked>(),
+      );
+      expect(built.fakes.storage.stored, downloadedFile);
+      expect(built.fakes.ancestorStorage.stored, downloadedFile);
+      expect(
+        await built.fakes.syncState.lastSyncedHash(),
+        VaultFileCodec.sha256Hex(downloadedFile),
+      );
+      expect(container.read(vaultAuthAttemptProvider).hasError, isFalse);
+    });
 
-    test(
-      'contraseña incorrecta: no escribe nada localmente, el error queda '
-      'en vaultAuthAttemptProvider y la sesión sigue sin bóveda',
-      () async {
-        final built = _buildContainerWithSync();
-        final container = built.container;
-        final notifier = container.read(
-          vaultSessionControllerProvider.notifier,
-        );
-        await container.read(vaultSessionControllerProvider.future);
+    test('contraseña incorrecta: no escribe nada localmente, el error queda '
+        'en vaultAuthAttemptProvider y la sesión sigue sin bóveda', () async {
+      final built = _buildContainerWithSync();
+      final container = built.container;
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
 
-        final remoteStorage = FakeVaultStoragePort();
-        await CreateVaultUseCase(
-          storage: remoteStorage,
-          crypto: built.fakes.crypto,
-        )(masterPassword: _masterPassword);
-        final downloadedFile = remoteStorage.stored!;
+      final remoteStorage = FakeVaultStoragePort();
+      await CreateVaultUseCase(
+        storage: remoteStorage,
+        crypto: built.fakes.crypto,
+      )(masterPassword: _masterPassword);
+      final downloadedFile = remoteStorage.stored!;
 
-        await notifier.restoreFromDownloadedFile(
-          file: downloadedFile,
-          masterPassword: 'contraseña-incorrecta',
-        );
+      await notifier.restoreFromDownloadedFile(
+        file: downloadedFile,
+        masterPassword: 'contraseña-incorrecta',
+      );
 
-        expect(
-          container.read(vaultSessionControllerProvider).value,
-          isA<VaultSessionNoVault>(),
-        );
-        expect(built.fakes.storage.stored, isNull);
-        expect(built.fakes.ancestorStorage.stored, isNull);
-        expect(container.read(vaultAuthAttemptProvider).hasError, isTrue);
-      },
-    );
+      expect(
+        container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionNoVault>(),
+      );
+      expect(built.fakes.storage.stored, isNull);
+      expect(built.fakes.ancestorStorage.stored, isNull);
+      expect(container.read(vaultAuthAttemptProvider).hasError, isTrue);
+    });
   });
 }
