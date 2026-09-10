@@ -90,6 +90,7 @@ class SyncController extends _$SyncController {
     ref.invalidate(currentGoogleDriveAccountProvider);
     ref.invalidate(currentActiveSyncProviderProvider);
     ref.invalidate(activeSyncPortProvider);
+    ref.invalidate(isSyncConfiguredProvider);
   }
 
   Future<void> syncNow() async {
