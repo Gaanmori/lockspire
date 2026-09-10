@@ -55,12 +55,28 @@ class _ConflictResolutionScreenState
           .completeMerge(widget.pending, _resolutions);
       if (mounted) Navigator.of(context).pop();
     } on SyncStaleMergeException catch (e) {
-      if (mounted) {
-        setState(() {
-          _submitting = false;
-          _errorMessage = e.toString();
-        });
-      }
+      // A diferencia de otros errores, este `pending` ya no sirve para
+      // reintentar — los hashes contra los que se comparó quedaron
+      // obsoletos, así que cualquier intento con la misma resolución va a
+      // fallar exactamente igual. Hay que volver a la pantalla de sync
+      // para que el usuario dispare un análisis nuevo desde cero (ver
+      // docs/STATE.md — Fase 7), no reintentar acá.
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Los datos cambiaron'),
+          content: Text(e.toString()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+      if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
         setState(() {
