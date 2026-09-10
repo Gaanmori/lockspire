@@ -5,11 +5,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/sync/application/sync_vault_use_case.dart';
-import 'package:lockspire/features/sync/domain/ports/sync_credentials_port.dart';
-import 'package:lockspire/features/sync/presentation/providers/current_sync_credentials_provider.dart';
+import 'package:lockspire/features/sync/presentation/providers/active_sync_port_provider.dart';
+import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_state_port_provider.dart';
-import 'package:lockspire/features/sync/presentation/providers/webdav_sync_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/sync_controller.dart';
 import 'package:lockspire/features/vault/application/save_vault_use_case.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
@@ -93,16 +92,8 @@ class _SyncTestFakes {
       vaultStoragePortProvider.overrideWith((ref) async => storage),
       autoLockTimeoutProvider.overrideWith((ref) => timeout),
       autoSyncDebounceProvider.overrideWith((ref) => syncDebounce),
-      currentSyncCredentialsProvider.overrideWith(
-        (ref) async => hasCredentials
-            ? const WebDavCredentials(
-                serverUrl: 'https://example.test',
-                username: 'u',
-                password: 'p',
-              )
-            : null,
-      ),
-      webdavSyncPortProvider.overrideWith((ref) async => syncPort),
+      isSyncConfiguredProvider.overrideWith((ref) async => hasCredentials),
+      activeSyncPortProvider.overrideWith((ref) async => syncPort),
       syncStatePortProvider.overrideWith((ref) => syncState),
       syncAncestorStoragePortProvider.overrideWith(
         (ref) async => ancestorStorage,

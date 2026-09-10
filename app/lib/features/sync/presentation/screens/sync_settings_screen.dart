@@ -6,7 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/design/lockspire_spacing.dart';
 
 import '../../application/sync_vault_use_case.dart';
+import '../../domain/ports/active_sync_provider_port.dart';
+import '../../domain/ports/google_drive_account_port.dart';
 import '../../domain/ports/sync_credentials_port.dart';
+import '../providers/current_active_sync_provider_provider.dart';
+import '../providers/current_google_drive_account_provider.dart';
 import '../providers/current_sync_credentials_provider.dart';
 import '../sync_controller.dart';
 import 'conflict_resolution_screen.dart';
@@ -31,6 +35,12 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
   // la URL del servidor y, antes de tocar "Guardar", presiona "Sincronizar
   // ahora" para probar la conexión actual primero).
   bool _prefilled = false;
+
+  // Qué sub-formulario mostrar — se inicializa con el proveedor activo
+  // guardado (ver `_prefillSelection`) una sola vez, mismo criterio que
+  // `_prefilled` arriba.
+  SyncProviderId? _selectedProvider;
+  bool _selectionPrefilled = false;
 
   @override
   void dispose() {
@@ -60,6 +70,14 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
           ),
         );
     _passwordController.clear();
+  }
+
+  Future<void> _connectGoogleDrive() async {
+    await ref.read(syncControllerProvider.notifier).connectGoogleDrive();
+  }
+
+  Future<void> _disconnectGoogleDrive() async {
+    await ref.read(syncControllerProvider.notifier).disconnectGoogleDrive();
   }
 
   Future<void> _syncNow() async {
@@ -93,128 +111,205 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
           'hace falta elegir qué versión conservar de cada una.',
   };
 
+  Widget _buildProviderPicker() {
+    return SegmentedButton<SyncProviderId>(
+      segments: const [
+        ButtonSegment(value: SyncProviderId.webdav, label: Text('WebDAV')),
+        ButtonSegment(
+          value: SyncProviderId.googleDrive,
+          label: Text('Google Drive'),
+        ),
+      ],
+      selected: {_selectedProvider ?? SyncProviderId.webdav},
+      onSelectionChanged: (selection) {
+        setState(() => _selectedProvider = selection.first);
+      },
+    );
+  }
+
+  Widget _buildWebDavForm(WebDavCredentials? credentials) {
+    if (!_prefilled && credentials != null) {
+      _serverController.text = credentials.serverUrl;
+      _usernameController.text = credentials.username;
+      _prefilled = true;
+    }
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _serverController,
+            decoration: const InputDecoration(
+              labelText: 'URL del servidor WebDAV',
+              hintText: 'https://mi-servidor.ejemplo/dav',
+            ),
+            validator: (value) => (value == null || value.isEmpty)
+                ? 'Ingresá la URL del servidor'
+                : null,
+          ),
+          const SizedBox(height: LockspireSpacing.md),
+          TextFormField(
+            controller: _usernameController,
+            decoration: const InputDecoration(labelText: 'Usuario'),
+            validator: (value) =>
+                (value == null || value.isEmpty) ? 'Ingresá el usuario' : null,
+          ),
+          const SizedBox(height: LockspireSpacing.md),
+          TextFormField(
+            controller: _passwordController,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: 'Contraseña',
+              hintText: credentials != null
+                  ? '(sin cambios si se deja vacío)'
+                  : null,
+            ),
+            validator: (value) {
+              if (credentials == null && (value == null || value.isEmpty)) {
+                return 'Ingresá la contraseña';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: LockspireSpacing.lg),
+          FilledButton(onPressed: _save, child: const Text('Guardar')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleDriveSection(
+    AsyncValue<GoogleDriveAccount?> accountAsync,
+  ) {
+    return accountAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) =>
+          Text('Ocurrió un error: $error', textAlign: TextAlign.center),
+      data: (account) {
+        if (account == null) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Sin cuenta conectada. Lockspire solo accede a su propia '
+                'carpeta oculta de datos en tu Drive — no ve el resto de '
+                'tus archivos.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: LockspireSpacing.lg),
+              FilledButton(
+                onPressed: _connectGoogleDrive,
+                child: const Text('Conectar con Google'),
+              ),
+            ],
+          );
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Conectado como ${account.email}',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: LockspireSpacing.lg),
+            OutlinedButton(
+              onPressed: _disconnectGoogleDrive,
+              child: const Text('Desconectar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final credentialsAsync = ref.watch(currentSyncCredentialsProvider);
+    final googleAccountAsync = ref.watch(currentGoogleDriveAccountProvider);
+    final activeProviderAsync = ref.watch(currentActiveSyncProviderProvider);
     final syncState = ref.watch(syncControllerProvider);
 
+    if (!_selectionPrefilled && activeProviderAsync.hasValue) {
+      _selectedProvider = activeProviderAsync.value;
+      _selectionPrefilled = true;
+    }
+
+    final hasSomethingConfigured =
+        credentialsAsync.value != null || googleAccountAsync.value != null;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Sincronización (WebDAV)')),
+      appBar: AppBar(title: const Text('Sincronización')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(LockspireSpacing.lg),
-            child: credentialsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) =>
-                  Text('Ocurrió un error: $error', textAlign: TextAlign.center),
-              data: (credentials) {
-                if (!_prefilled && credentials != null) {
-                  _serverController.text = credentials.serverUrl;
-                  _usernameController.text = credentials.username;
-                  _prefilled = true;
-                }
-                return Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextFormField(
-                        controller: _serverController,
-                        decoration: const InputDecoration(
-                          labelText: 'URL del servidor WebDAV',
-                          hintText: 'https://mi-servidor.ejemplo/dav',
-                        ),
-                        validator: (value) => (value == null || value.isEmpty)
-                            ? 'Ingresá la URL del servidor'
-                            : null,
-                      ),
-                      const SizedBox(height: LockspireSpacing.md),
-                      TextFormField(
-                        controller: _usernameController,
-                        decoration: const InputDecoration(labelText: 'Usuario'),
-                        validator: (value) => (value == null || value.isEmpty)
-                            ? 'Ingresá el usuario'
-                            : null,
-                      ),
-                      const SizedBox(height: LockspireSpacing.md),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          labelText: 'Contraseña',
-                          hintText: credentials != null
-                              ? '(sin cambios si se deja vacío)'
-                              : null,
-                        ),
-                        validator: (value) {
-                          if (credentials == null &&
-                              (value == null || value.isEmpty)) {
-                            return 'Ingresá la contraseña';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: LockspireSpacing.lg),
-                      FilledButton(
-                        onPressed: _save,
-                        child: const Text('Guardar'),
-                      ),
-                      const SizedBox(height: LockspireSpacing.md),
-                      OutlinedButton(
-                        onPressed: credentials == null || syncState.isLoading
-                            ? null
-                            : _syncNow,
-                        child: syncState.isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Sincronizar ahora'),
-                      ),
-                      const SizedBox(height: LockspireSpacing.md),
-                      if (syncState.hasError)
-                        Text(
-                          'No se pudo sincronizar: ${syncState.error}',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                          textAlign: TextAlign.center,
-                        )
-                      else if (syncState.value != null)
-                        Text(
-                          _describeResult(syncState.value!),
-                          textAlign: TextAlign.center,
-                        ),
-                      if (syncState.value
-                          case final SyncNeedsResolution pending)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            top: LockspireSpacing.md,
-                          ),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              onPressed: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ConflictResolutionScreen(
-                                    pending: pending,
-                                  ),
-                                ),
-                              ),
-                              child: const Text('Resolver conflictos'),
-                            ),
-                          ),
-                        ),
-                    ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(child: _buildProviderPicker()),
+                const SizedBox(height: LockspireSpacing.lg),
+                if (_selectedProvider == SyncProviderId.googleDrive)
+                  _buildGoogleDriveSection(googleAccountAsync)
+                else
+                  credentialsAsync.when(
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (error, _) => Text(
+                      'Ocurrió un error: $error',
+                      textAlign: TextAlign.center,
+                    ),
+                    data: _buildWebDavForm,
                   ),
-                );
-              },
+                const SizedBox(height: LockspireSpacing.md),
+                OutlinedButton(
+                  onPressed: !hasSomethingConfigured || syncState.isLoading
+                      ? null
+                      : _syncNow,
+                  child: syncState.isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Sincronizar ahora'),
+                ),
+                const SizedBox(height: LockspireSpacing.md),
+                if (syncState.hasError)
+                  Text(
+                    'No se pudo sincronizar: ${syncState.error}',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    textAlign: TextAlign.center,
+                  )
+                else if (syncState.value != null)
+                  Text(
+                    _describeResult(syncState.value!),
+                    textAlign: TextAlign.center,
+                  ),
+                if (syncState.value case final SyncNeedsResolution pending)
+                  Padding(
+                    padding: const EdgeInsets.only(top: LockspireSpacing.md),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ConflictResolutionScreen(pending: pending),
+                          ),
+                        ),
+                        child: const Text('Resolver conflictos'),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

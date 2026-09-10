@@ -91,9 +91,7 @@ class SecureStorageSyncSettingsAdapter
   Future<GoogleDriveAccount?> googleDriveAccount() async {
     final email = await _storage.read(key: _keyGoogleDriveEmail);
     if (email == null) return null;
-    final refreshToken = await _storage.read(
-      key: _keyGoogleDriveRefreshToken,
-    );
+    final refreshToken = await _storage.read(key: _keyGoogleDriveRefreshToken);
     return GoogleDriveAccount(email: email, refreshToken: refreshToken);
   }
 

@@ -45,7 +45,10 @@ Future<SyncPort?> activeSyncPort(Ref ref) async {
         if (account.refreshToken == null) return null;
         final connection = await ref
             .watch(googleDriveWindowsAuthProvider)
-            .reconnect(refreshToken: account.refreshToken!, email: account.email);
+            .reconnect(
+              refreshToken: account.refreshToken!,
+              email: account.email,
+            );
         return GoogleDriveSyncAdapter(connection.httpClient);
       }
 

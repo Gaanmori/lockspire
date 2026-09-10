@@ -16,7 +16,9 @@ part 'is_sync_configured_provider.g.dart';
 /// existen `WebDavCredentials`/`GoogleDriveAccount`, solo si hay algo.
 @Riverpod(keepAlive: true)
 Future<bool> isSyncConfigured(Ref ref) async {
-  final provider = await ref.watch(activeSyncProviderPortProvider).activeProvider();
+  final provider = await ref
+      .watch(activeSyncProviderPortProvider)
+      .activeProvider();
   return switch (provider) {
     SyncProviderId.webdav =>
       (await ref.watch(currentSyncCredentialsProvider.future)) != null,
