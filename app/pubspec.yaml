@@ -44,6 +44,11 @@ dependencies:
   crypto: ^3.0.7
   xml: ^7.0.1
   file_picker: ^12.2.0
+  google_sign_in: ^7.2.0
+  extension_google_sign_in_as_googleapis_auth: ^3.0.0
+  googleapis: ^17.0.0
+  googleapis_auth: ^2.3.3
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
