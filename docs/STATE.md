@@ -1,10 +1,10 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-09 (Fase 4 en curso — sync con WebDAV; sistema de diseño extendido a "Crear bóveda")
+Última actualización: 2026-09-10 (Fase 5 — gestión de entradas de contraseña)
 
 ## Fase actual
 
-Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta en el Redmi. Fase 4 en curso: primera feature de sync (`SyncPort`), proveedor WebDAV — subir/bajar la bóveda con seguridad ante conflictos, sin el merge automático por entrada del ADR 0006 todavía (pasada siguiente).
+Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta en el Redmi. Fase 4 (sync WebDAV, primera pasada) completa y verificada contra un servidor real. Fase 5 (gestión de entradas — agregar/editar/borrar contraseñas) recién implementada, pendiente de verificación manual del usuario. Se secuenció **antes** que la siguiente pasada de sync (merge automático por entrada de ADR 0006) porque esa lógica necesita entradas reales para poder probarse de verdad — no tenía sentido cerrar el merge fino sobre una bóveda que nunca tuvo contenido.
 
 ## Completado
 
