@@ -52,14 +52,6 @@ flutter test
 flutter run -d <device-id>
 ```
 
-## Problemas conocidos / propuestas en revisión
-
-### Restaurar una bóveda existente en un dispositivo nuevo — resuelto en código, pendiente de verificación manual
-
-Hasta Fase 8, un dispositivo sin bóveda local solo podía "Crear bóveda" — lo que generaba siempre un salt/`vaultId` nuevo, incompatible con una bóveda ya sincronizada en otro dispositivo (aunque se usara la misma contraseña maestra), y hacía fallar la sincronización con un error de desencriptado. Detalle completo del problema y su causa raíz, y el diseño implementado, en `docs/STATE.md` → Fase 9.
-
-**Implementado en Fase 9:** opción "¿Ya tenés una bóveda? Restaurarla desde la nube" en la pantalla de crear bóveda → `RestoreVaultScreen` (configurar proveedor → buscar bóveda remota → contraseña maestra) → `VaultSessionController.restoreFromDownloadedFile()`. Cubierto por tests automatizados (`flutter test`, 79/79 pasan). **Pendiente:** verificación manual con dos dispositivos reales (Windows + Redmi).
-
 ## Licencia
 
 [GNU Affero General Public License v3.0](LICENSE) (AGPLv3). El código es abierto y auditable; el nombre y el logo "Lockspire" son marca registrada de forma independiente a la licencia del código.
