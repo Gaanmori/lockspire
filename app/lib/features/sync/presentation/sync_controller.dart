@@ -22,6 +22,7 @@ import 'providers/current_sync_credentials_provider.dart';
 import 'providers/google_drive_account_port_provider.dart';
 import 'providers/google_drive_android_auth_provider.dart';
 import 'providers/google_drive_windows_auth_provider.dart';
+import 'providers/is_sync_configured_provider.dart';
 import 'providers/sync_ancestor_storage_port_provider.dart';
 import 'providers/sync_credentials_port_provider.dart';
 import 'providers/sync_state_port_provider.dart';
@@ -44,6 +45,7 @@ class SyncController extends _$SyncController {
     ref.invalidate(currentSyncCredentialsProvider);
     ref.invalidate(currentActiveSyncProviderProvider);
     ref.invalidate(activeSyncPortProvider);
+    ref.invalidate(isSyncConfiguredProvider);
   }
 
   /// Conexión interactiva con Google Drive — dispara el flujo nativo en
