@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
+import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
 
@@ -35,8 +36,10 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sessionState = ref.watch(vaultSessionControllerProvider);
-    final isLoading = sessionState.isLoading;
+    // El progreso/error del intento vive en vaultAuthAttemptProvider, no en
+    // vaultSessionControllerProvider — ver el comentario de ese provider.
+    final attempt = ref.watch(vaultAuthAttemptProvider);
+    final isLoading = attempt.isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Lockspire')),
@@ -84,7 +87,12 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                         ),
                         child: Column(
                           children: [
-                            const CircularProgressIndicator(),
+                            const ClipRRect(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(4),
+                              ),
+                              child: LinearProgressIndicator(),
+                            ),
                             const SizedBox(height: LockspireSpacing.smMd),
                             const Text(
                               'Desbloqueando… esto puede tardar unos segundos '
@@ -94,7 +102,7 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                           ],
                         ),
                       )
-                    else if (sessionState.hasError)
+                    else if (attempt.hasError)
                       Padding(
                         padding: const EdgeInsets.only(
                           bottom: LockspireSpacing.md,

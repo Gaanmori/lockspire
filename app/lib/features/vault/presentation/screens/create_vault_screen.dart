@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
+import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
 
@@ -37,8 +38,10 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sessionState = ref.watch(vaultSessionControllerProvider);
-    final isLoading = sessionState.isLoading;
+    // El progreso/error del intento vive en vaultAuthAttemptProvider, no en
+    // vaultSessionControllerProvider — ver el comentario de ese provider.
+    final attempt = ref.watch(vaultAuthAttemptProvider);
+    final isLoading = attempt.isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Crear bóveda')),
@@ -97,34 +100,49 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                       },
                     ),
                     const SizedBox(height: LockspireSpacing.lg),
-                    if (sessionState.hasError)
+                    if (isLoading)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: LockspireSpacing.md,
+                        ),
+                        child: Column(
+                          children: [
+                            const ClipRRect(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(4),
+                              ),
+                              child: LinearProgressIndicator(),
+                            ),
+                            const SizedBox(height: LockspireSpacing.smMd),
+                            const Text(
+                              'Creando bóveda… esto puede tardar unos '
+                              'segundos (derivación de clave Argon2id)',
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (attempt.hasError)
                       Padding(
                         padding: const EdgeInsets.only(
                           bottom: LockspireSpacing.md,
                         ),
                         child: Text(
-                          'No se pudo crear la bóveda: ${sessionState.error}',
+                          'No se pudo crear la bóveda: ${attempt.error}',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: isLoading ? null : _submit,
-                        child: isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Crear bóveda'),
+                    if (!isLoading)
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: _submit,
+                          child: const Text('Crear bóveda'),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

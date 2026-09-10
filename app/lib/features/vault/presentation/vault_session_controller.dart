@@ -14,6 +14,7 @@ import '../domain/entities/vault_entry.dart';
 import '../domain/vault_file_codec.dart';
 import 'providers/auto_lock_timeout_provider.dart';
 import 'providers/crypto_port_provider.dart';
+import 'providers/vault_auth_attempt_provider.dart';
 import 'providers/vault_storage_port_provider.dart';
 import 'vault_session_state.dart';
 
@@ -45,45 +46,69 @@ class VaultSessionController extends _$VaultSessionController {
     return exists ? const VaultSessionLocked() : const VaultSessionNoVault();
   }
 
+  /// Crea la bóveda. El progreso/error de este intento se refleja en
+  /// [vaultAuthAttemptProvider], **no** en el estado de este controller —
+  /// ver el comentario de ese provider para el porqué: si este `state`
+  /// pasara por `AsyncLoading`/`AsyncError` mientras corre, `VaultGateScreen`
+  /// reemplazaría `CreateVaultScreen` por una pantalla genérica sin
+  /// contexto durante los ~3.5s de Argon2id.
   Future<void> createVault(String masterPassword) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    final attempt = ref.read(vaultAuthAttemptProvider.notifier);
+    attempt.state = const AsyncLoading();
+    try {
       final storage = await ref.read(vaultStoragePortProvider.future);
       final crypto = await ref.read(cryptoPortProvider.future);
-      final result = await CreateVaultUseCase(storage: storage, crypto: crypto)(
+      final created = await CreateVaultUseCase(storage: storage, crypto: crypto)(
         masterPassword: masterPassword,
       );
-      return VaultSessionUnlocked(
-        vault: result.vault,
-        key: result.key,
-        header: result.header,
-        fileHash: result.fileHash,
+      state = AsyncData(
+        VaultSessionUnlocked(
+          vault: created.vault,
+          key: created.key,
+          header: created.header,
+          fileHash: created.fileHash,
+        ),
       );
-    });
+      attempt.state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      attempt.state = AsyncError(error, stackTrace);
+    }
     _scheduleAutoLockIfUnlocked();
   }
 
+  /// Desbloquea la bóveda existente. Ver el comentario de [createVault]:
+  /// mismo motivo para no tocar `state` mientras corre.
   Future<void> unlock(String masterPassword) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    final attempt = ref.read(vaultAuthAttemptProvider.notifier);
+    attempt.state = const AsyncLoading();
+    try {
       final storage = await ref.read(vaultStoragePortProvider.future);
       final crypto = await ref.read(cryptoPortProvider.future);
-      final result = await UnlockVaultUseCase(storage: storage, crypto: crypto)(
+      final unlocked = await UnlockVaultUseCase(storage: storage, crypto: crypto)(
         masterPassword: masterPassword,
       );
-      return VaultSessionUnlocked(
-        vault: result.vault,
-        key: result.key,
-        header: result.header,
-        fileHash: result.fileHash,
+      state = AsyncData(
+        VaultSessionUnlocked(
+          vault: unlocked.vault,
+          key: unlocked.key,
+          header: unlocked.header,
+          fileHash: unlocked.fileHash,
+        ),
       );
-    });
+      attempt.state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      attempt.state = AsyncError(error, stackTrace);
+    }
     _scheduleAutoLockIfUnlocked();
   }
 
   void lock() {
     _inactivityTimer?.cancel();
     state = const AsyncData(VaultSessionLocked());
+    // Limpia cualquier error/loading de un intento anterior — la próxima
+    // vez que se muestre UnlockVaultScreen debe arrancar en blanco, no con
+    // el "Contraseña incorrecta" de la sesión previa.
+    ref.read(vaultAuthAttemptProvider.notifier).state = const AsyncData(null);
   }
 
   /// Agrega una entrada nueva de tipo contraseña. Lanza

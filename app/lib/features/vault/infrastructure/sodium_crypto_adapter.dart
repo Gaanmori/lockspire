@@ -43,19 +43,32 @@ class SodiumCryptoAdapter implements CryptoPort {
       );
     }
 
-    final key = sodium.crypto.pwhash.callStr(
-      outLen: sodium.crypto.aeadXChaCha20Poly1305IETF.keyBytes,
-      password: masterPassword,
-      salt: salt,
-      opsLimit: params.iterations,
-      memLimit: params.memoryKib * 1024,
-      alg: CryptoPwhashAlgorithm.argon2id13,
-    );
-    try {
-      return key.extractBytes();
-    } finally {
-      key.dispose();
-    }
+    // sodium.crypto.pwhash.callStr() es una llamada FFI síncrona — pese a
+    // que este método es `async`, sin un `await` real de por medio esos
+    // ~3.5s de Argon2id bloquean el isolate completo (no solo la UI: toda
+    // animación/gesto se congela), no solo el widget del spinner. La propia
+    // documentación del paquete `sodium` marca correr esto en un isolate
+    // aparte como obligatorio ("running the computation on a separate
+    // isolate is mandatory to not block the UI") y provee `runIsolated()`
+    // para esto — `compute()`/`Isolate.run()` normales no sirven porque no
+    // se puede pasar una instancia de `Sodium`/`SodiumSumo` entre isolates.
+    final opsLimit = params.iterations;
+    final memLimit = params.memoryKib * 1024;
+    return sodium.runIsolated((secureKeys, keyPairs) {
+      final key = sodium.crypto.pwhash.callStr(
+        outLen: sodium.crypto.aeadXChaCha20Poly1305IETF.keyBytes,
+        password: masterPassword,
+        salt: salt,
+        opsLimit: opsLimit,
+        memLimit: memLimit,
+        alg: CryptoPwhashAlgorithm.argon2id13,
+      );
+      try {
+        return key.extractBytes();
+      } finally {
+        key.dispose();
+      }
+    });
   }
 
   @override
