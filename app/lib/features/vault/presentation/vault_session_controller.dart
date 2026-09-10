@@ -310,8 +310,8 @@ class VaultSessionController extends _$VaultSessionController {
   /// tuvo éxito antes de llegar acá, pase lo que pase con la sync.
   Future<void> _maybeSyncNow() async {
     try {
-      final credentials = await ref.read(currentSyncCredentialsProvider.future);
-      if (credentials == null) return;
+      final configured = await ref.read(isSyncConfiguredProvider.future);
+      if (!configured) return;
       await ref.read(syncControllerProvider.notifier).syncNow();
     } catch (_) {
       // Silencioso a propósito — ver el comentario de arriba.
