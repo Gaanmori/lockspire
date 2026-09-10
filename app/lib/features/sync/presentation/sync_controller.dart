@@ -42,6 +42,7 @@ class SyncController extends _$SyncController {
         .read(activeSyncProviderPortProvider)
         .saveActiveProvider(SyncProviderId.webdav);
     ref.invalidate(currentSyncCredentialsProvider);
+    ref.invalidate(currentActiveSyncProviderProvider);
     ref.invalidate(activeSyncPortProvider);
   }
 
@@ -66,6 +67,7 @@ class SyncController extends _$SyncController {
         .read(activeSyncProviderPortProvider)
         .saveActiveProvider(SyncProviderId.googleDrive);
     ref.invalidate(currentGoogleDriveAccountProvider);
+    ref.invalidate(currentActiveSyncProviderProvider);
     ref.invalidate(activeSyncPortProvider);
   }
 
@@ -83,6 +85,7 @@ class SyncController extends _$SyncController {
       await ref.read(activeSyncProviderPortProvider).clearActiveProvider();
     }
     ref.invalidate(currentGoogleDriveAccountProvider);
+    ref.invalidate(currentActiveSyncProviderProvider);
     ref.invalidate(activeSyncPortProvider);
   }
 
