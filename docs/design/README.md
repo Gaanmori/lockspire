@@ -69,12 +69,14 @@ Escala en px: `4, 8, 12, 16, 20, 24, 32, 40`.
   (`lib/features/vault/presentation/widgets/auth_card.dart`): chip de icono,
   título, subtítulo y contenido, sobre tarjeta elevada — la misma
   composición del mockup, no solo los tokens de color/espaciado sueltos.
+- "Bóveda desbloqueada" (Fase 5, gestión de entradas): reescrita como lista
+  real usando la fila de lista ya especificada arriba (icono/inicial +
+  título + subtítulo + chevron) y los tokens de `lib/design/` — sin mockup
+  propio en el canvas, el componente ya estaba documentado en texto. Nueva
+  pantalla "Nueva/Editar contraseña" (`entry_form_screen.dart`) reusa
+  `AuthCard`, mismo patrón que "Crear bóveda".
 
 ## Pendiente
 
-- "Bóveda desbloqueada" queda con el tratamiento ligero (colores/espaciado
-  heredados del tema, sin maquetar a medida) — es un placeholder a
-  propósito hasta que exista la feature real de gestión de entradas; no
-  tiene sentido diseñarla a medida antes de eso.
-- Extender el sistema a las futuras pantallas: lista de entradas,
-  agregar/editar entrada, configuración, setup de sync.
+- Extender el sistema a las futuras pantallas: configuración, setup de
+  sync, y cualquier pantalla nueva de la extensión de navegador.
