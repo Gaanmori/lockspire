@@ -3,6 +3,8 @@
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../domain/ports/active_sync_provider_port.dart';
+import '../domain/ports/google_drive_account_port.dart';
 import '../domain/ports/sync_credentials_port.dart';
 import '../domain/ports/sync_state_port.dart';
 
@@ -10,12 +12,22 @@ const _keyServerUrl = 'sync.webdav.server_url';
 const _keyUsername = 'sync.webdav.username';
 const _keyPassword = 'sync.webdav.password';
 const _keyLastSyncedHash = 'sync.last_synced_hash';
+const _keyActiveProvider = 'sync.active_provider';
+const _keyGoogleDriveEmail = 'sync.google_drive.email';
+const _keyGoogleDriveRefreshToken = 'sync.google_drive.refresh_token';
 
-/// Implementa [SyncCredentialsPort] y [SyncStatePort] sobre el
+/// Implementa [SyncCredentialsPort], [SyncStatePort],
+/// [ActiveSyncProviderPort] y [GoogleDriveAccountPort] sobre el
 /// almacenamiento seguro del SO (Keystore en Android, Keychain en
-/// iOS/macOS, DPAPI en Windows) — nunca texto plano en disco.
+/// iOS/macOS, DPAPI en Windows) — nunca texto plano en disco. Un solo
+/// adapter para las cuatro interfaces porque comparten el mismo backend y
+/// son todas config de sync — no hay razón para instancias separadas.
 class SecureStorageSyncSettingsAdapter
-    implements SyncCredentialsPort, SyncStatePort {
+    implements
+        SyncCredentialsPort,
+        SyncStatePort,
+        ActiveSyncProviderPort,
+        GoogleDriveAccountPort {
   final FlutterSecureStorage _storage;
 
   const SecureStorageSyncSettingsAdapter(this._storage);
