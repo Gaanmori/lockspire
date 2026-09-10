@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'package:crypto/crypto.dart';
 import 'package:lockspire/features/sync/domain/ports/sync_port.dart';
 import 'package:lockspire/features/sync/domain/ports/sync_state_port.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
@@ -64,21 +63,21 @@ class SyncVaultUseCase {
     if (!remoteExists) {
       final local = await localStorage.read();
       await remote.uploadVault(local);
-      await syncState.saveLastSyncedHash(_hash(local));
+      await syncState.saveLastSyncedHash(VaultFileCodec.sha256Hex(local));
       return const SyncUploaded();
     }
 
     if (!localExists) {
       final remoteFile = await remote.downloadVault();
       await localStorage.write(remoteFile);
-      await syncState.saveLastSyncedHash(_hash(remoteFile));
+      await syncState.saveLastSyncedHash(VaultFileCodec.sha256Hex(remoteFile));
       return const SyncDownloaded();
     }
 
     final local = await localStorage.read();
     final remoteFile = await remote.downloadVault();
-    final localHash = _hash(local);
-    final remoteHash = _hash(remoteFile);
+    final localHash = VaultFileCodec.sha256Hex(local);
+    final remoteHash = VaultFileCodec.sha256Hex(remoteFile);
 
     if (localHash == remoteHash) {
       await syncState.saveLastSyncedHash(localHash);
@@ -105,7 +104,4 @@ class SyncVaultUseCase {
     // conflicto real, no se toca nada.
     return const SyncConflict();
   }
-
-  String _hash(VaultFile file) =>
-      sha256.convert(VaultFileCodec.encode(file)).toString();
 }

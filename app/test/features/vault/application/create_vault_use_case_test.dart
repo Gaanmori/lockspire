@@ -13,9 +13,10 @@ void main() {
       final crypto = FakeCryptoPort();
       final useCase = CreateVaultUseCase(storage: storage, crypto: crypto);
 
-      final vault = await useCase(
+      final result = await useCase(
         masterPassword: 'correcto-caballo-batería-grapa',
       );
+      final vault = result.vault;
 
       expect(vault.schemaVersion, 1);
       expect(vault.entries, isEmpty);

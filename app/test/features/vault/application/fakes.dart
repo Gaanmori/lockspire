@@ -13,6 +13,7 @@ import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 /// puertos sin depender de libsodium.
 class FakeCryptoPort implements CryptoPort {
   int saltCounter = 0;
+  int deriveKeyCalls = 0;
 
   @override
   Uint8List generateSalt() {
@@ -26,6 +27,7 @@ class FakeCryptoPort implements CryptoPort {
     required Uint8List salt,
     required Argon2Params params,
   }) async {
+    deriveKeyCalls++;
     if (params.parallelism != 1) {
       throw ArgumentError.value(
         params.parallelism,

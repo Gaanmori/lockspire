@@ -4,6 +4,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
+
 import 'ports/vault_storage_port.dart';
 
 /// Excepción lanzada cuando un [VaultFile] no puede leerse con la versión
@@ -49,6 +51,14 @@ abstract final class VaultFileCodec {
     builder.add(file.encryptedPayload);
     return builder.toBytes();
   }
+
+  /// Hash del [VaultFile] completo (header + payload cifrado) tal como se
+  /// vería en disco. Sirve como marcador liviano de "qué versión es esta"
+  /// — lo usan tanto `SyncVaultUseCase` (detectar cambios desde la última
+  /// sync) como `SaveVaultUseCase` (detectar si el archivo cambió desde
+  /// que la sesión lo leyó, ver docs/STATE.md).
+  static String sha256Hex(VaultFile file) =>
+      sha256.convert(encode(file)).toString();
 
   static VaultFile decode(Uint8List bytes) {
     final data = ByteData.sublistView(bytes);

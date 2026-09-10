@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import 'dart:typed_data';
+
 import '../domain/entities/vault.dart';
 import '../domain/ports/crypto_port.dart';
 import '../domain/ports/vault_storage_port.dart';
+import '../domain/vault_file_codec.dart';
+import 'unlocked_vault_result.dart';
 
 /// Desbloquea la bóveda existente con la contraseña maestra del usuario.
 ///
@@ -15,7 +19,7 @@ class UnlockVaultUseCase {
 
   const UnlockVaultUseCase({required this.storage, required this.crypto});
 
-  Future<Vault> call({required String masterPassword}) async {
+  Future<UnlockedVaultResult> call({required String masterPassword}) async {
     final file = await storage.read();
 
     final key = await crypto.deriveKey(
@@ -24,6 +28,24 @@ class UnlockVaultUseCase {
       params: file.header.kdfParams,
     );
 
+    return _decrypt(file: file, key: key);
+  }
+
+  /// Vuelve a leer y desencriptar el archivo actual con una clave ya
+  /// derivada — sin pedir la contraseña maestra ni volver a pasar por
+  /// Argon2id. Usado para recuperarse de un [VaultWriteConflictException]
+  /// (ver `SaveVaultUseCase`): la contraseña maestra no cambió, solo el
+  /// contenido en disco (típicamente por una sync externa), así que la
+  /// clave ya retenida en la sesión sigue siendo válida para descifrarlo.
+  Future<UnlockedVaultResult> reloadWithKey({required Uint8List key}) async {
+    final file = await storage.read();
+    return _decrypt(file: file, key: key);
+  }
+
+  Future<UnlockedVaultResult> _decrypt({
+    required VaultFile file,
+    required Uint8List key,
+  }) async {
     final plaintext = await crypto.decrypt(
       key: key,
       payload: EncryptedPayload(
@@ -33,6 +55,11 @@ class UnlockVaultUseCase {
       aad: file.header.toAadBytes(),
     );
 
-    return Vault.fromJsonBytes(plaintext);
+    return UnlockedVaultResult(
+      vault: Vault.fromJsonBytes(plaintext),
+      key: key,
+      header: file.header,
+      fileHash: VaultFileCodec.sha256Hex(file),
+    );
   }
 }

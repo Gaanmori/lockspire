@@ -56,10 +56,10 @@ void main() {
       masterPassword: masterPassword,
     );
 
-    expect(unlocked.vaultId, created.vaultId);
-    expect(unlocked.schemaVersion, created.schemaVersion);
-    expect(unlocked.entries, isEmpty);
-    expect(unlocked.folders, isEmpty);
+    expect(unlocked.vault.vaultId, created.vault.vaultId);
+    expect(unlocked.vault.schemaVersion, created.vault.schemaVersion);
+    expect(unlocked.vault.entries, isEmpty);
+    expect(unlocked.vault.folders, isEmpty);
   });
 
   test(

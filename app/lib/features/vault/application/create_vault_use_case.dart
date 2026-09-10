@@ -8,6 +8,9 @@ import 'package:uuid/uuid.dart';
 import '../domain/entities/vault.dart';
 import '../domain/ports/crypto_port.dart';
 import '../domain/ports/vault_storage_port.dart';
+import '../domain/vault_file_codec.dart';
+import 'save_vault_use_case.dart';
+import 'unlocked_vault_result.dart';
 
 /// Parámetros de Argon2id por defecto para bóvedas nuevas.
 ///
@@ -45,7 +48,7 @@ class CreateVaultUseCase {
     this.uuid = const Uuid(),
   });
 
-  Future<Vault> call({required String masterPassword}) async {
+  Future<UnlockedVaultResult> call({required String masterPassword}) async {
     final salt = crypto.generateSalt();
     final key = await crypto.deriveKey(
       masterPassword: masterPassword,
@@ -57,7 +60,7 @@ class CreateVaultUseCase {
 
     // El nonce se conoce recién al cifrar; se excluye del AAD (ver
     // VaultHeader.toAadBytes), así que este valor provisional no importa.
-    final headerForAad = VaultHeader(
+    final header = VaultHeader(
       formatVersion: _currentFormatVersion,
       formatMinReaderVersion: _currentFormatVersion,
       salt: salt,
@@ -67,27 +70,18 @@ class CreateVaultUseCase {
       kdfParams: defaultArgon2Params,
     );
 
-    final encrypted = await crypto.encrypt(
+    // Primera escritura: no hay nada previo en disco con qué comparar, así
+    // que se usa saveInitial() en vez de call() (ver SaveVaultUseCase).
+    final written = await SaveVaultUseCase(
+      storage: storage,
+      crypto: crypto,
+    ).saveInitial(vault: vault, key: key, header: header);
+
+    return UnlockedVaultResult(
+      vault: vault,
       key: key,
-      plaintext: vault.toJsonBytes(),
-      aad: headerForAad.toAadBytes(),
+      header: written.header,
+      fileHash: VaultFileCodec.sha256Hex(written),
     );
-
-    await storage.write(
-      VaultFile(
-        header: VaultHeader(
-          formatVersion: headerForAad.formatVersion,
-          formatMinReaderVersion: headerForAad.formatMinReaderVersion,
-          salt: headerForAad.salt,
-          nonce: encrypted.nonce,
-          vaultId: headerForAad.vaultId,
-          createdAt: headerForAad.createdAt,
-          kdfParams: headerForAad.kdfParams,
-        ),
-        encryptedPayload: encrypted.ciphertext,
-      ),
-    );
-
-    return vault;
   }
 }

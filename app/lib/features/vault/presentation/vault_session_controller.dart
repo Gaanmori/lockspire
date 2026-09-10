@@ -7,7 +7,11 @@ import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../application/create_vault_use_case.dart';
+import '../application/save_vault_use_case.dart';
 import '../application/unlock_vault_use_case.dart';
+import '../domain/entities/vault.dart';
+import '../domain/entities/vault_entry.dart';
+import '../domain/vault_file_codec.dart';
 import 'providers/auto_lock_timeout_provider.dart';
 import 'providers/crypto_port_provider.dart';
 import 'providers/vault_storage_port_provider.dart';
@@ -46,10 +50,15 @@ class VaultSessionController extends _$VaultSessionController {
     state = await AsyncValue.guard(() async {
       final storage = await ref.read(vaultStoragePortProvider.future);
       final crypto = await ref.read(cryptoPortProvider.future);
-      final vault = await CreateVaultUseCase(storage: storage, crypto: crypto)(
+      final result = await CreateVaultUseCase(storage: storage, crypto: crypto)(
         masterPassword: masterPassword,
       );
-      return VaultSessionUnlocked(vault);
+      return VaultSessionUnlocked(
+        vault: result.vault,
+        key: result.key,
+        header: result.header,
+        fileHash: result.fileHash,
+      );
     });
     _scheduleAutoLockIfUnlocked();
   }
@@ -59,10 +68,15 @@ class VaultSessionController extends _$VaultSessionController {
     state = await AsyncValue.guard(() async {
       final storage = await ref.read(vaultStoragePortProvider.future);
       final crypto = await ref.read(cryptoPortProvider.future);
-      final vault = await UnlockVaultUseCase(storage: storage, crypto: crypto)(
+      final result = await UnlockVaultUseCase(storage: storage, crypto: crypto)(
         masterPassword: masterPassword,
       );
-      return VaultSessionUnlocked(vault);
+      return VaultSessionUnlocked(
+        vault: result.vault,
+        key: result.key,
+        header: result.header,
+        fileHash: result.fileHash,
+      );
     });
     _scheduleAutoLockIfUnlocked();
   }
@@ -70,6 +84,101 @@ class VaultSessionController extends _$VaultSessionController {
   void lock() {
     _inactivityTimer?.cancel();
     state = const AsyncData(VaultSessionLocked());
+  }
+
+  /// Agrega una entrada nueva de tipo contraseña. Lanza
+  /// [VaultWriteConflictException] si la bóveda cambió en disco desde la
+  /// última lectura de esta sesión (ver `SaveVaultUseCase`) — en ese caso
+  /// el estado ya queda actualizado con la versión fresca antes de
+  /// relanzar, para que un reintento inmediato parta de datos vigentes.
+  Future<void> addEntry({
+    required String title,
+    Map<String, String> fields = const {},
+  }) async {
+    final current = state.value;
+    if (current is! VaultSessionUnlocked) return;
+    final entry = VaultEntry.create(title: title, fields: fields);
+    await _persist(
+      current.vault.copyWith(entries: [...current.vault.entries, entry]),
+    );
+  }
+
+  /// Edita una entrada existente. Ver [addEntry] para el manejo de
+  /// conflicto de guardado.
+  Future<void> updateEntry({
+    required String id,
+    required String title,
+    required Map<String, String> fields,
+  }) async {
+    final current = state.value;
+    if (current is! VaultSessionUnlocked) return;
+    final now = DateTime.now().toUtc();
+    final entries = current.vault.entries
+        .map(
+          (e) => e.id == id
+              ? e.copyWith(title: title, fields: fields, modifiedAt: now)
+              : e,
+        )
+        .toList();
+    await _persist(current.vault.copyWith(entries: entries));
+  }
+
+  /// Borrado suave (tombstone) — no quita la entrada de la lista, la marca
+  /// como borrada (ver comentario en `VaultEntry.deleted`). Ver [addEntry]
+  /// para el manejo de conflicto de guardado.
+  Future<void> deleteEntry(String id) async {
+    final current = state.value;
+    if (current is! VaultSessionUnlocked) return;
+    final now = DateTime.now().toUtc();
+    final entries = current.vault.entries
+        .map(
+          (e) => e.id == id
+              ? e.copyWith(deleted: true, deletedAt: now, modifiedAt: now)
+              : e,
+        )
+        .toList();
+    await _persist(current.vault.copyWith(entries: entries));
+  }
+
+  Future<void> _persist(Vault newVault) async {
+    final current = state.value;
+    if (current is! VaultSessionUnlocked) return;
+
+    final storage = await ref.read(vaultStoragePortProvider.future);
+    final crypto = await ref.read(cryptoPortProvider.future);
+
+    try {
+      final file = await SaveVaultUseCase(storage: storage, crypto: crypto)
+          .call(
+            vault: newVault,
+            key: current.key,
+            header: current.header,
+            expectedFileHash: current.fileHash,
+          );
+      state = AsyncData(
+        current.copyWith(
+          vault: newVault,
+          fileHash: VaultFileCodec.sha256Hex(file),
+        ),
+      );
+    } on VaultWriteConflictException {
+      // La contraseña maestra no cambió — solo el contenido en disco
+      // (típicamente otro dispositivo sincronizó). Se recarga con la
+      // misma key ya retenida, sin pedir la contraseña de nuevo.
+      final reloaded = await UnlockVaultUseCase(
+        storage: storage,
+        crypto: crypto,
+      ).reloadWithKey(key: current.key);
+      state = AsyncData(
+        VaultSessionUnlocked(
+          vault: reloaded.vault,
+          key: reloaded.key,
+          header: reloaded.header,
+          fileHash: reloaded.fileHash,
+        ),
+      );
+      rethrow;
+    }
   }
 
   /// Reinicia el temporizador de inactividad. No hace nada si la bóveda
