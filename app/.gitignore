@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets locales — ver google_oauth_secrets.json.example (Fase 8, sync
+# con Google Drive). Nunca comitear el archivo real.
+google_oauth_secrets.json

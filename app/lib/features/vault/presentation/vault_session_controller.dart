@@ -4,7 +4,7 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart' show AppLifecycleState;
-import 'package:lockspire/features/sync/presentation/providers/current_sync_credentials_provider.dart';
+import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
 import 'package:lockspire/features/sync/presentation/sync_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
