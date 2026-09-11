@@ -207,11 +207,24 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   /// pedido explícito del usuario, para tener precisión real cuando un
   /// sitio exige un máximo/mínimo de caracteres). En modo "fácil de
   /// recordar" se toman palabras de la wordlist que corresponda al
-  /// idioma del dispositivo (español si `Localizations.localeOf(context)`
-  /// es `es`, inglés para cualquier otro idioma — decisión confirmada
-  /// con el usuario, sin selector manual en la UI).
+  /// idioma real del sistema operativo (español si es `es`, inglés para
+  /// cualquier otro idioma — decisión confirmada con el usuario, sin
+  /// selector manual en la UI).
+  ///
+  /// **Se usa `PlatformDispatcher.instance.locale`, no
+  /// `Localizations.localeOf(context)`** — a propósito, no por
+  /// descuido: esta app no tiene un sistema de i18n real (todo el texto
+  /// está hardcodeado en español), así que `MaterialApp` nunca declaró
+  /// `supportedLocales`. Sin eso, el algoritmo de resolución de Flutter
+  /// no tiene con qué hacer *match* contra el idioma real del sistema y
+  /// cae en silencio al único locale que sabe manejar (`en_US`) — bug
+  /// real encontrado por el usuario (Windows en `es-CO`, la app
+  /// generaba en inglés igual). `PlatformDispatcher.instance.locale`
+  /// devuelve el locale que reporta el sistema operativo directo, sin
+  /// pasar por esa resolución.
   void _regeneratePassword() {
-    final languageCode = Localizations.localeOf(context).languageCode;
+    final languageCode =
+        WidgetsBinding.instance.platformDispatcher.locale.languageCode;
     final wordList = languageCode == 'es' ? spanishWordList : englishWordList;
     final length = _passwordLength.round();
 

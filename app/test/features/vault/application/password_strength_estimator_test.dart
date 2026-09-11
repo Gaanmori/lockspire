@@ -54,6 +54,17 @@ void main() {
       expect(estimate.bits, lessThan(35));
     });
 
+    test(
+      'dígitos de relleno al final de una palabra (ver '
+      'generateMemorablePassword) suman entropía real, no son cosméticos',
+      () {
+        final withoutPadding = estimatePasswordStrength('Forest5-River');
+        final withPadding = estimatePasswordStrength('Forest5-River42');
+
+        expect(withPadding.bits, greaterThan(withoutPadding.bits));
+      },
+    );
+
     test('patrón memorable de una sola palabra -> weak', () {
       final estimate = estimatePasswordStrength('Forest5');
 
@@ -61,9 +72,7 @@ void main() {
     });
 
     test('patrón memorable con suficientes palabras llega a fair', () {
-      final estimate = estimatePasswordStrength(
-        'Forest5-River-Stone-Sir-Passed',
-      );
+      final estimate = estimatePasswordStrength('Forest5-River-Stone');
 
       expect(estimate.level, PasswordStrengthLevel.fair);
     });

@@ -39,13 +39,17 @@ const _otherSize = 100;
 const _weakThresholdBits = 35;
 const _strongThresholdBits = 70;
 
-// Cantidad de palabras asumida en cada wordlist de
-// `memorable_wordlists.dart` (~230 cada una) — usada solo para estimar
-// la entropía real de un patrón `Palabra1<dígito>-Palabra2-...` (ver
-// `_memorablePatternRegex` abajo), no importada directamente desde ahí
-// para no acoplar este archivo puro a esa lista concreta. Si el tamaño
+// Cantidad de palabras asumida por wordlist de `memorable_wordlists.dart`
+// — usada solo para estimar la entropía real de un patrón
+// `Palabra1<dígito><símbolo>Palabra2...` (ver `_memorablePatternRegex`
+// abajo), no importada directamente desde ahí para no acoplar este
+// archivo puro a esas listas concretas. Se usa el tamaño de la más
+// chica de las dos (`spanishWordList`, 3050 — `englishWordList` tiene
+// 4438) como supuesto conservador: no sabemos qué idioma generó una
+// contraseña dada solo mirando el string, así que asumir la lista más
+// grande sobreestimaría la entropía real en el peor caso. Si el tamaño
 // de las wordlists cambia sustancialmente, actualizar acá también.
-const _assumedMemorableWordListSize = 230;
+const _assumedMemorableWordListSize = 3050;
 
 // Mismo set de símbolos que [_symbols] en `password_generator.dart` —
 // se repite acá por el mismo motivo que las otras constantes de clase
@@ -58,15 +62,22 @@ const _separatorChars = r'!@#$%^&*()\-_=+\[\]{}';
 // (`password_generator.dart`): una palabra capitalizada + un dígito,
 // seguida de cero o más palabras capitalizadas separadas por un símbolo
 // (no necesariamente el mismo símbolo en cada hueco — cada uno se
-// sortea independiente, ver el generador). Si una contraseña calza con
-// esta forma (generada así o tecleada a mano con la misma pinta), se
-// estima por cantidad de palabras en vez de por clase de caracteres —
-// ver el comentario en [estimatePasswordStrength] sobre por qué importa
-// la diferencia.
+// sortea independiente, ver el generador), y con dígitos extra
+// opcionales al final de cualquier palabra (relleno para llegar
+// exacto a `targetLength`, ver el generador — por eso `[0-9]+`/`[0-9]*`
+// en vez de un solo dígito fijo). Si una contraseña calza con esta
+// forma (generada así o tecleada a mano con la misma pinta), se estima
+// por cantidad de palabras en vez de por clase de caracteres — ver el
+// comentario en [estimatePasswordStrength] sobre por qué importa la
+// diferencia.
+// `[a-zñ]` en vez de `[a-z]` — `spanishWordList` permite la ñ (ver el
+// doc comment de `memorable_wordlists.dart`), así que una contraseña
+// memorable en español real puede traerla en cualquier palabra.
 final _memorablePatternRegex = RegExp(
-  '^[A-Z][a-z]*[0-9](?:[$_separatorChars][A-Z][a-z]*)*\$',
+  '^[A-Z][a-zñ]*[0-9]+(?:[$_separatorChars][A-Z][a-zñ]*[0-9]*)*\$',
 );
 final _memorableSeparatorSplitRegex = RegExp('[$_separatorChars]');
+final _trailingDigitsRegex = RegExp(r'[0-9]+$');
 
 /// Intentos por segundo asumidos para el tiempo estimado de descifrado
 /// — **supuesto documentado, no medido**: representa un ataque offline
@@ -93,7 +104,10 @@ const _guessesPerSecond = 1e10;
 /// espacio real de búsqueda es mucho más chico que su longitud en
 /// caracteres sugiere). Los separadores aleatorios (en vez de un guion
 /// fijo) sí suman entropía real acá — cada uno que el atacante tiene
-/// que adivinar además de las palabras.
+/// que adivinar además de las palabras. Los dígitos de relleno que
+/// `generateMemorablePassword` agrega para llegar exacto a la longitud
+/// pedida también cuentan aparte (ver el generador) — no son solo
+/// cosméticos.
 ///
 /// Para cualquier otro caso (contraseña aleatoria, tecleada a mano, o
 /// cualquier forma que no calce con el patrón de arriba), se estima
@@ -119,13 +133,30 @@ PasswordStrengthEstimate estimatePasswordStrength(String password) {
   }
 
   if (_memorablePatternRegex.hasMatch(password)) {
-    final wordCount = password.split(_memorableSeparatorSplitRegex).length;
+    final chunks = password.split(_memorableSeparatorSplitRegex);
+    final wordCount = chunks.length;
     final separatorCount = wordCount - 1;
+
+    // Cada trozo puede traer dígitos pegados al final — el primero
+    // siempre trae al menos 1 (obligatorio, ya contado aparte como
+    // `digitBits`); cualquier dígito de más ahí, o cualquier dígito en
+    // los trozos siguientes, es relleno real de `generateMemorablePassword`
+    // (ver el generador) y suma entropía propia, no es cosmético.
+    var paddingDigitCount = 0;
+    for (var i = 0; i < chunks.length; i++) {
+      final trailingDigits = _trailingDigitsRegex.stringMatch(chunks[i]) ?? '';
+      final mandatoryDigits = i == 0 ? 1 : 0;
+      paddingDigitCount += trailingDigits.length - mandatoryDigits;
+    }
+
     final bitsPerWord = log(_assumedMemorableWordListSize) / log(2);
     final digitBits = log(10) / log(2);
     final bitsPerSeparator = log(_symbolsSize) / log(2);
     final bits =
-        wordCount * bitsPerWord + digitBits + separatorCount * bitsPerSeparator;
+        wordCount * bitsPerWord +
+        digitBits +
+        separatorCount * bitsPerSeparator +
+        paddingDigitCount * digitBits;
     return PasswordStrengthEstimate(
       bits: bits,
       level: _levelFor(bits),

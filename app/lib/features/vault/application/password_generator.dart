@@ -57,18 +57,21 @@ const _maxAttemptsPerWord = 10;
 /// independiente, así que pueden salir símbolos distintos entre sí
 /// dentro de la misma contraseña.
 ///
-/// **Apunta a [targetLength] caracteres, no a una cantidad fija de
-/// palabras** — mismo control que [generatePassword] (longitud), para
-/// tener precisión real cuando un sitio exige un máximo/mínimo de
-/// caracteres, en vez de una cantidad de palabras que da un largo
-/// impredecible. Agrega palabras completas mientras entren sin superar
+/// **Siempre devuelve exactamente [targetLength] caracteres** — pedido
+/// explícito del usuario: antes, si no entraba otra palabra completa,
+/// la contraseña quedaba más corta que la longitud elegida en el
+/// slider. Agrega palabras completas mientras entren sin superar
 /// [targetLength] (nunca corta una palabra a la mitad, perdería el
-/// sentido de "fácil de recordar") — como las palabras (y ahora
-/// también los símbolos separadores) tienen largo variable, el
-/// resultado se acerca a [targetLength] pero normalmente no lo toca
-/// exacto. **Siempre incluye al menos una palabra**, aunque esa sola ya
-/// supere [targetLength] (ej. `targetLength` muy chico) — nunca
-/// devuelve una contraseña vacía.
+/// sentido de "fácil de recordar") y, si después de eso sigue faltando
+/// espacio, **completa el resto con dígitos al azar pegados al final**
+/// (ej. con `targetLength: 16`, `Forest5-River` de 13 caracteres se
+/// completa a `Forest5-River427`) — sigue sumando entropía real, no es
+/// relleno cosmético (ver `password_strength_estimator.dart`, que ya
+/// lo cuenta aparte del dígito obligatorio de la primera palabra). La
+/// única excepción es si [targetLength] es menor que la primera palabra
+/// sola (con su dígito) — ahí no hay forma de acortar sin partir una
+/// palabra, así que el resultado queda más largo que lo pedido en vez
+/// de trunca la palabra.
 String generateMemorablePassword({
   required List<String> wordList,
   int targetLength = 20,
@@ -103,5 +106,11 @@ String generateMemorablePassword({
     buffer.write(pickSeparator());
     buffer.write(word);
   }
+
+  final shortfall = targetLength - buffer.length;
+  for (var i = 0; i < shortfall; i++) {
+    buffer.write(random.nextInt(10));
+  }
+
   return buffer.toString();
 }

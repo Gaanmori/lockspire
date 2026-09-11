@@ -38,7 +38,9 @@ void main() {
     // hueco (no siempre el mismo símbolo).
     final separatorClass = RegExp(r'[!@#$%^&*()\-_=+\[\]{}]');
 
-    test('respeta el patrón Palabra1<dígito>(<símbolo>Palabra)*', () {
+    test('respeta el patrón Palabra1<dígito+>(<símbolo>Palabra<dígito*>)* '
+        '(los dígitos de más al final de cualquier palabra son relleno de '
+        'longitud, ver el doc comment del generador)', () {
       final password = generateMemorablePassword(
         wordList: wordList,
         targetLength: 25,
@@ -47,22 +49,25 @@ void main() {
       expect(
         password,
         matches(
-          RegExp(r'^[A-Za-z]+[0-9](?:[!@#$%^&*()\-_=+\[\]{}][A-Za-z]+)*$'),
+          RegExp(
+            r'^[A-Za-z]+[0-9]+(?:[!@#$%^&*()\-_=+\[\]{}][A-Za-z]+[0-9]*)*$',
+          ),
         ),
       );
     });
 
-    test('cada palabra generada pertenece a wordList', () {
+    test('cada palabra generada (sin los dígitos de relleno) pertenece a '
+        'wordList', () {
       final password = generateMemorablePassword(
         wordList: wordList,
         targetLength: 25,
       );
       final parts = password.split(separatorClass);
+      final trailingDigits = RegExp(r'[0-9]+$');
 
-      final firstWordWithoutDigit = parts[0].substring(0, parts[0].length - 1);
-      expect(wordList, contains(firstWordWithoutDigit.toLowerCase()));
-      for (final part in parts.skip(1)) {
-        expect(wordList, contains(part.toLowerCase()));
+      for (final part in parts) {
+        final word = part.replaceFirst(trailingDigits, '');
+        expect(wordList, contains(word.toLowerCase()));
       }
     });
 
@@ -84,18 +89,25 @@ void main() {
       expect(separators.length, greaterThan(1));
     });
 
-    test('no supera targetLength (con margen suficiente para que quepa '
-        'más de una palabra)', () {
-      final password = generateMemorablePassword(
-        wordList: wordList,
-        targetLength: 25,
-      );
-
-      expect(password.length, lessThanOrEqualTo(25));
+    test('siempre da exactamente targetLength caracteres (relleno con '
+        'dígitos si no entra otra palabra completa) — pedido explícito '
+        'del usuario', () {
+      for (final targetLength in [12, 16, 20, 25, 30, 40]) {
+        final password = generateMemorablePassword(
+          wordList: wordList,
+          targetLength: targetLength,
+        );
+        expect(
+          password.length,
+          targetLength,
+          reason: 'targetLength=$targetLength',
+        );
+      }
     });
 
-    test('con targetLength muy chico igual devuelve al menos una palabra, '
-        'aunque supere el objetivo', () {
+    test('con targetLength muy chico (menor que la primera palabra sola) '
+        'no hay dígitos de relleno de más y el resultado supera el '
+        'objetivo en vez de cortar la palabra', () {
       final password = generateMemorablePassword(
         wordList: const ['elephant'],
         targetLength: 1,
