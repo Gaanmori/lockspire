@@ -33,14 +33,23 @@ void main() {
 
   group('generateMemorablePassword', () {
     const wordList = ['forest', 'sir', 'passed', 'river', 'stone'];
+    // Mismo set que `_symbols` en password_generator.dart — los
+    // separadores entre palabras salen de acá, uno independiente por
+    // hueco (no siempre el mismo símbolo).
+    final separatorClass = RegExp(r'[!@#$%^&*()\-_=+\[\]{}]');
 
-    test('respeta el patrón Palabra1<dígito>(-Palabra)*', () {
+    test('respeta el patrón Palabra1<dígito>(<símbolo>Palabra)*', () {
       final password = generateMemorablePassword(
         wordList: wordList,
         targetLength: 25,
       );
 
-      expect(password, matches(RegExp(r'^[A-Za-z]+[0-9](-[A-Za-z]+)*$')));
+      expect(
+        password,
+        matches(
+          RegExp(r'^[A-Za-z]+[0-9](?:[!@#$%^&*()\-_=+\[\]{}][A-Za-z]+)*$'),
+        ),
+      );
     });
 
     test('cada palabra generada pertenece a wordList', () {
@@ -48,13 +57,31 @@ void main() {
         wordList: wordList,
         targetLength: 25,
       );
-      final parts = password.split('-');
+      final parts = password.split(separatorClass);
 
       final firstWordWithoutDigit = parts[0].substring(0, parts[0].length - 1);
       expect(wordList, contains(firstWordWithoutDigit.toLowerCase()));
       for (final part in parts.skip(1)) {
         expect(wordList, contains(part.toLowerCase()));
       }
+    });
+
+    test('usa separadores distintos entre sí en distintos huecos (con '
+        'suficientes palabras, no siempre sale el mismo símbolo)', () {
+      // Con targetLength generoso caben varias palabras — sobre 30
+      // intentos, se espera ver más de un símbolo distinto de separador
+      // salvo mala suerte estadística extrema (18 símbolos posibles).
+      final separators = <String>{};
+      for (var i = 0; i < 30; i++) {
+        final password = generateMemorablePassword(
+          wordList: wordList,
+          targetLength: 30,
+        );
+        separators.addAll(
+          separatorClass.allMatches(password).map((m) => m.group(0)!),
+        );
+      }
+      expect(separators.length, greaterThan(1));
     });
 
     test('no supera targetLength (con margen suficiente para que quepa '
@@ -85,7 +112,7 @@ void main() {
         targetLength: 30,
       );
 
-      expect(password.split('-').length, greaterThan(1));
+      expect(password.split(separatorClass).length, greaterThan(1));
     });
 
     test('no es determinista entre llamadas', () {

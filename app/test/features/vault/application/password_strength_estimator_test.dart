@@ -41,20 +41,18 @@ void main() {
       expect(strong.bits, greaterThan(weak.bits));
     });
 
-    test(
-      'detecta el patrón "fácil de recordar" y estima por cantidad de '
-      'palabras, no por clase de caracteres (ver password_generator.dart)',
-      () {
-        // 3 palabras — bits bajos aunque el string "se vea" largo/variado
-        // (mayúsculas + minúsculas + dígito + guiones): esa es justamente
-        // la limitación que se corrige acá, ver el doc comment de
-        // estimatePasswordStrength.
-        final estimate = estimatePasswordStrength('Forest5-River-Stone');
+    test('detecta el patrón "fácil de recordar" y estima por cantidad de '
+        'palabras + separadores, no por clase de caracteres '
+        '(ver password_generator.dart)', () {
+      // 2 palabras — bits bajos aunque el string "se vea" largo/variado
+      // (mayúsculas + minúsculas + dígito + símbolo): esa es
+      // justamente la limitación que se corrige acá, ver el doc
+      // comment de estimatePasswordStrength.
+      final estimate = estimatePasswordStrength('Forest5-River');
 
-        expect(estimate.level, PasswordStrengthLevel.weak);
-        expect(estimate.bits, lessThan(35));
-      },
-    );
+      expect(estimate.level, PasswordStrengthLevel.weak);
+      expect(estimate.bits, lessThan(35));
+    });
 
     test('patrón memorable de una sola palabra -> weak', () {
       final estimate = estimatePasswordStrength('Forest5');
@@ -68,6 +66,16 @@ void main() {
       );
 
       expect(estimate.level, PasswordStrengthLevel.fair);
+    });
+
+    test('separadores no siempre el mismo símbolo — reconoce el patrón '
+        'igual, y la entropía extra de los separadores puede llegar a '
+        'strong con suficientes palabras', () {
+      final estimate = estimatePasswordStrength(
+        'Forest5!River&Stone#Sir\$Passed*Frost=Cloud',
+      );
+
+      expect(estimate.level, PasswordStrengthLevel.strong);
     });
 
     test('un string que no calza con el patrón memorable exacto (dígito en '

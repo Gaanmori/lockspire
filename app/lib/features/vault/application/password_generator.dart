@@ -41,10 +41,21 @@ const _maxMemorableWords = 8;
 const _maxAttemptsPerWord = 10;
 
 /// Genera una contraseña "fácil de recordar" con el patrón
-/// `Palabra1<dígito>-Palabra2-Palabra3-...` (ej. `Passed5-Forest-Sir`),
-/// tomando palabras de [wordList] con `Random.secure()` (mismo criterio
-/// de seguridad que [generatePassword]). El dígito solo se agrega a la
-/// primera palabra, igual que el ejemplo que dio el usuario.
+/// `Palabra1<dígito><símbolo>Palabra2<símbolo>Palabra3<símbolo>...` (ej.
+/// `Passed5#Forest&Sir`), tomando palabras de [wordList] con
+/// `Random.secure()` (mismo criterio de seguridad que [generatePassword]).
+/// El dígito solo se agrega a la primera palabra, igual que el ejemplo
+/// que dio el usuario originalmente.
+///
+/// **El separador entre palabras es un símbolo elegido al azar por cada
+/// hueco** (de [_symbols], el mismo set que usa [generatePassword] —
+/// no un guion fijo) — pedido explícito del usuario para subir la
+/// seguridad real del modo memorable: un atacante ahora también tiene
+/// que adivinar qué símbolo separa cada par de palabras, no solo qué
+/// palabras son (ver `password_strength_estimator.dart`, que ya
+/// contempla esto al estimar). Cada hueco se sortea de forma
+/// independiente, así que pueden salir símbolos distintos entre sí
+/// dentro de la misma contraseña.
 ///
 /// **Apunta a [targetLength] caracteres, no a una cantidad fija de
 /// palabras** — mismo control que [generatePassword] (longitud), para
@@ -52,11 +63,12 @@ const _maxAttemptsPerWord = 10;
 /// caracteres, en vez de una cantidad de palabras que da un largo
 /// impredecible. Agrega palabras completas mientras entren sin superar
 /// [targetLength] (nunca corta una palabra a la mitad, perdería el
-/// sentido de "fácil de recordar") — como las palabras tienen largo
-/// variable, el resultado se acerca a [targetLength] pero normalmente
-/// no lo toca exacto. **Siempre incluye al menos una palabra**, aunque
-/// esa sola ya supere [targetLength] (ej. `targetLength` muy chico) —
-/// nunca devuelve una contraseña vacía.
+/// sentido de "fácil de recordar") — como las palabras (y ahora
+/// también los símbolos separadores) tienen largo variable, el
+/// resultado se acerca a [targetLength] pero normalmente no lo toca
+/// exacto. **Siempre incluye al menos una palabra**, aunque esa sola ya
+/// supere [targetLength] (ej. `targetLength` muy chico) — nunca
+/// devuelve una contraseña vacía.
 String generateMemorablePassword({
   required List<String> wordList,
   int targetLength = 20,
@@ -66,6 +78,7 @@ String generateMemorablePassword({
   String capitalize(String word) =>
       word.isEmpty ? word : word[0].toUpperCase() + word.substring(1);
   String pickWord() => capitalize(wordList[random.nextInt(wordList.length)]);
+  String pickSeparator() => _symbols[random.nextInt(_symbols.length)];
 
   final digit = random.nextInt(10);
   final words = ['${pickWord()}$digit'];
@@ -85,5 +98,10 @@ String generateMemorablePassword({
     length += 1 + fittingWord.length;
   }
 
-  return words.join('-');
+  final buffer = StringBuffer(words.first);
+  for (final word in words.skip(1)) {
+    buffer.write(pickSeparator());
+    buffer.write(word);
+  }
+  return buffer.toString();
 }

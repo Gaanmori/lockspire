@@ -47,14 +47,26 @@ const _strongThresholdBits = 70;
 // de las wordlists cambia sustancialmente, actualizar acá también.
 const _assumedMemorableWordListSize = 230;
 
+// Mismo set de símbolos que [_symbols] en `password_generator.dart` —
+// se repite acá por el mismo motivo que las otras constantes de clase
+// de arriba (no acoplar este archivo a la implementación del
+// generador). Usado tanto para detectar el separador del patrón
+// memorable como, más abajo, como clase de símbolo genérica.
+const _separatorChars = r'!@#$%^&*()\-_=+\[\]{}';
+
 // Coincide con la forma exacta que produce `generateMemorablePassword`
 // (`password_generator.dart`): una palabra capitalizada + un dígito,
-// seguida de cero o más palabras capitalizadas separadas por guion, sin
-// más dígitos. Si una contraseña calza con esta forma (generada así o
-// tecleada a mano con la misma pinta), se estima por cantidad de
-// palabras en vez de por clase de caracteres — ver el comentario en
-// [estimatePasswordStrength] sobre por qué importa la diferencia.
-final _memorablePatternRegex = RegExp(r'^[A-Z][a-z]*[0-9](?:-[A-Z][a-z]*)*$');
+// seguida de cero o más palabras capitalizadas separadas por un símbolo
+// (no necesariamente el mismo símbolo en cada hueco — cada uno se
+// sortea independiente, ver el generador). Si una contraseña calza con
+// esta forma (generada así o tecleada a mano con la misma pinta), se
+// estima por cantidad de palabras en vez de por clase de caracteres —
+// ver el comentario en [estimatePasswordStrength] sobre por qué importa
+// la diferencia.
+final _memorablePatternRegex = RegExp(
+  '^[A-Z][a-z]*[0-9](?:[$_separatorChars][A-Z][a-z]*)*\$',
+);
+final _memorableSeparatorSplitRegex = RegExp('[$_separatorChars]');
 
 /// Intentos por segundo asumidos para el tiempo estimado de descifrado
 /// — **supuesto documentado, no medido**: representa un ataque offline
@@ -68,15 +80,20 @@ const _guessesPerSecond = 1e10;
 /// Estima la fortaleza de [password].
 ///
 /// Si [password] tiene la forma exacta que produce
-/// `generateMemorablePassword` (`Palabra1<dígito>-Palabra2-...`, ver
-/// [_memorablePatternRegex]), se estima por **cantidad de palabras**
-/// asumiendo el tamaño real de las wordlists del proyecto
-/// ([_assumedMemorableWordListSize]) — es la cuenta que importa de
-/// verdad contra un atacante que prueba palabras de diccionario en vez
-/// de todo el alfabeto letra por letra, y suele dar bits bastante más
-/// bajos que la cuenta por clase de caracteres (una contraseña de 3
-/// palabras comunes "se ve" larga y variada, pero el espacio real de
-/// búsqueda es mucho más chico que su longitud en caracteres sugiere).
+/// `generateMemorablePassword` (`Palabra1<dígito><símbolo>Palabra2...`,
+/// ver [_memorablePatternRegex]), se estima por **cantidad de palabras
+/// + cantidad de separadores**, asumiendo el tamaño real de las
+/// wordlists del proyecto ([_assumedMemorableWordListSize]) y del set
+/// de símbolos separadores ([_symbolsSize], mismo set que
+/// [_separatorChars]) — es la cuenta que importa de verdad contra un
+/// atacante que prueba palabras de diccionario (y símbolos comunes en
+/// vez de recorrer todo el alfabeto letra por letra), y suele dar bits
+/// bastante más bajos que la cuenta por clase de caracteres (una
+/// contraseña de 3 palabras comunes "se ve" larga y variada, pero el
+/// espacio real de búsqueda es mucho más chico que su longitud en
+/// caracteres sugiere). Los separadores aleatorios (en vez de un guion
+/// fijo) sí suman entropía real acá — cada uno que el atacante tiene
+/// que adivinar además de las palabras.
 ///
 /// Para cualquier otro caso (contraseña aleatoria, tecleada a mano, o
 /// cualquier forma que no calce con el patrón de arriba), se estima
@@ -102,10 +119,13 @@ PasswordStrengthEstimate estimatePasswordStrength(String password) {
   }
 
   if (_memorablePatternRegex.hasMatch(password)) {
-    final wordCount = password.split('-').length;
+    final wordCount = password.split(_memorableSeparatorSplitRegex).length;
+    final separatorCount = wordCount - 1;
     final bitsPerWord = log(_assumedMemorableWordListSize) / log(2);
     final digitBits = log(10) / log(2);
-    final bits = wordCount * bitsPerWord + digitBits;
+    final bitsPerSeparator = log(_symbolsSize) / log(2);
+    final bits =
+        wordCount * bitsPerWord + digitBits + separatorCount * bitsPerSeparator;
     return PasswordStrengthEstimate(
       bits: bits,
       level: _levelFor(bits),
