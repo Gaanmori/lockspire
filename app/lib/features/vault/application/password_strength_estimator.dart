@@ -39,6 +39,23 @@ const _otherSize = 100;
 const _weakThresholdBits = 35;
 const _strongThresholdBits = 70;
 
+// Cantidad de palabras asumida en cada wordlist de
+// `memorable_wordlists.dart` (~230 cada una) — usada solo para estimar
+// la entropía real de un patrón `Palabra1<dígito>-Palabra2-...` (ver
+// `_memorablePatternRegex` abajo), no importada directamente desde ahí
+// para no acoplar este archivo puro a esa lista concreta. Si el tamaño
+// de las wordlists cambia sustancialmente, actualizar acá también.
+const _assumedMemorableWordListSize = 230;
+
+// Coincide con la forma exacta que produce `generateMemorablePassword`
+// (`password_generator.dart`): una palabra capitalizada + un dígito,
+// seguida de cero o más palabras capitalizadas separadas por guion, sin
+// más dígitos. Si una contraseña calza con esta forma (generada así o
+// tecleada a mano con la misma pinta), se estima por cantidad de
+// palabras en vez de por clase de caracteres — ver el comentario en
+// [estimatePasswordStrength] sobre por qué importa la diferencia.
+final _memorablePatternRegex = RegExp(r'^[A-Z][a-z]*[0-9](?:-[A-Z][a-z]*)*$');
+
 /// Intentos por segundo asumidos para el tiempo estimado de descifrado
 /// — **supuesto documentado, no medido**: representa un ataque offline
 /// rápido (hardware dedicado contra un hash débil/sin salt), referencia
@@ -48,17 +65,32 @@ const _strongThresholdBits = 70;
 /// app puntual.
 const _guessesPerSecond = 1e10;
 
-/// Estima la fortaleza de [password] **solo por las clases de
-/// caracteres presentes** (minúscula/mayúscula/dígito/símbolo/otro),
-/// igual para una contraseña tecleada a mano que para una generada.
+/// Estima la fortaleza de [password].
 ///
-/// **Limitación documentada a propósito:** esto sobreestima la
-/// resistencia real de una contraseña "fácil de recordar" (formada por
-/// palabras de diccionario) frente a un atacante que prueba palabras
-/// comunes en vez de todo el alfabeto letra por letra — no es un
-/// modelo tipo zxcvbn (sin detección de diccionario/patrones). Se
-/// acepta como simplificación para esta primera pasada, mismo criterio
-/// de "estimación transparente con supuestos explícitos" usado en el
+/// Si [password] tiene la forma exacta que produce
+/// `generateMemorablePassword` (`Palabra1<dígito>-Palabra2-...`, ver
+/// [_memorablePatternRegex]), se estima por **cantidad de palabras**
+/// asumiendo el tamaño real de las wordlists del proyecto
+/// ([_assumedMemorableWordListSize]) — es la cuenta que importa de
+/// verdad contra un atacante que prueba palabras de diccionario en vez
+/// de todo el alfabeto letra por letra, y suele dar bits bastante más
+/// bajos que la cuenta por clase de caracteres (una contraseña de 3
+/// palabras comunes "se ve" larga y variada, pero el espacio real de
+/// búsqueda es mucho más chico que su longitud en caracteres sugiere).
+///
+/// Para cualquier otro caso (contraseña aleatoria, tecleada a mano, o
+/// cualquier forma que no calce con el patrón de arriba), se estima
+/// **solo por las clases de caracteres presentes**
+/// (minúscula/mayúscula/dígito/símbolo/otro) — funciona igual para algo
+/// tecleado a mano que para algo generado.
+///
+/// **Limitación documentada a propósito, en ambos casos:** no es un
+/// modelo tipo zxcvbn completo (sin diccionario general de contraseñas
+/// filtradas/patrones de teclado/sustituciones l33t, etc.) — la rama
+/// "por palabras" cubre específicamente la forma que genera esta app,
+/// no cualquier contraseña basada en diccionario del mundo real. Se
+/// acepta como simplificación para esta pasada, mismo criterio de
+/// "estimación transparente con supuestos explícitos" usado en el
 /// resto del proyecto (ver ADR 0007, `fieldConflictsResolved`, etc.).
 PasswordStrengthEstimate estimatePasswordStrength(String password) {
   if (password.isEmpty) {
@@ -66,6 +98,18 @@ PasswordStrengthEstimate estimatePasswordStrength(String password) {
       bits: 0,
       level: PasswordStrengthLevel.weak,
       crackTimeLabel: 'instantáneo',
+    );
+  }
+
+  if (_memorablePatternRegex.hasMatch(password)) {
+    final wordCount = password.split('-').length;
+    final bitsPerWord = log(_assumedMemorableWordListSize) / log(2);
+    final digitBits = log(10) / log(2);
+    final bits = wordCount * bitsPerWord + digitBits;
+    return PasswordStrengthEstimate(
+      bits: bits,
+      level: _levelFor(bits),
+      crackTimeLabel: _formatCrackTime(bits),
     );
   }
 
@@ -83,18 +127,18 @@ PasswordStrengthEstimate estimatePasswordStrength(String password) {
 
   final bits = password.length * (log(poolSize) / log(2));
 
-  final level = bits < _weakThresholdBits
-      ? PasswordStrengthLevel.weak
-      : bits < _strongThresholdBits
-      ? PasswordStrengthLevel.fair
-      : PasswordStrengthLevel.strong;
-
   return PasswordStrengthEstimate(
     bits: bits,
-    level: level,
+    level: _levelFor(bits),
     crackTimeLabel: _formatCrackTime(bits),
   );
 }
+
+PasswordStrengthLevel _levelFor(double bits) => bits < _weakThresholdBits
+    ? PasswordStrengthLevel.weak
+    : bits < _strongThresholdBits
+    ? PasswordStrengthLevel.fair
+    : PasswordStrengthLevel.strong;
 
 /// Formatea el tiempo estimado de descifrado a partir de [bits] de
 /// entropía — `double` en toda la cuenta (nunca `Duration`, que

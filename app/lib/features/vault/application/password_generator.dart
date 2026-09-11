@@ -37,29 +37,53 @@ String generatePassword({int length = 20}) {
   return chars.join();
 }
 
+const _maxMemorableWords = 8;
+const _maxAttemptsPerWord = 10;
+
 /// Genera una contraseña "fácil de recordar" con el patrón
-/// `Palabra1<dígito>-Palabra2-Palabra3` (ej. `Passed5-Forest-Sir`),
-/// tomando [wordCount] palabras de [wordList] con `Random.secure()`
-/// (mismo criterio de seguridad que [generatePassword]). El dígito solo
-/// se agrega a la primera palabra, igual que el ejemplo que dio el
-/// usuario — sin controlar [wordCount] desde la UI todavía (alcance
-/// chico a propósito, ver docs/STATE.md).
+/// `Palabra1<dígito>-Palabra2-Palabra3-...` (ej. `Passed5-Forest-Sir`),
+/// tomando palabras de [wordList] con `Random.secure()` (mismo criterio
+/// de seguridad que [generatePassword]). El dígito solo se agrega a la
+/// primera palabra, igual que el ejemplo que dio el usuario.
+///
+/// **Apunta a [targetLength] caracteres, no a una cantidad fija de
+/// palabras** — mismo control que [generatePassword] (longitud), para
+/// tener precisión real cuando un sitio exige un máximo/mínimo de
+/// caracteres, en vez de una cantidad de palabras que da un largo
+/// impredecible. Agrega palabras completas mientras entren sin superar
+/// [targetLength] (nunca corta una palabra a la mitad, perdería el
+/// sentido de "fácil de recordar") — como las palabras tienen largo
+/// variable, el resultado se acerca a [targetLength] pero normalmente
+/// no lo toca exacto. **Siempre incluye al menos una palabra**, aunque
+/// esa sola ya supere [targetLength] (ej. `targetLength` muy chico) —
+/// nunca devuelve una contraseña vacía.
 String generateMemorablePassword({
   required List<String> wordList,
-  int wordCount = 3,
+  int targetLength = 20,
 }) {
-  assert(wordCount >= 2, 'wordCount debe alcanzar para separar con guiones');
   final random = Random.secure();
 
   String capitalize(String word) =>
       word.isEmpty ? word : word[0].toUpperCase() + word.substring(1);
+  String pickWord() => capitalize(wordList[random.nextInt(wordList.length)]);
 
-  final words = List.generate(
-    wordCount,
-    (_) => capitalize(wordList[random.nextInt(wordList.length)]),
-  );
   final digit = random.nextInt(10);
-  words[0] = '${words[0]}$digit';
+  final words = ['${pickWord()}$digit'];
+  var length = words[0].length;
+
+  while (words.length < _maxMemorableWords) {
+    String? fittingWord;
+    for (var attempt = 0; attempt < _maxAttemptsPerWord; attempt++) {
+      final candidate = pickWord();
+      if (length + 1 + candidate.length <= targetLength) {
+        fittingWord = candidate;
+        break;
+      }
+    }
+    if (fittingWord == null) break;
+    words.add(fittingWord);
+    length += 1 + fittingWord.length;
+  }
 
   return words.join('-');
 }

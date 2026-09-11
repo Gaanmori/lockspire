@@ -23,6 +23,23 @@ enum _PasswordGenerationMode { random, memorable }
 
 const _clipboardAutoClear = Duration(seconds: 30);
 
+// Se guardan como campos más dentro de `fields` (mismo criterio que
+// `username`/`password`/`url`/`notes` — no hay jerarquía de subclases,
+// ver `vault_entry.dart`) para que, al editar, el panel arranque con el
+// modo/parámetro que se usó la última vez y "generar otra" reproduzca el
+// mismo estilo sin que el usuario tenga que volver a elegirlo. No son
+// datos sensibles (solo dicen *cómo* se generó, no la contraseña en sí).
+const _genModeFieldKey = 'password_gen_mode';
+const _genParamFieldKey = 'password_gen_param';
+
+// Un solo rango de longitud para los dos modos — el usuario pidió que
+// "fácil de recordar" también se controle por cantidad de caracteres
+// (no por cantidad de palabras), igual que el modo aleatorio, para
+// tener precisión real cuando un sitio exige un máximo/mínimo de
+// caracteres. `generateMemorablePassword` agrega palabras completas
+// mientras entren sin superar el objetivo (ver `password_generator.dart`).
+const _passwordLengthRange = (min: 8.0, max: 48.0, divisions: 40);
+
 /// Formulario único de crear/editar una entrada de contraseña — sin vista
 /// de detalle de solo lectura separada (ver docs/STATE.md — Fase 5).
 /// [entry] nulo = crear; no nulo = editar, precargado.
@@ -57,11 +74,50 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   bool _saving = false;
   String? _errorMessage;
 
-  bool _showGeneratorPanel = false;
-  _PasswordGenerationMode _passwordMode = _PasswordGenerationMode.random;
-  double _randomLength = 20;
+  late _PasswordGenerationMode _passwordMode;
+  late double _passwordLength;
 
   bool get _isEditing => widget.entry != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final storedMode = widget.entry?.fields[_genModeFieldKey];
+    final storedLength = double.tryParse(
+      widget.entry?.fields[_genParamFieldKey] ?? '',
+    );
+
+    switch (storedMode) {
+      case 'random':
+        _passwordMode = _PasswordGenerationMode.random;
+        _passwordLength = storedLength ?? 20;
+      case 'memorable':
+        _passwordMode = _PasswordGenerationMode.memorable;
+        _passwordLength = storedLength ?? 20;
+      default:
+        if (_isEditing) {
+          // Entrada existente sin metadata de generación (creada antes de
+          // esta feature, o importada de SafeInCloud) — no hay forma de
+          // saber cómo se hizo la contraseña guardada, así que se infiere
+          // aleatoria con su longitud actual (así "generar otra" da algo
+          // de un porte similar, en vez de sorprender con un valor fijo).
+          _passwordMode = _PasswordGenerationMode.random;
+          _passwordLength = (widget.entry!.fields['password']?.length ?? 20)
+              .clamp(
+                _passwordLengthRange.min.round(),
+                _passwordLengthRange.max.round(),
+              )
+              .toDouble();
+        } else {
+          // Crear una entrada nueva: "fácil de recordar" por default,
+          // pedido explícito del usuario — si elige aleatoria, queda esa
+          // elección para lo que reste de esta sesión de edición.
+          _passwordMode = _PasswordGenerationMode.memorable;
+          _passwordLength = 20;
+        }
+    }
+  }
 
   @override
   void dispose() {
@@ -86,6 +142,8 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
       'password': _passwordController.text,
       'url': _urlController.text,
       'notes': _notesController.text,
+      _genModeFieldKey: _passwordMode.name,
+      _genParamFieldKey: _passwordLength.round().toString(),
     };
 
     try {
@@ -144,30 +202,25 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  void _toggleGeneratorPanel() {
-    setState(() {
-      _showGeneratorPanel = !_showGeneratorPanel;
-      if (_showGeneratorPanel) _regeneratePassword();
-    });
-  }
-
-  /// Regenera la contraseña según [_passwordMode] — aleatoria con
-  /// [_randomLength] caracteres, o "fácil de recordar" tomando palabras
-  /// de la wordlist que corresponda al idioma del dispositivo (español
-  /// si `Localizations.localeOf(context)` es `es`, inglés para
-  /// cualquier otro idioma — decisión confirmada con el usuario, sin
-  /// selector manual en la UI).
+  /// Regenera la contraseña según [_passwordMode], ambos apuntando a
+  /// [_passwordLength] caracteres (mismo control en los dos modos —
+  /// pedido explícito del usuario, para tener precisión real cuando un
+  /// sitio exige un máximo/mínimo de caracteres). En modo "fácil de
+  /// recordar" se toman palabras de la wordlist que corresponda al
+  /// idioma del dispositivo (español si `Localizations.localeOf(context)`
+  /// es `es`, inglés para cualquier otro idioma — decisión confirmada
+  /// con el usuario, sin selector manual en la UI).
   void _regeneratePassword() {
     final languageCode = Localizations.localeOf(context).languageCode;
     final wordList = languageCode == 'es' ? spanishWordList : englishWordList;
+    final length = _passwordLength.round();
 
     setState(() {
       _passwordController.text = switch (_passwordMode) {
-        _PasswordGenerationMode.random => generatePassword(
-          length: _randomLength.round(),
-        ),
+        _PasswordGenerationMode.random => generatePassword(length: length),
         _PasswordGenerationMode.memorable => generateMemorablePassword(
           wordList: wordList,
+          targetLength: length,
         ),
       };
       _obscure = false;
@@ -261,7 +314,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                             IconButton(
                               icon: const Icon(Icons.casino_outlined),
                               tooltip: 'Generar contraseña',
-                              onPressed: _toggleGeneratorPanel,
+                              onPressed: _regeneratePassword,
                             ),
                             IconButton(
                               icon: Icon(
@@ -285,13 +338,15 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: LockspireSpacing.sm),
+                    _buildPasswordGeneratorPanel(),
                     ValueListenableBuilder<TextEditingValue>(
                       valueListenable: _passwordController,
                       builder: (context, value, _) {
                         if (value.text.isEmpty) return const SizedBox.shrink();
                         return Padding(
                           padding: const EdgeInsets.only(
-                            top: LockspireSpacing.xs,
+                            top: LockspireSpacing.sm,
                           ),
                           child: _PasswordStrengthIndicator(
                             password: value.text,
@@ -299,10 +354,6 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                         );
                       },
                     ),
-                    if (_showGeneratorPanel) ...[
-                      const SizedBox(height: LockspireSpacing.sm),
-                      _buildPasswordGeneratorPanel(),
-                    ],
                     const SizedBox(height: LockspireSpacing.md),
                     TextFormField(
                       controller: _urlController,
@@ -365,15 +416,19 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     );
   }
 
-  /// Panel colapsable con las opciones de generación — modo (aleatoria /
-  /// fácil de recordar), slider de longitud (solo modo aleatorio, ver
-  /// docs/STATE.md — alcance de esta pasada) y un botón para volver a
-  /// generar sin cambiar nada. Se abre/cierra con el ícono de dado del
-  /// campo contraseña (`_toggleGeneratorPanel`), mismo patrón colapsable
-  /// que `_FieldHistorySection` más abajo — sin diálogo aparte.
+  /// Controles de generación, **siempre visibles** (no un panel
+  /// colapsable — el usuario reportó que esconder/mostrar según el ícono
+  /// de dado resultaba confuso, porque el dado a veces generaba y a
+  /// veces solo abría el panel). El dado del campo contraseña ahora
+  /// siempre genera de una ([_regeneratePassword] directo, ver arriba);
+  /// acá vive la elección de modo (desplegable) y el slider de
+  /// longitud — mismo rango en los dos modos, ver [_passwordLength].
   Widget _buildPasswordGeneratorPanel() {
     return Container(
-      padding: const EdgeInsets.all(LockspireSpacing.smMd),
+      padding: const EdgeInsets.symmetric(
+        horizontal: LockspireSpacing.smMd,
+        vertical: LockspireSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: LockspireColors.bgSurfaceSubtle,
         borderRadius: BorderRadius.circular(LockspireRadius.md),
@@ -383,60 +438,51 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: SegmentedButton<_PasswordGenerationMode>(
-                  segments: const [
-                    ButtonSegment(
+              DropdownButtonHideUnderline(
+                child: DropdownButton<_PasswordGenerationMode>(
+                  value: _passwordMode,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  items: const [
+                    DropdownMenuItem(
                       value: _PasswordGenerationMode.random,
-                      label: Text('Aleatoria'),
+                      child: Text('Aleatoria'),
                     ),
-                    ButtonSegment(
+                    DropdownMenuItem(
                       value: _PasswordGenerationMode.memorable,
-                      label: Text('Fácil de recordar'),
+                      child: Text('Fácil de recordar'),
                     ),
                   ],
-                  selected: {_passwordMode},
-                  onSelectionChanged: (selection) {
-                    setState(() => _passwordMode = selection.first);
+                  onChanged: (mode) {
+                    if (mode == null) return;
+                    setState(() => _passwordMode = mode);
                     _regeneratePassword();
                   },
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: 'Generar otra',
-                onPressed: _regeneratePassword,
+              const SizedBox(width: LockspireSpacing.sm),
+              Expanded(
+                child: Slider(
+                  value: _passwordLength,
+                  min: _passwordLengthRange.min,
+                  max: _passwordLengthRange.max,
+                  divisions: _passwordLengthRange.divisions,
+                  label: '${_passwordLength.round()}',
+                  onChanged: (value) {
+                    _passwordLength = value;
+                    _regeneratePassword();
+                  },
+                ),
               ),
             ],
           ),
-          if (_passwordMode == _PasswordGenerationMode.random) ...[
-            const SizedBox(height: LockspireSpacing.xs),
-            Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _randomLength,
-                    min: 8,
-                    max: 48,
-                    divisions: 40,
-                    label: '${_randomLength.round()}',
-                    onChanged: (value) {
-                      _randomLength = value;
-                      _regeneratePassword();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 48,
-                  child: Text(
-                    '${_randomLength.round()}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
-              ],
+          Padding(
+            padding: const EdgeInsets.only(bottom: LockspireSpacing.xs),
+            child: Text(
+              '${_passwordLength.round()} caracteres',
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -510,6 +556,8 @@ class _FieldHistorySection extends StatelessWidget {
       'password' => 'Contraseña',
       'url' => 'URL',
       'notes' => 'Notas',
+      _genModeFieldKey => 'Modo de generación',
+      _genParamFieldKey => 'Parámetro de generación',
       _ => key,
     };
   }
