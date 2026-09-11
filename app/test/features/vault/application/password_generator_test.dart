@@ -34,39 +34,64 @@ void main() {
   group('generateMemorablePassword', () {
     const wordList = ['forest', 'sir', 'passed', 'river', 'stone'];
 
-    test('respeta el patrón Palabra1<dígito>-Palabra2-Palabra3', () {
-      final password = generateMemorablePassword(wordList: wordList);
-
-      expect(
-        password,
-        matches(RegExp(r'^[A-Za-z]+[0-9]-[A-Za-z]+-[A-Za-z]+$')),
+    test('respeta el patrón Palabra1<dígito>(-Palabra)*', () {
+      final password = generateMemorablePassword(
+        wordList: wordList,
+        targetLength: 25,
       );
+
+      expect(password, matches(RegExp(r'^[A-Za-z]+[0-9](-[A-Za-z]+)*$')));
     });
 
     test('cada palabra generada pertenece a wordList', () {
-      final password = generateMemorablePassword(wordList: wordList);
-      final parts = password.split('-');
-
-      expect(parts, hasLength(3));
-      final firstWordWithoutDigit = parts[0].substring(0, parts[0].length - 1);
-      expect(wordList, contains(firstWordWithoutDigit.toLowerCase()));
-      expect(wordList, contains(parts[1].toLowerCase()));
-      expect(wordList, contains(parts[2].toLowerCase()));
-    });
-
-    test('respeta wordCount pedido', () {
       final password = generateMemorablePassword(
         wordList: wordList,
-        wordCount: 4,
+        targetLength: 25,
+      );
+      final parts = password.split('-');
+
+      final firstWordWithoutDigit = parts[0].substring(0, parts[0].length - 1);
+      expect(wordList, contains(firstWordWithoutDigit.toLowerCase()));
+      for (final part in parts.skip(1)) {
+        expect(wordList, contains(part.toLowerCase()));
+      }
+    });
+
+    test('no supera targetLength (con margen suficiente para que quepa '
+        'más de una palabra)', () {
+      final password = generateMemorablePassword(
+        wordList: wordList,
+        targetLength: 25,
       );
 
-      expect(password.split('-'), hasLength(4));
+      expect(password.length, lessThanOrEqualTo(25));
+    });
+
+    test('con targetLength muy chico igual devuelve al menos una palabra, '
+        'aunque supere el objetivo', () {
+      final password = generateMemorablePassword(
+        wordList: const ['elephant'],
+        targetLength: 1,
+      );
+
+      expect(password.split('-'), hasLength(1));
+      expect(password, matches(RegExp(r'^[A-Za-z]+[0-9]$')));
+    });
+
+    test('usa el espacio disponible — con targetLength grande agrega '
+        'más de una palabra', () {
+      final password = generateMemorablePassword(
+        wordList: wordList,
+        targetLength: 30,
+      );
+
+      expect(password.split('-').length, greaterThan(1));
     });
 
     test('no es determinista entre llamadas', () {
       final passwords = List.generate(
         20,
-        (_) => generateMemorablePassword(wordList: wordList),
+        (_) => generateMemorablePassword(wordList: wordList, targetLength: 25),
       );
       expect(passwords.toSet().length, greaterThan(1));
     });

@@ -41,6 +41,42 @@ void main() {
       expect(strong.bits, greaterThan(weak.bits));
     });
 
+    test(
+      'detecta el patrón "fácil de recordar" y estima por cantidad de '
+      'palabras, no por clase de caracteres (ver password_generator.dart)',
+      () {
+        // 3 palabras — bits bajos aunque el string "se vea" largo/variado
+        // (mayúsculas + minúsculas + dígito + guiones): esa es justamente
+        // la limitación que se corrige acá, ver el doc comment de
+        // estimatePasswordStrength.
+        final estimate = estimatePasswordStrength('Forest5-River-Stone');
+
+        expect(estimate.level, PasswordStrengthLevel.weak);
+        expect(estimate.bits, lessThan(35));
+      },
+    );
+
+    test('patrón memorable de una sola palabra -> weak', () {
+      final estimate = estimatePasswordStrength('Forest5');
+
+      expect(estimate.level, PasswordStrengthLevel.weak);
+    });
+
+    test('patrón memorable con suficientes palabras llega a fair', () {
+      final estimate = estimatePasswordStrength(
+        'Forest5-River-Stone-Sir-Passed',
+      );
+
+      expect(estimate.level, PasswordStrengthLevel.fair);
+    });
+
+    test('un string que no calza con el patrón memorable exacto (dígito en '
+        'otra posición) usa la estimación por clase de caracteres', () {
+      final estimate = estimatePasswordStrength('Ab3xQ9');
+
+      expect(estimate.level, PasswordStrengthLevel.fair);
+    });
+
     test('formatea el tiempo en distintas escalas legibles', () {
       expect(estimatePasswordStrength('a').crackTimeLabel, 'instantáneo');
       expect(
