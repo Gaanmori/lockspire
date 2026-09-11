@@ -36,3 +36,30 @@ String generatePassword({int length = 20}) {
 
   return chars.join();
 }
+
+/// Genera una contraseña "fácil de recordar" con el patrón
+/// `Palabra1<dígito>-Palabra2-Palabra3` (ej. `Passed5-Forest-Sir`),
+/// tomando [wordCount] palabras de [wordList] con `Random.secure()`
+/// (mismo criterio de seguridad que [generatePassword]). El dígito solo
+/// se agrega a la primera palabra, igual que el ejemplo que dio el
+/// usuario — sin controlar [wordCount] desde la UI todavía (alcance
+/// chico a propósito, ver docs/STATE.md).
+String generateMemorablePassword({
+  required List<String> wordList,
+  int wordCount = 3,
+}) {
+  assert(wordCount >= 2, 'wordCount debe alcanzar para separar con guiones');
+  final random = Random.secure();
+
+  String capitalize(String word) =>
+      word.isEmpty ? word : word[0].toUpperCase() + word.substring(1);
+
+  final words = List.generate(
+    wordCount,
+    (_) => capitalize(wordList[random.nextInt(wordList.length)]),
+  );
+  final digit = random.nextInt(10);
+  words[0] = '${words[0]}$digit';
+
+  return words.join('-');
+}

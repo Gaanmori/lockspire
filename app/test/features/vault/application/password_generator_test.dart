@@ -30,4 +30,45 @@ void main() {
       expect(password, matches(RegExp(r'[^a-zA-Z0-9]')));
     });
   });
+
+  group('generateMemorablePassword', () {
+    const wordList = ['forest', 'sir', 'passed', 'river', 'stone'];
+
+    test('respeta el patrón Palabra1<dígito>-Palabra2-Palabra3', () {
+      final password = generateMemorablePassword(wordList: wordList);
+
+      expect(
+        password,
+        matches(RegExp(r'^[A-Za-z]+[0-9]-[A-Za-z]+-[A-Za-z]+$')),
+      );
+    });
+
+    test('cada palabra generada pertenece a wordList', () {
+      final password = generateMemorablePassword(wordList: wordList);
+      final parts = password.split('-');
+
+      expect(parts, hasLength(3));
+      final firstWordWithoutDigit = parts[0].substring(0, parts[0].length - 1);
+      expect(wordList, contains(firstWordWithoutDigit.toLowerCase()));
+      expect(wordList, contains(parts[1].toLowerCase()));
+      expect(wordList, contains(parts[2].toLowerCase()));
+    });
+
+    test('respeta wordCount pedido', () {
+      final password = generateMemorablePassword(
+        wordList: wordList,
+        wordCount: 4,
+      );
+
+      expect(password.split('-'), hasLength(4));
+    });
+
+    test('no es determinista entre llamadas', () {
+      final passwords = List.generate(
+        20,
+        (_) => generateMemorablePassword(wordList: wordList),
+      );
+      expect(passwords.toSet().length, greaterThan(1));
+    });
+  });
 }

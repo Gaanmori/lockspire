@@ -7,12 +7,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
+import '../../application/memorable_wordlists.dart';
 import '../../application/password_generator.dart';
+import '../../application/password_strength_estimator.dart';
 import '../../application/save_vault_use_case.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
+
+/// Modo de generación elegido en el panel del generador — ver
+/// `_buildPasswordGeneratorPanel`.
+enum _PasswordGenerationMode { random, memorable }
 
 const _clipboardAutoClear = Duration(seconds: 30);
 
@@ -49,6 +56,10 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   bool _obscure = true;
   bool _saving = false;
   String? _errorMessage;
+
+  bool _showGeneratorPanel = false;
+  _PasswordGenerationMode _passwordMode = _PasswordGenerationMode.random;
+  double _randomLength = 20;
 
   bool get _isEditing => widget.entry != null;
 
@@ -133,9 +144,32 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  void _generatePassword() {
+  void _toggleGeneratorPanel() {
     setState(() {
-      _passwordController.text = generatePassword();
+      _showGeneratorPanel = !_showGeneratorPanel;
+      if (_showGeneratorPanel) _regeneratePassword();
+    });
+  }
+
+  /// Regenera la contraseña según [_passwordMode] — aleatoria con
+  /// [_randomLength] caracteres, o "fácil de recordar" tomando palabras
+  /// de la wordlist que corresponda al idioma del dispositivo (español
+  /// si `Localizations.localeOf(context)` es `es`, inglés para
+  /// cualquier otro idioma — decisión confirmada con el usuario, sin
+  /// selector manual en la UI).
+  void _regeneratePassword() {
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final wordList = languageCode == 'es' ? spanishWordList : englishWordList;
+
+    setState(() {
+      _passwordController.text = switch (_passwordMode) {
+        _PasswordGenerationMode.random => generatePassword(
+          length: _randomLength.round(),
+        ),
+        _PasswordGenerationMode.memorable => generateMemorablePassword(
+          wordList: wordList,
+        ),
+      };
       _obscure = false;
     });
   }
@@ -227,7 +261,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                             IconButton(
                               icon: const Icon(Icons.casino_outlined),
                               tooltip: 'Generar contraseña',
-                              onPressed: _generatePassword,
+                              onPressed: _toggleGeneratorPanel,
                             ),
                             IconButton(
                               icon: Icon(
@@ -251,6 +285,24 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                         ),
                       ),
                     ),
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _passwordController,
+                      builder: (context, value, _) {
+                        if (value.text.isEmpty) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(
+                            top: LockspireSpacing.xs,
+                          ),
+                          child: _PasswordStrengthIndicator(
+                            password: value.text,
+                          ),
+                        );
+                      },
+                    ),
+                    if (_showGeneratorPanel) ...[
+                      const SizedBox(height: LockspireSpacing.sm),
+                      _buildPasswordGeneratorPanel(),
+                    ],
                     const SizedBox(height: LockspireSpacing.md),
                     TextFormField(
                       controller: _urlController,
@@ -310,6 +362,132 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Panel colapsable con las opciones de generación — modo (aleatoria /
+  /// fácil de recordar), slider de longitud (solo modo aleatorio, ver
+  /// docs/STATE.md — alcance de esta pasada) y un botón para volver a
+  /// generar sin cambiar nada. Se abre/cierra con el ícono de dado del
+  /// campo contraseña (`_toggleGeneratorPanel`), mismo patrón colapsable
+  /// que `_FieldHistorySection` más abajo — sin diálogo aparte.
+  Widget _buildPasswordGeneratorPanel() {
+    return Container(
+      padding: const EdgeInsets.all(LockspireSpacing.smMd),
+      decoration: BoxDecoration(
+        color: LockspireColors.bgSurfaceSubtle,
+        borderRadius: BorderRadius.circular(LockspireRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: SegmentedButton<_PasswordGenerationMode>(
+                  segments: const [
+                    ButtonSegment(
+                      value: _PasswordGenerationMode.random,
+                      label: Text('Aleatoria'),
+                    ),
+                    ButtonSegment(
+                      value: _PasswordGenerationMode.memorable,
+                      label: Text('Fácil de recordar'),
+                    ),
+                  ],
+                  selected: {_passwordMode},
+                  onSelectionChanged: (selection) {
+                    setState(() => _passwordMode = selection.first);
+                    _regeneratePassword();
+                  },
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Generar otra',
+                onPressed: _regeneratePassword,
+              ),
+            ],
+          ),
+          if (_passwordMode == _PasswordGenerationMode.random) ...[
+            const SizedBox(height: LockspireSpacing.xs),
+            Row(
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: _randomLength,
+                    min: 8,
+                    max: 48,
+                    divisions: 40,
+                    label: '${_randomLength.round()}',
+                    onChanged: (value) {
+                      _randomLength = value;
+                      _regeneratePassword();
+                    },
+                  ),
+                ),
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    '${_randomLength.round()}',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Barra de fortaleza + tiempo estimado de descifrado (ver
+/// `password_strength_estimator.dart`) — reacciona tanto a una
+/// contraseña generada como a una tecleada a mano, sin distinguir entre
+/// ambas (la estimación es solo por clases de caracteres presentes).
+class _PasswordStrengthIndicator extends StatelessWidget {
+  final String password;
+
+  const _PasswordStrengthIndicator({required this.password});
+
+  Color _colorFor(PasswordStrengthLevel level) => switch (level) {
+    PasswordStrengthLevel.weak => LockspireColors.danger,
+    PasswordStrengthLevel.fair => LockspireColors.accentDefault,
+    PasswordStrengthLevel.strong => LockspireColors.accentSecondary,
+  };
+
+  String _labelFor(PasswordStrengthLevel level) => switch (level) {
+    PasswordStrengthLevel.weak => 'Débil',
+    PasswordStrengthLevel.fair => 'Regular',
+    PasswordStrengthLevel.strong => 'Segura',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final estimate = estimatePasswordStrength(password);
+    final color = _colorFor(estimate.level);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(LockspireRadius.pill),
+          child: LinearProgressIndicator(
+            value: (estimate.bits / 100).clamp(0.0, 1.0),
+            minHeight: 6,
+            backgroundColor: LockspireColors.bgSurfaceSubtle,
+            valueColor: AlwaysStoppedAnimation(color),
+          ),
+        ),
+        const SizedBox(height: LockspireSpacing.xs),
+        Text(
+          '${_labelFor(estimate.level)} — tiempo estimado para '
+          'descifrarla: ${estimate.crackTimeLabel}',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
+        ),
+      ],
     );
   }
 }
