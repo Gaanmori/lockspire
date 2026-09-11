@@ -32,6 +32,17 @@ set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE}")
 # Use Unicode for all projects.
 add_definitions(-DUNICODE -D_UNICODE)
 
+# Silences a static_assert (error C2338/STL1011) that MSVC 14.51+ (Visual
+# Studio 18.6+) added to <experimental/coroutine> — several Flutter Windows
+# plugins still built against the old MS experimental-coroutine TS (ej.
+# local_auth_windows 1.0.11, agregado para docs/adr/0010-desbloqueo-biometrico.md)
+# fail to compile without this on a toolchain that recent. No reemplaza el
+# código de esos plugins, solo silencia la advertencia de deprecación para
+# que la característica experimental (todavía presente, solo desalentada)
+# siga compilando. Puesto antes de add_subdirectory/include de plugins para
+# que se propague a sus subdirectorios de CMake.
+add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # Compilation settings that should be applied to most targets.
 #
 # Be cautious about adding new options here, as plugins use this function by

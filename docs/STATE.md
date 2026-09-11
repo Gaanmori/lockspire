@@ -1,6 +1,6 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-11 (ADR 0009 — merge automático por campo, reemplaza el picker manual de Fase 7; TOTP implementado y luego descartado explícitamente por el usuario en la misma sesión; generador de contraseñas mejorado — fortaleza + modo memorable + slider de longitud — ver Completado/Backlog)
+Última actualización: 2026-09-11 (ADR 0009 — merge automático por campo, reemplaza el picker manual de Fase 7; TOTP implementado y luego descartado explícitamente por el usuario en la misma sesión; generador de contraseñas mejorado — fortaleza + modo memorable + slider de longitud; ADR 0010 — desbloqueo biométrico, huella en Android/Windows Hello en escritorio — ver Completado/Backlog)
 
 ## Fase actual
 
