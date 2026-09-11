@@ -16,6 +16,7 @@ import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 import 'package:lockspire/features/vault/domain/vault_file_codec.dart';
 import 'package:lockspire/features/vault/presentation/providers/auto_lock_timeout_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/auto_sync_debounce_provider.dart';
+import 'package:lockspire/features/vault/presentation/providers/biometric_auth_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_auth_attempt_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
@@ -34,8 +35,13 @@ const _masterPassword = 'correcto-caballo-batería-grapa';
 class _TestFakes {
   final FakeCryptoPort crypto;
   final FakeVaultStoragePort storage;
+  final FakeBiometricAuthPort biometric;
 
-  _TestFakes({required this.crypto, required this.storage});
+  _TestFakes({
+    required this.crypto,
+    required this.storage,
+    required this.biometric,
+  });
 }
 
 ({ProviderContainer container, _TestFakes fakes}) _buildContainer({
@@ -43,17 +49,19 @@ class _TestFakes {
 }) {
   final crypto = FakeCryptoPort();
   final storage = FakeVaultStoragePort();
+  final biometric = FakeBiometricAuthPort();
   final container = ProviderContainer(
     overrides: [
       cryptoPortProvider.overrideWith((ref) async => crypto),
       vaultStoragePortProvider.overrideWith((ref) async => storage),
       autoLockTimeoutProvider.overrideWith((ref) => timeout),
+      biometricAuthPortProvider.overrideWith((ref) => biometric),
     ],
   );
   addTearDown(container.dispose);
   return (
     container: container,
-    fakes: _TestFakes(crypto: crypto, storage: storage),
+    fakes: _TestFakes(crypto: crypto, storage: storage, biometric: biometric),
   );
 }
 
@@ -263,6 +271,97 @@ void main() {
         isA<VaultSessionLocked>(),
       );
       expect(container.read(vaultAuthAttemptProvider).hasError, isTrue);
+    });
+  });
+
+  group('VaultSessionController — desbloqueo biométrico (ADR 0010)', () {
+    test(
+      'enableBiometricUnlock() no hace nada si la bóveda no está desbloqueada',
+      () async {
+        final built = _buildContainer(timeout: const Duration(minutes: 5));
+        final container = built.container;
+        final notifier = container.read(
+          vaultSessionControllerProvider.notifier,
+        );
+        await container.read(vaultSessionControllerProvider.future);
+
+        await notifier.enableBiometricUnlock();
+
+        expect(await built.fakes.biometric.hasStoredKey(), isFalse);
+      },
+    );
+
+    test(
+      'enableBiometricUnlock() guarda la clave de la sesión actual',
+      () async {
+        final built = _buildContainer(timeout: const Duration(minutes: 5));
+        final container = built.container;
+        final notifier = container.read(
+          vaultSessionControllerProvider.notifier,
+        );
+        await container.read(vaultSessionControllerProvider.future);
+        await notifier.createVault(_masterPassword);
+
+        await notifier.enableBiometricUnlock();
+
+        expect(await built.fakes.biometric.hasStoredKey(), isTrue);
+      },
+    );
+
+    test('disableBiometricUnlock() borra la clave guardada', () async {
+      final built = _buildContainer(timeout: const Duration(minutes: 5));
+      final container = built.container;
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
+      await notifier.createVault(_masterPassword);
+      await notifier.enableBiometricUnlock();
+
+      await notifier.disableBiometricUnlock();
+
+      expect(await built.fakes.biometric.hasStoredKey(), isFalse);
+    });
+
+    test('unlockWithBiometrics() con el prompt cancelado (readKey -> null) no '
+        'cambia el estado de sesión — sigue Locked, sin error', () async {
+      final built = _buildContainer(timeout: const Duration(minutes: 5));
+      final container = built.container;
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
+      await notifier.createVault(_masterPassword);
+      notifier.lock();
+      built.fakes.biometric.nextReadKeyResult = null;
+
+      await notifier.unlockWithBiometrics();
+
+      expect(
+        container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionLocked>(),
+      );
+      expect(container.read(vaultAuthAttemptProvider).hasError, isFalse);
+    });
+
+    test('unlockWithBiometrics() con una clave válida desbloquea sin volver a '
+        'derivar (no pide la contraseña maestra de nuevo)', () async {
+      final built = _buildContainer(timeout: const Duration(minutes: 5));
+      final container = built.container;
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
+      await notifier.createVault(_masterPassword);
+      final key =
+          (container.read(vaultSessionControllerProvider).value
+                  as VaultSessionUnlocked)
+              .key;
+      notifier.lock();
+      final callsAfterCreate = built.fakes.crypto.deriveKeyCalls;
+
+      built.fakes.biometric.nextReadKeyResult = key;
+      await notifier.unlockWithBiometrics();
+
+      expect(
+        container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionUnlocked>(),
+      );
+      expect(built.fakes.crypto.deriveKeyCalls, callsAfterCreate);
     });
   });
 

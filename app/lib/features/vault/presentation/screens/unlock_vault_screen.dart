@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
+import '../providers/biometric_auth_port_provider.dart';
 import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
@@ -21,6 +24,25 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
   final _passwordController = TextEditingController();
   bool _obscure = true;
 
+  // Se consulta una sola vez al abrir la pantalla — si el usuario activa
+  // o desactiva el desbloqueo biométrico desde "Seguridad", esta
+  // pantalla ya se habrá recreado (bloqueo/desbloqueo de por medio) para
+  // cuando vuelva a importar.
+  bool _biometricAvailable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometricAvailability();
+  }
+
+  Future<void> _checkBiometricAvailability() async {
+    final port = ref.read(biometricAuthPortProvider);
+    final hasStoredKey = await port.hasStoredKey();
+    if (!mounted || !hasStoredKey) return;
+    setState(() => _biometricAvailable = true);
+  }
+
   @override
   void dispose() {
     _passwordController.dispose();
@@ -32,6 +54,12 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
     await ref
         .read(vaultSessionControllerProvider.notifier)
         .unlock(_passwordController.text);
+  }
+
+  Future<void> _submitWithBiometrics() async {
+    await ref
+        .read(vaultSessionControllerProvider.notifier)
+        .unlockWithBiometrics();
   }
 
   @override
@@ -123,6 +151,19 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                           child: const Text('Desbloquear'),
                         ),
                       ),
+                    if (!isLoading && _biometricAvailable) ...[
+                      const SizedBox(height: LockspireSpacing.sm),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _submitWithBiometrics,
+                          icon: const Icon(Icons.fingerprint),
+                          label: Text(
+                            'Usar ${Platform.isWindows ? 'Windows Hello' : 'la huella'}',
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

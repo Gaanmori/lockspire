@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/features/sync/presentation/screens/sync_settings_screen.dart';
@@ -9,9 +11,12 @@ import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../domain/entities/vault.dart';
 import '../../domain/entities/vault_entry.dart';
+import '../../domain/ports/biometric_auth_port.dart';
+import '../providers/biometric_auth_port_provider.dart';
 import '../vault_session_controller.dart';
 import 'entry_form_screen.dart';
 import 'import_screen.dart';
+import 'security_screen.dart';
 
 /// Lista de entradas de la bóveda desbloqueada, con búsqueda y acceso a
 /// crear/editar (ver `EntryFormScreen`).
@@ -30,9 +35,66 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
   String _query = '';
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _maybeShowBiometricOptIn(),
+    );
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Aviso único de opt-in (ver docs/STATE.md/ADR 0010): se ofrece una
+  /// sola vez, la primera vez que hay biometría disponible y todavía no
+  /// se decidió nada — nunca se vuelve a mostrar después de que el
+  /// usuario responde algo, sin importar si dijo que sí o que no. No
+  /// distingue si se llegó acá por desbloqueo con contraseña o con
+  /// biometría — chequear `hasStoredKey()`/`wasOnboardingDismissed()`
+  /// ya cubre ambos casos sin duplicar la lógica en cada pantalla de
+  /// desbloqueo.
+  Future<void> _maybeShowBiometricOptIn() async {
+    final port = ref.read(biometricAuthPortProvider);
+    if (await port.checkAvailability() != BiometricAvailability.available) {
+      return;
+    }
+    if (await port.hasStoredKey()) return;
+    if (await port.wasOnboardingDismissed()) return;
+    if (!mounted) return;
+
+    final methodName = Platform.isWindows ? 'Windows Hello' : 'la huella';
+    final activar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('¿Activar desbloqueo con $methodName?'),
+        content: Text(
+          'En vez de escribir la contraseña maestra cada vez, vas a poder '
+          'desbloquear la bóveda con $methodName. Podés cambiarlo después '
+          'desde "Seguridad".',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Ahora no'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Activar'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (activar == true) {
+      await ref
+          .read(vaultSessionControllerProvider.notifier)
+          .enableBiometricUnlock();
+    } else {
+      await port.markOnboardingDismissed();
+    }
   }
 
   List<VaultEntry> get _filteredEntries {
@@ -70,6 +132,13 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SyncSettingsScreen()),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.security_outlined),
+            tooltip: 'Seguridad',
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SecurityScreen())),
           ),
           IconButton(
             icon: const Icon(Icons.lock),

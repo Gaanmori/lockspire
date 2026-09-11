@@ -19,6 +19,7 @@ import '../domain/ports/vault_storage_port.dart';
 import '../domain/vault_file_codec.dart';
 import 'providers/auto_lock_timeout_provider.dart';
 import 'providers/auto_sync_debounce_provider.dart';
+import 'providers/biometric_auth_port_provider.dart';
 import 'providers/crypto_port_provider.dart';
 import 'providers/vault_auth_attempt_provider.dart';
 import 'providers/vault_storage_port_provider.dart';
@@ -114,6 +115,62 @@ class VaultSessionController extends _$VaultSessionController {
       attempt.state = AsyncError(error, stackTrace);
     }
     _scheduleAutoLockIfUnlocked();
+  }
+
+  /// Desbloquea con la clave cacheada tras la biometría/PIN del sistema
+  /// (huella en Android, Windows Hello en escritorio — ver
+  /// `BiometricAuthPort`, docs/adr/0010-desbloqueo-biometrico.md). Nunca
+  /// deriva nada ni pide la contraseña maestra — reusa
+  /// `UnlockVaultUseCase.reloadWithKey()`, el mismo primitivo que ya usa
+  /// [reloadFromDisk] para recargar con una clave ya conocida.
+  ///
+  /// Si el usuario cancela o falla la verificación,
+  /// [BiometricAuthPort.readKey] devuelve `null` y acá no se toca nada
+  /// (ni `state` ni [vaultAuthAttemptProvider]) — sigue viendo la
+  /// pantalla de desbloqueo normal, sin un error que no pidió ver.
+  Future<void> unlockWithBiometrics() async {
+    final port = ref.read(biometricAuthPortProvider);
+    final key = await port.readKey();
+    if (key == null) return;
+
+    final attempt = ref.read(vaultAuthAttemptProvider.notifier);
+    attempt.state = const AsyncLoading();
+    try {
+      final storage = await ref.read(vaultStoragePortProvider.future);
+      final crypto = await ref.read(cryptoPortProvider.future);
+      final unlocked = await UnlockVaultUseCase(
+        storage: storage,
+        crypto: crypto,
+      ).reloadWithKey(key: key);
+      state = AsyncData(
+        VaultSessionUnlocked(
+          vault: unlocked.vault,
+          key: unlocked.key,
+          header: unlocked.header,
+          fileHash: unlocked.fileHash,
+        ),
+      );
+      attempt.state = const AsyncData(null);
+      _triggerAutoSync();
+    } catch (error, stackTrace) {
+      attempt.state = AsyncError(error, stackTrace);
+    }
+    _scheduleAutoLockIfUnlocked();
+  }
+
+  /// Activa el desbloqueo biométrico — cachea la clave ya derivada de la
+  /// sesión actual detrás de la biometría/PIN del sistema. Solo tiene
+  /// sentido con la bóveda ya desbloqueada (llamar justo después de un
+  /// desbloqueo real con contraseña); no hace nada si no lo está.
+  Future<void> enableBiometricUnlock() async {
+    final current = state.value;
+    if (current is! VaultSessionUnlocked) return;
+    await ref.read(biometricAuthPortProvider).storeKey(key: current.key);
+  }
+
+  /// Desactiva el desbloqueo biométrico — borra la clave cacheada.
+  Future<void> disableBiometricUnlock() async {
+    await ref.read(biometricAuthPortProvider).deleteKey();
   }
 
   /// Restaura una bóveda descargada de un proveedor de sync en un

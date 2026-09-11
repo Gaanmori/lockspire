@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:lockspire/features/vault/domain/ports/biometric_auth_port.dart';
 import 'package:lockspire/features/vault/domain/ports/crypto_port.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 
@@ -112,5 +113,44 @@ class FakeVaultStoragePort implements VaultStoragePort {
   @override
   Future<void> write(VaultFile file) async {
     stored = file;
+  }
+}
+
+/// Biometría falsa para tests — sin platform channels reales. [available]
+/// controla lo que devuelve [checkAvailability]; [nextReadKeyResult]
+/// controla lo que [readKey] devuelve la próxima vez que se llame (`null`
+/// simula que el usuario canceló/falló el prompt, ver el contrato de
+/// [BiometricAuthPort.readKey]).
+class FakeBiometricAuthPort implements BiometricAuthPort {
+  BiometricAvailability available = BiometricAvailability.available;
+  Uint8List? nextReadKeyResult;
+  Uint8List? _storedKey;
+  bool _onboardingDismissed = false;
+
+  @override
+  Future<BiometricAvailability> checkAvailability() async => available;
+
+  @override
+  Future<bool> hasStoredKey() async => _storedKey != null;
+
+  @override
+  Future<void> storeKey({required Uint8List key}) async {
+    _storedKey = key;
+  }
+
+  @override
+  Future<Uint8List?> readKey() async => nextReadKeyResult;
+
+  @override
+  Future<void> deleteKey() async {
+    _storedKey = null;
+  }
+
+  @override
+  Future<bool> wasOnboardingDismissed() async => _onboardingDismissed;
+
+  @override
+  Future<void> markOnboardingDismissed() async {
+    _onboardingDismissed = true;
   }
 }
