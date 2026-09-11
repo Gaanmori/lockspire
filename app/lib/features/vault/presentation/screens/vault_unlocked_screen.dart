@@ -147,6 +147,9 @@ class _EntryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final username = entry.fields['username'];
+    final subtitle = (username != null && username.isNotEmpty)
+        ? username
+        : null;
     final initial = entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?';
 
     return Material(
@@ -187,9 +190,9 @@ class _EntryTile extends StatelessWidget {
                       entry.title,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    if (username != null && username.isNotEmpty)
+                    if (subtitle != null)
                       Text(
-                        username,
+                        subtitle,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                   ],

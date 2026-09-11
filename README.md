@@ -52,6 +52,10 @@ flutter test
 flutter run -d <device-id>
 ```
 
+## Pendiente de verificación
+
+**ADR 0009 (merge automático por campo, reemplaza el picker manual de conflictos)** está implementado y cubierto por tests automatizados (`flutter test`, 83/83 pasan), pero todavía no se probó en dispositivos reales — falta repetir el escenario de dos dispositivos editando la misma entrada sin sincronizar entre medio (mismo setup Windows + Redmi por Google Drive que ya se usó para verificar Fases 7-9) y confirmar que se resuelve solo, sin picker. Detalle completo en `docs/STATE.md` y `docs/adr/0009-merge-automatico-por-campo.md`.
+
 ## Licencia
 
 [GNU Affero General Public License v3.0](LICENSE) (AGPLv3). El código es abierto y auditable; el nombre y el logo "Lockspire" son marca registrada de forma independiente a la licencia del código.

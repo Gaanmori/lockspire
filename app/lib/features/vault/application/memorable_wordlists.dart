@@ -1,0 +1,80 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Lockspire
+
+/// Palabras usadas por [generateMemorablePassword] — ver
+/// `password_generator.dart`. Listas propias, cortas y de uso común (no
+/// reproducidas de un corpus de terceros con licencia propia). El español
+/// evita deliberadamente tildes/ñ — reduce fricción de teclado/IME al
+/// tener que teclear a mano una contraseña generada así en otro
+/// dispositivo, no es un error de ortografía.
+const spanishWordList = [
+  'arbol', 'agua', 'fuego', 'nube', 'monte', 'playa', 'rio', 'sol', 'luna',
+  'flor', 'hoja', 'roca', 'nieve', 'lluvia', 'viento', 'campo', 'bosque',
+  'valle', 'cielo', 'mar', 'isla', 'puente', 'camino', 'puerta', 'ventana',
+  'techo', 'pared', 'jardin', 'huerto', 'granja', 'aldea', 'ciudad',
+  'torre', 'castillo', 'barco', 'avion', 'tren', 'coche', 'bici',
+  'gato', 'perro', 'leon', 'tigre', 'oso', 'lobo', 'zorro', 'ciervo',
+  'aguila', 'buho', 'pato', 'cisne', 'pez', 'ballena', 'delfin', 'tortuga',
+  'abeja', 'hormiga', 'mariposa', 'arana', 'caballo', 'vaca', 'oveja',
+  'cerdo', 'conejo', 'raton', 'ardilla', 'pluma', 'ala', 'nido',
+  'piedra', 'arena', 'polvo', 'humo', 'chispa', 'llama', 'brasa',
+  'hielo', 'espuma', 'ola', 'corriente', 'cascada', 'lago', 'laguna',
+  'pantano', 'desierto', 'selva', 'colina', 'cueva', 'acantilado',
+  'estrella', 'planeta', 'cometa', 'galaxia', 'eclipse', 'aurora',
+  'atardecer', 'amanecer', 'niebla', 'trueno', 'rayo', 'tormenta',
+  'invierno', 'verano', 'otono', 'primavera', 'semana', 'mes', 'ano',
+  'norte', 'sur', 'este', 'oeste', 'centro', 'borde', 'limite',
+  'espejo', 'reloj', 'llave', 'candado', 'caja', 'cofre', 'mapa',
+  'libro', 'pagina', 'letra', 'numero', 'nota', 'carta', 'sello',
+  'lampara', 'vela', 'linterna', 'fogata', 'chimenea', 'horno',
+  'mesa', 'silla', 'banco', 'cama', 'armario', 'estante', 'cajon',
+  'plato', 'taza', 'vaso', 'cuchara', 'tenedor', 'cuchillo', 'olla',
+  'pan', 'sal', 'miel', 'leche', 'queso', 'fruta', 'manzana', 'naranja',
+  'limon', 'uva', 'pera', 'cereza', 'fresa', 'platano', 'coco', 'nuez',
+  'trigo', 'maiz', 'arroz', 'cafe', 'te', 'azucar', 'aceite',
+  'hierro', 'oro', 'plata', 'cobre', 'bronce', 'cristal', 'madera',
+  'cuero', 'lana', 'algodon', 'seda', 'hilo', 'cuerda', 'red',
+  'barco', 'vela', 'remo', 'ancla', 'timon', 'puerto', 'muelle',
+  'escudo', 'espada', 'flecha', 'arco', 'lanza', 'casco', 'armadura',
+  'corona', 'anillo', 'collar', 'moneda', 'tesoro', 'joya', 'perla',
+  'musica', 'cancion', 'tambor', 'flauta', 'violin', 'campana', 'eco',
+  'sueno', 'idea', 'recuerdo', 'secreto', 'misterio', 'aventura',
+  'viaje', 'destino', 'sendero', 'frontera', 'horizonte', 'paisaje',
+];
+
+/// Lista en inglés — igual criterio, palabras comunes y cortas, sin
+/// depender de un corpus con licencia propia (ej. diceware/EFF).
+const englishWordList = [
+  'tree', 'water', 'fire', 'cloud', 'forest', 'beach', 'river', 'sun',
+  'moon', 'flower', 'leaf', 'rock', 'snow', 'rain', 'wind', 'field',
+  'valley', 'sky', 'ocean', 'island', 'bridge', 'road', 'door', 'window',
+  'roof', 'wall', 'garden', 'orchard', 'farm', 'village', 'city',
+  'tower', 'castle', 'ship', 'plane', 'train', 'car', 'bike',
+  'cat', 'dog', 'lion', 'tiger', 'bear', 'wolf', 'fox', 'deer',
+  'eagle', 'owl', 'duck', 'swan', 'fish', 'whale', 'dolphin', 'turtle',
+  'bee', 'ant', 'butterfly', 'spider', 'horse', 'cow', 'sheep',
+  'pig', 'rabbit', 'mouse', 'squirrel', 'feather', 'wing', 'nest',
+  'stone', 'sand', 'dust', 'smoke', 'spark', 'flame', 'ember',
+  'ice', 'foam', 'wave', 'current', 'waterfall', 'lake', 'pond',
+  'marsh', 'desert', 'jungle', 'hill', 'cave', 'cliff',
+  'star', 'planet', 'comet', 'galaxy', 'eclipse', 'dawn', 'dusk',
+  'sunset', 'sunrise', 'fog', 'thunder', 'lightning', 'storm',
+  'winter', 'summer', 'autumn', 'spring', 'week', 'month', 'year',
+  'north', 'south', 'east', 'west', 'center', 'edge', 'border',
+  'mirror', 'clock', 'key', 'lock', 'box', 'chest', 'map',
+  'book', 'page', 'letter', 'number', 'note', 'card', 'stamp',
+  'lamp', 'candle', 'lantern', 'campfire', 'chimney', 'oven',
+  'table', 'chair', 'bench', 'bed', 'closet', 'shelf', 'drawer',
+  'plate', 'cup', 'glass', 'spoon', 'fork', 'knife', 'pot',
+  'bread', 'salt', 'honey', 'milk', 'cheese', 'fruit', 'apple',
+  'orange', 'lemon', 'grape', 'pear', 'cherry', 'berry', 'banana',
+  'wheat', 'corn', 'rice', 'coffee', 'tea', 'sugar', 'oil',
+  'iron', 'gold', 'silver', 'copper', 'bronze', 'glass', 'wood',
+  'leather', 'wool', 'cotton', 'silk', 'thread', 'rope', 'net',
+  'sail', 'oar', 'anchor', 'helm', 'harbor', 'dock', 'shield',
+  'sword', 'arrow', 'bow', 'spear', 'helmet', 'armor', 'crown',
+  'ring', 'necklace', 'coin', 'treasure', 'jewel', 'pearl',
+  'music', 'song', 'drum', 'flute', 'violin', 'bell', 'echo',
+  'dream', 'idea', 'memory', 'secret', 'mystery', 'adventure',
+  'journey', 'destiny', 'trail', 'frontier', 'horizon', 'landscape',
+];

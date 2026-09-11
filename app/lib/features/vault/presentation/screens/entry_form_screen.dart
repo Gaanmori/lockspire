@@ -16,8 +16,8 @@ import '../widgets/auth_card.dart';
 
 const _clipboardAutoClear = Duration(seconds: 30);
 
-/// Formulario único de crear/editar una entrada de tipo contraseña — sin
-/// vista de detalle de solo lectura separada (ver docs/STATE.md — Fase 5).
+/// Formulario único de crear/editar una entrada de contraseña — sin vista
+/// de detalle de solo lectura separada (ver docs/STATE.md — Fase 5).
 /// [entry] nulo = crear; no nulo = editar, precargado.
 class EntryFormScreen extends ConsumerStatefulWidget {
   final VaultEntry? entry;
@@ -161,11 +161,14 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     });
   }
 
+  String get _appBarTitle =>
+      _isEditing ? 'Editar contraseña' : 'Nueva contraseña';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Editar contraseña' : 'Nueva contraseña'),
+        title: Text(_appBarTitle),
         actions: [
           if (_isEditing)
             IconButton(
@@ -184,7 +187,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
               key: _formKey,
               child: AuthCard(
                 icon: Icons.key_outlined,
-                title: _isEditing ? 'Editar contraseña' : 'Nueva contraseña',
+                title: _appBarTitle,
                 subtitle: 'Se guarda cifrada junto con el resto de tu bóveda.',
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -262,7 +265,8 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                       // puede traer varias líneas transicionales (TOTP,
                       // PIN, tarjeta) además del texto libre — con 3 no se
                       // veían sin hacer scroll dentro del campo (el dato
-                      // seguía completo, solo estaba recortado a la vista).
+                      // seguía completo, solo estaba recortado a la
+                      // vista).
                       maxLines: 8,
                     ),
                     if (widget.entry != null &&
