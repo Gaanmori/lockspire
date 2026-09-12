@@ -50,6 +50,7 @@ dependencies:
   googleapis_auth: ^2.3.3
   url_launcher: ^6.3.2
   local_auth: ^3.0.2
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:

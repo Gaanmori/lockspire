@@ -12,16 +12,20 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../application/sync_vault_use_case.dart';
 import '../domain/ports/active_sync_provider_port.dart';
 import '../domain/ports/google_drive_account_port.dart';
+import '../domain/ports/one_drive_account_port.dart';
 import '../domain/ports/sync_credentials_port.dart';
 import 'providers/active_sync_port_provider.dart';
 import 'providers/active_sync_provider_port_provider.dart';
 import 'providers/current_active_sync_provider_provider.dart';
 import 'providers/current_google_drive_account_provider.dart';
+import 'providers/current_one_drive_account_provider.dart';
 import 'providers/current_sync_credentials_provider.dart';
 import 'providers/google_drive_account_port_provider.dart';
 import 'providers/google_drive_android_auth_provider.dart';
 import 'providers/google_drive_windows_auth_provider.dart';
 import 'providers/is_sync_configured_provider.dart';
+import 'providers/microsoft_oauth_auth_provider.dart';
+import 'providers/one_drive_account_port_provider.dart';
 import 'providers/sync_ancestor_storage_port_provider.dart';
 import 'providers/sync_credentials_port_provider.dart';
 import 'providers/sync_state_port_provider.dart';
@@ -87,6 +91,49 @@ class SyncController extends _$SyncController {
       await ref.read(activeSyncProviderPortProvider).clearActiveProvider();
     }
     ref.invalidate(currentGoogleDriveAccountProvider);
+    ref.invalidate(currentActiveSyncProviderProvider);
+    ref.invalidate(activeSyncPortProvider);
+    ref.invalidate(isSyncConfiguredProvider);
+  }
+
+  /// Conexión interactiva con OneDrive — abre el navegador del sistema en
+  /// ambas plataformas (ver `microsoft_oauth_auth.dart`, a diferencia de
+  /// Google Drive no hay split Android/Windows acá). Elegir OneDrive acá
+  /// implica "usar OneDrive" — pasa a ser el proveedor activo.
+  Future<void> connectOneDrive() async {
+    final connection = await ref
+        .read(microsoftOauthAuthProvider)
+        .connectInteractive();
+
+    await ref
+        .read(oneDriveAccountPortProvider)
+        .saveOneDriveAccount(
+          OneDriveAccount(
+            email: connection.email,
+            refreshToken: connection.refreshToken,
+          ),
+        );
+    await ref
+        .read(activeSyncProviderPortProvider)
+        .saveActiveProvider(SyncProviderId.oneDrive);
+    ref.invalidate(currentOneDriveAccountProvider);
+    ref.invalidate(currentActiveSyncProviderProvider);
+    ref.invalidate(activeSyncPortProvider);
+    ref.invalidate(isSyncConfiguredProvider);
+  }
+
+  /// Desconecta la cuenta de OneDrive — si era el proveedor activo, deja
+  /// de haber ninguno configurado (mismo criterio que
+  /// `disconnectGoogleDrive()`).
+  Future<void> disconnectOneDrive() async {
+    await ref.read(oneDriveAccountPortProvider).clearOneDriveAccount();
+    final active = await ref
+        .read(activeSyncProviderPortProvider)
+        .activeProvider();
+    if (active == SyncProviderId.oneDrive) {
+      await ref.read(activeSyncProviderPortProvider).clearActiveProvider();
+    }
+    ref.invalidate(currentOneDriveAccountProvider);
     ref.invalidate(currentActiveSyncProviderProvider);
     ref.invalidate(activeSyncPortProvider);
     ref.invalidate(isSyncConfiguredProvider);

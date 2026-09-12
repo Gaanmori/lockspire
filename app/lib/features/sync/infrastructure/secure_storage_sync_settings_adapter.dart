@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../domain/ports/active_sync_provider_port.dart';
 import '../domain/ports/google_drive_account_port.dart';
+import '../domain/ports/one_drive_account_port.dart';
 import '../domain/ports/sync_credentials_port.dart';
 import '../domain/ports/sync_state_port.dart';
 
@@ -15,19 +16,23 @@ const _keyLastSyncedHash = 'sync.last_synced_hash';
 const _keyActiveProvider = 'sync.active_provider';
 const _keyGoogleDriveEmail = 'sync.google_drive.email';
 const _keyGoogleDriveRefreshToken = 'sync.google_drive.refresh_token';
+const _keyOneDriveEmail = 'sync.one_drive.email';
+const _keyOneDriveRefreshToken = 'sync.one_drive.refresh_token';
 
 /// Implementa [SyncCredentialsPort], [SyncStatePort],
-/// [ActiveSyncProviderPort] y [GoogleDriveAccountPort] sobre el
-/// almacenamiento seguro del SO (Keystore en Android, Keychain en
-/// iOS/macOS, DPAPI en Windows) — nunca texto plano en disco. Un solo
-/// adapter para las cuatro interfaces porque comparten el mismo backend y
-/// son todas config de sync — no hay razón para instancias separadas.
+/// [ActiveSyncProviderPort], [GoogleDriveAccountPort] y
+/// [OneDriveAccountPort] sobre el almacenamiento seguro del SO (Keystore
+/// en Android, Keychain en iOS/macOS, DPAPI en Windows) — nunca texto
+/// plano en disco. Un solo adapter para las cinco interfaces porque
+/// comparten el mismo backend y son todas config de sync — no hay razón
+/// para instancias separadas.
 class SecureStorageSyncSettingsAdapter
     implements
         SyncCredentialsPort,
         SyncStatePort,
         ActiveSyncProviderPort,
-        GoogleDriveAccountPort {
+        GoogleDriveAccountPort,
+        OneDriveAccountPort {
   final FlutterSecureStorage _storage;
 
   const SecureStorageSyncSettingsAdapter(this._storage);
@@ -75,6 +80,7 @@ class SecureStorageSyncSettingsAdapter
     return switch (value) {
       'webdav' => SyncProviderId.webdav,
       'googleDrive' => SyncProviderId.googleDrive,
+      'oneDrive' => SyncProviderId.oneDrive,
       _ => null,
     };
   }
@@ -110,5 +116,28 @@ class SecureStorageSyncSettingsAdapter
   Future<void> clearGoogleDriveAccount() async {
     await _storage.delete(key: _keyGoogleDriveEmail);
     await _storage.delete(key: _keyGoogleDriveRefreshToken);
+  }
+
+  @override
+  Future<OneDriveAccount?> oneDriveAccount() async {
+    final email = await _storage.read(key: _keyOneDriveEmail);
+    final refreshToken = await _storage.read(key: _keyOneDriveRefreshToken);
+    if (email == null || refreshToken == null) return null;
+    return OneDriveAccount(email: email, refreshToken: refreshToken);
+  }
+
+  @override
+  Future<void> saveOneDriveAccount(OneDriveAccount account) async {
+    await _storage.write(key: _keyOneDriveEmail, value: account.email);
+    await _storage.write(
+      key: _keyOneDriveRefreshToken,
+      value: account.refreshToken,
+    );
+  }
+
+  @override
+  Future<void> clearOneDriveAccount() async {
+    await _storage.delete(key: _keyOneDriveEmail);
+    await _storage.delete(key: _keyOneDriveRefreshToken);
   }
 }

@@ -6,7 +6,9 @@ import 'dart:io' show Platform;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/ports/active_sync_provider_port.dart';
+import '../../domain/ports/one_drive_account_port.dart';
 import '../../infrastructure/google_drive_sync_adapter.dart';
+import '../../infrastructure/one_drive_sync_adapter.dart';
 import '../../infrastructure/webdav_sync_adapter.dart';
 import '../../domain/ports/sync_port.dart';
 import 'active_sync_provider_port_provider.dart';
@@ -14,6 +16,8 @@ import 'current_sync_credentials_provider.dart';
 import 'google_drive_account_port_provider.dart';
 import 'google_drive_android_auth_provider.dart';
 import 'google_drive_windows_auth_provider.dart';
+import 'microsoft_oauth_auth_provider.dart';
+import 'one_drive_account_port_provider.dart';
 
 part 'active_sync_port_provider.g.dart';
 
@@ -57,6 +61,27 @@ Future<SyncPort?> activeSyncPort(Ref ref) async {
           .reconnectSilently();
       if (connection == null) return null;
       return GoogleDriveSyncAdapter(connection.httpClient);
+
+    case SyncProviderId.oneDrive:
+      final accountPort = ref.watch(oneDriveAccountPortProvider);
+      final account = await accountPort.oneDriveAccount();
+      if (account == null) return null;
+
+      final connection = await ref
+          .watch(microsoftOauthAuthProvider)
+          .reconnect(refreshToken: account.refreshToken, email: account.email);
+      // Microsoft rota el refresh token en cada uso (cliente PKCE) — a
+      // diferencia de Google, hay que volver a guardarlo si cambió o la
+      // próxima sync falla con el token viejo ya invalidado.
+      if (connection.refreshToken != account.refreshToken) {
+        await accountPort.saveOneDriveAccount(
+          OneDriveAccount(
+            email: connection.email,
+            refreshToken: connection.refreshToken,
+          ),
+        );
+      }
+      return OneDriveSyncAdapter(connection.accessToken);
 
     case null:
       return null;

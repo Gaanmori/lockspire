@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/ports/active_sync_provider_port.dart';
 import 'active_sync_provider_port_provider.dart';
 import 'current_google_drive_account_provider.dart';
+import 'current_one_drive_account_provider.dart';
 import 'current_sync_credentials_provider.dart';
 
 part 'is_sync_configured_provider.g.dart';
@@ -24,6 +25,8 @@ Future<bool> isSyncConfigured(Ref ref) async {
       (await ref.watch(currentSyncCredentialsProvider.future)) != null,
     SyncProviderId.googleDrive =>
       (await ref.watch(currentGoogleDriveAccountProvider.future)) != null,
+    SyncProviderId.oneDrive =>
+      (await ref.watch(currentOneDriveAccountProvider.future)) != null,
     null => false,
   };
 }

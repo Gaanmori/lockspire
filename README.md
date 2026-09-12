@@ -24,7 +24,7 @@ Sin backend centralizado: la bóveda es un archivo local fuertemente cifrado que
 - **Criptografía:** libsodium vía bindings nativos — Argon2id (KDF) + XChaCha20-Poly1305 (AEAD).
 - **Extensión de navegador:** TypeScript, Manifest V3.
 - **Comunicación App/Extensión:** Native Messaging (STDIN/STDOUT).
-- **Sincronización cloud:** Google Drive, OneDrive, Dropbox, WebDAV — cada uno como adaptador intercambiable.
+- **Sincronización cloud:** Google Drive, OneDrive, WebDAV — cada uno como adaptador intercambiable.
 - **Autocompletado nativo:** Android Autofill Framework / Credential Manager API, iOS Credential Provider Extension.
 
 ## Estructura del repo

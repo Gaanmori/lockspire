@@ -4,7 +4,7 @@
 /// Proveedores de sync soportados. Uno solo puede estar activo a la vez —
 /// no hay caso de uso para tener credenciales de dos proveedores en
 /// simultáneo (ver Fase 8 en docs/STATE.md).
-enum SyncProviderId { webdav, googleDrive }
+enum SyncProviderId { webdav, googleDrive, oneDrive }
 
 /// Puerto que guarda cuál proveedor de sync está activo actualmente.
 ///

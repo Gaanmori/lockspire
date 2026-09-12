@@ -47,3 +47,7 @@ app.*.map.json
 # Secrets locales — ver google_oauth_secrets.json.example (Fase 8, sync
 # con Google Drive). Nunca comitear el archivo real.
 google_oauth_secrets.json
+
+# Secrets locales — ver microsoft_oauth_secrets.json.example (sync con
+# OneDrive). Nunca comitear el archivo real.
+microsoft_oauth_secrets.json

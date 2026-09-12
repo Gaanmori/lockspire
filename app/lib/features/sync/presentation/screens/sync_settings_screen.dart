@@ -8,9 +8,11 @@ import 'package:lockspire/design/lockspire_spacing.dart';
 import '../../application/sync_vault_use_case.dart';
 import '../../domain/ports/active_sync_provider_port.dart';
 import '../../domain/ports/google_drive_account_port.dart';
+import '../../domain/ports/one_drive_account_port.dart';
 import '../../domain/ports/sync_credentials_port.dart';
 import '../providers/current_active_sync_provider_provider.dart';
 import '../providers/current_google_drive_account_provider.dart';
+import '../providers/current_one_drive_account_provider.dart';
 import '../providers/current_sync_credentials_provider.dart';
 import '../sync_controller.dart';
 
@@ -79,6 +81,14 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
     await ref.read(syncControllerProvider.notifier).disconnectGoogleDrive();
   }
 
+  Future<void> _connectOneDrive() async {
+    await ref.read(syncControllerProvider.notifier).connectOneDrive();
+  }
+
+  Future<void> _disconnectOneDrive() async {
+    await ref.read(syncControllerProvider.notifier).disconnectOneDrive();
+  }
+
   Future<void> _syncNow() async {
     await ref.read(syncControllerProvider.notifier).syncNow();
   }
@@ -106,6 +116,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
           value: SyncProviderId.googleDrive,
           label: Text('Google Drive'),
         ),
+        ButtonSegment(value: SyncProviderId.oneDrive, label: Text('OneDrive')),
       ],
       selected: {_selectedProvider ?? SyncProviderId.webdav},
       onSelectionChanged: (selection) {
@@ -213,10 +224,55 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
     );
   }
 
+  Widget _buildOneDriveSection(AsyncValue<OneDriveAccount?> accountAsync) {
+    return accountAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) =>
+          Text('Ocurrió un error: $error', textAlign: TextAlign.center),
+      data: (account) {
+        if (account == null) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Sin cuenta conectada. Lockspire solo accede a su propia '
+                'carpeta especial de app en tu OneDrive — no ve el resto de '
+                'tus archivos.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: LockspireSpacing.lg),
+              FilledButton(
+                onPressed: _connectOneDrive,
+                child: const Text('Conectar con OneDrive'),
+              ),
+            ],
+          );
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Conectado como ${account.email}',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: LockspireSpacing.lg),
+            OutlinedButton(
+              onPressed: _disconnectOneDrive,
+              child: const Text('Desconectar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final credentialsAsync = ref.watch(currentSyncCredentialsProvider);
     final googleAccountAsync = ref.watch(currentGoogleDriveAccountProvider);
+    final oneDriveAccountAsync = ref.watch(currentOneDriveAccountProvider);
     final activeProviderAsync = ref.watch(currentActiveSyncProviderProvider);
     final syncState = ref.watch(syncControllerProvider);
 
@@ -226,7 +282,9 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
     }
 
     final hasSomethingConfigured =
-        credentialsAsync.value != null || googleAccountAsync.value != null;
+        credentialsAsync.value != null ||
+        googleAccountAsync.value != null ||
+        oneDriveAccountAsync.value != null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Sincronización')),
@@ -243,6 +301,8 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                 const SizedBox(height: LockspireSpacing.lg),
                 if (_selectedProvider == SyncProviderId.googleDrive)
                   _buildGoogleDriveSection(googleAccountAsync)
+                else if (_selectedProvider == SyncProviderId.oneDrive)
+                  _buildOneDriveSection(oneDriveAccountAsync)
                 else
                   credentialsAsync.when(
                     loading: () =>
