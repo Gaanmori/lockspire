@@ -7,9 +7,13 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.autofill.AutofillId
+import android.view.autofill.AutofillManager
+import android.view.autofill.AutofillValue
 import androidx.annotation.RequiresApi
 import androidx.credentials.CreatePasswordRequest
 import androidx.credentials.CreatePasswordResponse
+import androidx.credentials.Credential
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.PasswordCredential
 import androidx.credentials.provider.PendingIntentHandler
@@ -20,13 +24,15 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 /**
- * Activity respaldada por Flutter, destino del `PendingIntent` que arma
- * [LockspireCredentialProviderService] (ADR 0011). No exportada (ver
- * `AndroidManifest.xml`) — solo la puede lanzar ese servicio, nunca un
- * intent externo directo. Todo lo sensible (desbloqueo, matching de
- * entradas, guardado) ocurre del lado Dart, reusando la infraestructura
- * ya existente — esta clase solo traduce entre las APIs de Android
- * Credential Manager y un `MethodChannel` simple.
+ * Activity respaldada por Flutter, destino del `PendingIntent`/`Intent`
+ * que arman [LockspireCredentialProviderService] (Credential Manager) y
+ * [LockspireAutofillService] (Autofill legado, necesario para WebViews —
+ * ver ADR 0011). No exportada (ver `AndroidManifest.xml`) — solo la
+ * pueden lanzar esos dos servicios, nunca un intent externo directo.
+ * Todo lo sensible (desbloqueo, matching de entradas, guardado) ocurre
+ * del lado Dart, reusando la infraestructura ya existente — esta clase
+ * solo traduce entre las dos APIs nativas de Android y un `MethodChannel`
+ * simple, agnóstico de cuál de las dos la lanzó.
  */
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 class AutofillActivity : FlutterFragmentActivity() {
@@ -34,12 +40,27 @@ class AutofillActivity : FlutterFragmentActivity() {
     private var getRequest: ProviderGetCredentialRequest? = null
     private var createRequest: ProviderCreateCredentialRequest? = null
 
+    // Origen "Autofill legado" — ver LockspireAutofillService. Si
+    // legacyUsernameId/legacyPasswordId no son null, vinimos de ahí en
+    // modo "get"; si legacySaveUsername/legacySavePassword no son null,
+    // vinimos de ahí en modo "guardar" (onSaveRequest).
+    private var legacyUsernameId: AutofillId? = null
+    private var legacyPasswordId: AutofillId? = null
+    private var legacySaveUsername: String? = null
+    private var legacySavePassword: String? = null
+    private var legacyRequestingPackage: String? = null
+
     override fun getInitialRoute(): String = "/autofill"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         getRequest = PendingIntentHandler.retrieveProviderGetCredentialRequest(intent)
         createRequest = PendingIntentHandler.retrieveProviderCreateCredentialRequest(intent)
+        legacyUsernameId = intent.getParcelableExtra(EXTRA_LEGACY_USERNAME_ID)
+        legacyPasswordId = intent.getParcelableExtra(EXTRA_LEGACY_PASSWORD_ID)
+        legacySaveUsername = intent.getStringExtra(EXTRA_LEGACY_SAVE_USERNAME)
+        legacySavePassword = intent.getStringExtra(EXTRA_LEGACY_SAVE_PASSWORD)
+        legacyRequestingPackage = intent.getStringExtra(EXTRA_REQUESTING_PACKAGE)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -70,6 +91,20 @@ class AutofillActivity : FlutterFragmentActivity() {
     }
 
     private fun buildRequestMap(): Map<String, Any?> {
+        if (legacySaveUsername != null && legacySavePassword != null) {
+            return mapOf(
+                "mode" to "create",
+                "packageName" to (legacyRequestingPackage ?: ""),
+                "username" to legacySaveUsername,
+                "password" to legacySavePassword,
+            )
+        }
+        if (legacyUsernameId != null || legacyPasswordId != null) {
+            return mapOf(
+                "mode" to "get",
+                "packageName" to (legacyRequestingPackage ?: ""),
+            )
+        }
         getRequest?.let {
             return mapOf(
                 "mode" to "get",
@@ -91,16 +126,56 @@ class AutofillActivity : FlutterFragmentActivity() {
     }
 
     private fun submitGet(username: String, password: String) {
+        if (legacyUsernameId != null || legacyPasswordId != null) {
+            submitLegacyGet(username, password)
+            return
+        }
         val resultIntent = Intent()
+        // La versión de androidx.credentials fijada en build.gradle.kts
+        // (1.6.0) todavía solo tiene el constructor de un único
+        // Credential — el de List<Credential> se agregó después, ver el
+        // comentario en build.gradle.kts.
+        val credential: Credential = PasswordCredential(username, password)
         PendingIntentHandler.setGetCredentialResponse(
             resultIntent,
-            GetCredentialResponse(listOf(PasswordCredential(username, password))),
+            GetCredentialResponse(credential),
+        )
+        setResult(Activity.RESULT_OK, resultIntent)
+        finish()
+    }
+
+    // Autofill legado (LockspireAutofillService) — a diferencia de
+    // Credential Manager, acá se arma un Dataset real con los
+    // AutofillId recibidos y se devuelve por la extra key que el propio
+    // framework de Android lee automáticamente
+    // (AutofillManager.EXTRA_AUTHENTICATION_RESULT), no por
+    // PendingIntentHandler.
+    private fun submitLegacyGet(username: String, password: String) {
+        val datasetBuilder = android.service.autofill.Dataset.Builder()
+        legacyUsernameId?.let {
+            datasetBuilder.setValue(it, AutofillValue.forText(username))
+        }
+        legacyPasswordId?.let {
+            datasetBuilder.setValue(it, AutofillValue.forText(password))
+        }
+        val resultIntent = Intent().putExtra(
+            AutofillManager.EXTRA_AUTHENTICATION_RESULT,
+            datasetBuilder.build(),
         )
         setResult(Activity.RESULT_OK, resultIntent)
         finish()
     }
 
     private fun submitCreate() {
+        // Guardado vía Autofill legado (LockspireAutofillService.
+        // onSaveRequest) — el SaveCallback.onSuccess() del framework ya
+        // se llamó del lado del servicio al abrir esta Activity (así lo
+        // exige esa API), acá solo queda cerrar una vez que addEntry()
+        // ya guardó la entrada en la bóveda (ver AutofillScreen).
+        if (legacySaveUsername != null && legacySavePassword != null) {
+            finish()
+            return
+        }
         val resultIntent = Intent()
         PendingIntentHandler.setCreateCredentialResponse(
             resultIntent,
@@ -112,5 +187,10 @@ class AutofillActivity : FlutterFragmentActivity() {
 
     companion object {
         private const val CHANNEL = "com.lockspire.lockspire/autofill"
+        const val EXTRA_LEGACY_USERNAME_ID = "legacy_username_autofill_id"
+        const val EXTRA_LEGACY_PASSWORD_ID = "legacy_password_autofill_id"
+        const val EXTRA_LEGACY_SAVE_USERNAME = "legacy_save_username"
+        const val EXTRA_LEGACY_SAVE_PASSWORD = "legacy_save_password"
+        const val EXTRA_REQUESTING_PACKAGE = "requesting_package"
     }
 }

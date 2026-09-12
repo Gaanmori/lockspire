@@ -51,6 +51,11 @@ dependencies {
     // Autofill nativo (ADR 0011) — androidx.credentials:provider, para
     // LockspireCredentialProviderService. Versión estable confirmada en
     // uso de producción (Bitwarden, código fuente leído directamente vía
-    // GitHub, no solo documentación) antes de fijarla acá.
+    // GitHub, no solo documentación) antes de fijarla acá. Nota: la rama
+    // de desarrollo de androidx (androidx-main) ya tiene un
+    // GetCredentialResponse(List<Credential>) que esta versión 1.6.0
+    // todavía no tiene — usar siempre el constructor de un solo
+    // Credential mientras se mantenga esta versión (confirmado con el
+    // compilador real, no solo con la documentación).
     implementation("androidx.credentials:credentials:1.6.0")
 }

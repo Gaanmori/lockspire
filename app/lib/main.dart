@@ -12,6 +12,12 @@ import 'features/vault/presentation/vault_session_state.dart';
 import 'features/vault/presentation/widgets/activity_and_lifecycle_watcher.dart';
 
 void main() {
+  // WidgetsBinding.instance no existe hasta que se inicializa el binding
+  // — runApp() lo hace por dentro, pero acá hace falta leer la ruta
+  // inicial *antes* de decidir a qué widget llamar runApp(), así que se
+  // inicializa a mano primero (idempotente, runApp() lo detecta y no
+  // vuelve a inicializar).
+  WidgetsFlutterBinding.ensureInitialized();
   // AutofillActivity (ADR 0011) arranca el mismo entrypoint con la ruta
   // inicial `/autofill` (ver `AutofillActivity.getInitialRoute()`) en vez
   // de un entrypoint Dart separado — evita la complejidad de compilar un

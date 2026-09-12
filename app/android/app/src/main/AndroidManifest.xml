@@ -59,6 +59,25 @@
                 android:resource="@xml/provider" />
         </service>
 
+        <!-- Autofill legado (ADR 0011) — necesario junto con el
+             servicio de arriba porque Credential Manager todavía no
+             soporta campos dentro de un WebView (confirmado en
+             verificación manual real, ver el ADR). Mismo criterio de
+             servicio delgado. -->
+        <service
+            android:name=".LockspireAutofillService"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Lockspire"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.autofill"
+                android:resource="@xml/autofill_service_configuration" />
+        </service>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

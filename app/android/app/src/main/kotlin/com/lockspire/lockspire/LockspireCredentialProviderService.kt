@@ -18,6 +18,7 @@ import androidx.credentials.provider.BeginCreateCredentialResponse
 import androidx.credentials.provider.BeginCreatePasswordCredentialRequest
 import androidx.credentials.provider.BeginGetCredentialRequest
 import androidx.credentials.provider.BeginGetCredentialResponse
+import androidx.credentials.provider.BeginGetPasswordOption
 import androidx.credentials.provider.CreateEntry
 import androidx.credentials.provider.CredentialProviderService
 import androidx.credentials.provider.ProviderClearCredentialStateRequest
@@ -39,6 +40,22 @@ class LockspireCredentialProviderService : CredentialProviderService() {
         cancellationSignal: CancellationSignal,
         callback: OutcomeReceiver<BeginGetCredentialResponse, GetCredentialException>,
     ) {
+        // Si el pedido no incluye ninguna opción de tipo contraseña (ej.
+        // Sign in with Google, u otro tipo de credencial que no
+        // manejamos), no hay nada que Lockspire pueda ofrecer acá —
+        // devolver una respuesta vacía evita aparecer como opción
+        // confusa en flujos que no tienen nada que ver con la bóveda.
+        // Bug real encontrado en verificación manual: sin este chequeo,
+        // Lockspire aparecía incluso en el selector de "Iniciar sesión
+        // con Google" de apps de terceros.
+        val hasPasswordOption = request.beginGetCredentialOptions.any {
+            it is BeginGetPasswordOption
+        }
+        if (!hasPasswordOption) {
+            callback.onResult(BeginGetCredentialResponse(authenticationActions = emptyList()))
+            return
+        }
+
         val packageName = request.callingAppInfo?.packageName ?: ""
         val authenticationAction = AuthenticationAction(
             title = "Desbloquear Lockspire",

@@ -109,7 +109,7 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
   }
 }
 
-class _GetCredentialView extends StatelessWidget {
+class _GetCredentialView extends StatefulWidget {
   final Vault vault;
   final String packageName;
   final ValueChanged<VaultEntry> onPick;
@@ -121,60 +121,106 @@ class _GetCredentialView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final entries = matchEntriesForPackage(
-      entries: vault.entries,
-      packageName: packageName,
-    );
+  State<_GetCredentialView> createState() => _GetCredentialViewState();
+}
 
-    if (entries.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(LockspireSpacing.lg),
-          child: Text(
-            'Todavía no guardaste ninguna contraseña en Lockspire.',
-            textAlign: TextAlign.center,
+class _GetCredentialViewState extends State<_GetCredentialView> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final matched = matchEntriesForPackage(
+      entries: widget.vault.entries,
+      packageName: widget.packageName,
+    );
+    final query = _query.trim().toLowerCase();
+    final entries = query.isEmpty
+        ? matched
+        : matched.where((e) => e.title.toLowerCase().contains(query)).toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            LockspireSpacing.lg,
+            LockspireSpacing.md,
+            LockspireSpacing.lg,
+            LockspireSpacing.sm,
+          ),
+          child: TextField(
+            controller: _searchController,
+            decoration: const InputDecoration(
+              hintText: 'Buscar por título',
+              prefixIcon: Icon(Icons.search),
+            ),
+            onChanged: (value) => setState(() => _query = value),
           ),
         ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(LockspireSpacing.lg),
-      itemCount: entries.length,
-      separatorBuilder: (_, _) => const SizedBox(height: LockspireSpacing.sm),
-      itemBuilder: (context, index) {
-        final entry = entries[index];
-        final username = entry.fields['username'];
-        return Material(
-          color: LockspireColors.bgSurface,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () => onPick(entry),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: LockspireSpacing.md,
-                vertical: LockspireSpacing.smMd,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.title,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  if (username != null && username.isNotEmpty)
-                    Text(
-                      username,
-                      style: Theme.of(context).textTheme.bodySmall,
+        Expanded(
+          child: entries.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(LockspireSpacing.lg),
+                    child: Text(
+                      query.isEmpty
+                          ? 'Todavía no guardaste ninguna contraseña en Lockspire.'
+                          : 'No se encontraron resultados.',
+                      textAlign: TextAlign.center,
                     ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(
+                    LockspireSpacing.lg,
+                    LockspireSpacing.sm,
+                    LockspireSpacing.lg,
+                    LockspireSpacing.lg,
+                  ),
+                  itemCount: entries.length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: LockspireSpacing.sm),
+                  itemBuilder: (context, index) {
+                    final entry = entries[index];
+                    final username = entry.fields['username'];
+                    return Material(
+                      color: LockspireColors.bgSurface,
+                      borderRadius: BorderRadius.circular(16),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => widget.onPick(entry),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: LockspireSpacing.md,
+                            vertical: LockspireSpacing.smMd,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry.title,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              if (username != null && username.isNotEmpty)
+                                Text(
+                                  username,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }

@@ -52,6 +52,19 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
 
   void _refresh() => setState(() => _statusFuture = _loadStatus());
 
+  Future<void> _openAutofillServiceSettings() async {
+    try {
+      await _settingsChannel.invokeMethod('openAutofillServiceSettings');
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? 'No se pudo abrir la configuración.'),
+        ),
+      );
+    }
+  }
+
   Future<void> _toggle(bool value) async {
     setState(() => _busy = true);
     final controller = ref.read(vaultSessionControllerProvider.notifier);
@@ -110,16 +123,15 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                     ),
                     const SizedBox(height: LockspireSpacing.sm),
                     const Text(
-                      'Activá Lockspire como gestor de credenciales del '
-                      'sistema para que aparezca como opción al iniciar '
-                      'sesión en otras apps (Android 14 o superior).',
+                      'Activá Lockspire como servicio de autocompletado '
+                      'para que aparezca como opción al iniciar sesión en '
+                      'otras apps — incluye logins dentro de un navegador '
+                      'embebido (ej. WebView).',
                     ),
                     const SizedBox(height: LockspireSpacing.md),
                     OutlinedButton(
-                      onPressed: () => _settingsChannel.invokeMethod(
-                        'openCredentialProviderSettings',
-                      ),
-                      child: const Text('Activar como gestor de credenciales'),
+                      onPressed: _openAutofillServiceSettings,
+                      child: const Text('Activar como autocompletado'),
                     ),
                   ],
                 ],
