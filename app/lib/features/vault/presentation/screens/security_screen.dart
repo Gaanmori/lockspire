@@ -4,12 +4,15 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
 import '../../domain/ports/biometric_auth_port.dart';
 import '../providers/biometric_auth_port_provider.dart';
 import '../vault_session_controller.dart';
+
+const _settingsChannel = MethodChannel('com.lockspire.lockspire/settings');
 
 /// Nombre del método biométrico según la plataforma — usado en los
 /// textos de esta pantalla (ver docs/adr/0010-desbloqueo-biometrico.md,
@@ -96,6 +99,28 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                   if (_busy) ...[
                     const SizedBox(height: LockspireSpacing.md),
                     const Center(child: CircularProgressIndicator()),
+                  ],
+                  if (Platform.isAndroid) ...[
+                    const SizedBox(height: LockspireSpacing.lg),
+                    const Divider(),
+                    const SizedBox(height: LockspireSpacing.md),
+                    Text(
+                      'Autocompletado',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: LockspireSpacing.sm),
+                    const Text(
+                      'Activá Lockspire como gestor de credenciales del '
+                      'sistema para que aparezca como opción al iniciar '
+                      'sesión en otras apps (Android 14 o superior).',
+                    ),
+                    const SizedBox(height: LockspireSpacing.md),
+                    OutlinedButton(
+                      onPressed: () => _settingsChannel.invokeMethod(
+                        'openCredentialProviderSettings',
+                      ),
+                      child: const Text('Activar como gestor de credenciales'),
+                    ),
                   ],
                 ],
               );

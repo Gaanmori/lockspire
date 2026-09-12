@@ -46,3 +46,11 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Autofill nativo (ADR 0011) — androidx.credentials:provider, para
+    // LockspireCredentialProviderService. Versión estable confirmada en
+    // uso de producción (Bitwarden, código fuente leído directamente vía
+    // GitHub, no solo documentación) antes de fijarla acá.
+    implementation("androidx.credentials:credentials:1.6.0")
+}
