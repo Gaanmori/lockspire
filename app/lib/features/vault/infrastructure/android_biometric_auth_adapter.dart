@@ -11,31 +11,38 @@ import '../domain/ports/biometric_auth_port.dart';
 
 const _keyBiometricKey = 'biometric.vault_key';
 const _keyOnboardingDismissed = 'biometric.onboarding_dismissed';
+const _promptReason = 'Verificate para desbloquear Lockspire';
 
-/// Implementa [BiometricAuthPort] en Android usando el gating biométrico
-/// real de `flutter_secure_storage` (`AndroidOptions.biometric`, con
-/// `enforceBiometrics: true`) — la clave queda envuelta por una clave de
-/// Android Keystore con autenticación de usuario requerida
-/// (hardware/TEE-backed), no un simple chequeo de UI antes de leer texto
-/// plano. El propio `read()`/`write()` de `flutter_secure_storage` ya
-/// muestra el prompt del sistema y el Keystore rechaza liberar la clave
-/// sin pasarlo — ver docs/adr/0010-desbloqueo-biometrico.md.
+/// Implementa [BiometricAuthPort] en Android con `local_auth`
+/// (`BiometricPrompt` real) para disparar el prompt del sistema antes de
+/// leer la clave de un `FlutterSecureStorage` plano — mismo patrón que
+/// `windows_biometric_auth_adapter.dart`.
 ///
-/// [_localAuth] se usa **solo** para [checkAvailability] (consultar si
-/// hay biometría/PIN configurado, sin disparar ningún prompt) — el
-/// desafío real ocurre dentro de `flutter_secure_storage`, no acá.
+/// **No usa `AndroidOptions.biometric` de `flutter_secure_storage`** —
+/// se intentó primero (gating a nivel de Android Keystore,
+/// hardware/TEE-backed, la opción documentada como más fuerte en
+/// docs/adr/0010-desbloqueo-biometrico.md) pero se descartó tras
+/// verificación manual real: el plugin cachea el cifrado de datos ya
+/// desenvuelto a nivel del objeto Java del plugin (`storageCipher`,
+/// campo de instancia, ver el código fuente de
+/// `FlutterSecureStorage.java`) — una vez pasada la biometría una vez
+/// dentro del proceso de la app, **todas las lecturas siguientes la
+/// reusan sin volver a pedirla**, sin importar cuántas veces la app
+/// llame a `lock()` (eso solo cambia estado de Dart, no toca el caché
+/// nativo del plugin). Confirmado con un bug real: tras activar la
+/// huella una vez, "Bloquear" + "Usar huella" entraba directo, sin
+/// pedir huella de nuevo. `local_auth.authenticate()` no tiene ese
+/// problema — cada llamada dispara un `BiometricPrompt` nuevo de
+/// verdad, así que el gating pasa a ser explícito acá (mismo trade-off
+/// ya aceptado para Windows, ahora también para Android — ver el ADR).
 class AndroidBiometricAuthAdapter implements BiometricAuthPort {
-  final FlutterSecureStorage _biometricStorage;
-  final FlutterSecureStorage plainStorage;
+  final FlutterSecureStorage _storage;
   final LocalAuthentication _localAuth;
 
   AndroidBiometricAuthAdapter({
-    required this.plainStorage,
+    required this._storage,
     LocalAuthentication? localAuth,
-  }) : _localAuth = localAuth ?? LocalAuthentication(),
-       _biometricStorage = const FlutterSecureStorage(
-         aOptions: AndroidOptions.biometric(enforceBiometrics: true),
-       );
+  }) : _localAuth = localAuth ?? LocalAuthentication();
 
   @override
   Future<BiometricAvailability> checkAvailability() async {
@@ -50,35 +57,37 @@ class AndroidBiometricAuthAdapter implements BiometricAuthPort {
 
   @override
   Future<bool> hasStoredKey() async =>
-      (await _biometricStorage.read(key: _keyBiometricKey)) != null;
+      (await _storage.read(key: _keyBiometricKey)) != null;
 
   @override
   Future<void> storeKey({required Uint8List key}) =>
-      _biometricStorage.write(key: _keyBiometricKey, value: base64Encode(key));
+      _storage.write(key: _keyBiometricKey, value: base64Encode(key));
 
   @override
   Future<Uint8List?> readKey() async {
-    // El prompt del sistema (huella/PIN) lo dispara este mismo read() —
-    // si el usuario cancela o falla, flutter_secure_storage lanza; se
-    // traduce a `null` acá, nunca se deja escapar la excepción (ver el
-    // contrato de [BiometricAuthPort.readKey]).
     try {
-      final encoded = await _biometricStorage.read(key: _keyBiometricKey);
+      final verified = await _localAuth.authenticate(
+        localizedReason: _promptReason,
+      );
+      if (!verified) return null;
+      final encoded = await _storage.read(key: _keyBiometricKey);
       if (encoded == null) return null;
       return base64Decode(encoded);
     } catch (_) {
+      // LocalAuthException (cancelado, timeout, etc.) — nunca se deja
+      // escapar, ver el contrato de [BiometricAuthPort.readKey].
       return null;
     }
   }
 
   @override
-  Future<void> deleteKey() => _biometricStorage.delete(key: _keyBiometricKey);
+  Future<void> deleteKey() => _storage.delete(key: _keyBiometricKey);
 
   @override
   Future<bool> wasOnboardingDismissed() async =>
-      (await plainStorage.read(key: _keyOnboardingDismissed)) == 'true';
+      (await _storage.read(key: _keyOnboardingDismissed)) == 'true';
 
   @override
   Future<void> markOnboardingDismissed() =>
-      plainStorage.write(key: _keyOnboardingDismissed, value: 'true');
+      _storage.write(key: _keyOnboardingDismissed, value: 'true');
 }

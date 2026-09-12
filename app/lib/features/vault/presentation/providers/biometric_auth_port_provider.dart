@@ -21,9 +21,7 @@ part 'biometric_auth_port_provider.g.dart';
 @Riverpod(keepAlive: true)
 BiometricAuthPort biometricAuthPort(Ref ref) {
   if (Platform.isAndroid) {
-    return AndroidBiometricAuthAdapter(
-      plainStorage: const FlutterSecureStorage(),
-    );
+    return AndroidBiometricAuthAdapter(storage: const FlutterSecureStorage());
   }
   if (Platform.isWindows) {
     return WindowsBiometricAuthAdapter(storage: const FlutterSecureStorage());

@@ -36,11 +36,19 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
     _checkBiometricAvailability();
   }
 
+  /// Si hay una clave biométrica guardada, muestra el botón **y** dispara
+  /// el prompt de una vez — pedido explícito del usuario, para no tener
+  /// que tocar "Usar huella" cada vez que se bloquea la bóveda. Si la
+  /// huella falla o se cancela, [VaultSessionController.unlockWithBiometrics]
+  /// no toca el estado (ver su doc comment) — la pantalla sigue mostrando
+  /// el campo de contraseña normal, listo para escribir, sin ningún error
+  /// que el usuario no pidió ver.
   Future<void> _checkBiometricAvailability() async {
     final port = ref.read(biometricAuthPortProvider);
     final hasStoredKey = await port.hasStoredKey();
     if (!mounted || !hasStoredKey) return;
     setState(() => _biometricAvailable = true);
+    await _submitWithBiometrics();
   }
 
   @override
