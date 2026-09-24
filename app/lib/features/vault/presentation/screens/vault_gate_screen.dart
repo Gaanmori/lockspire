@@ -5,17 +5,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
+import '../../domain/entities/vault.dart';
 import '../vault_session_controller.dart';
 import '../vault_session_state.dart';
 import 'create_vault_screen.dart';
 import 'unlock_vault_screen.dart';
-import 'vault_unlocked_screen.dart';
 
 /// Punto de entrada de la feature `vault`: decide qué pantalla mostrar
 /// según el estado inicial de la sesión (¿existe una bóveda? ¿está
 /// desbloqueada?). Sin `Navigator` — es un solo swap condicional.
+///
+/// Qué se muestra con la bóveda desbloqueada lo decide quien la usa
+/// ([unlockedBuilder]): así `vault` no depende de la navegación de la app
+/// (`home`), que a su vez sí depende de `vault` — sin ciclo entre features.
 class VaultGateScreen extends ConsumerWidget {
-  const VaultGateScreen({super.key});
+  final Widget Function(Vault vault) unlockedBuilder;
+
+  const VaultGateScreen({super.key, required this.unlockedBuilder});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,7 +52,7 @@ class VaultGateScreen extends ConsumerWidget {
       data: (state) => switch (state) {
         VaultSessionNoVault() => const CreateVaultScreen(),
         VaultSessionLocked() => const UnlockVaultScreen(),
-        VaultSessionUnlocked(:final vault) => VaultUnlockedScreen(vault: vault),
+        VaultSessionUnlocked(:final vault) => unlockedBuilder(vault),
       },
     );
   }

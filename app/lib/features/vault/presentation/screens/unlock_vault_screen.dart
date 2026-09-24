@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
 import '../providers/biometric_auth_port_provider.dart';
+import '../providers/check_master_password_required_provider.dart';
 import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
@@ -30,6 +31,10 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
   // cuando vuelva a importar.
   bool _biometricAvailable = false;
 
+  /// La biometría está activa, pero venció el plazo y toca escribir la
+  /// contraseña maestra (ADR 0017).
+  bool _passwordRequiredByReminder = false;
+
   @override
   void initState() {
     super.initState();
@@ -43,10 +48,19 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
   /// no toca el estado (ver su doc comment) — la pantalla sigue mostrando
   /// el campo de contraseña normal, listo para escribir, sin ningún error
   /// que el usuario no pidió ver.
+  ///
+  /// Si venció el plazo de ADR 0017, no ofrece la biometría y explica por
+  /// qué se pide la contraseña.
   Future<void> _checkBiometricAvailability() async {
     final port = ref.read(biometricAuthPortProvider);
     final hasStoredKey = await port.hasStoredKey();
     if (!mounted || !hasStoredKey) return;
+    final required = await ref.read(checkMasterPasswordRequiredProvider)();
+    if (!mounted) return;
+    if (required) {
+      setState(() => _passwordRequiredByReminder = true);
+      return;
+    }
     setState(() => _biometricAvailable = true);
     await _submitWithBiometrics();
   }
@@ -93,6 +107,18 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (_passwordRequiredByReminder) ...[
+                      Text(
+                        'Por seguridad, cada tanto Lockspire te pide la '
+                        'contraseña maestra aunque uses '
+                        '${Platform.isWindows ? 'Windows Hello' : 'la huella'}, '
+                        'para que no se te olvide. Después vuelve a '
+                        'funcionar como siempre.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: LockspireSpacing.md),
+                    ],
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscure,

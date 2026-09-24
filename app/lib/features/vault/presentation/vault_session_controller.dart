@@ -20,7 +20,10 @@ import '../domain/vault_file_codec.dart';
 import 'providers/auto_lock_timeout_provider.dart';
 import 'providers/auto_sync_debounce_provider.dart';
 import 'providers/biometric_auth_port_provider.dart';
+import 'providers/clock_provider.dart';
 import 'providers/crypto_port_provider.dart';
+import 'providers/check_master_password_required_provider.dart';
+import 'providers/password_unlock_history_port_provider.dart';
 import 'providers/lock_on_background_provider.dart';
 import 'providers/vault_auth_attempt_provider.dart';
 import 'providers/vault_storage_port_provider.dart';
@@ -91,6 +94,7 @@ class VaultSessionController extends _$VaultSessionController {
         ),
       );
       attempt.state = const AsyncData(null);
+      await _recordPasswordUnlock();
       _triggerAutoSync();
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
@@ -119,6 +123,7 @@ class VaultSessionController extends _$VaultSessionController {
         ),
       );
       attempt.state = const AsyncData(null);
+      await _recordPasswordUnlock();
       _triggerAutoSync();
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
@@ -137,7 +142,12 @@ class VaultSessionController extends _$VaultSessionController {
   /// [BiometricAuthPort.readKey] devuelve `null` y acá no se toca nada
   /// (ni `state` ni [vaultAuthAttemptProvider]) — sigue viendo la
   /// pantalla de desbloqueo normal, sin un error que no pidió ver.
+  ///
+  /// Si ya venció el plazo para exigir la contraseña maestra (ADR 0017),
+  /// no hace nada aunque la pantalla lo haya llamado: la regla se aplica
+  /// aquí, no solo ocultando el botón.
   Future<void> unlockWithBiometrics() async {
+    if (await ref.read(checkMasterPasswordRequiredProvider)()) return;
     final port = ref.read(biometricAuthPortProvider);
     final key = await port.readKey();
     if (key == null) return;
@@ -225,10 +235,23 @@ class VaultSessionController extends _$VaultSessionController {
         ),
       );
       attempt.state = const AsyncData(null);
+      await _recordPasswordUnlock();
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }
     _scheduleAutoLockIfUnlocked();
+  }
+
+  /// Registra un desbloqueo con la contraseña maestra (ADR 0017) y reinicia
+  /// el plazo para volver a pedirla. Un fallo al guardar no deshace el
+  /// desbloqueo: en el peor caso, la próxima vez se vuelve a pedir la
+  /// contraseña, que es el lado seguro.
+  Future<void> _recordPasswordUnlock() async {
+    try {
+      await ref
+          .read(passwordUnlockHistoryPortProvider)
+          .recordPasswordUnlock(ref.read(clockProvider)());
+    } catch (_) {}
   }
 
   void lock() {

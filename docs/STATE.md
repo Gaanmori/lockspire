@@ -355,7 +355,19 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
      - Tests: contraste WCAG de los 6 temas, controller con puerto falso, y tema en `PONG` en la app y la extensión. App 163, bridge 27, extensión 8. Detalle en `docs/design/README.md`.
   6. **Temas: verificados visualmente por el usuario en Windows (2026-09-25).**
   7. **ADR 0016 — tiempo de bloqueo configurable (implementado 2026-09-25, pendiente de probar):** 1, 5 o 15 minutos (5 por defecto) en Seguridad → Bloqueo automático. Se guarda fuera de la bóveda (`flutter_secure_storage`) y se carga antes del primer frame. Al cambiarlo, `VaultSessionController` reprograma el temporizador por su cuenta (escucha `autoLockTimeoutProvider`); la pantalla solo guarda el ajuste. Un provider por archivo (`auto_lock_preferences_port_provider`, `auto_lock_timeout_setting_provider`, `auto_lock_timeout_provider`), y lo mismo en `appearance` (puerto, controller y `appearance_theme.dart` para traducir a `ThemeData`), pensando en la revisión SOLID pedida por el usuario. Tests: 5 nuevos (app 168).
-  8. Después: `SAVE_CREDENTIAL` con confirmación en la app, Firefox, empaquetado/instalador que deje el host junto a la app automáticamente, publicación en la Chrome Web Store (añadir su ID a `allowedExtensionIds`).
+  8. **ADR 0017 — exigir la contraseña maestra cada 7, 14 o 30 días aunque se use biometría (implementado 2026-09-25, pendiente de probar):**
+     - El usuario propuso 15/30/45 y aceptó la recomendación 7/14/30, con 14 por defecto.
+     - Al vencer, el siguiente desbloqueo pide la contraseña una vez (con explicación) y luego la biometría vuelve sola. La clave cacheada no se borra.
+     - Diseño: regla pura en el dominio (`isMasterPasswordRequiredAt`: sin registro o reloj atrasado → pedir), dos puertos separados (ajuste y fecha del último desbloqueo con contraseña) y reloj inyectable.
+     - La regla se aplica en `VaultSessionController.unlockWithBiometrics()`, no solo en la UI.
+     - Tests: 8 nuevos (app 176).
+     - **Bug real encontrado por el usuario en Windows y corregido:** tras escribir la contraseña, al bloquear y al reiniciar la app volvía a pedir contraseña en vez de Windows Hello.
+       - La fecha sí se guardaba bien (comprobado leyendo `flutter_secure_storage.dat` con DPAPI; solo nombres de claves y la fecha, nunca otros valores).
+       - La causa era un provider auto-dispose con el resultado, leído con `ref.read(...future)`, que se descartaba a mitad de la lectura.
+       - Se reemplazó por `CheckMasterPasswordRequiredUseCase`, que evalúa en cada llamada.
+       - Tests nuevos: 3 del caso de uso y 2 de widget de `UnlockVaultScreen` como regresión. App 181.
+       - **Pendiente:** que el usuario confirme en Windows.
+  9. Después: `SAVE_CREDENTIAL` con confirmación en la app, Firefox, empaquetado/instalador que deje el host junto a la app automáticamente, publicación en la Chrome Web Store (añadir su ID a `allowedExtensionIds`).
 
 - "Bóveda desbloqueada" ya no es un placeholder (Fase 5) — sale de pendientes de diseño. Futuras pantallas por maquetar: configuración, `import_screen.dart`/`sync_settings_screen.dart`/`restore_vault_screen.dart` (quedaron con estilo básico/sin `AuthCard` completo — no bloqueante), lo que necesite la extensión de navegador.
 - **ADR 0009 (merge por campo) — verificación manual parcial, no un escenario controlado todavía:** durante la prueba de OneDrive en el Redmi se vio un merge real ("Se fusionaron los cambios: 1 entradas resueltas automáticamente") entre lo subido desde Windows y lo local del teléfono, lo que confirma que el camino funciona en la práctica — pero no fue el escenario específico planeado (dos dispositivos editando la misma entrada sin sincronizar entre medio, para confirmar que se resuelve solo sin picker). Queda como pendiente menor, no bloqueante, si se quiere esa prueba puntual más adelante.

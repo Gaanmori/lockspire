@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/sync/application/sync_vault_use_case.dart';
 import 'package:lockspire/features/sync/presentation/providers/active_sync_port_provider.dart';
@@ -17,7 +20,10 @@ import 'package:lockspire/features/vault/domain/vault_file_codec.dart';
 import 'package:lockspire/features/vault/presentation/providers/auto_lock_timeout_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/auto_sync_debounce_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/biometric_auth_port_provider.dart';
+import 'package:lockspire/features/vault/presentation/providers/clock_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
+import 'package:lockspire/features/vault/presentation/providers/master_password_reminder_settings_port_provider.dart';
+import 'package:lockspire/features/vault/presentation/providers/password_unlock_history_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/lock_on_background_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_auth_attempt_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
@@ -37,13 +43,28 @@ class _TestFakes {
   final FakeCryptoPort crypto;
   final FakeVaultStoragePort storage;
   final FakeBiometricAuthPort biometric;
+  final FakePasswordUnlockHistoryPort history;
 
   _TestFakes({
     required this.crypto,
     required this.storage,
     required this.biometric,
+    required this.history,
   });
 }
+
+/// Puertos de ADR 0017 en memoria: sin ellos, los tests usarían el
+/// almacenamiento real (sin plugin en `flutter test`).
+List<Override> _reminderOverrides(
+  FakePasswordUnlockHistoryPort history, {
+  DateTime Function()? clock,
+}) => [
+  passwordUnlockHistoryPortProvider.overrideWithValue(history),
+  masterPasswordReminderSettingsPortProvider.overrideWithValue(
+    FakeMasterPasswordReminderSettingsPort(),
+  ),
+  if (clock != null) clockProvider.overrideWithValue(clock),
+];
 
 /// [lockOnBackground] en `true` por defecto (comportamiento de Android,
 /// ADR 0008) — explícito porque los tests corren en un host de escritorio,
@@ -51,10 +72,12 @@ class _TestFakes {
 ({ProviderContainer container, _TestFakes fakes}) _buildContainer({
   Duration timeout = _shortTimeout,
   bool lockOnBackground = true,
+  DateTime Function()? clock,
 }) {
   final crypto = FakeCryptoPort();
   final storage = FakeVaultStoragePort();
   final biometric = FakeBiometricAuthPort();
+  final history = FakePasswordUnlockHistoryPort();
   final container = ProviderContainer(
     overrides: [
       cryptoPortProvider.overrideWith((ref) async => crypto),
@@ -62,12 +85,18 @@ class _TestFakes {
       autoLockTimeoutProvider.overrideWith((ref) => timeout),
       lockOnBackgroundProvider.overrideWith((ref) => lockOnBackground),
       biometricAuthPortProvider.overrideWith((ref) => biometric),
+      ..._reminderOverrides(history, clock: clock),
     ],
   );
   addTearDown(container.dispose);
   return (
     container: container,
-    fakes: _TestFakes(crypto: crypto, storage: storage, biometric: biometric),
+    fakes: _TestFakes(
+      crypto: crypto,
+      storage: storage,
+      biometric: biometric,
+      history: history,
+    ),
   );
 }
 
@@ -114,6 +143,7 @@ class _SyncTestFakes {
       syncAncestorStoragePortProvider.overrideWith(
         (ref) async => ancestorStorage,
       ),
+      ..._reminderOverrides(FakePasswordUnlockHistoryPort()),
     ],
   );
   addTearDown(container.dispose);
@@ -130,6 +160,88 @@ class _SyncTestFakes {
 }
 
 void main() {
+  group('VaultSessionController — pedir la contraseña maestra cada N días '
+      '(ADR 0017)', () {
+    Future<Uint8List> enableBiometrics(
+      ProviderContainer container,
+      _TestFakes fakes,
+    ) async {
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
+      await notifier.createVault(_masterPassword);
+      await notifier.enableBiometricUnlock();
+      final key =
+          (container.read(vaultSessionControllerProvider).value!
+                  as VaultSessionUnlocked)
+              .key;
+      notifier.lock();
+      return key;
+    }
+
+    test('crear o desbloquear con contraseña registra la fecha', () async {
+      final now = DateTime.utc(2026, 9, 25, 10);
+      final built = _buildContainer(
+        timeout: const Duration(minutes: 5),
+        clock: () => now,
+      );
+      final notifier = built.container.read(
+        vaultSessionControllerProvider.notifier,
+      );
+      await built.container.read(vaultSessionControllerProvider.future);
+      await notifier.createVault(_masterPassword);
+      expect(built.fakes.history.last, now);
+    });
+
+    test('dentro del plazo, la biometría desbloquea', () async {
+      var now = DateTime.utc(2026, 9, 25);
+      final built = _buildContainer(
+        timeout: const Duration(minutes: 5),
+        clock: () => now,
+      );
+      final key = await enableBiometrics(built.container, built.fakes);
+
+      now = now.add(const Duration(days: 13));
+      built.fakes.biometric.nextReadKeyResult = key;
+      await built.container
+          .read(vaultSessionControllerProvider.notifier)
+          .unlockWithBiometrics();
+
+      expect(
+        built.container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionUnlocked>(),
+      );
+    });
+
+    test('vencido el plazo, la biometría no desbloquea aunque la huella sea '
+        'correcta; tras usar la contraseña vuelve a funcionar', () async {
+      var now = DateTime.utc(2026, 9, 25);
+      final built = _buildContainer(
+        timeout: const Duration(minutes: 5),
+        clock: () => now,
+      );
+      final notifier = built.container.read(
+        vaultSessionControllerProvider.notifier,
+      );
+      final key = await enableBiometrics(built.container, built.fakes);
+
+      now = now.add(const Duration(days: 14));
+      built.fakes.biometric.nextReadKeyResult = key;
+      await notifier.unlockWithBiometrics();
+      expect(
+        built.container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionLocked>(),
+      );
+
+      await notifier.unlock(_masterPassword);
+      notifier.lock();
+      await notifier.unlockWithBiometrics();
+      expect(
+        built.container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionUnlocked>(),
+      );
+    });
+  });
+
   group(
     'VaultSessionController — tiempo de bloqueo configurable (ADR 0016)',
     () {
@@ -152,6 +264,7 @@ void main() {
             biometricAuthPortProvider.overrideWith(
               (ref) => FakeBiometricAuthPort(),
             ),
+            ..._reminderOverrides(FakePasswordUnlockHistoryPort()),
           ],
         );
         addTearDown(container.dispose);

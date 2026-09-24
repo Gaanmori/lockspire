@@ -8,7 +8,7 @@
 - **Clave derivada** (salida de Argon2id) mientras la bóveda está desbloqueada en memoria.
 - **Contenido de la bóveda** (credenciales, passkeys, notas) tanto en reposo (archivo cifrado en disco) como en memoria durante una sesión desbloqueada.
 - **Tokens OAuth de los proveedores de nube** (Drive/OneDrive/WebDAV; Dropbox descartado), guardados en el almacenamiento seguro del SO (Keystore/Keychain). No dan acceso al contenido de la bóveda (que sigue cifrado con la clave derivada de la contraseña maestra), pero sí permiten borrar o corromper el archivo remoto si se roban.
-- **Clave derivada cacheada tras activar el desbloqueo biométrico** (huella en Android, Windows Hello en escritorio — ver [ADR 0010](adr/0010-desbloqueo-biometrico.md)), guardada en el almacenamiento seguro del SO detrás de biometría/PIN. Es opt-in explícito, nunca reemplaza la derivación Argon2id de la sesión inicial — quien la obtiene tiene el mismo acceso que quien obtiene la clave derivada en memoria durante una sesión desbloqueada.
+- **Clave derivada cacheada tras activar el desbloqueo biométrico** (huella en Android, Windows Hello en escritorio — ver [ADR 0010](adr/0010-desbloqueo-biometrico.md)), guardada en el almacenamiento seguro del SO detrás de biometría/PIN. Es opt-in explícito, nunca reemplaza la derivación Argon2id de la sesión inicial — quien la obtiene tiene el mismo acceso que quien obtiene la clave derivada en memoria durante una sesión desbloqueada. Desde [ADR 0017](adr/0017-exigir-contrasena-maestra-periodicamente.md), la app solo la usa durante 7, 14 o 30 días (14 por defecto) desde el último desbloqueo con la contraseña maestra; pasado ese plazo exige la contraseña (y también si el reloj del equipo se atrasó).
 
 ## Actores / adversarios modelados
 

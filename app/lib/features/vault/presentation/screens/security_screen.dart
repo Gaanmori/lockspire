@@ -9,9 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
 import '../../domain/auto_lock_timeout.dart';
+import '../../domain/master_password_reminder.dart';
 import '../../domain/ports/biometric_auth_port.dart';
 import '../providers/auto_lock_timeout_setting_provider.dart';
 import '../providers/biometric_auth_port_provider.dart';
+import '../providers/master_password_reminder_setting_provider.dart';
 import '../vault_session_controller.dart';
 
 const _settingsChannel = MethodChannel('com.lockspire.lockspire/settings');
@@ -123,6 +125,10 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                     const SizedBox(height: LockspireSpacing.md),
                     const Center(child: CircularProgressIndicator()),
                   ],
+                  if (available) ...[
+                    const SizedBox(height: LockspireSpacing.md),
+                    const _MasterPasswordReminderSection(),
+                  ],
                   if (Platform.isAndroid) ...[
                     const SizedBox(height: LockspireSpacing.lg),
                     const Divider(),
@@ -164,6 +170,54 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
         BiometricAvailability.unavailable =>
           'No disponible en este dispositivo.',
       };
+}
+
+/// Cada cuánto se exige la contraseña maestra aunque se use biometría (ADR
+/// 0017): 7, 14 o 30 días.
+class _MasterPasswordReminderSection extends ConsumerWidget {
+  const _MasterPasswordReminderSection();
+
+  static String _label(MasterPasswordReminder reminder) => switch (reminder) {
+    MasterPasswordReminder.sevenDays => '7 días',
+    MasterPasswordReminder.fourteenDays => '14 días',
+    MasterPasswordReminder.thirtyDays => '30 días',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current =
+        ref.watch(masterPasswordReminderSettingProvider).value ??
+        MasterPasswordReminder.defaultValue;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Pedir la contraseña maestra cada',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: LockspireSpacing.sm),
+        SegmentedButton<MasterPasswordReminder>(
+          showSelectedIcon: false,
+          segments: [
+            for (final reminder in MasterPasswordReminder.values)
+              ButtonSegment(value: reminder, label: Text(_label(reminder))),
+          ],
+          selected: {current},
+          onSelectionChanged: (selection) => ref
+              .read(masterPasswordReminderSettingProvider.notifier)
+              .set(selection.first),
+        ),
+        const SizedBox(height: LockspireSpacing.xs),
+        Text(
+          'Aunque uses $_biometricMethodName, pasado este tiempo Lockspire '
+          'te pide la contraseña una vez, para que no se te olvide. Si la '
+          'olvidás, la bóveda no se puede recuperar.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
 }
 
 /// Tiempo de bloqueo por inactividad (ADR 0016): 1, 5 o 15 minutos.

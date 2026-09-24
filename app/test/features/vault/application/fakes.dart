@@ -4,7 +4,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:lockspire/features/vault/domain/master_password_reminder.dart';
 import 'package:lockspire/features/vault/domain/ports/biometric_auth_port.dart';
+import 'package:lockspire/features/vault/domain/ports/master_password_reminder_settings_port.dart';
+import 'package:lockspire/features/vault/domain/ports/password_unlock_history_port.dart';
 import 'package:lockspire/features/vault/domain/ports/crypto_port.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 
@@ -153,4 +156,33 @@ class FakeBiometricAuthPort implements BiometricAuthPort {
   Future<void> markOnboardingDismissed() async {
     _onboardingDismissed = true;
   }
+}
+
+/// Registro en memoria de desbloqueos con contraseña (ADR 0017).
+class FakePasswordUnlockHistoryPort implements PasswordUnlockHistoryPort {
+  DateTime? last;
+
+  FakePasswordUnlockHistoryPort([this.last]);
+
+  @override
+  Future<DateTime?> lastPasswordUnlock() async => last;
+
+  @override
+  Future<void> recordPasswordUnlock(DateTime at) async => last = at;
+}
+
+/// Ajuste de días en memoria (ADR 0017).
+class FakeMasterPasswordReminderSettingsPort
+    implements MasterPasswordReminderSettingsPort {
+  MasterPasswordReminder stored;
+
+  FakeMasterPasswordReminderSettingsPort([
+    this.stored = MasterPasswordReminder.defaultValue,
+  ]);
+
+  @override
+  Future<MasterPasswordReminder> load() async => stored;
+
+  @override
+  Future<void> save(MasterPasswordReminder reminder) async => stored = reminder;
 }
