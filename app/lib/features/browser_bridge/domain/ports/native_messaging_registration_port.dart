@@ -17,16 +17,27 @@ class NativeMessagingStatus {
   /// registrar nada.
   final bool hostBinaryFound;
 
-  /// Navegadores donde el host está registrado apuntando a esta
-  /// instalación.
+  /// Navegadores donde el host está registrado para el usuario actual,
+  /// apuntando a esta instalación.
   final Set<SupportedBrowser> registeredIn;
+
+  /// Navegadores donde el host está registrado para todo el equipo (ADR
+  /// 0014). Vacío si no aplica en la plataforma.
+  final Set<SupportedBrowser> registeredSystemWideIn;
+
+  /// `true` si la plataforma admite el registro para todo el equipo.
+  final bool systemWideSupported;
 
   const NativeMessagingStatus({
     required this.hostBinaryFound,
     required this.registeredIn,
+    this.registeredSystemWideIn = const {},
+    this.systemWideSupported = false,
   });
 
   bool get isRegistered => registeredIn.isNotEmpty;
+
+  bool get isRegisteredSystemWide => registeredSystemWideIn.isNotEmpty;
 }
 
 /// Registro del native host en los navegadores. Solo se modifica cuando
@@ -39,4 +50,14 @@ abstract interface class NativeMessagingRegistrationPort {
   Future<Set<SupportedBrowser>> register();
 
   Future<void> unregister();
+
+  /// Registra el host para todo el equipo (ADR 0014). Pide permisos de
+  /// administrador al sistema. Pensado para equipos donde una política de
+  /// la organización impide los hosts por usuario
+  /// (`NativeMessagingUserLevelHosts`). Lanza si el usuario cancela la
+  /// elevación o falla.
+  Future<void> registerSystemWide();
+
+  /// Quita el registro para todo el equipo. También pide elevación.
+  Future<void> unregisterSystemWide();
 }

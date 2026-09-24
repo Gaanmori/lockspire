@@ -12,6 +12,7 @@ import '../../../vault/application/password_generator.dart';
 import '../../../vault/presentation/vault_session_controller.dart';
 import '../../../vault/presentation/vault_session_state.dart';
 import '../../application/handle_bridge_request.dart';
+import 'pending_link_request_provider.dart';
 
 part 'browser_bridge_provider.g.dart';
 
@@ -46,6 +47,10 @@ Future<BrowserBridgeStatus> browserBridge(Ref ref) async {
     },
     showApp: () => unawaited(showMainWindow()),
     generatePassword: (length) => generatePassword(length: length),
+    requestLink: (request) {
+      ref.read(pendingLinkRequestProvider.notifier).set(request);
+      unawaited(showMainWindow());
+    },
   );
 
   try {

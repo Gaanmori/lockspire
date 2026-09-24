@@ -423,11 +423,15 @@ class WindowsPipeConnection implements BridgeConnection {
   /// Conecta y verifica que el servidor corre como el mismo usuario antes
   /// de enviarle nada (anti pipe-squatting, ADR 0013).
   static Future<WindowsPipeConnection> connect(IpcLocation location) async {
+    String? failure;
     final handle = using((arena) {
       final name = location.endpoint.toNativeUtf16(allocator: arena);
       for (var attempt = 0; attempt < 3; attempt++) {
         // Falla de inmediato si el pipe no existe; espera si está ocupado.
-        if (waitNamedPipe(name, 2000) == 0) return invalidHandleValue;
+        if (waitNamedPipe(name, 2000) == 0) {
+          failure = 'WaitNamedPipe falló (error ${getLastError()})';
+          return invalidHandleValue;
+        }
         final h = createFile(
           name,
           genericRead | genericWrite,
@@ -438,10 +442,11 @@ class WindowsPipeConnection implements BridgeConnection {
           0,
         );
         if (h != invalidHandleValue) return h;
+        failure = 'CreateFile falló (error ${getLastError()})';
       }
       return invalidHandleValue;
     });
-    if (handle == invalidHandleValue) throw AppNotRunningException();
+    if (handle == invalidHandleValue) throw AppNotRunningException(failure);
 
     final serverSid = using((arena) {
       final pid = arena<Uint32>();

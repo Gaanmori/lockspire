@@ -14,6 +14,35 @@ VaultEntry _entry(String? url, {bool deleted = false}) {
 }
 
 void main() {
+  group('linkedUrlForOrigin (ADR 0015)', () {
+    test('quita solo un www. inicial y conserva esquema y puerto', () {
+      expect(
+        linkedUrlForOrigin('https://www.facebook.com'),
+        'https://facebook.com',
+      );
+      expect(
+        linkedUrlForOrigin('https://m.facebook.com'),
+        'https://m.facebook.com',
+      );
+      expect(
+        linkedUrlForOrigin('http://www.intranet.local:8080'),
+        'http://intranet.local:8080',
+      );
+      // "www.com" no se reduce a "com".
+      expect(linkedUrlForOrigin('https://www.com'), 'https://www.com');
+    });
+
+    test('la URL guardada coincide luego con www. y con otros subdominios', () {
+      final entry = _entry(linkedUrlForOrigin('https://www.facebook.com'));
+      expect(entryMatchesOrigin(entry, 'https://www.facebook.com'), isTrue);
+      expect(entryMatchesOrigin(entry, 'https://m.facebook.com'), isTrue);
+      expect(
+        entryMatchesOrigin(entry, 'https://facebook.com.evil.io'),
+        isFalse,
+      );
+    });
+  });
+
   group('entryMatchesOrigin (ADR 0013)', () {
     test('mismo host coincide; subdominio del guardado también', () {
       final entry = _entry('https://example.com/login');

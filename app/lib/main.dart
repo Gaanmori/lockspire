@@ -11,6 +11,7 @@ import 'design/lockspire_theme.dart';
 import 'features/autofill/presentation/autofill_app.dart';
 import 'features/browser_bridge/infrastructure/single_instance.dart';
 import 'features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
+import 'features/browser_bridge/presentation/widgets/link_request_listener.dart';
 import 'features/desktop/presentation/widgets/desktop_shell.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
 import 'features/vault/presentation/vault_session_controller.dart';
@@ -98,7 +99,9 @@ class MyApp extends ConsumerWidget {
       // DesktopShell dentro de MaterialApp: necesita un Navigator para
       // mostrar el aviso de "sigue en la bandeja" al cerrar la ventana.
       home: const DesktopShell(
-        child: ActivityAndLifecycleWatcher(child: VaultGateScreen()),
+        child: LinkRequestListener(
+          child: ActivityAndLifecycleWatcher(child: VaultGateScreen()),
+        ),
       ),
     );
   }

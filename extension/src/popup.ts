@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Lockspire
 
 import { fillCredentials, type FillResult } from './fill.ts';
+import { filterEntries } from './filter.ts';
 import { send, webOrigin, type CredentialSummary, type Response } from './protocol.ts';
 
 const GENERATED_LENGTH = 20;
@@ -17,6 +18,10 @@ const siteEl = $('site');
 const primaryAction = $<HTMLButtonElement>('primary-action');
 const entriesEl = $<HTMLUListElement>('entries');
 const generatorEl = $('generator');
+const chooseOther = $<HTMLButtonElement>('choose-other');
+const pickerEl = $('picker');
+const filterInput = $<HTMLInputElement>('filter');
+const allEntriesEl = $<HTMLUListElement>('all-entries');
 
 function setStatus(text: string, isError = false): void {
   statusEl.textContent = text;
@@ -34,7 +39,10 @@ function problemMessage(response: Response): string | null {
   if (response.type !== 'ERROR') return null;
   switch (response.code) {
     case 'HOST_NOT_INSTALLED':
-      return 'La extensión no está conectada con la app. En Lockspire: Navegador → "Conectar con Chrome/Edge".';
+      return (
+        'La extensión no está conectada con la app. En Lockspire: Navegador → "Conectar con Chrome/Edge".' +
+        (response.detail ? `\n\n(Chrome: ${response.detail})` : '')
+      );
     case 'APP_NOT_RUNNING':
       return 'Abrí Lockspire en este equipo para usar la extensión.';
     default:
@@ -84,6 +92,11 @@ async function listCredentials(tabId: number, origin: string): Promise<void> {
     setStatus(problemMessage(response) ?? 'Respuesta inesperada de Lockspire.', true);
     return;
   }
+  // Siempre se puede elegir otra entrada: también sirve cuando la que
+  // coincide no es la cuenta que se quiere usar (ADR 0015).
+  chooseOther.hidden = false;
+  chooseOther.onclick = () => void openPicker(origin);
+
   if (response.entries.length === 0) {
     setStatus('No hay credenciales guardadas para este sitio.');
     return;
@@ -91,12 +104,71 @@ async function listCredentials(tabId: number, origin: string): Promise<void> {
 
   setStatus('Elegí una credencial para rellenar:');
   entriesEl.replaceChildren(
-    ...response.entries.map((entry) => entryItem(entry, tabId, origin)),
+    ...response.entries.map((entry) =>
+      entryItem(entry, () => void fill(entry, tabId, origin)),
+    ),
   );
   entriesEl.hidden = false;
 }
 
-function entryItem(entry: CredentialSummary, tabId: number, origin: string): HTMLLIElement {
+async function openPicker(origin: string): Promise<void> {
+  entriesEl.hidden = true;
+  chooseOther.hidden = true;
+  setStatus('Cargando tus entradas…');
+
+  const response = await send({ type: 'LIST_CREDENTIALS' });
+  if (response.type === 'UNLOCK_REQUIRED') {
+    setStatus('Tu bóveda está bloqueada.');
+    showAction('Desbloquear en Lockspire', () => void showApp());
+    return;
+  }
+  if (response.type !== 'CREDENTIALS') {
+    setStatus(problemMessage(response) ?? 'Respuesta inesperada de Lockspire.', true);
+    return;
+  }
+  if (response.entries.length === 0) {
+    setStatus('Tu bóveda no tiene entradas todavía.');
+    return;
+  }
+
+  setStatus(`Vincular ${new URL(origin).host} a una entrada:`);
+  const all = response.entries;
+  const render = () => {
+    const visible = filterEntries(all, filterInput.value);
+    allEntriesEl.replaceChildren(
+      ...visible.map((entry) => entryItem(entry, () => void requestLink(entry, origin))),
+    );
+  };
+  filterInput.oninput = render;
+  render();
+  pickerEl.hidden = false;
+  filterInput.focus();
+}
+
+async function requestLink(entry: CredentialSummary, origin: string): Promise<void> {
+  const response = await send({
+    type: 'REQUEST_LINK_ORIGIN',
+    origin,
+    entry_id: entry.entryId,
+  });
+  pickerEl.hidden = true;
+  if (response.type === 'OK') {
+    // La app muestra la confirmación en su ventana; al ganar el foco, el
+    // navegador suele cerrar este popup.
+    setStatus(
+      `Confirmá el vínculo en la ventana de Lockspire. Después volvé a abrir esta extensión para rellenar "${entry.title}".`,
+    );
+    return;
+  }
+  setStatus(
+    response.type === 'UNLOCK_REQUIRED'
+      ? 'La bóveda se bloqueó. Desbloqueala e intentá de nuevo.'
+      : 'No se pudo pedir el vínculo.',
+    true,
+  );
+}
+
+function entryItem(entry: CredentialSummary, onClick: () => void): HTMLLIElement {
   const button = document.createElement('button');
   button.className = 'entry';
   const title = document.createElement('span');
@@ -106,7 +178,7 @@ function entryItem(entry: CredentialSummary, tabId: number, origin: string): HTM
   user.className = 'user';
   user.textContent = entry.username || '(sin usuario)';
   button.append(title, user);
-  button.addEventListener('click', () => void fill(entry, tabId, origin));
+  button.addEventListener('click', onClick);
 
   const li = document.createElement('li');
   li.append(button);

@@ -131,6 +131,12 @@ void main() {
         ),
         const GeneratePasswordRequest('r4', length: 20),
         const ShowAppRequest('r5'),
+        const ListCredentialsRequest('r6'),
+        const RequestLinkOriginRequest(
+          'r7',
+          origin: 'https://www.facebook.com',
+          entryId: '3f2c9a1e-0000-4000-8000-000000000000',
+        ),
       ];
       for (final request in requests) {
         final parsed = BridgeRequest.parse(request.toJson());
@@ -204,6 +210,15 @@ void main() {
             'entry_id': '../etc',
           },
           {'v': 1, 'id': 'x', 'type': 'GET_CREDENTIALS_FOR_ORIGIN'},
+          {'v': 1, 'id': 'x', 'type': 'LIST_CREDENTIALS', 'query': 'fa'},
+          {
+            'v': 1,
+            'id': 'x',
+            'type': 'REQUEST_LINK_ORIGIN',
+            'origin': 'file:///x',
+            'entry_id': 'e1',
+          },
+          {'v': 1, 'id': 'x', 'type': 'REQUEST_LINK_ORIGIN', 'entry_id': 'e1'},
         ];
         for (final json in bad) {
           expect(

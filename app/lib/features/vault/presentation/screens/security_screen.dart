@@ -50,7 +50,11 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     return (availability, enabled);
   }
 
-  void _refresh() => setState(() => _statusFuture = _loadStatus());
+  // Cuerpo con llaves: `() => _statusFuture = ...` devolvería el Future y
+  // setState lo rechaza.
+  void _refresh() => setState(() {
+    _statusFuture = _loadStatus();
+  });
 
   Future<void> _openAutofillServiceSettings() async {
     try {

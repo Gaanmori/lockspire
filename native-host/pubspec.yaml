@@ -11,6 +11,7 @@ environment:
 dependencies:
   lockspire_bridge:
     path: ../packages/lockspire_bridge
+  path: ^1.9.1
 
 dev_dependencies:
   lints: ^6.0.0

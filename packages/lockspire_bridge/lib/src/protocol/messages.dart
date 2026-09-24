@@ -32,6 +32,8 @@ abstract final class MessageType {
   static const getCredentialSecret = 'GET_CREDENTIAL_SECRET';
   static const generatePassword = 'GENERATE_PASSWORD';
   static const showApp = 'SHOW_APP';
+  static const listCredentials = 'LIST_CREDENTIALS';
+  static const requestLinkOrigin = 'REQUEST_LINK_ORIGIN';
 
   // Respuestas (app → extensión).
   static const pong = 'PONG';
@@ -171,14 +173,10 @@ sealed class BridgeRequest {
       case MessageType.getCredentialSecret:
         _expectKeys(json, required: {'v', 'id', 'type', 'origin', 'entry_id'});
         _expectVersion(json);
-        final entryId = _string(json, 'entry_id');
-        if (!_entryIdPattern.hasMatch(entryId)) {
-          throw const BridgeProtocolException('entry_id inválido');
-        }
         return GetCredentialSecretRequest(
           _id(json),
           origin: _origin(json),
-          entryId: entryId,
+          entryId: _entryId(json),
         );
       case MessageType.generatePassword:
         _expectKeys(json, required: {'v', 'id', 'type', 'length'});
@@ -194,6 +192,18 @@ sealed class BridgeRequest {
         _expectKeys(json, required: {'v', 'id', 'type'});
         _expectVersion(json);
         return ShowAppRequest(_id(json));
+      case MessageType.listCredentials:
+        _expectKeys(json, required: {'v', 'id', 'type'});
+        _expectVersion(json);
+        return ListCredentialsRequest(_id(json));
+      case MessageType.requestLinkOrigin:
+        _expectKeys(json, required: {'v', 'id', 'type', 'origin', 'entry_id'});
+        _expectVersion(json);
+        return RequestLinkOriginRequest(
+          _id(json),
+          origin: _origin(json),
+          entryId: _entryId(json),
+        );
       default:
         throw const BridgeProtocolException('type desconocido');
     }
@@ -253,6 +263,33 @@ class ShowAppRequest extends BridgeRequest {
   String get type => MessageType.showApp;
   @override
   Map<String, Object?> _fields() => const {};
+}
+
+/// Todas las entradas de contraseña (resumen sin contraseñas), para elegir
+/// una a mano cuando ninguna coincide con el sitio (ADR 0015).
+class ListCredentialsRequest extends BridgeRequest {
+  const ListCredentialsRequest(super.id);
+  @override
+  String get type => MessageType.listCredentials;
+  @override
+  Map<String, Object?> _fields() => const {};
+}
+
+/// Pide vincular [origin] a una entrada. La app **no** lo aplica: muestra
+/// una confirmación en su propia ventana y responde `OK` de inmediato
+/// (ADR 0015).
+class RequestLinkOriginRequest extends BridgeRequest {
+  final String origin;
+  final String entryId;
+  const RequestLinkOriginRequest(
+    super.id, {
+    required this.origin,
+    required this.entryId,
+  });
+  @override
+  String get type => MessageType.requestLinkOrigin;
+  @override
+  Map<String, Object?> _fields() => {'origin': origin, 'entry_id': entryId};
 }
 
 // ---------------------------------------------------------------------
@@ -379,6 +416,14 @@ String _id(Map<String, Object?> json) {
     throw const BridgeProtocolException('id inválido');
   }
   return id;
+}
+
+String _entryId(Map<String, Object?> json) {
+  final entryId = _string(json, 'entry_id');
+  if (!_entryIdPattern.hasMatch(entryId)) {
+    throw const BridgeProtocolException('entry_id inválido');
+  }
+  return entryId;
 }
 
 String _origin(Map<String, Object?> json) {

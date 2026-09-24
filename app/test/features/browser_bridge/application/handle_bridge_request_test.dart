@@ -37,10 +37,12 @@ final _bank = VaultEntry.create(
 void main() {
   Vault? vault;
   var showCalls = 0;
+  final linkRequests = <LinkRequest>[];
 
   late HandleBridgeRequest handle;
 
   setUp(() {
+    linkRequests.clear();
     vault = Vault(
       vaultId: 'test',
       schemaVersion: 1,
@@ -51,7 +53,63 @@ void main() {
       currentVault: () => vault,
       showApp: () => showCalls++,
       generatePassword: (length) => 'x' * length,
+      requestLink: linkRequests.add,
     );
+  });
+
+  group('vincular un sitio (ADR 0015)', () {
+    test('LIST_CREDENTIALS devuelve todas, ordenadas y sin contraseñas', () {
+      final response = handle(const ListCredentialsRequest('a'));
+      final titles = (response['entries'] as List).map(
+        (e) => (e as Map)['title'],
+      );
+      expect(titles, ['Banco', 'GitHub', 'github trabajo']);
+      expect(jsonEncode(response), isNot(contains('pw-')));
+    });
+
+    test('LIST_CREDENTIALS con la bóveda bloqueada pide desbloquear', () {
+      vault = null;
+      expect(
+        handle(const ListCredentialsRequest('a')),
+        unlockRequiredResponse('a'),
+      );
+    });
+
+    test('REQUEST_LINK_ORIGIN no toca la bóveda: solo pide confirmación '
+        'en la app, con la URL sin www.', () {
+      final before = vault!.entries.map((e) => e.fields['url']).toList();
+      expect(
+        handle(
+          RequestLinkOriginRequest(
+            'a',
+            origin: 'https://www.facebook.com',
+            entryId: _bank.id,
+          ),
+        ),
+        okResponse('a'),
+      );
+      expect(vault!.entries.map((e) => e.fields['url']).toList(), before);
+      final request = linkRequests.single;
+      expect(request.entryId, _bank.id);
+      expect(request.entryTitle, 'Banco');
+      expect(request.currentUrl, 'https://banco.example');
+      expect(request.newUrl, 'https://facebook.com');
+    });
+
+    test('REQUEST_LINK_ORIGIN de una entrada inexistente → NOT_FOUND, sin '
+        'pedir nada', () {
+      expect(
+        handle(
+          const RequestLinkOriginRequest(
+            'a',
+            origin: 'https://www.facebook.com',
+            entryId: 'no-existe',
+          ),
+        ),
+        errorResponse('a', ErrorCode.notFound),
+      );
+      expect(linkRequests, isEmpty);
+    });
   });
 
   test('PING informa si la bóveda está bloqueada', () {

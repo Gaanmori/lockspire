@@ -127,6 +127,12 @@ final flushFileBuffers = _kernel32
       'FlushFileBuffers',
     );
 
+/// Solo para diagnósticos: desde Dart FFI el valor puede quedar pisado por
+/// el runtime entre la llamada y la lectura, así que nunca se usa para
+/// decidir el flujo.
+final getLastError = _kernel32
+    .lookupFunction<Uint32 Function(), int Function()>('GetLastError');
+
 final closeHandle = _kernel32
     .lookupFunction<Int32 Function(IntPtr), int Function(int)>('CloseHandle');
 

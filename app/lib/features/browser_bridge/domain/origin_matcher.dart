@@ -34,6 +34,21 @@ bool entryMatchesOrigin(VaultEntry entry, String origin) {
   return requestHost == storedHost || requestHost.endsWith('.$storedHost');
 }
 
+/// URL que se guarda en una entrada al vincularla con [origin] desde la
+/// extensión (ADR 0015): el mismo origen sin un `www.` inicial, para que
+/// la entrada coincida también con los demás subdominios del sitio
+/// (`https://www.facebook.com` → `https://facebook.com`, que sirve para
+/// `www.` y `m.`). Solo se quita `www.`: nunca se sube más allá, porque
+/// eso haría coincidir dominios ajenos (`co.uk`).
+String linkedUrlForOrigin(String origin) {
+  final uri = Uri.parse(origin);
+  final host = _normalizeHost(uri.host);
+  final stripped = host.startsWith('www.') && host.split('.').length > 2
+      ? host.substring(4)
+      : host;
+  return uri.replace(host: stripped).toString();
+}
+
 const _webSchemes = {'http', 'https'};
 
 Uri? _parseStoredUrl(String? raw) {

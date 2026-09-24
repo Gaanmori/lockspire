@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
 
 import '../domain/ports/native_messaging_registration_port.dart';
@@ -64,9 +65,30 @@ class NativeMessagingRegistrationAdapter
         }
       }
     }
+    final registeredSystemWide = <SupportedBrowser>{};
+    if (Platform.isWindows) {
+      final manifestPath = _windowsSystemManifestPath();
+      final manifest = File(manifestPath);
+      final pointsHere =
+          manifest.existsSync() &&
+          _pointsToThisHost(manifest.readAsStringSync());
+      if (pointsHere) {
+        for (final browser in SupportedBrowser.values) {
+          final value = await _regQueryDefault(
+            _windowsRegistryKey(browser, root: 'HKLM'),
+            extraArgs: const ['/reg:64'],
+          );
+          if (value != null && p.equals(value, manifestPath)) {
+            registeredSystemWide.add(browser);
+          }
+        }
+      }
+    }
     return NativeMessagingStatus(
       hostBinaryFound: File(_hostBinaryPath).existsSync(),
       registeredIn: registered,
+      registeredSystemWideIn: registeredSystemWide,
+      systemWideSupported: Platform.isWindows,
     );
   }
 
@@ -143,7 +165,125 @@ class NativeMessagingRegistrationAdapter
     }
   }
 
+  @override
+  Future<void> registerSystemWide() async {
+    if (!Platform.isWindows) {
+      throw UnsupportedError('Solo disponible en Windows por ahora');
+    }
+    if (!File(_hostBinaryPath).existsSync()) {
+      throw StateError(
+        'No se encontró el native host en $_hostBinaryPath. '
+        'Compílalo e instálalo junto a la app (ver native-host/README.md).',
+      );
+    }
+    await _runElevated(_systemWideScript(install: true));
+  }
+
+  @override
+  Future<void> unregisterSystemWide() async {
+    if (!Platform.isWindows) {
+      throw UnsupportedError('Solo disponible en Windows por ahora');
+    }
+    await _runElevated(_systemWideScript(install: false));
+  }
+
+  /// Script de PowerShell que se ejecuta elevado (ADR 0014). Escribe el
+  /// manifest en `%ProgramData%\Lockspire\native-messaging\` con una ACL
+  /// explícita (Administradores y SYSTEM control total, Usuarios solo
+  /// lectura, sin herencia) y registra la clave `HKLM` de cada navegador
+  /// en las vistas de 64 y 32 bits del registro.
+  String _systemWideScript({required bool install}) {
+    final keys = [
+      for (final browser in SupportedBrowser.values)
+        "'${_windowsRegistrySubkey(browser)}'",
+    ].join(', ');
+    final manifestJson = _manifestJson();
+    return '''
+\$ErrorActionPreference = 'Stop'
+\$dir = Join-Path \$env:ProgramData 'Lockspire\\native-messaging'
+\$path = Join-Path \$dir '$nativeHostName.json'
+\$keys = @($keys)
+\$views = @([Microsoft.Win32.RegistryView]::Registry64, [Microsoft.Win32.RegistryView]::Registry32)
+if (${install ? r'$true' : r'$false'}) {
+  New-Item -ItemType Directory -Force -Path \$dir | Out-Null
+  & icacls.exe \$dir /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' | Out-Null
+  if (\$LASTEXITCODE -ne 0) { throw 'icacls falló' }
+  [System.IO.File]::WriteAllText(\$path, @'
+$manifestJson
+'@, (New-Object System.Text.UTF8Encoding \$false))
+  foreach (\$view in \$views) {
+    \$base = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, \$view)
+    foreach (\$k in \$keys) {
+      \$key = \$base.CreateSubKey(\$k)
+      \$key.SetValue('', \$path)
+      \$key.Close()
+    }
+    \$base.Close()
+  }
+} else {
+  foreach (\$view in \$views) {
+    \$base = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, \$view)
+    foreach (\$k in \$keys) { \$base.DeleteSubKeyTree(\$k, \$false) }
+    \$base.Close()
+  }
+  if (Test-Path \$path) { Remove-Item -Force \$path }
+}
+''';
+  }
+
+  /// Ejecuta [script] como administrador (diálogo de UAC). El script va
+  /// en línea con `-EncodedCommand`, nunca en un archivo temporal: un
+  /// archivo en `%TEMP%` podría modificarlo cualquier proceso del usuario
+  /// entre que se escribe y Windows lo ejecuta elevado (escalada de
+  /// privilegios).
+  static Future<void> _runElevated(String script) async {
+    final encoded = _encodePowerShellCommand(script);
+    final launcher =
+        "\$p = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait "
+        "-PassThru -WindowStyle Hidden -ArgumentList '-NoProfile', "
+        "'-NonInteractive', '-EncodedCommand', '$encoded'; "
+        'exit \$p.ExitCode';
+    final result = await Process.run('powershell.exe', [
+      '-NoProfile',
+      '-NonInteractive',
+      '-Command',
+      launcher,
+    ]);
+    if (result.exitCode != 0) {
+      throw StateError(
+        'No se completó el registro para todo el equipo '
+        '(¿se canceló el permiso de administrador?).',
+      );
+    }
+  }
+
+  @visibleForTesting
+  String systemWideScriptForTest({required bool install}) =>
+      _systemWideScript(install: install);
+
+  @visibleForTesting
+  static String encodePowerShellCommandForTest(String script) =>
+      _encodePowerShellCommand(script);
+
+  /// `-EncodedCommand` espera base64 de UTF-16LE.
+  static String _encodePowerShellCommand(String script) {
+    final bytes = <int>[];
+    for (final unit in script.codeUnits) {
+      bytes
+        ..add(unit & 0xff)
+        ..add(unit >> 8);
+    }
+    return base64.encode(bytes);
+  }
+
   // --- Windows ---------------------------------------------------------
+
+  String _windowsSystemManifestPath() => p.join(
+    _environment['ProgramData'] ?? r'C:\ProgramData',
+    'Lockspire',
+    'native-messaging',
+    '$nativeHostName.json',
+  );
 
   String _windowsManifestPath() => p.join(
     _environment['LOCALAPPDATA'] ?? '',
@@ -152,17 +292,30 @@ class NativeMessagingRegistrationAdapter
     '$nativeHostName.json',
   );
 
-  static String _windowsRegistryKey(SupportedBrowser browser) {
+  static String _windowsRegistrySubkey(SupportedBrowser browser) {
     final vendor = switch (browser) {
       SupportedBrowser.chrome => r'Google\Chrome',
       SupportedBrowser.edge => r'Microsoft\Edge',
       SupportedBrowser.chromium => 'Chromium',
     };
-    return 'HKCU\\Software\\$vendor\\NativeMessagingHosts\\$nativeHostName';
+    return 'SOFTWARE\\$vendor\\NativeMessagingHosts\\$nativeHostName';
   }
 
-  static Future<String?> _regQueryDefault(String key) async {
-    final result = await Process.run('reg', ['query', key, '/ve']);
+  static String _windowsRegistryKey(
+    SupportedBrowser browser, {
+    String root = 'HKCU',
+  }) => '$root\\${_windowsRegistrySubkey(browser)}';
+
+  static Future<String?> _regQueryDefault(
+    String key, {
+    List<String> extraArgs = const [],
+  }) async {
+    final result = await Process.run('reg', [
+      'query',
+      key,
+      '/ve',
+      ...extraArgs,
+    ]);
     if (result.exitCode != 0) return null;
     // Línea: "    (Default)    REG_SZ    C:\...\x.json" (el nombre del
     // valor por defecto depende del idioma del sistema).

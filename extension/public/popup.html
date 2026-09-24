@@ -17,6 +17,16 @@
       <p id="status" class="status" role="status">Conectando con Lockspire…</p>
       <button id="primary-action" class="primary" hidden></button>
       <ul id="entries" class="entries" hidden></ul>
+      <button id="choose-other" class="link" hidden>Elegir otra entrada de Lockspire…</button>
+
+      <section id="picker" class="picker" hidden>
+        <p class="note">
+          Elegí la entrada que usás en este sitio. Lockspire te va a pedir que
+          confirmes el vínculo en su ventana.
+        </p>
+        <input id="filter" type="search" placeholder="Filtrar por título o usuario" autocomplete="off" />
+        <ul id="all-entries" class="entries"></ul>
+      </section>
     </main>
 
     <section id="generator" class="generator" hidden>

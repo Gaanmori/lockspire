@@ -34,7 +34,11 @@ class _BrowserIntegrationScreenState
   Future<NativeMessagingStatus> _load() =>
       ref.read(nativeMessagingRegistrationPortProvider).status();
 
-  void _refresh() => setState(() => _statusFuture = _load());
+  // Cuerpo con llaves: `() => _statusFuture = ...` devolvería el Future y
+  // setState lo rechaza.
+  void _refresh() => setState(() {
+    _statusFuture = _load();
+  });
 
   Future<void> _run(Future<void> Function() action, String doneMessage) async {
     setState(() => _busy = true);
@@ -64,6 +68,19 @@ class _BrowserIntegrationScreenState
   Future<void> _unregister() => _run(
     () => ref.read(nativeMessagingRegistrationPortProvider).unregister(),
     'Lockspire ya no está conectado a los navegadores.',
+  );
+
+  Future<void> _registerSystemWide() => _run(
+    () =>
+        ref.read(nativeMessagingRegistrationPortProvider).registerSystemWide(),
+    'Listo para todo el equipo. Reiniciá el navegador si ya estaba abierto.',
+  );
+
+  Future<void> _unregisterSystemWide() => _run(
+    () => ref
+        .read(nativeMessagingRegistrationPortProvider)
+        .unregisterSystemWide(),
+    'Se quitó el registro para todo el equipo.',
   );
 
   @override
@@ -138,6 +155,57 @@ class _BrowserIntegrationScreenState
                           ),
                       ],
                     ),
+                    if (status.systemWideSupported) ...[
+                      const SizedBox(height: LockspireSpacing.xl),
+                      Text('Para todo el equipo', style: textTheme.titleMedium),
+                      const SizedBox(height: LockspireSpacing.sm),
+                      const Text(
+                        'Si la extensión sigue diciendo que no está '
+                        'conectada, tu organización puede estar bloqueando '
+                        'las conexiones por usuario (política '
+                        '"NativeMessagingUserLevelHosts" de Chrome, visible '
+                        'en chrome://policy). En ese caso, registrá '
+                        'Lockspire para todo el equipo: Windows te va a '
+                        'pedir permisos de administrador.',
+                      ),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          status.isRegisteredSystemWide
+                              ? Icons.check_circle_outline
+                              : Icons.link_off,
+                        ),
+                        title: Text(
+                          status.isRegisteredSystemWide
+                              ? 'Registrado para todo el equipo'
+                              : 'No registrado para todo el equipo',
+                        ),
+                      ),
+                      Wrap(
+                        spacing: LockspireSpacing.md,
+                        runSpacing: LockspireSpacing.sm,
+                        children: [
+                          OutlinedButton.icon(
+                            icon: const Icon(
+                              Icons.admin_panel_settings_outlined,
+                            ),
+                            onPressed: (_busy || !status.hostBinaryFound)
+                                ? null
+                                : _registerSystemWide,
+                            label: Text(
+                              status.isRegisteredSystemWide
+                                  ? 'Volver a registrar'
+                                  : 'Registrar para todo el equipo',
+                            ),
+                          ),
+                          if (status.isRegisteredSystemWide)
+                            OutlinedButton(
+                              onPressed: _busy ? null : _unregisterSystemWide,
+                              child: const Text('Quitar registro'),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                   const SizedBox(height: LockspireSpacing.xl),
                   Text('Instalar la extensión', style: textTheme.titleMedium),

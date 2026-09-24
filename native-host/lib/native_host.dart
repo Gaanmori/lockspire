@@ -56,6 +56,7 @@ Future<void> runNativeHost({
   required Stream<List<int>> input,
   required void Function(List<int> frame) output,
   required AppLink app,
+  void Function(String message) log = _noLog,
 }) async {
   final decoder = FrameDecoder();
   try {
@@ -69,7 +70,7 @@ Future<void> runNativeHost({
         return;
       }
       for (final frame in frames) {
-        output(encodeFrame(await _handleFrame(frame, app)));
+        output(encodeFrame(await _handleFrame(frame, app, log)));
       }
     }
   } finally {
@@ -77,7 +78,13 @@ Future<void> runNativeHost({
   }
 }
 
-Future<Map<String, Object?>> _handleFrame(List<int> body, AppLink app) async {
+void _noLog(String message) {}
+
+Future<Map<String, Object?>> _handleFrame(
+  List<int> body,
+  AppLink app,
+  void Function(String) log,
+) async {
   final Map<String, Object?> json;
   try {
     json = decodeFrameBody(body);
@@ -97,11 +104,13 @@ Future<Map<String, Object?>> _handleFrame(List<int> body, AppLink app) async {
 
   try {
     return await app.send(request);
-  } on AppNotRunningException {
+  } on AppNotRunningException catch (e) {
+    log('${request.type}: $e');
     return errorResponse(request.id, ErrorCode.appNotRunning);
-  } catch (_) {
+  } catch (e) {
     // Canal rechazado, respuesta inválida, timeout... Sin detalles hacia
-    // la extensión.
+    // la extensión; solo al log local.
+    log('${request.type}: ${e.runtimeType}: $e');
     return errorResponse(request.id, ErrorCode.internal);
   }
 }

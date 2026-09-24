@@ -9,10 +9,16 @@ import 'session_token.dart';
 import 'unix_socket_transport.dart';
 import 'windows_pipe_transport.dart';
 
-/// No hay ninguna instancia de la app escuchando.
+/// No hay ninguna instancia de la app escuchando (o no se pudo llegar a
+/// ella). [reason] es un diagnóstico técnico sin datos sensibles.
 class AppNotRunningException implements Exception {
+  final String? reason;
+
+  AppNotRunningException([this.reason]);
+
   @override
-  String toString() => 'Lockspire no está en ejecución';
+  String toString() =>
+      'Lockspire no está en ejecución${reason == null ? '' : ' ($reason)'}';
 }
 
 /// El proceso al otro lado del canal no corre como el mismo usuario del
@@ -62,8 +68,10 @@ class BridgeClient {
       final String token;
       try {
         token = readSessionToken(location.tokenPath);
-      } on FileSystemException {
-        throw AppNotRunningException();
+      } on FileSystemException catch (e) {
+        throw AppNotRunningException(
+          'no se pudo leer el token: ${e.osError?.message ?? e.message}',
+        );
       }
       final reply = await connection.exchange(
         HelloMessage(token: token, client: client, caller: caller).toJson(),

@@ -4,7 +4,28 @@
 import 'package:lockspire_bridge/lockspire_bridge.dart';
 
 import '../../vault/domain/entities/vault.dart';
+import '../../vault/domain/entities/vault_entry.dart';
 import '../domain/origin_matcher.dart';
+
+/// Petición pendiente de vincular un sitio a una entrada (ADR 0015). La
+/// confirma el usuario en la ventana de la app, nunca la extensión.
+class LinkRequest {
+  final String entryId;
+  final String entryTitle;
+
+  /// URL que tiene hoy la entrada (vacía si no tenía).
+  final String currentUrl;
+
+  /// URL que quedará si el usuario confirma.
+  final String newUrl;
+
+  const LinkRequest({
+    required this.entryId,
+    required this.entryTitle,
+    required this.currentUrl,
+    required this.newUrl,
+  });
+}
 
 /// Responde las peticiones de la extensión (ADR 0013). No sabe nada de
 /// transporte ni de Riverpod: recibe la bóveda desbloqueada (o `null` si
@@ -19,11 +40,31 @@ class HandleBridgeRequest {
   /// Generador de contraseñas aleatorias de la app.
   final String Function(int length) generatePassword;
 
+  /// Muestra la confirmación de vincular un sitio en la app (ADR 0015).
+  final void Function(LinkRequest request) requestLink;
+
   const HandleBridgeRequest({
     required this.currentVault,
     required this.showApp,
     required this.generatePassword,
+    required this.requestLink,
   });
+
+  static Iterable<VaultEntry> _passwordEntries(Vault vault) => vault.entries
+      .where((e) => !e.deleted && e.type == VaultEntryType.password);
+
+  static List<CredentialSummary> _summaries(Iterable<VaultEntry> entries) {
+    final sorted = entries.toList()
+      ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    return [
+      for (final entry in sorted)
+        CredentialSummary(
+          entryId: entry.id,
+          title: entry.title,
+          username: entry.fields['username'] ?? '',
+        ),
+    ];
+  }
 
   Map<String, Object?> call(BridgeRequest request) {
     switch (request) {
@@ -43,22 +84,40 @@ class HandleBridgeRequest {
       case GetCredentialsRequest():
         final vault = currentVault();
         if (vault == null) return unlockRequiredResponse(request.id);
-        final matches =
-            vault.entries
-                .where((e) => entryMatchesOrigin(e, request.origin))
-                .toList()
-              ..sort(
-                (a, b) =>
-                    a.title.toLowerCase().compareTo(b.title.toLowerCase()),
-              );
-        return credentialsResponse(request.id, [
-          for (final entry in matches)
-            CredentialSummary(
-              entryId: entry.id,
-              title: entry.title,
-              username: entry.fields['username'] ?? '',
-            ),
-        ]);
+        return credentialsResponse(
+          request.id,
+          _summaries(
+            vault.entries.where((e) => entryMatchesOrigin(e, request.origin)),
+          ),
+        );
+
+      case ListCredentialsRequest():
+        final vault = currentVault();
+        if (vault == null) return unlockRequiredResponse(request.id);
+        return credentialsResponse(
+          request.id,
+          _summaries(_passwordEntries(vault)),
+        );
+
+      case RequestLinkOriginRequest():
+        final vault = currentVault();
+        if (vault == null) return unlockRequiredResponse(request.id);
+        final entry = _passwordEntries(
+          vault,
+        ).where((e) => e.id == request.entryId).firstOrNull;
+        if (entry == null) {
+          return errorResponse(request.id, ErrorCode.notFound);
+        }
+        // No se modifica nada aquí: la app pregunta en su propia ventana.
+        requestLink(
+          LinkRequest(
+            entryId: entry.id,
+            entryTitle: entry.title,
+            currentUrl: entry.fields['url'] ?? '',
+            newUrl: linkedUrlForOrigin(request.origin),
+          ),
+        );
+        return okResponse(request.id);
 
       case GetCredentialSecretRequest():
         final vault = currentVault();

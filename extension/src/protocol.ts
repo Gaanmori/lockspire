@@ -13,7 +13,9 @@ export type Request =
   | { type: 'GET_CREDENTIALS_FOR_ORIGIN'; origin: string }
   | { type: 'GET_CREDENTIAL_SECRET'; origin: string; entry_id: string }
   | { type: 'GENERATE_PASSWORD'; length: number }
-  | { type: 'SHOW_APP' };
+  | { type: 'SHOW_APP' }
+  | { type: 'LIST_CREDENTIALS' }
+  | { type: 'REQUEST_LINK_ORIGIN'; origin: string; entry_id: string };
 
 export interface CredentialSummary {
   entryId: string;
@@ -28,7 +30,7 @@ export type Response =
   | { type: 'GENERATED_PASSWORD'; password: string }
   | { type: 'OK' }
   | { type: 'UNLOCK_REQUIRED' }
-  | { type: 'ERROR'; code: string };
+  | { type: 'ERROR'; code: string; detail?: string };
 
 export class ProtocolError extends Error {}
 
@@ -108,9 +110,14 @@ export async function send(request: Request): Promise<Response> {
       id,
       ...request,
     });
-  } catch {
-    // El navegador no encuentra el host registrado (o no pudo lanzarlo).
-    return { type: 'ERROR', code: 'HOST_NOT_INSTALLED' };
+  } catch (e) {
+    // El navegador no encuentra el host registrado, no pudo lanzarlo o el
+    // host terminó sin responder. El mensaje de Chrome distingue cuál.
+    return {
+      type: 'ERROR',
+      code: 'HOST_NOT_INSTALLED',
+      detail: e instanceof Error ? e.message : String(e),
+    };
   }
   return parseResponse(raw, id);
 }
