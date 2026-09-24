@@ -1,6 +1,6 @@
 # 0008 — Sesión: auto-lock por inactividad y al pasar a segundo plano
 
-- Estado: Aceptado
+- Estado: Aceptado — disparador 2 ("app en segundo plano") reemplazado **solo en escritorio** por [ADR 0012](0012-escritorio-bandeja-y-bloqueo.md)
 - Fecha: 2026-09-09
 
 ## Contexto

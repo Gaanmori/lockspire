@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'dart:io' show Platform;
-
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
@@ -14,6 +12,7 @@ import '../domain/ports/active_sync_provider_port.dart';
 import '../domain/ports/google_drive_account_port.dart';
 import '../domain/ports/one_drive_account_port.dart';
 import '../domain/ports/sync_credentials_port.dart';
+import '../infrastructure/google_drive_desktop_auth.dart';
 import 'providers/active_sync_port_provider.dart';
 import 'providers/active_sync_provider_port_provider.dart';
 import 'providers/current_active_sync_provider_provider.dart';
@@ -22,7 +21,7 @@ import 'providers/current_one_drive_account_provider.dart';
 import 'providers/current_sync_credentials_provider.dart';
 import 'providers/google_drive_account_port_provider.dart';
 import 'providers/google_drive_android_auth_provider.dart';
-import 'providers/google_drive_windows_auth_provider.dart';
+import 'providers/google_drive_desktop_auth_provider.dart';
 import 'providers/is_sync_configured_provider.dart';
 import 'providers/microsoft_oauth_auth_provider.dart';
 import 'providers/one_drive_account_port_provider.dart';
@@ -52,12 +51,12 @@ class SyncController extends _$SyncController {
   }
 
   /// Conexión interactiva con Google Drive — dispara el flujo nativo en
-  /// Android (`google_sign_in`) o abre el navegador en Windows (loopback
-  /// OAuth). Elegir Google Drive acá implica "usar Google Drive" — pasa a
-  /// ser el proveedor activo.
+  /// Android (`google_sign_in`) o abre el navegador en escritorio — Windows
+  /// y Linux (loopback OAuth). Elegir Google Drive acá implica "usar
+  /// Google Drive" — pasa a ser el proveedor activo.
   Future<void> connectGoogleDrive() async {
-    final connection = Platform.isWindows
-        ? await ref.read(googleDriveWindowsAuthProvider).connectInteractive()
+    final connection = usesDesktopGoogleAuth
+        ? await ref.read(googleDriveDesktopAuthProvider).connectInteractive()
         : await ref.read(googleDriveAndroidAuthProvider).connectInteractive();
 
     await ref
@@ -80,7 +79,7 @@ class SyncController extends _$SyncController {
   /// Desconecta la cuenta de Google — si era el proveedor activo, deja de
   /// haber ninguno configurado (no cae de vuelta a WebDAV solo).
   Future<void> disconnectGoogleDrive() async {
-    if (!Platform.isWindows) {
+    if (!usesDesktopGoogleAuth) {
       await ref.read(googleDriveAndroidAuthProvider).disconnect();
     }
     await ref.read(googleDriveAccountPortProvider).clearGoogleDriveAccount();
@@ -97,8 +96,8 @@ class SyncController extends _$SyncController {
   }
 
   /// Conexión interactiva con OneDrive — abre el navegador del sistema en
-  /// ambas plataformas (ver `microsoft_oauth_auth.dart`, a diferencia de
-  /// Google Drive no hay split Android/Windows acá). Elegir OneDrive acá
+  /// todas las plataformas (ver `microsoft_oauth_auth.dart`, a diferencia
+  /// de Google Drive no hay split Android/escritorio acá). Elegir OneDrive acá
   /// implica "usar OneDrive" — pasa a ser el proveedor activo.
   Future<void> connectOneDrive() async {
     final connection = await ref

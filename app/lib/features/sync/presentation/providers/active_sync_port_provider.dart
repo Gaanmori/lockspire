@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'dart:io' show Platform;
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/ports/active_sync_provider_port.dart';
 import '../../domain/ports/one_drive_account_port.dart';
+import '../../infrastructure/google_drive_desktop_auth.dart';
 import '../../infrastructure/google_drive_sync_adapter.dart';
 import '../../infrastructure/one_drive_sync_adapter.dart';
 import '../../infrastructure/webdav_sync_adapter.dart';
@@ -15,7 +14,7 @@ import 'active_sync_provider_port_provider.dart';
 import 'current_sync_credentials_provider.dart';
 import 'google_drive_account_port_provider.dart';
 import 'google_drive_android_auth_provider.dart';
-import 'google_drive_windows_auth_provider.dart';
+import 'google_drive_desktop_auth_provider.dart';
 import 'microsoft_oauth_auth_provider.dart';
 import 'one_drive_account_port_provider.dart';
 
@@ -45,10 +44,10 @@ Future<SyncPort?> activeSyncPort(Ref ref) async {
           .googleDriveAccount();
       if (account == null) return null;
 
-      if (Platform.isWindows) {
+      if (usesDesktopGoogleAuth) {
         if (account.refreshToken == null) return null;
         final connection = await ref
-            .watch(googleDriveWindowsAuthProvider)
+            .watch(googleDriveDesktopAuthProvider)
             .reconnect(
               refreshToken: account.refreshToken!,
               email: account.email,

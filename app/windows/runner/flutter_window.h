@@ -3,6 +3,8 @@
 
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#include <flutter/method_channel.h>
+#include <flutter/encodable_value.h>
 
 #include <memory>
 
@@ -23,11 +25,22 @@ class FlutterWindow : public Win32Window {
                          LPARAM const lparam) noexcept override;
 
  private:
+  // Reenvía a Dart un evento de sesión del SO (ADR 0012): la bóveda se
+  // bloquea al bloquear la sesión o antes de suspender el equipo.
+  void NotifyOsSessionEvent(const char* method);
+
   // The project to run.
   flutter::DartProject project_;
 
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
+
+  // Canal `com.lockspire/os_session` (ver
+  // lib/features/desktop/infrastructure/windows_os_session_events_adapter.dart).
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
+      os_session_channel_;
+
+  bool session_notifications_registered_ = false;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

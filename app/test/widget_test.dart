@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/features/desktop/presentation/providers/is_desktop_shell_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_file_path_provider.dart';
 import 'package:lockspire/main.dart';
 
@@ -22,6 +23,8 @@ void main() {
           // que no está disponible en el entorno de `flutter test`.
           overrides: [
             vaultFilePathProvider.overrideWith((ref) async => vaultPath),
+            // Sin ventana ni bandeja reales en `flutter test` (ADR 0012).
+            isDesktopShellProvider.overrideWith((ref) => false),
           ],
           child: const MyApp(),
         ),

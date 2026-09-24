@@ -1,0 +1,17 @@
+name: lockspire_native_host
+description: >-
+  Native messaging host de Lockspire: relay delgado entre la extensión de
+  navegador y la app (ADR 0005, ADR 0013). Sin lógica de bóveda ni cripto.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.12.1
+
+dependencies:
+  lockspire_bridge:
+    path: ../packages/lockspire_bridge
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0

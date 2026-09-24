@@ -5,6 +5,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lockspire/features/browser_bridge/presentation/screens/browser_integration_screen.dart';
 import 'package:lockspire/features/sync/presentation/screens/sync_settings_screen.dart';
 
 import '../../../../design/lockspire_colors.dart';
@@ -140,6 +141,16 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
               context,
             ).push(MaterialPageRoute(builder: (_) => const SecurityScreen())),
           ),
+          if (Platform.isWindows || Platform.isLinux)
+            IconButton(
+              icon: const Icon(Icons.extension_outlined),
+              tooltip: 'Navegador',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const BrowserIntegrationScreen(),
+                ),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.lock),
             tooltip: 'Bloquear',

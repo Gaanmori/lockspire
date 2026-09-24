@@ -12,7 +12,8 @@
 /// `google_oauth_secrets.json.example`).
 class GoogleOAuthConfig {
   /// Client id/secret del cliente OAuth tipo "Desktop app", usado solo en
-  /// Windows (ver `google_drive_windows_auth.dart`) — el secret de un
+  /// escritorio, Windows y Linux (ver `google_drive_desktop_auth.dart`) —
+  /// el secret de un
   /// cliente "Desktop" no es confidencial por diseño de Google, pero
   /// igual no se comitea en texto plano.
   static const clientId = String.fromEnvironment('GOOGLE_OAUTH_CLIENT_ID');

@@ -21,6 +21,7 @@ import 'providers/auto_lock_timeout_provider.dart';
 import 'providers/auto_sync_debounce_provider.dart';
 import 'providers/biometric_auth_port_provider.dart';
 import 'providers/crypto_port_provider.dart';
+import 'providers/lock_on_background_provider.dart';
 import 'providers/vault_auth_attempt_provider.dart';
 import 'providers/vault_storage_port_provider.dart';
 import 'vault_session_state.dart';
@@ -374,8 +375,10 @@ class VaultSessionController extends _$VaultSessionController {
 
   /// Reenviado desde [ActivityAndLifecycleWatcher]. Bloquea inmediatamente
   /// al pasar a segundo plano (`paused`/`hidden`) — `inactive` se ignora a
-  /// propósito, ver ADR 0008.
+  /// propósito, ver ADR 0008. En escritorio no hace nada: ocultar la
+  /// ventana no bloquea (ADR 0012, ver `lockOnBackgroundProvider`).
   void onAppLifecycleChanged(AppLifecycleState lifecycleState) {
+    if (!ref.read(lockOnBackgroundProvider)) return;
     final isBackgrounded =
         lifecycleState == AppLifecycleState.paused ||
         lifecycleState == AppLifecycleState.hidden;

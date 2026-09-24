@@ -34,3 +34,36 @@ jobs:
 
       - name: Test
         run: flutter test
+
+  build-linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        # GTK/CMake/Ninja: toolchain de Flutter desktop. build-essential:
+        # el build hook de `sodium` compila libsodium con ./configure && make.
+        # libsecret-1-dev: plugin nativo de flutter_secure_storage.
+        # libayatana-appindicator3-dev: icono de bandeja (tray_manager, ADR 0012).
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev build-essential \
+            libsecret-1-dev libayatana-appindicator3-dev
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.2"
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Linux (release)
+        run: flutter build linux --release

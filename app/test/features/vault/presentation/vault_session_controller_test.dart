@@ -18,6 +18,7 @@ import 'package:lockspire/features/vault/presentation/providers/auto_lock_timeou
 import 'package:lockspire/features/vault/presentation/providers/auto_sync_debounce_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/biometric_auth_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
+import 'package:lockspire/features/vault/presentation/providers/lock_on_background_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_auth_attempt_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
@@ -44,8 +45,12 @@ class _TestFakes {
   });
 }
 
+/// [lockOnBackground] en `true` por defecto (comportamiento de Android,
+/// ADR 0008) — explícito porque los tests corren en un host de escritorio,
+/// donde el valor real sería `false` (ADR 0012).
 ({ProviderContainer container, _TestFakes fakes}) _buildContainer({
   Duration timeout = _shortTimeout,
+  bool lockOnBackground = true,
 }) {
   final crypto = FakeCryptoPort();
   final storage = FakeVaultStoragePort();
@@ -55,6 +60,7 @@ class _TestFakes {
       cryptoPortProvider.overrideWith((ref) async => crypto),
       vaultStoragePortProvider.overrideWith((ref) async => storage),
       autoLockTimeoutProvider.overrideWith((ref) => timeout),
+      lockOnBackgroundProvider.overrideWith((ref) => lockOnBackground),
       biometricAuthPortProvider.overrideWith((ref) => biometric),
     ],
   );
@@ -217,6 +223,28 @@ void main() {
         );
       },
     );
+
+    test('escritorio (ADR 0012): paused/hidden NO bloquean — la app vive en '
+        'la bandeja; el timer de inactividad sigue corriendo', () async {
+      final built = _buildContainer(lockOnBackground: false);
+      final container = built.container;
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
+      await notifier.createVault(_masterPassword);
+
+      notifier.onAppLifecycleChanged(AppLifecycleState.hidden);
+      notifier.onAppLifecycleChanged(AppLifecycleState.paused);
+      expect(
+        container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionUnlocked>(),
+      );
+
+      await Future<void>.delayed(_shortTimeout * 3);
+      expect(
+        container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionLocked>(),
+      );
+    });
 
     test('registerActivity() y onAppLifecycleChanged() durante el await de '
         'createVault()/unlock() no lanzan excepción — y el estado de sesión '

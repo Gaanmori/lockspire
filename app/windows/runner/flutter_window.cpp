@@ -1,5 +1,8 @@
 #include "flutter_window.h"
 
+#include <flutter/standard_method_codec.h>
+#include <wtsapi32.h>
+
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
@@ -27,6 +30,15 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
+  os_session_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(), "com.lockspire/os_session",
+          &flutter::StandardMethodCodec::GetInstance());
+  // Sin esto Windows no envía WM_WTSSESSION_CHANGE a la ventana. Si falla,
+  // quedan la inactividad y el bloqueo manual (ADR 0012).
+  session_notifications_registered_ =
+      WTSRegisterSessionNotification(GetHandle(), NOTIFY_FOR_THIS_SESSION);
+
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
   });
@@ -40,6 +52,11 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  if (session_notifications_registered_) {
+    WTSUnRegisterSessionNotification(GetHandle());
+    session_notifications_registered_ = false;
+  }
+  os_session_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -51,6 +68,14 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // Antes que los plugins, para que ninguno pueda consumir el mensaje:
+  // bloquear la sesión o suspender bloquea la bóveda (ADR 0012).
+  if (message == WM_WTSSESSION_CHANGE && wparam == WTS_SESSION_LOCK) {
+    NotifyOsSessionEvent("sessionLocked");
+  } else if (message == WM_POWERBROADCAST && wparam == PBT_APMSUSPEND) {
+    NotifyOsSessionEvent("suspending");
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
@@ -68,4 +93,10 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
 
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);
+}
+
+void FlutterWindow::NotifyOsSessionEvent(const char* method) {
+  if (os_session_channel_) {
+    os_session_channel_->InvokeMethod(method, nullptr);
+  }
 }

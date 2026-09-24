@@ -1,0 +1,17 @@
+name: lockspire_bridge
+description: >-
+  Protocolo y transporte IPC compartidos entre la app Lockspire y su native
+  messaging host (ADR 0005, ADR 0013). Dart puro, sin Flutter.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.12.1
+
+dependencies:
+  ffi: ^2.1.0
+  path: ^1.9.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.0

@@ -1,17 +1,23 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import 'dart:io' show Platform, exit;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'design/lockspire_theme.dart';
 import 'features/autofill/presentation/autofill_app.dart';
+import 'features/browser_bridge/infrastructure/single_instance.dart';
+import 'features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
+import 'features/desktop/presentation/widgets/desktop_shell.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
 import 'features/vault/presentation/vault_session_controller.dart';
 import 'features/vault/presentation/vault_session_state.dart';
 import 'features/vault/presentation/widgets/activity_and_lifecycle_watcher.dart';
 
-void main() {
+Future<void> main() async {
   // WidgetsBinding.instance no existe hasta que se inicializa el binding
   // — runApp() lo hace por dentro, pero acá hace falta leer la ruta
   // inicial *antes* de decidir a qué widget llamar runApp(), así que se
@@ -25,8 +31,27 @@ void main() {
   final isAutofill =
       WidgetsBinding.instance.platformDispatcher.defaultRouteName ==
       '/autofill';
+  final container = ProviderContainer();
+  if (Platform.isWindows || Platform.isLinux) {
+    // DesktopShell (ADR 0012) usa window_manager, que exige inicializarse
+    // antes de runApp().
+    await windowManager.ensureInitialized();
+    // El canal de la extensión (ADR 0013) arranca antes de la UI: si otra
+    // instancia ya lo tiene, se le pide que muestre su ventana y esta
+    // termina sin llegar a abrir la suya (instancia única, ADR 0012). Si
+    // la otra no responde (colgada, o el canal no es de confianza), esta
+    // sigue arrancando sin canal — la pantalla "Navegador" lo indica.
+    final bridge = await container.read(browserBridgeProvider.future);
+    if (bridge == BrowserBridgeStatus.anotherInstance &&
+        await signalExistingInstance()) {
+      exit(0);
+    }
+  }
   runApp(
-    ProviderScope(child: isAutofill ? const AutofillApp() : const MyApp()),
+    UncontrolledProviderScope(
+      container: container,
+      child: isAutofill ? const AutofillApp() : const MyApp(),
+    ),
   );
 }
 
@@ -70,7 +95,11 @@ class MyApp extends ConsumerWidget {
       navigatorKey: navigatorKey,
       title: 'Lockspire',
       theme: LockspireTheme.themeData,
-      home: const ActivityAndLifecycleWatcher(child: VaultGateScreen()),
+      // DesktopShell dentro de MaterialApp: necesita un Navigator para
+      // mostrar el aviso de "sigue en la bandeja" al cerrar la ventana.
+      home: const DesktopShell(
+        child: ActivityAndLifecycleWatcher(child: VaultGateScreen()),
+      ),
     );
   }
 }

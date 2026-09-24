@@ -51,6 +51,16 @@ dependencies:
   url_launcher: ^6.3.2
   local_auth: ^3.0.2
   http: ^1.2.0
+  window_manager: ^0.5.2
+  # 0.5.x a propósito: 0.6+ pasa a depender de `nativeapi`/`cnativeapi`
+  # (~2 MB de C++ de propósito general) — superficie innecesaria para un
+  # icono de bandeja. Ver ADR 0012.
+  tray_manager: ^0.5.2
+  # Protocolo + transporte IPC compartido con el native host (ADR 0013).
+  lockspire_bridge:
+    path: ../packages/lockspire_bridge
+  dbus: ^0.7.15
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
@@ -88,6 +98,11 @@ flutter:
     - family: Karla
       fonts:
         - asset: assets/fonts/Karla[wght].ttf
+
+  assets:
+    # Icono de la bandeja del sistema en escritorio (ADR 0012): .ico en
+    # Windows, .png en Linux. Copias de los iconos de la app.
+    - assets/tray/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

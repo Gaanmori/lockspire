@@ -4,14 +4,14 @@
 import 'package:googleapis_auth/googleapis_auth.dart' show ClientId;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../infrastructure/google_drive_windows_auth.dart';
+import '../../infrastructure/google_drive_desktop_auth.dart';
 import '../../infrastructure/google_oauth_config.dart';
 
-part 'google_drive_windows_auth_provider.g.dart';
+part 'google_drive_desktop_auth_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-GoogleDriveWindowsAuth googleDriveWindowsAuth(Ref ref) {
-  return GoogleDriveWindowsAuth(
+GoogleDriveDesktopAuth googleDriveDesktopAuth(Ref ref) {
+  return GoogleDriveDesktopAuth(
     ClientId(GoogleOAuthConfig.clientId, GoogleOAuthConfig.clientSecret),
   );
 }
