@@ -22,7 +22,7 @@ Este documento es el resumen en texto para que cualquier agente/dev pueda implem
 | `accent/secondary` | `#4FA391` | Confirmaciones / éxito |
 | `danger` | `#C23B3B` | Errores (ej. contraseña incorrecta) |
 
-**Pendiente de traducir a Flutter:** `main.dart` sigue usando `ColorScheme.fromSeed(seedColor: Colors.deepPurple)` del scaffold original — no refleja esta paleta. Hay que definir un `ColorScheme` explícito (no generado por seed) con estos tokens antes de aplicar el sistema a las pantallas reales.
+**Implementado en Flutter** en `app/lib/design/lockspire_colors.dart` (`LockspireColors`, los 11 tokens) y aplicado vía un `ColorScheme.light` explícito en `lockspire_theme.dart` (`LockspireTheme.themeData`, usado por `main.dart`).
 
 ## Tipografía
 
@@ -39,9 +39,11 @@ Dos familias (Google Fonts):
 | Caption | Karla | 500 | 13px |
 | Label | Karla | 600 | 12px |
 
+Las fuentes van empaquetadas como assets locales (`app/assets/fonts/`, variable fonts, licencia OFL en `OFL.txt`). Se decidió **no** usar el paquete `google_fonts`, que las descarga en tiempo de ejecución: un gestor de contraseñas local-first no debe hacer una llamada de red a Google en el primer arranque.
+
 ## Espaciado
 
-Escala en px: `4, 8, 12, 16, 20, 24, 32, 40`.
+Escala en px: `4, 8, 12, 16, 20, 24, 32, 40` — `LockspireSpacing` (`xs, sm, smMd, md, mdLg, lg, xl, xxl`) en `app/lib/design/lockspire_spacing.dart`.
 
 ## Radios
 
@@ -49,6 +51,8 @@ Escala en px: `4, 8, 12, 16, 20, 24, 32, 40`.
 - `md` — 16px (campos de texto, chips de icono)
 - `lg` — 24px (tarjetas)
 - `pill` — 999px / altura completa (botones)
+
+En código: `LockspireRadius` (mismo archivo que el espaciado).
 
 ## Componentes definidos
 
@@ -58,11 +62,25 @@ Escala en px: `4, 8, 12, 16, 20, 24, 32, 40`.
 - Fila de lista — pensada para la futura pantalla de entradas de la bóveda (icono/inicial + título + subtítulo + chevron).
 - Barra superior (título + acción a la derecha).
 
-## Pantallas ya maquetadas con este sistema
+El patrón de tarjeta de autenticación (chip de icono + título + subtítulo + contenido) está extraído como widget compartido: `AuthCard` (`app/lib/features/vault/presentation/widgets/auth_card.dart`).
 
-- "Desbloquear bóveda" — móvil y escritorio.
+## Pantallas
+
+Maquetadas en el canvas **e implementadas** con la composición completa:
+
+- "Desbloquear bóveda" — móvil y escritorio (`unlock_vault_screen.dart`, con `AuthCard`).
+- "Crear bóveda" — móvil y escritorio (`create_vault_screen.dart`, con `AuthCard`).
+
+Implementadas usando los tokens y componentes del sistema, **sin mockup propio** en el canvas:
+
+- Lista de entradas (`vault_unlocked_screen.dart`) — usa la fila de lista definida arriba.
+- Crear/editar entrada (`entry_form_screen.dart`) — usa `AuthCard`; incluye el panel del generador y la barra de fortaleza (niveles con `danger` / `accentDefault` / `accentSecondary`).
+- Restaurar bóveda desde la nube (`restore_vault_screen.dart`) — usa `AuthCard`.
+
+Con estilo básico (heredan el tema, sin composición a medida): `sync_settings_screen.dart`, `import_screen.dart`, `security_screen.dart`, y la pantalla de selección de credencial del autofill de Android (`autofill_screen.dart`).
 
 ## Pendiente
 
-- Aplicar estos tokens al `ThemeData`/`ColorScheme` real de Flutter.
-- Extender el sistema a las pantallas restantes: crear bóveda, bóveda desbloqueada, y las futuras (lista de entradas, agregar/editar entrada, configuración, setup de sync).
+- Maquetar y aplicar el sistema a las pantallas con estilo básico de la lista anterior (no bloqueante).
+- Pantallas futuras: configuración general y la UI de la extensión de navegador.
+- Modo oscuro: no definido todavía (solo existe `ColorScheme.light`).
