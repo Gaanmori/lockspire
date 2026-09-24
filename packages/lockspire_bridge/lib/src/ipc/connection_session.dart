@@ -38,10 +38,7 @@ class ConnectionSession {
   final BridgeRequestHandler _handler;
   ClientKind? _client;
 
-  ConnectionSession({
-    required this._expectedToken,
-    required this._handler,
-  });
+  ConnectionSession({required this._expectedToken, required this._handler});
 
   bool get isAuthenticated => _client != null;
 

@@ -214,6 +214,23 @@ void main() {
     },
   );
 
+  test(
+    'Linux: un socket huérfano de una ejecución anterior no impide arrancar',
+    () async {
+      location.ensureDirectory();
+      // Un servidor que se cierra sin borrar su archivo deja el socket en
+      // disco sin nadie escuchando: lo mismo que un proceso que murió.
+      final stale = await ServerSocket.bind(
+        InternetAddress(location.endpoint, type: InternetAddressType.unix),
+        0,
+      );
+      await stale.close();
+      await startServer();
+      expect(await _isolated(location, _appInstancePing), MessageType.pong);
+    },
+    testOn: 'linux',
+  );
+
   test('Linux: directorio 0700 y token 0600', () async {
     await startServer();
     expect(FileStat.statSync(location.directory).mode & 0x1FF, 0x1C0);

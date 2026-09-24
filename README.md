@@ -10,7 +10,7 @@ Sin backend centralizado: la bóveda es un archivo local fuertemente cifrado que
 
 - **Seguridad Zero-Knowledge:** la bóveda debe ser segura incluso si un atacante obtiene acceso a la nube del usuario.
 - **Propiedad de los datos:** sin servidores centralizados; el usuario decide dónde guardar su bóveda.
-- **Multiplataforma sin fricción:** una sola base de código Flutter para escritorio y móvil. Plataformas objetivo hoy: **Android y Windows**; iOS, macOS y Linux quedan para más adelante (el scaffold existe, no se prueban ni se les da soporte todavía).
+- **Multiplataforma sin fricción:** una sola base de código Flutter para escritorio y móvil. Plataformas objetivo hoy: **Android, Windows y Linux** (Linux Mint como referencia); iOS y macOS quedan para más adelante (el scaffold existe, no se prueban ni se les da soporte todavía).
 - **Integración web:** extensión de navegador independiente para autocompletado de credenciales y Passkeys.
 - **Sin suscripciones:** venta a precio fijo en Play Store / App Store.
 
@@ -30,14 +30,20 @@ Verificado en dispositivo real (Windows desktop + Android):
 - **Importar desde SafeInCloud** (XML).
 - **Autofill nativo en Android** vía Credential Manager + `AutofillService` legado (ADR 0011).
 
-Pendiente de implementar: extensión de navegador + native host (ADR 0005), Passkeys, iOS. El detalle de qué falta y qué está en verificación está en `docs/STATE.md`.
+Implementado, con tests automatizados, **pendiente de verificación manual**:
+
+- **Linux** (Linux Mint): mismas funciones que Windows salvo desbloqueo biométrico; compila en CI.
+- **Escritorio en la bandeja del sistema** (ADR 0012): cerrar la ventana la oculta; la bóveda se bloquea por inactividad, manualmente, al bloquear la sesión del SO o al suspender.
+- **Extensión de navegador para Chrome/Edge + native host** (ADR 0005, 0013): rellenar credenciales guardadas y generar contraseñas. El native host y el canal IPC ya se probaron de punta a punta en Windows; falta la prueba con el navegador.
+
+Pendiente de implementar: guardar credenciales desde la extensión, Firefox, Passkeys, iOS. El detalle de qué falta y qué está en verificación está en `docs/STATE.md`.
 
 ## Stack
 
 - **App principal (móvil y escritorio):** Flutter (Dart), arquitectura Clean/Hexagonal por features, Riverpod 3 con code generation.
 - **Criptografía:** libsodium vía bindings nativos (paquete `sodium`, variante Sumo) — Argon2id (KDF) + XChaCha20-Poly1305 (AEAD).
-- **Extensión de navegador:** TypeScript, Manifest V3 (pendiente).
-- **Comunicación App/Extensión:** Native Messaging (STDIN/STDOUT) (pendiente).
+- **Extensión de navegador:** TypeScript, Manifest V3 (Chrome/Edge), empaquetada con esbuild.
+- **Comunicación App/Extensión:** Native Messaging (STDIN/STDOUT) hacia un native host en Dart, y de ahí a la app por named pipe (Windows) o socket Unix (Linux) autenticados (ADR 0013).
 - **Sincronización cloud:** WebDAV, Google Drive, OneDrive — cada uno como adaptador intercambiable de `SyncPort`. Dropbox descartado.
 - **Autocompletado nativo:** Android Credential Manager + Autofill Framework (implementado); iOS Credential Provider Extension (futuro).
 
@@ -45,12 +51,14 @@ Pendiente de implementar: extensión de navegador + native host (ADR 0005), Pass
 
 ```
 /app              # App Flutter (móvil + escritorio) — ver app/README.md
-/extension        # Extensión de navegador (TypeScript, Manifest V3) — sin implementar
-/native-host      # Native Messaging host — sin implementar
+/extension        # Extensión de navegador (TypeScript, Manifest V3) — ver extension/README.md
+/native-host      # Native Messaging host (Dart) — ver native-host/README.md
+/packages
+  lockspire_bridge/ # Protocolo + transporte IPC compartido por app y native host
 /docs
   STATE.md        # Estado actual del desarrollo — leer primero
   THREAT_MODEL.md # Modelo de amenazas (documento vivo)
-  adr/            # Architecture Decision Records (0001–0011)
+  adr/            # Architecture Decision Records (0001–0013)
   design/         # Sistema de diseño (tokens, tipografía, componentes)
 ```
 
@@ -63,6 +71,8 @@ Requisitos:
 - Flutter SDK 3.47.2+ (channel stable) con el Android toolchain configurado (ver `flutter doctor`). Es la misma versión que usa el CI (`.github/workflows/flutter-ci.yml`).
 - En Windows hace falta además un `make` compatible con MSYS (no el nativo de Windows) para compilar el binding de libsodium — instalar [MSYS2](https://www.msys2.org/) y `pacman -S make`, con `<msys64>\usr\bin` al final del PATH (nunca al principio, para no romper la detección del Android SDK de Flutter).
 - Para compilar para Windows desktop: Visual Studio Build Tools con el componente **ATL** (`Microsoft.VisualStudio.Component.VC.ATL`) y el "Modo desarrollador" de Windows activado.
+- Para compilar para Linux: paquetes de sistema listados en `app/README.md`.
+- Para la extensión: Node 24+.
 - Para sync con Google Drive / OneDrive: credenciales OAuth propias, ver `app/README.md`.
 
 ```

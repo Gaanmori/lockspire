@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Fill test</title></head>
+<body>
+  <form id="search"><input type="text" name="q" placeholder="buscar"></form>
+  <form id="login">
+    <input type="hidden" name="csrf" value="x">
+    <input type="email" name="email" placeholder="email">
+    <input type="password" name="decoy" style="display:none">
+    <input type="password" name="pass" placeholder="contraseña">
+    <button type="submit">Entrar</button>
+  </form>
+  <script>
+    window.events = [];
+    for (const el of document.querySelectorAll('input')) {
+      el.addEventListener('input', () => events.push('input:' + el.name));
+      el.addEventListener('change', () => events.push('change:' + el.name));
+    }
+  </script>
+</body>
+</html>

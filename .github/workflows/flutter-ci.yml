@@ -67,3 +67,53 @@ jobs:
 
       - name: Build Linux (release)
         run: flutter build linux --release
+
+  # Protocolo + transporte IPC (ADR 0013) y native host. En los dos SO:
+  # los tests de transporte usan el socket Unix / named pipe reales.
+  bridge-and-native-host:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.2"
+          channel: stable
+
+      - name: lockspire_bridge
+        working-directory: packages/lockspire_bridge
+        run: |
+          dart pub get
+          dart format --output=none --set-exit-if-changed .
+          dart analyze --fatal-infos
+          dart test
+
+      - name: native-host
+        working-directory: native-host
+        run: |
+          dart pub get
+          dart format --output=none --set-exit-if-changed .
+          dart analyze --fatal-infos
+          dart test
+          dart compile exe bin/lockspire_native_host.dart -o build/lockspire-native-host
+
+  extension:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

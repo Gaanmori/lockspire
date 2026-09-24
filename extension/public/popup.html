@@ -1,0 +1,35 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lockspire</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <img src="icons/icon-48.png" alt="" width="24" height="24" />
+      <h1>Lockspire</h1>
+      <span id="site" class="site"></span>
+    </header>
+
+    <main>
+      <p id="status" class="status" role="status">Conectando con Lockspire…</p>
+      <button id="primary-action" class="primary" hidden></button>
+      <ul id="entries" class="entries" hidden></ul>
+    </main>
+
+    <section id="generator" class="generator" hidden>
+      <button id="generate" class="secondary">Generar contraseña</button>
+      <div id="generated-row" class="generated" hidden>
+        <code id="generated"></code>
+        <button id="copy" class="secondary">Copiar</button>
+      </div>
+      <p id="generated-note" class="note" hidden>
+        No se guarda sola: creá la entrada en Lockspire.
+      </p>
+    </section>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
