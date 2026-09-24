@@ -131,8 +131,8 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
           content: const Text(
             'Al cerrar la ventana, Lockspire queda en la bandeja del sistema '
             'para que la extensión del navegador pueda autocompletar. La '
-            'bóveda se bloquea sola tras 5 minutos sin usar la app, al '
-            'bloquear la sesión o al suspender el equipo.\n\n'
+            'bóveda se bloquea sola tras el tiempo sin uso que elijas en '
+            'Seguridad, al bloquear la sesión o al suspender el equipo.\n\n'
             'Para cerrarlo del todo, usá "Salir" en el icono de la bandeja.',
           ),
           actions: [

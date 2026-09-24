@@ -9,11 +9,13 @@ import 'package:window_manager/window_manager.dart';
 
 import 'features/appearance/domain/appearance_preference.dart';
 import 'features/appearance/presentation/appearance_controller.dart';
+import 'features/appearance/presentation/appearance_theme.dart';
 import 'features/autofill/presentation/autofill_app.dart';
 import 'features/browser_bridge/infrastructure/single_instance.dart';
 import 'features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
 import 'features/browser_bridge/presentation/widgets/link_request_listener.dart';
 import 'features/desktop/presentation/widgets/desktop_shell.dart';
+import 'features/vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
 import 'features/vault/presentation/vault_session_controller.dart';
 import 'features/vault/presentation/vault_session_state.dart';
@@ -37,6 +39,9 @@ Future<void> main() async {
   // El tema elegido se carga antes del primer frame: si no, la app
   // mostraría un instante el tema por defecto y luego cambiaría.
   await container.read(appearanceControllerProvider.future);
+  // Igual con el tiempo de bloqueo (ADR 0016): el primer desbloqueo ya
+  // usa el valor guardado.
+  await container.read(autoLockTimeoutSettingProvider.future);
   if (Platform.isWindows || Platform.isLinux) {
     // DesktopShell (ADR 0012) usa window_manager, que exige inicializarse
     // antes de runApp().

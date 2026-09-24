@@ -8,7 +8,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
+import '../../domain/auto_lock_timeout.dart';
 import '../../domain/ports/biometric_auth_port.dart';
+import '../providers/auto_lock_timeout_setting_provider.dart';
 import '../providers/biometric_auth_port_provider.dart';
 import '../vault_session_controller.dart';
 
@@ -101,6 +103,10 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const _AutoLockSection(),
+                  const SizedBox(height: LockspireSpacing.lg),
+                  const Divider(),
+                  const SizedBox(height: LockspireSpacing.md),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text('Desbloquear con $_biometricMethodName'),
@@ -158,4 +164,57 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
         BiometricAvailability.unavailable =>
           'No disponible en este dispositivo.',
       };
+}
+
+/// Tiempo de bloqueo por inactividad (ADR 0016): 1, 5 o 15 minutos.
+class _AutoLockSection extends ConsumerWidget {
+  const _AutoLockSection();
+
+  static String _label(AutoLockTimeout timeout) => switch (timeout) {
+    AutoLockTimeout.oneMinute => '1 min',
+    AutoLockTimeout.fiveMinutes => '5 min',
+    AutoLockTimeout.fifteenMinutes => '15 min',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current =
+        ref.watch(autoLockTimeoutSettingProvider).value ??
+        AutoLockTimeout.defaultValue;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Bloqueo automático', style: textTheme.titleMedium),
+        const SizedBox(height: LockspireSpacing.sm),
+        Text(
+          'La bóveda se bloquea sola cuando pasa este tiempo sin que uses '
+          'Lockspire. ${Platform.isAndroid ? 'También se bloquea al salir de la app.' : 'También se bloquea al bloquear la sesión o suspender el equipo.'}',
+        ),
+        const SizedBox(height: LockspireSpacing.md),
+        SegmentedButton<AutoLockTimeout>(
+          showSelectedIcon: false,
+          segments: [
+            for (final timeout in AutoLockTimeout.values)
+              ButtonSegment(value: timeout, label: Text(_label(timeout))),
+          ],
+          selected: {current},
+          // VaultSessionController escucha el cambio y reprograma el
+          // temporizador por su cuenta.
+          onSelectionChanged: (selection) => ref
+              .read(autoLockTimeoutSettingProvider.notifier)
+              .set(selection.first),
+        ),
+        const SizedBox(height: LockspireSpacing.xs),
+        Text(
+          current == AutoLockTimeout.fifteenMinutes
+              ? 'Más cómodo, pero la bóveda queda abierta más tiempo si te '
+                    'alejás del equipo.'
+              : ' ',
+          style: textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
 }

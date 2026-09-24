@@ -9,6 +9,7 @@ import '../../../../design/lockspire_spacing.dart';
 import '../../../../design/lockspire_theme.dart';
 import '../../domain/appearance_preference.dart';
 import '../appearance_controller.dart';
+import '../appearance_theme.dart';
 
 /// Elegir familia de colores (Cálido, Menta, Lavanda) y modo (según el
 /// sistema, claro u oscuro). El cambio se aplica al instante.

@@ -130,6 +130,52 @@ class _SyncTestFakes {
 }
 
 void main() {
+  group(
+    'VaultSessionController — tiempo de bloqueo configurable (ADR 0016)',
+    () {
+      test('al cambiar el tiempo, reprograma el temporizador en curso sin '
+          'esperar a la próxima interacción', () async {
+        // Fuente mutable del tiempo: se cambia la variable e invalida el
+        // provider, igual que cuando el usuario elige otro valor.
+        var timeout = const Duration(minutes: 5);
+        final timeoutSource = Provider<Duration>((ref) => timeout);
+        final container = ProviderContainer(
+          overrides: [
+            cryptoPortProvider.overrideWith((ref) async => FakeCryptoPort()),
+            vaultStoragePortProvider.overrideWith(
+              (ref) async => FakeVaultStoragePort(),
+            ),
+            autoLockTimeoutProvider.overrideWith(
+              (ref) => ref.watch(timeoutSource),
+            ),
+            lockOnBackgroundProvider.overrideWith((ref) => true),
+            biometricAuthPortProvider.overrideWith(
+              (ref) => FakeBiometricAuthPort(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        final notifier = container.read(
+          vaultSessionControllerProvider.notifier,
+        );
+        await container.read(vaultSessionControllerProvider.future);
+        await notifier.createVault(_masterPassword);
+
+        // Con 5 minutos no se bloquearía en el tiempo del test...
+        timeout = _shortTimeout;
+        container.invalidate(timeoutSource);
+        container.read(autoLockTimeoutProvider);
+        await Future<void>.delayed(_shortTimeout * 3);
+
+        // ...pero el controller reprogramó con el valor nuevo.
+        expect(
+          container.read(vaultSessionControllerProvider).value,
+          isA<VaultSessionLocked>(),
+        );
+      });
+    },
+  );
+
   group('VaultSessionController — auto-lock (ADR 0008)', () {
     test(
       'bloquea automáticamente al superar el timeout de inactividad',

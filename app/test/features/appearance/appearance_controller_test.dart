@@ -8,6 +8,8 @@ import 'package:lockspire/design/lockspire_colors.dart';
 import 'package:lockspire/features/appearance/domain/appearance_preference.dart';
 import 'package:lockspire/features/appearance/domain/ports/appearance_preferences_port.dart';
 import 'package:lockspire/features/appearance/presentation/appearance_controller.dart';
+import 'package:lockspire/features/appearance/presentation/appearance_theme.dart';
+import 'package:lockspire/features/appearance/presentation/providers/appearance_preferences_port_provider.dart';
 
 class _FakePort implements AppearancePreferencesPort {
   AppearancePreference stored;

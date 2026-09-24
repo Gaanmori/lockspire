@@ -53,6 +53,14 @@ class VaultSessionController extends _$VaultSessionController {
       _autoSyncTimer?.cancel();
     });
 
+    // Si el usuario cambia el tiempo de bloqueo (ADR 0016), el temporizador
+    // en curso se reprograma ya con el valor nuevo. `listen` (no `watch`):
+    // cambiar el ajuste no debe reconstruir la sesión.
+    ref.listen(
+      autoLockTimeoutProvider,
+      (_, _) => _scheduleAutoLockIfUnlocked(),
+    );
+
     final storage = await ref.watch(vaultStoragePortProvider.future);
     final exists = await storage.exists();
     return exists ? const VaultSessionLocked() : const VaultSessionNoVault();

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../design/lockspire_spacing.dart';
 import '../../appearance/domain/appearance_preference.dart';
 import '../../appearance/presentation/appearance_controller.dart';
+import '../../appearance/presentation/appearance_theme.dart';
 import '../../vault/presentation/screens/unlock_vault_screen.dart';
 import '../../vault/presentation/vault_session_controller.dart';
 import '../../vault/presentation/vault_session_state.dart';
