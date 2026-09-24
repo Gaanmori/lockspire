@@ -190,7 +190,7 @@ class _GetCredentialViewState extends State<_GetCredentialView> {
                     final entry = entries[index];
                     final username = entry.fields['username'];
                     return Material(
-                      color: LockspireColors.bgSurface,
+                      color: context.palette.bgSurface,
                       borderRadius: BorderRadius.circular(16),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),

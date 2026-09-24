@@ -23,8 +23,16 @@ export interface CredentialSummary {
   username: string;
 }
 
+export const THEME_FAMILIES = ['calido', 'menta', 'lavanda'] as const;
+export const THEME_MODES = ['system', 'light', 'dark'] as const;
+
+export interface AppTheme {
+  family: (typeof THEME_FAMILIES)[number];
+  mode: (typeof THEME_MODES)[number];
+}
+
 export type Response =
-  | { type: 'PONG'; locked: boolean }
+  | { type: 'PONG'; locked: boolean; theme?: AppTheme }
   | { type: 'CREDENTIALS'; entries: CredentialSummary[] }
   | { type: 'CREDENTIAL_SECRET'; username: string; password: string }
   | { type: 'GENERATED_PASSWORD'; password: string }
@@ -59,7 +67,8 @@ export function parseResponse(raw: unknown, requestId: string): Response {
   switch (type) {
     case 'PONG': {
       if (typeof raw['locked'] !== 'boolean') throw new ProtocolError('locked');
-      return { type, locked: raw['locked'] };
+      const theme = parseTheme(raw['theme']);
+      return { type, locked: raw['locked'], ...(theme ? { theme } : {}) };
     }
     case 'CREDENTIALS': {
       const list = raw['entries'];
@@ -86,6 +95,26 @@ export function parseResponse(raw: unknown, requestId: string): Response {
     default:
       throw new ProtocolError('type desconocido');
   }
+}
+
+/**
+ * Tema opcional de `PONG`. Un valor desconocido (p. ej. una familia que
+ * añada una versión futura de la app) se ignora en vez de fallar: el tema
+ * es cosmético.
+ */
+function parseTheme(raw: unknown): AppTheme | undefined {
+  if (!isObject(raw)) return undefined;
+  const family = raw['family'];
+  const mode = raw['mode'];
+  if (
+    typeof family !== 'string' ||
+    typeof mode !== 'string' ||
+    !(THEME_FAMILIES as readonly string[]).includes(family) ||
+    !(THEME_MODES as readonly string[]).includes(mode)
+  ) {
+    return undefined;
+  }
+  return { family, mode } as AppTheme;
 }
 
 /** Origen de una URL de pestaña, solo para http/https. */

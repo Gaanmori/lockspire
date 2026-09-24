@@ -1,16 +1,92 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-/* Tokens de docs/design/README.md (dirección "cálido y cercano"). */
-:root {
+/* Tokens de docs/design/README.md. Mismos 6 temas que la app
+   (app/lib/design/lockspire_colors.dart); la app indica cuál en la
+   respuesta a PING y src/theme.ts fija data-theme en <html>. */
+:root,
+:root[data-theme='calido-light'] {
   --bg-page: #fff8f1;
   --bg-surface: #ffffff;
   --bg-subtle: #fdede6;
+  --bg-input: #f6ece1;
   --text-primary: #3a2e2a;
   --text-secondary: #8a7a73;
   --accent: #ea6c4d;
   --accent-hover: #d65a3c;
+  --on-accent: #ffffff;
   --danger: #c23b3b;
   --radius-md: 16px;
   --radius-pill: 999px;
+  color-scheme: light;
+}
+
+:root[data-theme='calido-dark'] {
+  --bg-page: #1e1714;
+  --bg-surface: #2a211d;
+  --bg-subtle: #3a2c26;
+  --bg-input: #332823;
+  --text-primary: #f5e9e2;
+  --text-secondary: #bba89e;
+  --accent: #f07a5a;
+  --accent-hover: #e0664a;
+  --on-accent: #1e1714;
+  --danger: #e5605f;
+  color-scheme: dark;
+}
+
+:root[data-theme='menta-light'] {
+  --bg-page: #f3faf7;
+  --bg-surface: #ffffff;
+  --bg-subtle: #ddf2ea;
+  --bg-input: #e7f3ee;
+  --text-primary: #1f3a33;
+  --text-secondary: #5f7a72;
+  --accent: #178a6b;
+  --accent-hover: #12735a;
+  --on-accent: #ffffff;
+  --danger: #c23b3b;
+  color-scheme: light;
+}
+
+:root[data-theme='menta-dark'] {
+  --bg-page: #0f1c18;
+  --bg-surface: #172822;
+  --bg-subtle: #1f3a31;
+  --bg-input: #1a2f28;
+  --text-primary: #e3f2ec;
+  --text-secondary: #92b3a8;
+  --accent: #3cc49b;
+  --accent-hover: #2fae87;
+  --on-accent: #0f1c18;
+  --danger: #e5605f;
+  color-scheme: dark;
+}
+
+:root[data-theme='lavanda-light'] {
+  --bg-page: #f7f5fd;
+  --bg-surface: #ffffff;
+  --bg-subtle: #ece8fb;
+  --bg-input: #eeebf7;
+  --text-primary: #2e2a45;
+  --text-secondary: #7a7496;
+  --accent: #6c5ce0;
+  --accent-hover: #5a4acb;
+  --on-accent: #ffffff;
+  --danger: #c23b3b;
+  color-scheme: light;
+}
+
+:root[data-theme='lavanda-dark'] {
+  --bg-page: #16142a;
+  --bg-surface: #201d38;
+  --bg-subtle: #2c2850;
+  --bg-input: #252144;
+  --text-primary: #ece9fa;
+  --text-secondary: #a6a1c4;
+  --accent: #8f82f2;
+  --accent-hover: #7b6de6;
+  --on-accent: #16142a;
+  --danger: #e5605f;
+  color-scheme: dark;
 }
 
 * {
@@ -116,7 +192,7 @@ button.secondary {
 button.primary {
   border: none;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 button.primary:hover {
@@ -154,7 +230,7 @@ button.link {
   padding: 8px 12px;
   border: 1px solid var(--bg-subtle);
   border-radius: var(--radius-md);
-  background: var(--bg-surface);
+  background: var(--bg-input);
   color: inherit;
   font: inherit;
 }

@@ -6,6 +6,8 @@ import 'dart:async';
 import 'package:lockspire_bridge/lockspire_bridge.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../appearance/domain/appearance_preference.dart';
+import '../../../appearance/presentation/appearance_controller.dart';
 import '../../../desktop/presentation/providers/is_desktop_shell_provider.dart';
 import '../../../desktop/presentation/window_actions.dart';
 import '../../../vault/application/password_generator.dart';
@@ -51,6 +53,9 @@ Future<BrowserBridgeStatus> browserBridge(Ref ref) async {
       ref.read(pendingLinkRequestProvider.notifier).set(request);
       unawaited(showMainWindow());
     },
+    currentAppearance: () =>
+        ref.read(appearanceControllerProvider).value ??
+        AppearancePreference.defaults,
   );
 
   try {

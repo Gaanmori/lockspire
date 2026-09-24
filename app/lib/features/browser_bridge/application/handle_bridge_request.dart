@@ -3,6 +3,7 @@
 
 import 'package:lockspire_bridge/lockspire_bridge.dart';
 
+import '../../appearance/domain/appearance_preference.dart';
 import '../../vault/domain/entities/vault.dart';
 import '../../vault/domain/entities/vault_entry.dart';
 import '../domain/origin_matcher.dart';
@@ -43,12 +44,19 @@ class HandleBridgeRequest {
   /// Muestra la confirmación de vincular un sitio en la app (ADR 0015).
   final void Function(LinkRequest request) requestLink;
 
+  /// Tema activo de la app, para que la extensión use el mismo.
+  final AppearancePreference Function() currentAppearance;
+
   const HandleBridgeRequest({
     required this.currentVault,
     required this.showApp,
     required this.generatePassword,
     required this.requestLink,
+    this.currentAppearance = _defaultAppearance,
   });
+
+  static AppearancePreference _defaultAppearance() =>
+      AppearancePreference.defaults;
 
   static Iterable<VaultEntry> _passwordEntries(Vault vault) => vault.entries
       .where((e) => !e.deleted && e.type == VaultEntryType.password);
@@ -69,7 +77,13 @@ class HandleBridgeRequest {
   Map<String, Object?> call(BridgeRequest request) {
     switch (request) {
       case PingRequest():
-        return pongResponse(request.id, locked: currentVault() == null);
+        final appearance = currentAppearance();
+        return pongResponse(
+          request.id,
+          locked: currentVault() == null,
+          themeFamily: appearance.family.name,
+          themeMode: appearance.mode.name,
+        );
 
       case ShowAppRequest():
         showApp();

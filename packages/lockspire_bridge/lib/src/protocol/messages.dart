@@ -321,8 +321,20 @@ Map<String, Object?> _response(
   Map<String, Object?> fields = const {},
 ]) => {'v': protocolVersion, 'id': id, 'type': type, ...fields};
 
-Map<String, Object?> pongResponse(String id, {required bool locked}) =>
-    _response(id, MessageType.pong, {'locked': locked});
+/// [themeFamily] (`calido`/`menta`/`lavanda`) y [themeMode]
+/// (`system`/`light`/`dark`) le dicen a la extensión con qué tema pintarse
+/// para que coincida con la app. Opcionales: una app sin preferencia de
+/// tema no los envía.
+Map<String, Object?> pongResponse(
+  String id, {
+  required bool locked,
+  String? themeFamily,
+  String? themeMode,
+}) => _response(id, MessageType.pong, {
+  'locked': locked,
+  if (themeFamily != null && themeMode != null)
+    'theme': {'family': themeFamily, 'mode': themeMode},
+});
 
 Map<String, Object?> credentialsResponse(
   String id,

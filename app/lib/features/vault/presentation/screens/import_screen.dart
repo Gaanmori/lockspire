@@ -154,10 +154,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(
+        Icon(
           Icons.upload_file_outlined,
           size: 48,
-          color: LockspireColors.textPlaceholder,
+          color: context.palette.textPlaceholder,
         ),
         const SizedBox(height: LockspireSpacing.md),
         Text(

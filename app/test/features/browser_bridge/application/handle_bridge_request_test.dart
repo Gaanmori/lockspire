@@ -4,6 +4,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/features/appearance/domain/appearance_preference.dart';
 import 'package:lockspire/features/browser_bridge/application/handle_bridge_request.dart';
 import 'package:lockspire/features/vault/domain/entities/vault.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
@@ -109,6 +110,23 @@ void main() {
         errorResponse('a', ErrorCode.notFound),
       );
       expect(linkRequests, isEmpty);
+    });
+  });
+
+  test('PING incluye el tema de la app para que la extensión lo siga', () {
+    final themed = HandleBridgeRequest(
+      currentVault: () => vault,
+      showApp: () {},
+      generatePassword: (length) => '',
+      requestLink: (_) {},
+      currentAppearance: () => const AppearancePreference(
+        family: ThemeFamilyId.menta,
+        mode: AppearanceMode.dark,
+      ),
+    );
+    expect(themed(const PingRequest('a'))['theme'], {
+      'family': 'menta',
+      'mode': 'dark',
     });
   });
 

@@ -6,52 +6,31 @@ import 'package:flutter/material.dart';
 import 'lockspire_colors.dart';
 import 'lockspire_spacing.dart';
 
+/// Familias de tema: cada una con versión clara y oscura (ver
+/// docs/design/README.md).
+enum LockspireThemeFamily {
+  calido('Cálido', LockspirePalettes.calido, LockspirePalettes.calidoOscuro),
+  menta('Menta', LockspirePalettes.menta, LockspirePalettes.mentaOscuro),
+  lavanda(
+    'Lavanda',
+    LockspirePalettes.lavanda,
+    LockspirePalettes.lavandaOscuro,
+  );
+
+  final String displayName;
+  final LockspirePalette light;
+  final LockspirePalette dark;
+
+  const LockspireThemeFamily(this.displayName, this.light, this.dark);
+}
+
 /// `ThemeData` real construido a partir del sistema de diseño (ver
-/// docs/design/README.md) — reemplaza el `ColorScheme.fromSeed` de
-/// ejemplo del scaffold de `flutter create`.
+/// docs/design/README.md) para una [LockspirePalette].
 abstract final class LockspireTheme {
   // Quicksand: títulos, nombre de la app, texto de botones.
   static const _headingFamily = 'Quicksand';
   // Karla: cuerpo de texto, labels, captions.
   static const _bodyFamily = 'Karla';
-
-  static final TextTheme _textTheme = TextTheme(
-    // Display — Quicksand 700, 20px.
-    headlineSmall: const TextStyle(
-      fontFamily: _headingFamily,
-      fontWeight: FontWeight.w700,
-      fontSize: 20,
-      color: LockspireColors.textPrimary,
-    ),
-    // Heading — Quicksand 700, 17px (también usado por AppBar).
-    titleLarge: const TextStyle(
-      fontFamily: _headingFamily,
-      fontWeight: FontWeight.w700,
-      fontSize: 17,
-      color: LockspireColors.textPrimary,
-    ),
-    // Body — Karla 500, 15px. Estilo por defecto de Text() sin estilo propio.
-    bodyMedium: const TextStyle(
-      fontFamily: _bodyFamily,
-      fontWeight: FontWeight.w500,
-      fontSize: 15,
-      color: LockspireColors.textPrimary,
-    ),
-    // Caption — Karla 500, 13px.
-    bodySmall: const TextStyle(
-      fontFamily: _bodyFamily,
-      fontWeight: FontWeight.w500,
-      fontSize: 13,
-      color: LockspireColors.textSecondary,
-    ),
-    // Label — Karla 600, 12px.
-    labelMedium: const TextStyle(
-      fontFamily: _bodyFamily,
-      fontWeight: FontWeight.w600,
-      fontSize: 12,
-      color: LockspireColors.textSecondary,
-    ),
-  );
 
   // El doc de diseño dice "texto de botones: Quicksand" sin fijar un
   // tamaño propio — se usa el mismo tamaño que Body (15px) por legibilidad,
@@ -62,117 +41,192 @@ abstract final class LockspireTheme {
     fontSize: 15,
   );
 
-  static final ThemeData themeData = ThemeData(
-    useMaterial3: true,
-    scaffoldBackgroundColor: LockspireColors.bgPage,
-    fontFamily: _bodyFamily,
-    textTheme: _textTheme,
-    colorScheme: const ColorScheme.light(
-      primary: LockspireColors.accentDefault,
-      onPrimary: Colors.white,
-      secondary: LockspireColors.accentSecondary,
-      onSecondary: Colors.white,
-      error: LockspireColors.danger,
-      onError: Colors.white,
-      surface: LockspireColors.bgSurface,
-      onSurface: LockspireColors.textPrimary,
-      surfaceContainerHighest: LockspireColors.bgSurfaceSubtle,
-      outline: LockspireColors.textPlaceholder,
-    ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: LockspireColors.bgPage,
-      foregroundColor: LockspireColors.textPrimary,
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      titleTextStyle: _textTheme.titleLarge,
-    ),
-    cardTheme: CardThemeData(
-      color: LockspireColors.bgSurface,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(LockspireRadius.lg),
+  static final _cache = <LockspirePalette, ThemeData>{};
+
+  /// `ThemeData` de [palette], construido una sola vez por paleta.
+  static ThemeData of(LockspirePalette palette) =>
+      _cache.putIfAbsent(palette, () => build(palette));
+
+  static ThemeData build(LockspirePalette p) {
+    final textTheme = TextTheme(
+      // Display — Quicksand 700, 20px.
+      headlineSmall: TextStyle(
+        fontFamily: _headingFamily,
+        fontWeight: FontWeight.w700,
+        fontSize: 20,
+        color: p.textPrimary,
       ),
-    ),
-    filledButtonTheme: FilledButtonThemeData(
-      style: ButtonStyle(
-        textStyle: const WidgetStatePropertyAll(_buttonTextStyle),
-        shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(LockspireRadius.pill),
-          ),
-        ),
-        padding: const WidgetStatePropertyAll(
-          EdgeInsets.symmetric(
-            horizontal: LockspireSpacing.lg,
-            vertical: LockspireSpacing.md,
-          ),
-        ),
-        backgroundColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.disabled)) {
-            return LockspireColors.textPlaceholder;
-          }
-          if (states.contains(WidgetState.pressed)) {
-            return LockspireColors.accentHover;
-          }
-          return LockspireColors.accentDefault;
-        }),
-        foregroundColor: const WidgetStatePropertyAll(Colors.white),
+      // Heading — Quicksand 700, 17px (también usado por AppBar).
+      titleLarge: TextStyle(
+        fontFamily: _headingFamily,
+        fontWeight: FontWeight.w700,
+        fontSize: 17,
+        color: p.textPrimary,
       ),
-    ),
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: ButtonStyle(
-        textStyle: const WidgetStatePropertyAll(_buttonTextStyle),
-        shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(LockspireRadius.pill),
-          ),
-        ),
-        padding: const WidgetStatePropertyAll(
-          EdgeInsets.symmetric(
-            horizontal: LockspireSpacing.lg,
-            vertical: LockspireSpacing.md,
-          ),
-        ),
-        side: const WidgetStatePropertyAll(
-          BorderSide(color: LockspireColors.accentDefault),
-        ),
-        foregroundColor: const WidgetStatePropertyAll(
-          LockspireColors.accentDefault,
-        ),
+      titleMedium: TextStyle(
+        fontFamily: _headingFamily,
+        fontWeight: FontWeight.w700,
+        fontSize: 15,
+        color: p.textPrimary,
       ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: LockspireColors.bgInput,
-      hintStyle: TextStyle(
+      // Body — Karla 500, 15px. Estilo por defecto de Text() sin estilo propio.
+      bodyMedium: TextStyle(
         fontFamily: _bodyFamily,
-        color: LockspireColors.textPlaceholder,
+        fontWeight: FontWeight.w500,
+        fontSize: 15,
+        color: p.textPrimary,
       ),
-      labelStyle: _textTheme.labelMedium,
-      errorStyle: _textTheme.bodySmall?.copyWith(color: LockspireColors.danger),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(LockspireRadius.md),
-        borderSide: BorderSide.none,
+      bodyLarge: TextStyle(
+        fontFamily: _bodyFamily,
+        fontWeight: FontWeight.w500,
+        fontSize: 16,
+        color: p.textPrimary,
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(LockspireRadius.md),
-        borderSide: BorderSide.none,
+      // Caption — Karla 500, 13px.
+      bodySmall: TextStyle(
+        fontFamily: _bodyFamily,
+        fontWeight: FontWeight.w500,
+        fontSize: 13,
+        color: p.textSecondary,
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(LockspireRadius.md),
-        borderSide: const BorderSide(
-          color: LockspireColors.accentDefault,
-          width: 2,
+      // Label — Karla 600, 12px.
+      labelMedium: TextStyle(
+        fontFamily: _bodyFamily,
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
+        color: p.textSecondary,
+      ),
+    );
+
+    final colorScheme = ColorScheme(
+      brightness: p.brightness,
+      primary: p.accentDefault,
+      onPrimary: p.onAccent,
+      secondary: p.accentSecondary,
+      onSecondary: p.onAccent,
+      error: p.danger,
+      onError: p.isDark ? p.bgPage : Colors.white,
+      surface: p.bgSurface,
+      onSurface: p.textPrimary,
+      onSurfaceVariant: p.textSecondary,
+      surfaceContainerLowest: p.bgPage,
+      surfaceContainerLow: p.bgSurface,
+      surfaceContainer: p.bgSurface,
+      surfaceContainerHigh: p.bgSurface,
+      surfaceContainerHighest: p.bgSurfaceSubtle,
+      outline: p.textPlaceholder,
+      outlineVariant: p.bgSurfaceSubtle,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: p.brightness,
+      scaffoldBackgroundColor: p.bgPage,
+      fontFamily: _bodyFamily,
+      textTheme: textTheme,
+      colorScheme: colorScheme,
+      extensions: [p],
+      appBarTheme: AppBarTheme(
+        backgroundColor: p.bgPage,
+        foregroundColor: p.textPrimary,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: textTheme.titleLarge,
+      ),
+      cardTheme: CardThemeData(
+        color: p.bgSurface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(LockspireRadius.lg),
         ),
       ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(LockspireRadius.md),
-        borderSide: const BorderSide(color: LockspireColors.danger),
+      dialogTheme: DialogThemeData(
+        backgroundColor: p.bgSurface,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: textTheme.titleLarge,
+        contentTextStyle: textTheme.bodyMedium,
       ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(LockspireRadius.md),
-        borderSide: const BorderSide(color: LockspireColors.danger, width: 2),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: p.textPrimary,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(color: p.bgPage),
       ),
-    ),
-  );
+      filledButtonTheme: FilledButtonThemeData(
+        style: ButtonStyle(
+          textStyle: const WidgetStatePropertyAll(_buttonTextStyle),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(LockspireRadius.pill),
+            ),
+          ),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(
+              horizontal: LockspireSpacing.lg,
+              vertical: LockspireSpacing.md,
+            ),
+          ),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return p.textPlaceholder;
+            }
+            if (states.contains(WidgetState.pressed)) {
+              return p.accentHover;
+            }
+            return p.accentDefault;
+          }),
+          foregroundColor: WidgetStatePropertyAll(p.onAccent),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: ButtonStyle(
+          textStyle: const WidgetStatePropertyAll(_buttonTextStyle),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(LockspireRadius.pill),
+            ),
+          ),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(
+              horizontal: LockspireSpacing.lg,
+              vertical: LockspireSpacing.md,
+            ),
+          ),
+          side: WidgetStatePropertyAll(BorderSide(color: p.accentDefault)),
+          foregroundColor: WidgetStatePropertyAll(p.accentDefault),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          textStyle: const WidgetStatePropertyAll(_buttonTextStyle),
+          foregroundColor: WidgetStatePropertyAll(p.accentDefault),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: p.bgInput,
+        hintStyle: TextStyle(fontFamily: _bodyFamily, color: p.textPlaceholder),
+        labelStyle: textTheme.labelMedium,
+        errorStyle: textTheme.bodySmall?.copyWith(color: p.danger),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(LockspireRadius.md),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(LockspireRadius.md),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(LockspireRadius.md),
+          borderSide: BorderSide(color: p.accentDefault, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(LockspireRadius.md),
+          borderSide: BorderSide(color: p.danger),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(LockspireRadius.md),
+          borderSide: BorderSide(color: p.danger, width: 2),
+        ),
+      ),
+    );
+  }
 }

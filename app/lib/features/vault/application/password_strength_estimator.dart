@@ -4,7 +4,7 @@
 import 'dart:math';
 
 /// Nivel de fortaleza — 3 niveles (no 4) para poder mapear 1:1 a los 3
-/// colores semánticos ya existentes en `LockspireColors`
+/// colores semánticos ya existentes en `LockspirePalette`
 /// (danger/accentDefault/accentSecondary) sin agregar tokens nuevos.
 enum PasswordStrengthLevel { weak, fair, strong }
 

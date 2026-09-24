@@ -348,7 +348,12 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
      - Mensajes nuevos: `LIST_CREDENTIALS` y `REQUEST_LINK_ORIGIN`.
      - Sitio web y app Android son vínculos **separados** (pedido del usuario): la vinculación Android pendiente usará su propio campo, nunca `url`.
      - Tests: app 155, bridge (20 de protocolo/sesión), extensión 6 (filtro incluido).
-  5. Después: `SAVE_CREDENTIAL` con confirmación en la app, Firefox, empaquetado/instalador que deje el host junto a la app automáticamente, publicación en la Chrome Web Store (añadir su ID a `allowedExtensionIds`).
+  5. **6 temas (implementado 2026-09-24, pendiente de verlos en la app):** pedido del usuario.
+     - 3 familias (Cálido, Menta, Lavanda), cada una en claro y oscuro, más el modo "según el sistema". Se eligen en la pantalla nueva **Apariencia** (icono de paleta en la lista de entradas). La preferencia se guarda en `flutter_secure_storage` y se carga antes del primer frame para que no parpadee.
+     - La extensión sigue el mismo tema: `PONG` lleva `theme {family, mode}` y el popup lo cachea en `localStorage` para no parpadear al abrirse.
+     - Refactor: `LockspireColors` (constantes globales) pasa a `LockspirePalette` (`ThemeExtension`), y las pantallas leen `context.palette`.
+     - Tests: contraste WCAG de los 6 temas, controller con puerto falso, y tema en `PONG` en la app y la extensión. App 163, bridge 27, extensión 8. Detalle en `docs/design/README.md`.
+  6. Después: `SAVE_CREDENTIAL` con confirmación en la app, Firefox, empaquetado/instalador que deje el host junto a la app automáticamente, publicación en la Chrome Web Store (añadir su ID a `allowedExtensionIds`).
 
 - "Bóveda desbloqueada" ya no es un placeholder (Fase 5) — sale de pendientes de diseño. Futuras pantallas por maquetar: configuración, `import_screen.dart`/`sync_settings_screen.dart`/`restore_vault_screen.dart` (quedaron con estilo básico/sin `AuthCard` completo — no bloqueante), lo que necesite la extensión de navegador.
 - **ADR 0009 (merge por campo) — verificación manual parcial, no un escenario controlado todavía:** durante la prueba de OneDrive en el Redmi se vio un merge real ("Se fusionaron los cambios: 1 entradas resueltas automáticamente") entre lo subido desde Windows y lo local del teléfono, lo que confirma que el camino funciona en la práctica — pero no fue el escenario específico planeado (dos dispositivos editando la misma entrada sin sincronizar entre medio, para confirmar que se resuelve solo sin picker). Queda como pendiente menor, no bloqueante, si se quiere esa prueba puntual más adelante.

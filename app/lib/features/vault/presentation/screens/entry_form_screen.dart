@@ -443,7 +443,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
         vertical: LockspireSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: LockspireColors.bgSurfaceSubtle,
+        color: context.palette.bgSurfaceSubtle,
         borderRadius: BorderRadius.circular(LockspireRadius.md),
       ),
       child: Column(
@@ -511,11 +511,12 @@ class _PasswordStrengthIndicator extends StatelessWidget {
 
   const _PasswordStrengthIndicator({required this.password});
 
-  Color _colorFor(PasswordStrengthLevel level) => switch (level) {
-    PasswordStrengthLevel.weak => LockspireColors.danger,
-    PasswordStrengthLevel.fair => LockspireColors.accentDefault,
-    PasswordStrengthLevel.strong => LockspireColors.accentSecondary,
-  };
+  Color _colorFor(BuildContext context, PasswordStrengthLevel level) =>
+      switch (level) {
+        PasswordStrengthLevel.weak => context.palette.danger,
+        PasswordStrengthLevel.fair => context.palette.accentDefault,
+        PasswordStrengthLevel.strong => context.palette.accentSecondary,
+      };
 
   String _labelFor(PasswordStrengthLevel level) => switch (level) {
     PasswordStrengthLevel.weak => 'Débil',
@@ -526,7 +527,7 @@ class _PasswordStrengthIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final estimate = estimatePasswordStrength(password);
-    final color = _colorFor(estimate.level);
+    final color = _colorFor(context, estimate.level);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,7 +537,7 @@ class _PasswordStrengthIndicator extends StatelessWidget {
           child: LinearProgressIndicator(
             value: (estimate.bits / 100).clamp(0.0, 1.0),
             minHeight: 6,
-            backgroundColor: LockspireColors.bgSurfaceSubtle,
+            backgroundColor: context.palette.bgSurfaceSubtle,
             valueColor: AlwaysStoppedAnimation(color),
           ),
         ),

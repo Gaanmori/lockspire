@@ -3,6 +3,11 @@
 
 import { fillCredentials, type FillResult } from './fill.ts';
 import { filterEntries } from './filter.ts';
+import { applyAppTheme, applyCachedTheme } from './theme.ts';
+
+// Antes que nada: sin esto el popup se pinta un instante con el tema por
+// defecto hasta que responde la app.
+applyCachedTheme();
 import { send, webOrigin, type CredentialSummary, type Response } from './protocol.ts';
 
 const GENERATED_LENGTH = 20;
@@ -61,6 +66,7 @@ async function main(): Promise<void> {
   if (origin) siteEl.textContent = new URL(origin).host;
 
   const ping = await send({ type: 'PING' });
+  if (ping.type === 'PONG') applyAppTheme(ping.theme);
   const problem = problemMessage(ping);
   if (problem) {
     setStatus(problem, true);

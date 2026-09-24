@@ -5,6 +5,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lockspire/features/appearance/presentation/screens/appearance_screen.dart';
 import 'package:lockspire/features/browser_bridge/presentation/screens/browser_integration_screen.dart';
 import 'package:lockspire/features/sync/presentation/screens/sync_settings_screen.dart';
 
@@ -141,6 +142,13 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
               context,
             ).push(MaterialPageRoute(builder: (_) => const SecurityScreen())),
           ),
+          IconButton(
+            icon: const Icon(Icons.palette_outlined),
+            tooltip: 'Apariencia',
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const AppearanceScreen())),
+          ),
           if (Platform.isWindows || Platform.isLinux)
             IconButton(
               icon: const Icon(Icons.extension_outlined),
@@ -233,7 +241,7 @@ class _EntryTile extends StatelessWidget {
     final initial = entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?';
 
     return Material(
-      color: LockspireColors.bgSurface,
+      color: context.palette.bgSurface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -249,14 +257,14 @@ class _EntryTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  color: LockspireColors.bgSurfaceSubtle,
+                decoration: BoxDecoration(
+                  color: context.palette.bgSurfaceSubtle,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   initial,
-                  style: const TextStyle(
-                    color: LockspireColors.accentDefault,
+                  style: TextStyle(
+                    color: context.palette.accentDefault,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -278,10 +286,7 @@ class _EntryTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-                color: LockspireColors.textPlaceholder,
-              ),
+              Icon(Icons.chevron_right, color: context.palette.textPlaceholder),
             ],
           ),
         ),
@@ -306,7 +311,7 @@ class _EmptyState extends StatelessWidget {
             Icon(
               hasQuery ? Icons.search_off : Icons.password_outlined,
               size: 48,
-              color: LockspireColors.textPlaceholder,
+              color: context.palette.textPlaceholder,
             ),
             const SizedBox(height: LockspireSpacing.md),
             Text(

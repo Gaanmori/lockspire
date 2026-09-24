@@ -6,7 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../design/lockspire_spacing.dart';
-import '../../../design/lockspire_theme.dart';
+import '../../appearance/domain/appearance_preference.dart';
+import '../../appearance/presentation/appearance_controller.dart';
 import '../../vault/presentation/screens/unlock_vault_screen.dart';
 import '../../vault/presentation/vault_session_controller.dart';
 import '../../vault/presentation/vault_session_state.dart';
@@ -22,9 +23,14 @@ class AutofillApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final appearance =
+        ref.watch(appearanceControllerProvider).value ??
+        AppearancePreference.defaults;
     return MaterialApp(
       title: 'Lockspire',
-      theme: LockspireTheme.themeData,
+      theme: appearance.lightTheme,
+      darkTheme: appearance.darkTheme,
+      themeMode: appearance.themeMode,
       home: const _AutofillGate(),
     );
   }

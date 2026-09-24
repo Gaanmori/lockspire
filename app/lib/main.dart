@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'design/lockspire_theme.dart';
+import 'features/appearance/domain/appearance_preference.dart';
+import 'features/appearance/presentation/appearance_controller.dart';
 import 'features/autofill/presentation/autofill_app.dart';
 import 'features/browser_bridge/infrastructure/single_instance.dart';
 import 'features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
@@ -33,6 +34,9 @@ Future<void> main() async {
       WidgetsBinding.instance.platformDispatcher.defaultRouteName ==
       '/autofill';
   final container = ProviderContainer();
+  // El tema elegido se carga antes del primer frame: si no, la app
+  // mostraría un instante el tema por defecto y luego cambiaría.
+  await container.read(appearanceControllerProvider.future);
   if (Platform.isWindows || Platform.isLinux) {
     // DesktopShell (ADR 0012) usa window_manager, que exige inicializarse
     // antes de runApp().
@@ -92,10 +96,16 @@ class MyApp extends ConsumerWidget {
       }
     });
 
+    final appearance =
+        ref.watch(appearanceControllerProvider).value ??
+        AppearancePreference.defaults;
+
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Lockspire',
-      theme: LockspireTheme.themeData,
+      theme: appearance.lightTheme,
+      darkTheme: appearance.darkTheme,
+      themeMode: appearance.themeMode,
       // DesktopShell dentro de MaterialApp: necesita un Navigator para
       // mostrar el aviso de "sigue en la bandeja" al cerrar la ventana.
       home: const DesktopShell(

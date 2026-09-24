@@ -33,11 +33,11 @@ class AuthCard extends StatelessWidget {
         vertical: LockspireSpacing.xl,
       ),
       decoration: BoxDecoration(
-        color: LockspireColors.bgSurface,
+        color: context.palette.bgSurface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: LockspireColors.textPrimary.withValues(alpha: 0.06),
+            color: context.palette.textPrimary.withValues(alpha: 0.06),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -52,10 +52,10 @@ class AuthCard extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: LockspireColors.bgSurfaceSubtle,
+                color: context.palette.bgSurfaceSubtle,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(icon, size: 28, color: LockspireColors.accentDefault),
+              child: Icon(icon, size: 28, color: context.palette.accentDefault),
             ),
           ),
           const SizedBox(height: LockspireSpacing.mdLg),

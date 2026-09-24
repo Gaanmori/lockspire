@@ -22,7 +22,22 @@ Este documento es el resumen en texto para que cualquier agente/dev pueda implem
 | `accent/secondary` | `#4FA391` | Confirmaciones / éxito |
 | `danger` | `#C23B3B` | Errores (ej. contraseña incorrecta) |
 
-**Implementado en Flutter** en `app/lib/design/lockspire_colors.dart` (`LockspireColors`, los 11 tokens) y aplicado vía un `ColorScheme.light` explícito en `lockspire_theme.dart` (`LockspireTheme.themeData`, usado por `main.dart`).
+La tabla de arriba es el tema **Cálido claro**, el original.
+
+### Temas (2026-09-24)
+
+Hay **3 familias, cada una en claro y oscuro** (6 temas). El usuario elige familia y modo (según el sistema, claro u oscuro) en la pantalla **Apariencia** de la app (`lib/features/appearance/`), y la extensión de navegador usa el mismo tema: la app se lo indica en la respuesta a `PING`.
+
+| Familia | Claro: página / acento | Oscuro: página / acento |
+|---|---|---|
+| Cálido | `#FFF8F1` / `#EA6C4D` | `#1E1714` / `#F07A5A` |
+| Menta | `#F3FAF7` / `#178A6B` | `#0F1C18` / `#3CC49B` |
+| Lavanda | `#F7F5FD` / `#6C5CE0` | `#16142A` / `#8F82F2` |
+
+Todos los tokens de cada tema están en `app/lib/design/lockspire_colors.dart` (`LockspirePalettes`) y, en espejo, en `extension/public/popup.css`.
+
+- **Código:** cada tema es una `LockspirePalette`, una `ThemeExtension` con los mismos tokens de la tabla más `onAccent` (texto sobre el acento: blanco en los claros, el fondo de página en los oscuros). `LockspireTheme.of(palette)` construye el `ThemeData` y lo guarda en caché. Las pantallas leen `context.palette.X`, nunca un color fijo, así que un tema nuevo no toca ninguna pantalla.
+- **Contraste verificado en tests** (`test/design/lockspire_theme_test.dart`, WCAG) para los 6 temas: texto principal ≥ 7:1 sobre página y tarjetas, secundario ≥ 3:1, texto de botón sobre el acento ≥ 3:1. El verde de Menta claro se oscureció respecto a la primera propuesta (`#1F9E7A` → `#178A6B`) para cumplirlo con holgura.
 
 ## Tipografía
 
@@ -83,4 +98,5 @@ Con estilo básico (heredan el tema, sin composición a medida): `sync_settings_
 
 - Maquetar y aplicar el sistema a las pantallas con estilo básico de la lista anterior (no bloqueante).
 - Pantallas futuras: configuración general y la UI de la extensión de navegador.
-- Modo oscuro: no definido todavía (solo existe `ColorScheme.light`).
+- ~~Modo oscuro~~: hecho, ver "Temas".
+- Maquetar en el canvas vivo los temas nuevos (hoy solo existen en código).
