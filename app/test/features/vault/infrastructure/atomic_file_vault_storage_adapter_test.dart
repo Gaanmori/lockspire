@@ -18,7 +18,7 @@ VaultHeader _sampleHeader({int formatMinReaderVersion = 1}) {
     vaultId: 'vault-de-prueba',
     createdAt: DateTime.utc(2026, 1, 1),
     kdfParams: const Argon2Params(
-      memoryKib: 65536,
+      memoryKib: 262144,
       iterations: 3,
       parallelism: 1,
     ),

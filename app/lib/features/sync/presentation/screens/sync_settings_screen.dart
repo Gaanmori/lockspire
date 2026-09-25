@@ -10,6 +10,7 @@ import '../../domain/ports/active_sync_provider_port.dart';
 import '../../domain/ports/google_drive_account_port.dart';
 import '../../domain/ports/one_drive_account_port.dart';
 import '../../domain/ports/sync_credentials_port.dart';
+import '../../domain/webdav_url_policy.dart';
 import '../providers/current_active_sync_provider_provider.dart';
 import '../providers/current_google_drive_account_provider.dart';
 import '../providers/current_one_drive_account_provider.dart';
@@ -143,9 +144,19 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
               labelText: 'URL del servidor WebDAV',
               hintText: 'https://mi-servidor.ejemplo/dav',
             ),
-            validator: (value) => (value == null || value.isEmpty)
-                ? 'Ingresá la URL del servidor'
-                : null,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Ingresá la URL del servidor';
+              }
+              return switch (checkWebDavUrl(value)) {
+                null => null,
+                WebDavUrlProblem.insecure =>
+                  'Usá https://: con http:// tu usuario y contraseña del '
+                      'servidor viajarían sin cifrar.',
+                WebDavUrlProblem.invalid =>
+                  'Ingresá una URL completa, p. ej. https://servidor/dav',
+              };
+            },
           ),
           const SizedBox(height: LockspireSpacing.md),
           TextFormField(

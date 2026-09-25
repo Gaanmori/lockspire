@@ -15,6 +15,7 @@ import '../providers/auto_lock_timeout_setting_provider.dart';
 import '../providers/biometric_auth_port_provider.dart';
 import '../providers/master_password_reminder_setting_provider.dart';
 import '../vault_session_controller.dart';
+import 'change_master_password_screen.dart';
 
 const _settingsChannel = MethodChannel('com.lockspire.lockspire/settings');
 
@@ -102,61 +103,85 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
               final (availability, enabled) = snapshot.data!;
               final available = availability == BiometricAvailability.available;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _AutoLockSection(),
-                  const SizedBox(height: LockspireSpacing.lg),
-                  const Divider(),
-                  const SizedBox(height: LockspireSpacing.md),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text('Desbloquear con $_biometricMethodName'),
-                    subtitle: Text(
-                      available
-                          ? 'Usá $_biometricMethodName en vez de escribir la '
-                                'contraseña maestra cada vez.'
-                          : _unavailableReason(availability),
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.password),
+                      title: const Text('Cambiar contraseña maestra'),
+                      subtitle: const Text(
+                        'Hacelo si creés que alguien pudo conocerla.',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _openChangeMasterPassword,
                     ),
-                    value: enabled,
-                    onChanged: (available && !_busy) ? _toggle : null,
-                  ),
-                  if (_busy) ...[
+                    const Divider(),
                     const SizedBox(height: LockspireSpacing.md),
-                    const Center(child: CircularProgressIndicator()),
-                  ],
-                  if (available) ...[
-                    const SizedBox(height: LockspireSpacing.md),
-                    const _MasterPasswordReminderSection(),
-                  ],
-                  if (Platform.isAndroid) ...[
+                    const _AutoLockSection(),
                     const SizedBox(height: LockspireSpacing.lg),
                     const Divider(),
                     const SizedBox(height: LockspireSpacing.md),
-                    Text(
-                      'Autocompletado',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('Desbloquear con $_biometricMethodName'),
+                      subtitle: Text(
+                        available
+                            ? 'Usá $_biometricMethodName en vez de escribir la '
+                                  'contraseña maestra cada vez.'
+                            : _unavailableReason(availability),
+                      ),
+                      value: enabled,
+                      onChanged: (available && !_busy) ? _toggle : null,
                     ),
-                    const SizedBox(height: LockspireSpacing.sm),
-                    const Text(
-                      'Activá Lockspire como servicio de autocompletado '
-                      'para que aparezca como opción al iniciar sesión en '
-                      'otras apps — incluye logins dentro de un navegador '
-                      'embebido (ej. WebView).',
-                    ),
-                    const SizedBox(height: LockspireSpacing.md),
-                    OutlinedButton(
-                      onPressed: _openAutofillServiceSettings,
-                      child: const Text('Activar como autocompletado'),
-                    ),
+                    if (_busy) ...[
+                      const SizedBox(height: LockspireSpacing.md),
+                      const Center(child: CircularProgressIndicator()),
+                    ],
+                    if (available) ...[
+                      const SizedBox(height: LockspireSpacing.md),
+                      const _MasterPasswordReminderSection(),
+                    ],
+                    if (Platform.isAndroid) ...[
+                      const SizedBox(height: LockspireSpacing.lg),
+                      const Divider(),
+                      const SizedBox(height: LockspireSpacing.md),
+                      Text(
+                        'Autocompletado',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: LockspireSpacing.sm),
+                      const Text(
+                        'Activá Lockspire como servicio de autocompletado '
+                        'para que aparezca como opción al iniciar sesión en '
+                        'otras apps — incluye logins dentro de un navegador '
+                        'embebido (ej. WebView).',
+                      ),
+                      const SizedBox(height: LockspireSpacing.md),
+                      OutlinedButton(
+                        onPressed: _openAutofillServiceSettings,
+                        child: const Text('Activar como autocompletado'),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               );
             },
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _openChangeMasterPassword() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const ChangeMasterPasswordScreen(),
+      ),
+    );
+    // Cambiar la contraseña puede desactivar la biometría (ADR 0018).
+    if (mounted) _refresh();
   }
 
   String _unavailableReason(BiometricAvailability availability) =>

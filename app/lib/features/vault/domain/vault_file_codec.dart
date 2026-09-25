@@ -27,7 +27,18 @@ class UnsupportedVaultFormatException implements Exception {
       'la versión $supportedFormatVersion. Actualiza la app.';
 }
 
+/// El header pide parámetros de Argon2id fuera de los límites aceptados
+/// (ver [Argon2Params.isWithinAcceptedBounds]): se rechaza el archivo sin
+/// derivar nada.
+class UnsafeKdfParamsException implements Exception {
+  @override
+  String toString() =>
+      'El archivo de bóveda pide parámetros de cifrado fuera de lo normal. '
+      'Puede estar dañado o haber sido modificado; no se abrió.';
+}
+
 const _currentSupportedFormatVersion = 1;
+const _headerStart = 10; // magic(4) + formatVersion(2) + headerLen(4)
 final _magic = Uint8List.fromList(utf8.encode('LKSP'));
 
 /// Codifica/decodifica el framing binario de un [VaultFile] (ver
@@ -60,21 +71,35 @@ abstract final class VaultFileCodec {
   static String sha256Hex(VaultFile file) =>
       sha256.convert(encode(file)).toString();
 
+  /// Lanza [FormatException] si los bytes no son un archivo de bóveda bien
+  /// formado (truncado, longitudes imposibles, header ilegible),
+  /// [UnsupportedVaultFormatException] si es de una versión futura y
+  /// [UnsafeKdfParamsException] si pide parámetros de Argon2id fuera de
+  /// límites. Nunca deja escapar un `RangeError`/`TypeError` crudo.
   static VaultFile decode(Uint8List bytes) {
+    const invalid = FormatException(
+      'No es un archivo de bóveda de Lockspire válido',
+    );
+    if (bytes.length < _headerStart) throw invalid;
     final data = ByteData.sublistView(bytes);
 
     final magic = bytes.sublist(0, 4);
-    if (!_bytesEqual(magic, _magic)) {
-      throw FormatException('No es un archivo de bóveda de Lockspire válido');
-    }
+    if (!_bytesEqual(magic, _magic)) throw invalid;
 
     final formatVersion = data.getUint16(4, Endian.big);
     final headerLen = data.getUint32(6, Endian.big);
-    final headerStart = 10;
-    final headerBytes = bytes.sublist(headerStart, headerStart + headerLen);
-    final headerJson =
-        jsonDecode(utf8.decode(headerBytes)) as Map<String, dynamic>;
-    final header = VaultHeader.fromJson(headerJson);
+    if (headerLen > bytes.length - _headerStart) throw invalid;
+    final headerBytes = bytes.sublist(_headerStart, _headerStart + headerLen);
+
+    final VaultHeader header;
+    try {
+      final headerJson =
+          jsonDecode(utf8.decode(headerBytes)) as Map<String, dynamic>;
+      header = VaultHeader.fromJson(headerJson);
+    } on Object {
+      // JSON inválido, UTF-8 inválido, campos ausentes o de otro tipo.
+      throw invalid;
+    }
 
     if (header.formatMinReaderVersion > _currentSupportedFormatVersion) {
       throw UnsupportedVaultFormatException(
@@ -82,8 +107,11 @@ abstract final class VaultFileCodec {
         supportedFormatVersion: _currentSupportedFormatVersion,
       );
     }
+    if (!header.kdfParams.isWithinAcceptedBounds) {
+      throw UnsafeKdfParamsException();
+    }
 
-    final encryptedPayload = bytes.sublist(headerStart + headerLen);
+    final encryptedPayload = bytes.sublist(_headerStart + headerLen);
 
     return VaultFile(
       header: VaultHeader(

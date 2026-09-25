@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
+import '../../application/master_password_policy.dart';
 import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
@@ -68,7 +69,8 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                       autofocus: true,
                       decoration: InputDecoration(
                         labelText: 'Contraseña maestra',
-                        helperText: 'Mínimo 8 caracteres',
+                        helperText:
+                            'Mínimo $masterPasswordMinLength caracteres',
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscure ? Icons.visibility : Icons.visibility_off,
@@ -80,10 +82,10 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Ingresá una contraseña';
                         }
-                        if (value.length < 8) {
-                          return 'Usá al menos 8 caracteres';
-                        }
-                        return null;
+                        final problem = checkNewMasterPassword(value);
+                        return problem == null
+                            ? null
+                            : describeMasterPasswordProblem(problem);
                       },
                     ),
                     const SizedBox(height: LockspireSpacing.md),

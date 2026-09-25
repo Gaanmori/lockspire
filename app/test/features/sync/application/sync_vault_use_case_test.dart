@@ -51,10 +51,11 @@ Future<VaultFile> _encryptVault(
   Vault vault,
   FakeCryptoPort crypto, {
   VaultHeader? header,
+  Uint8List? key,
 }) async {
   final h = header ?? _testHeader(vaultId: vault.vaultId);
   final encrypted = await crypto.encrypt(
-    key: _testKey,
+    key: key ?? _testKey,
     plaintext: vault.toJsonBytes(),
     aad: h.toAadBytes(),
   );
@@ -92,6 +93,173 @@ VaultEntry _entry(
 }
 
 void main() {
+  // Revisión 2026-09-25, hallazgo S1: un archivo remoto que no se descifra
+  // con la clave de la sesión (o es otra bóveda) nunca debe tocar nada
+  // local. Antes se copiaba sobre la bóveda y el ancestro.
+  group('SyncVaultUseCase — rechaza bóvedas remotas no auténticas (S1)', () {
+    final otherKey = Uint8List.fromList(utf8.encode('clave-del-atacante'));
+
+    Future<
+      ({
+        FakeVaultStoragePort local,
+        FakeVaultStoragePort ancestor,
+        FakeSyncStatePort state,
+        FakeSyncPort remote,
+        SyncVaultUseCase useCase,
+      })
+    >
+    setUpSynced(FakeCryptoPort crypto) async {
+      final original = await _encryptVault(
+        Vault(
+          vaultId: 'vault-1',
+          schemaVersion: 1,
+          entries: [_entry('e1', 'Mi banco')],
+        ),
+        crypto,
+      );
+      final local = FakeVaultStoragePort()..stored = original;
+      final ancestor = FakeVaultStoragePort()..stored = original;
+      final state = FakeSyncStatePort();
+      await state.saveLastSyncedHash(_hashOf(original));
+      final remote = FakeSyncPort();
+      return (
+        local: local,
+        ancestor: ancestor,
+        state: state,
+        remote: remote,
+        useCase: SyncVaultUseCase(
+          localStorage: local,
+          ancestorStorage: ancestor,
+          remote: remote,
+          syncState: state,
+          crypto: crypto,
+          key: _testKey,
+          header: _testHeader(),
+        ),
+      );
+    }
+
+    test(
+      'remoto cifrado con otra clave → rechazado, nada local cambia',
+      () async {
+        final crypto = FakeCryptoPort();
+        final s = await setUpSynced(crypto);
+        final before = (
+          s.local.stored,
+          s.ancestor.stored,
+          await s.state.lastSyncedHash(),
+        );
+        s.remote.remoteFile = await _encryptVault(
+          Vault(vaultId: 'vault-1', schemaVersion: 1),
+          crypto,
+          key: otherKey,
+        );
+
+        await expectLater(
+          s.useCase(),
+          throwsA(
+            isA<RemoteVaultRejectedException>().having(
+              (e) => e.reason,
+              'reason',
+              RemoteVaultRejection.notAuthentic,
+            ),
+          ),
+        );
+        expect(s.local.stored, same(before.$1));
+        expect(s.ancestor.stored, same(before.$2));
+        expect(await s.state.lastSyncedHash(), before.$3);
+      },
+    );
+
+    test('remoto con bytes basura → rechazado, nada local cambia', () async {
+      final s = await setUpSynced(FakeCryptoPort());
+      final before = s.local.stored;
+      s.remote.remoteFile = _sampleFile(List.filled(64, 7));
+
+      await expectLater(
+        s.useCase(),
+        throwsA(isA<RemoteVaultRejectedException>()),
+      );
+      expect(s.local.stored, same(before));
+      expect(s.ancestor.stored, same(before));
+    });
+
+    test('remoto de otra bóveda (otro vault_id) → rechazado', () async {
+      final crypto = FakeCryptoPort();
+      final s = await setUpSynced(crypto);
+      final before = s.local.stored;
+      s.remote.remoteFile = await _encryptVault(
+        Vault(vaultId: 'otra-boveda', schemaVersion: 1),
+        crypto,
+      );
+
+      await expectLater(
+        s.useCase(),
+        throwsA(
+          isA<RemoteVaultRejectedException>().having(
+            (e) => e.reason,
+            'reason',
+            RemoteVaultRejection.differentVault,
+          ),
+        ),
+      );
+      expect(s.local.stored, same(before));
+    });
+
+    test('también en la rama de merge (cambiaron los dos lados)', () async {
+      final crypto = FakeCryptoPort();
+      final s = await setUpSynced(crypto);
+      final changedLocal = await _encryptVault(
+        Vault(
+          vaultId: 'vault-1',
+          schemaVersion: 1,
+          entries: [_entry('e1', 'Mi banco'), _entry('e2', 'Local nueva')],
+        ),
+        crypto,
+      );
+      s.local.stored = changedLocal;
+      s.remote.remoteFile = await _encryptVault(
+        Vault(vaultId: 'vault-1', schemaVersion: 1),
+        crypto,
+        key: otherKey,
+      );
+
+      await expectLater(
+        s.useCase(),
+        throwsA(isA<RemoteVaultRejectedException>()),
+      );
+      expect(s.local.stored, same(changedLocal));
+    });
+
+    test(
+      'sin bóveda local, un remoto no auténtico tampoco se escribe',
+      () async {
+        final crypto = FakeCryptoPort();
+        final local = FakeVaultStoragePort();
+        final remote = FakeSyncPort()
+          ..remoteFile = await _encryptVault(
+            Vault(vaultId: 'vault-1', schemaVersion: 1),
+            crypto,
+            key: otherKey,
+          );
+
+        await expectLater(
+          SyncVaultUseCase(
+            localStorage: local,
+            ancestorStorage: FakeVaultStoragePort(),
+            remote: remote,
+            syncState: FakeSyncStatePort(),
+            crypto: crypto,
+            key: _testKey,
+            header: _testHeader(),
+          ).call(),
+          throwsA(isA<RemoteVaultRejectedException>()),
+        );
+        expect(local.stored, isNull);
+      },
+    );
+  });
+
   group('SyncVaultUseCase — ramas simples (sin necesitar decriptar)', () {
     test('solo existe local → sube', () async {
       final localStorage = FakeVaultStoragePort()..stored = _sampleFile([1]);
@@ -113,9 +281,14 @@ void main() {
       expect(await syncState.lastSyncedHash(), isNotNull);
     });
 
-    test('solo existe remoto → baja', () async {
+    test('solo existe remoto (válido) → baja', () async {
+      final crypto = FakeCryptoPort();
       final localStorage = FakeVaultStoragePort();
-      final remote = FakeSyncPort()..remoteFile = _sampleFile([2]);
+      final remote = FakeSyncPort()
+        ..remoteFile = await _encryptVault(
+          Vault(vaultId: 'vault-1', schemaVersion: 1),
+          crypto,
+        );
       final syncState = FakeSyncStatePort();
 
       final result = await SyncVaultUseCase(
@@ -123,13 +296,13 @@ void main() {
         ancestorStorage: FakeVaultStoragePort(),
         remote: remote,
         syncState: syncState,
-        crypto: FakeCryptoPort(),
+        crypto: crypto,
         key: _testKey,
         header: _testHeader(),
       ).call();
 
       expect(result, isA<SyncDownloaded>());
-      expect(localStorage.stored, isNotNull);
+      expect(localStorage.stored, same(remote.remoteFile));
     });
 
     test('local y remoto ya coinciden → al día', () async {
@@ -174,27 +347,38 @@ void main() {
       expect(localStorage.stored, same(newLocalFile));
     });
 
-    test('solo cambió el remoto desde la última sync → baja', () async {
-      final oldFile = _sampleFile([5]);
-      final newRemoteFile = _sampleFile([5, 5]);
-      final localStorage = FakeVaultStoragePort()..stored = oldFile;
-      final remote = FakeSyncPort()..remoteFile = newRemoteFile;
-      final syncState = FakeSyncStatePort();
-      await syncState.saveLastSyncedHash(_hashOf(oldFile));
+    test(
+      'solo cambió el remoto (válido) desde la última sync → baja',
+      () async {
+        final crypto = FakeCryptoPort();
+        final oldFile = _sampleFile([5]);
+        final newRemoteFile = await _encryptVault(
+          Vault(
+            vaultId: 'vault-1',
+            schemaVersion: 1,
+            entries: [_entry('e1', 'Nueva desde otro dispositivo')],
+          ),
+          crypto,
+        );
+        final localStorage = FakeVaultStoragePort()..stored = oldFile;
+        final remote = FakeSyncPort()..remoteFile = newRemoteFile;
+        final syncState = FakeSyncStatePort();
+        await syncState.saveLastSyncedHash(_hashOf(oldFile));
 
-      final result = await SyncVaultUseCase(
-        localStorage: localStorage,
-        ancestorStorage: FakeVaultStoragePort(),
-        remote: remote,
-        syncState: syncState,
-        crypto: FakeCryptoPort(),
-        key: _testKey,
-        header: _testHeader(),
-      ).call();
+        final result = await SyncVaultUseCase(
+          localStorage: localStorage,
+          ancestorStorage: FakeVaultStoragePort(),
+          remote: remote,
+          syncState: syncState,
+          crypto: crypto,
+          key: _testKey,
+          header: _testHeader(),
+        ).call();
 
-      expect(result, isA<SyncDownloaded>());
-      expect(localStorage.stored, same(newRemoteFile));
-    });
+        expect(result, isA<SyncDownloaded>());
+        expect(localStorage.stored, same(newRemoteFile));
+      },
+    );
 
     test(
       'sin bóveda local ni remota → falla explícitamente, no hay nada que sincronizar',

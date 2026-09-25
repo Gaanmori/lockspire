@@ -7,10 +7,12 @@ import 'package:lockspire/features/vault/presentation/vault_session_controller.d
 import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../application/adopt_remote_master_password_use_case.dart';
 import '../application/sync_vault_use_case.dart';
 import '../domain/ports/active_sync_provider_port.dart';
 import '../domain/ports/google_drive_account_port.dart';
 import '../domain/ports/one_drive_account_port.dart';
+import '../domain/ports/sync_port.dart';
 import '../domain/ports/sync_credentials_port.dart';
 import '../infrastructure/google_drive_desktop_auth.dart';
 import 'providers/active_sync_port_provider.dart';
@@ -148,20 +150,51 @@ class SyncController extends _$SyncController {
     });
   }
 
-  Future<SyncVaultUseCase> _buildUseCase() async {
+  /// Tras un `RemoteVaultRejection.passwordChanged`: adopta la contraseña
+  /// maestra que se cambió en otro dispositivo (ADR 0018). Lanza
+  /// `IncorrectMasterPasswordException` si [newPassword] no abre la bóveda
+  /// de la nube; en ese caso no se cambió nada.
+  Future<void> adoptRemoteMasterPassword(String newPassword) async {
+    final session = _requireUnlockedSession();
+    final syncPort = await _requireSyncPort();
+    final result = await AdoptRemoteMasterPasswordUseCase(
+      localStorage: await ref.read(vaultStoragePortProvider.future),
+      ancestorStorage: await ref.read(syncAncestorStoragePortProvider.future),
+      remote: syncPort,
+      syncState: ref.read(syncStatePortProvider),
+      crypto: await ref.read(cryptoPortProvider.future),
+      currentKey: session.key,
+      currentHeader: session.header,
+    ).call(newPassword: newPassword);
+    await ref
+        .read(vaultSessionControllerProvider.notifier)
+        .adoptRekeyedSession(result);
+    state = const AsyncData(SyncDownloaded());
+  }
+
+  VaultSessionUnlocked _requireUnlockedSession() {
     final session = ref.read(vaultSessionControllerProvider).value;
     if (session is! VaultSessionUnlocked) {
       throw StateError(
         'La bóveda tiene que estar desbloqueada para sincronizar',
       );
     }
+    return session;
+  }
 
+  Future<SyncPort> _requireSyncPort() async {
     final syncPort = await ref.read(activeSyncPortProvider.future);
     if (syncPort == null) {
       throw StateError(
         'Configurá un proveedor de sync primero (WebDAV o Google Drive)',
       );
     }
+    return syncPort;
+  }
+
+  Future<SyncVaultUseCase> _buildUseCase() async {
+    final session = _requireUnlockedSession();
+    final syncPort = await _requireSyncPort();
 
     return SyncVaultUseCase(
       localStorage: await ref.read(vaultStoragePortProvider.future),

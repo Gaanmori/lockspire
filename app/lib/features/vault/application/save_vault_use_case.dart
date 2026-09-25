@@ -71,13 +71,26 @@ class SaveVaultUseCase {
     required Uint8List key,
     required VaultHeader header,
   }) async {
+    final file = await encryptFile(vault: vault, key: key, header: header);
+    await storage.write(file);
+    return file;
+  }
+
+  /// Cifra [vault] con [key] y los metadatos de [header] (nonce nuevo)
+  /// **sin escribir nada** — para quien necesita el archivo antes de
+  /// decidir dónde persistirlo (cambio de contraseña, ADR 0018).
+  Future<VaultFile> encryptFile({
+    required Vault vault,
+    required Uint8List key,
+    required VaultHeader header,
+  }) async {
     final encrypted = await crypto.encrypt(
       key: key,
       plaintext: vault.toJsonBytes(),
       aad: header.toAadBytes(),
     );
 
-    final file = VaultFile(
+    return VaultFile(
       header: VaultHeader(
         formatVersion: header.formatVersion,
         formatMinReaderVersion: header.formatMinReaderVersion,
@@ -89,8 +102,5 @@ class SaveVaultUseCase {
       ),
       encryptedPayload: encrypted.ciphertext,
     );
-
-    await storage.write(file);
-    return file;
   }
 }

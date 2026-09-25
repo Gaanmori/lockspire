@@ -1,8 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- allowBackup="false" (revisión 2026-09-25, hallazgo S10): la bóveda
+         (cifrada) y las preferencias no entran en la copia automática de
+         Android. La copia de la bóveda es la sync, con cifrado propio; una
+         restauración de Android dejaría el almacenamiento seguro (claves
+         del Keystore, que no se copian) inconsistente con los datos. -->
     <application
         android:label="lockspire"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"

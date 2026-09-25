@@ -19,8 +19,17 @@ class HomeShell extends StatefulWidget {
   final List<HomeDestination> destinations;
   final VoidCallback onLock;
 
-  const HomeShell({super.key, required this.destinations, required this.onLock})
-    : assert(destinations.length >= 2, 'M3 pide al menos 2 destinos');
+  /// Aviso global opcional sobre el contenido (p. ej. la contraseña
+  /// maestra se cambió en otro dispositivo). Debe ocupar cero espacio
+  /// cuando no hay nada que avisar.
+  final Widget? banner;
+
+  const HomeShell({
+    super.key,
+    required this.destinations,
+    required this.onLock,
+    this.banner,
+  }) : assert(destinations.length >= 2, 'M3 pide al menos 2 destinos');
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -36,7 +45,7 @@ class _HomeShellState extends State<HomeShell> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final layout = navigationLayoutFor(constraints.maxWidth);
-        final body = IndexedStack(
+        final pages = IndexedStack(
           index: _selected,
           children: [
             for (final destination in widget.destinations)
@@ -45,6 +54,15 @@ class _HomeShellState extends State<HomeShell> {
               ),
           ],
         );
+        final banner = widget.banner;
+        final body = banner == null
+            ? pages
+            : Column(
+                children: [
+                  SafeArea(bottom: false, child: banner),
+                  Expanded(child: pages),
+                ],
+              );
         return switch (layout) {
           NavigationLayout.bar => Scaffold(
             body: body,

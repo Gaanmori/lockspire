@@ -51,6 +51,43 @@ class SyncMerged extends SyncResult {
   });
 }
 
+/// Por qué se rechazó el archivo remoto.
+enum RemoteVaultRejection {
+  /// Es otra bóveda (otro `vault_id`).
+  differentVault,
+
+  /// No se descifra con la clave de esta sesión: manipulado, dañado o
+  /// cifrado con otra contraseña.
+  notAuthentic,
+
+  /// Es la misma bóveda pero con otro salt: la contraseña maestra se
+  /// cambió en otro dispositivo (ADR 0018). Se resuelve con
+  /// `AdoptRemoteMasterPasswordUseCase`, pidiendo la contraseña nueva.
+  passwordChanged,
+}
+
+/// El archivo de la nube no pasó la validación y **no se escribió nada**
+/// localmente (ver `SyncVaultUseCase._verifyRemote`).
+class RemoteVaultRejectedException implements Exception {
+  final RemoteVaultRejection reason;
+
+  const RemoteVaultRejectedException(this.reason);
+
+  @override
+  String toString() => switch (reason) {
+    RemoteVaultRejection.differentVault =>
+      'La nube tiene otra bóveda distinta a la tuya. No se cambió nada en '
+          'este dispositivo.',
+    RemoteVaultRejection.notAuthentic =>
+      'La bóveda de la nube no se pudo verificar (está dañada, fue '
+          'modificada o usa otra contraseña). No se cambió nada en este '
+          'dispositivo.',
+    RemoteVaultRejection.passwordChanged =>
+      'La contraseña maestra se cambió en otro dispositivo. Ingresá la '
+          'contraseña nueva para seguir sincronizando.',
+  };
+}
+
 /// Sincroniza la bóveda local con el proveedor remoto configurado,
 /// resolviendo automáticamente todo lo que haga falta (ADR 0006 + ADR
 /// 0009) — nunca deja nada pendiente de que el usuario decida.
@@ -90,6 +127,7 @@ class SyncVaultUseCase {
 
     if (!localExists) {
       final remoteFile = await remote.downloadVault();
+      await _verifyRemote(remoteFile);
       await localStorage.write(remoteFile);
       await _markSynced(remoteFile);
       return const SyncDownloaded();
@@ -116,6 +154,7 @@ class SyncVaultUseCase {
     }
 
     if (remoteChanged && !localChanged) {
+      await _verifyRemote(remoteFile);
       await localStorage.write(remoteFile);
       await _markSynced(remoteFile);
       return const SyncDownloaded();
@@ -128,7 +167,7 @@ class SyncVaultUseCase {
         ? await ancestorStorage.read()
         : null;
     final localVault = await _decrypt(local);
-    final remoteVault = await _decrypt(remoteFile);
+    final remoteVault = await _verifyRemote(remoteFile);
     final ancestorVault = ancestorFile != null
         ? await _decrypt(ancestorFile)
         : null;
@@ -161,6 +200,35 @@ class SyncVaultUseCase {
     await ancestorStorage.write(file);
   }
 
+  /// Valida un archivo que viene de la nube **antes** de escribir nada con
+  /// él: tiene que descifrarse con la clave de esta sesión (el AEAD
+  /// autentica header y contenido) y ser la misma bóveda (`vault_id`).
+  ///
+  /// Sin esto, quien tuviera acceso a la nube del usuario (adversarios 1 y
+  /// 3 del threat model) podía subir un archivo cualquiera y la siguiente
+  /// sync lo copiaba sobre la bóveda local y el ancestro: pérdida de datos
+  /// (revisión 2026-09-25, hallazgo S1). Si falla, lanza
+  /// [RemoteVaultRejectedException] y no se toca nada local.
+  Future<Vault> _verifyRemote(VaultFile file) async {
+    if (file.header.vaultId != header.vaultId) {
+      throw const RemoteVaultRejectedException(
+        RemoteVaultRejection.differentVault,
+      );
+    }
+    if (!sameKeyDerivation(file.header, header)) {
+      throw const RemoteVaultRejectedException(
+        RemoteVaultRejection.passwordChanged,
+      );
+    }
+    try {
+      return await _decrypt(file);
+    } catch (_) {
+      throw const RemoteVaultRejectedException(
+        RemoteVaultRejection.notAuthentic,
+      );
+    }
+  }
+
   Future<Vault> _decrypt(VaultFile file) async {
     final plaintext = await crypto.decrypt(
       key: key,
@@ -172,4 +240,20 @@ class SyncVaultUseCase {
     );
     return Vault.fromJsonBytes(plaintext);
   }
+}
+
+/// Si [a] y [b] derivan la misma clave con la misma contraseña: mismo salt
+/// y mismos parámetros de Argon2id. Solo cambian al cambiar la contraseña
+/// maestra (ADR 0018).
+bool sameKeyDerivation(VaultHeader a, VaultHeader b) {
+  if (a.kdfParams.memoryKib != b.kdfParams.memoryKib ||
+      a.kdfParams.iterations != b.kdfParams.iterations ||
+      a.kdfParams.parallelism != b.kdfParams.parallelism ||
+      a.salt.length != b.salt.length) {
+    return false;
+  }
+  for (var i = 0; i < a.salt.length; i++) {
+    if (a.salt[i] != b.salt[i]) return false;
+  }
+  return true;
 }

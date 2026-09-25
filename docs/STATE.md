@@ -336,6 +336,40 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
 
 ## Pendiente / próximo paso
 
+- **Revisión de arquitectura, SOLID, clean code y seguridad (2026-09-25, pedida por el usuario):** informe completo en `docs/reviews/2026-09-25-revision-arquitectura-solid-seguridad.md`. Solo diagnóstico, sin cambios de código.
+  - **Plan en ejecución (2026-09-25): pasos 1 y 2 hechos, y S8 del paso 3. Pendiente de prueba manual y de commit:**
+    - **S1 corregido:** `SyncVaultUseCase._verifyRemote` comprueba `vault_id` y descifra el remoto con la clave de la sesión (AEAD) **antes** de escribir nada, en las tres ramas (sin bóveda local, solo cambió el remoto, merge). Si falla lanza `RemoteVaultRejectedException` y no toca el disco. 5 tests de regresión.
+    - **S3 corregido:** `VaultFileCodec.decode` rechaza parámetros de Argon2id fuera de `Argon2Params.isWithinAcceptedBounds` (memoria 256 MiB–2 GiB, 3–32 iteraciones, paralelismo 1) con `UnsafeKdfParamsException`, antes de derivar.
+    - **S11 corregido:** el decodificador valida longitudes y el JSON del header, y lanza `FormatException` en vez de `RangeError`.
+    - **S5 corregido:** `FLAG_SECURE` en `MainActivity` y `AutofillActivity` (`ScreenSecurity.kt`).
+    - **S10 corregido:** `allowBackup="false"` y `fullBackupContent="false"` en el manifest.
+    - **S7 corregido:** regla de dominio `checkWebDavUrl` (`sync/domain/webdav_url_policy.dart`): `https://` a cualquier host, `http://` solo a `localhost`/`127.0.0.1`/`::1`. La aplican el formulario (mensaje al guardar) y `WebdavSyncAdapter` (defensa en profundidad para credenciales antiguas con `http://`, que ahora fallan con un error claro).
+    - S5 y S10 verificados a nivel de build: `flutter build apk --debug` compila (lanzado fuera del sandbox vía explorer, ~16 min por libsodium). Falta probarlo en el Redmi: la miniatura de recientes debe salir en negro.
+    - **S8 corregido — ADR 0018 (cambio de contraseña maestra):**
+      - Política nueva para crear o cambiar (no para desbloquear): 12 caracteres, 6 distintos y 50 bits estimados (`master_password_policy.dart`).
+      - `ChangeMasterPasswordUseCase` sigue el orden verificar la actual → sincronizar con la clave actual (sin conexión, no cambia nada) → salt y clave nuevos → publicar en la nube → escribir local. La sync entra por el puerto `MasterPasswordChangeReplicaPort` (adaptador `SyncMasterPasswordChangeReplica`).
+      - En los otros dispositivos, `SyncVaultUseCase` rechaza con `RemoteVaultRejection.passwordChanged` (mismo `vault_id`, otro salt). `PasswordChangedElsewhereBanner` (banner opcional de `HomeShell`) pide la contraseña nueva, y `AdoptRemoteMasterPasswordUseCase` verifica con AEAD y hace merge de 3 vías para conservar los cambios hechos con la contraseña vieja.
+      - La clave biométrica se reemplaza y el cambio cuenta como ingreso de la contraseña (ADR 0017).
+      - UI: Seguridad → "Cambiar contraseña maestra".
+    - Tests: app 218, todos pasan (+11 de ADR 0018, +4 de la política). `flutter analyze` sin issues. Windows Debug recompilado para prueba manual.
+    - **Prueba manual pendiente de S8:** cambiar la contraseña en Windows con sync activa, y en el Redmi sincronizar → debe aparecer el banner → ingresar la nueva → la entrada creada en el Redmi antes de adoptar debe conservarse.
+    - **Siguiente:** S4 (portapapeles nativo: Android `EXTRA_IS_SENSITIVE`; Windows fuera del historial y la nube; limpiar al bloquear y al salir), luego paso 4 (S2 rollback y S6 autofill por dominio, cada uno con su ADR).
+  - Núcleo hexagonal correcto: ningún `domain/`/`application/` importa Flutter ni infraestructura.
+  - **Hallazgo 🔴 S1 confirmado con una prueba:** la sync, cuando solo cambió el remoto, lo escribe en disco sin descifrarlo con la clave de la sesión y reemplaza también el ancestro. Una nube manipulada puede destruir la bóveda local. Es lo primero a arreglar.
+  - Hallazgos 🟠 de seguridad:
+    - S2: rollback de versiones antiguas.
+    - S3: parámetros de Argon2id sin límites.
+    - S4: portapapeles no sensible ni limpiado al bloquear.
+    - S5: sin `FLAG_SECURE`.
+    - S6: autofill de Android sin `webDomain`.
+    - S7: WebDAV por `http`.
+    - S8: sin cambio de contraseña maestra y mínimo de 8 caracteres.
+  - Hallazgos 🟠 de arquitectura:
+    - A1: `VaultSessionController` con demasiadas responsabilidades.
+    - A2: lógica de entradas en presentación.
+    - A3: ciclo `vault`↔`sync`.
+    - A4: `sync` usa un adaptador de `vault`.
+  - Plan priorizado en la sección 5 del informe.
 - **Aviso para probar en Windows: lanzar la app desde el Explorador o una terminal propia, nunca desde la sesión del agente de Claude.** Esa sesión corre dentro del paquete MSIX de Claude, y Windows virtualiza sus escrituras en `%LOCALAPPDATA%`/`HKCU` hacia `...\Packages\Claude_pzs8sxrjxfjjc\LocalCache\`. El token IPC y el registro por usuario del native host quedan invisibles para Chrome, y la extensión dice "host not found" o "Abrí Lockspire". Diagnosticado el 2026-09-24 con el log nuevo del host (`%LOCALAPPDATA%\Lockspire\logs\native-host.log`). Ver la corrección en ADR 0014.
 - **Punch list de verificación manual (Linux + bandeja + extensión, 2026-09-24):**
   1. **Linux Mint:** instalar dependencias (`app/README.md`), `flutter run -d linux`; crear/desbloquear bóveda, sync (WebDAV/Google Drive/OneDrive: el login de Google en Linux es nuevo), importar, generador.

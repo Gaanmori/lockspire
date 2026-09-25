@@ -87,7 +87,7 @@ VaultFile _sampleFile(List<int> payload) {
       vaultId: 'vault-1',
       createdAt: DateTime.utc(2026, 1, 1),
       kdfParams: const Argon2Params(
-        memoryKib: 65536,
+        memoryKib: 262144,
         iterations: 3,
         parallelism: 1,
       ),

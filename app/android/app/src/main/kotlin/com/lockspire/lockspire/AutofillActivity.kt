@@ -54,6 +54,7 @@ class AutofillActivity : FlutterFragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        protectFromScreenCapture()
         getRequest = PendingIntentHandler.retrieveProviderGetCredentialRequest(intent)
         createRequest = PendingIntentHandler.retrieveProviderCreateCredentialRequest(intent)
         legacyUsernameId = intent.getParcelableExtra(EXTRA_LEGACY_USERNAME_ID)

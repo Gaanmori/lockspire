@@ -2,17 +2,21 @@
 // Copyright (C) 2026 Lockspire
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
+import 'package:lockspire/features/sync/presentation/providers/master_password_change_replica_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_state_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/sync_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../application/change_master_password_use_case.dart';
 import '../application/create_vault_use_case.dart';
 import '../application/save_vault_use_case.dart';
 import '../application/unlock_vault_use_case.dart';
+import '../application/unlocked_vault_result.dart';
 import '../domain/entities/vault.dart';
 import '../domain/entities/vault_entry.dart';
 import '../domain/ports/vault_storage_port.dart';
@@ -190,6 +194,54 @@ class VaultSessionController extends _$VaultSessionController {
   /// Desactiva el desbloqueo biométrico — borra la clave cacheada.
   Future<void> disableBiometricUnlock() async {
     await ref.read(biometricAuthPortProvider).deleteKey();
+  }
+
+  /// Cambia la contraseña maestra (ADR 0018). Lanza
+  /// [IncorrectMasterPasswordException], [WeakMasterPasswordException] o el
+  /// error de sync/escritura que impidió el cambio; en todos esos casos la
+  /// sesión sigue con la contraseña anterior.
+  Future<void> changeMasterPassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (state.value is! VaultSessionUnlocked) return;
+    _autoSyncTimer?.cancel();
+    final result = await ChangeMasterPasswordUseCase(
+      storage: await ref.read(vaultStoragePortProvider.future),
+      crypto: await ref.read(cryptoPortProvider.future),
+      replica: await ref.read(masterPasswordChangeReplicaPortProvider.future),
+    ).call(currentPassword: currentPassword, newPassword: newPassword);
+    await adoptRekeyedSession(result);
+  }
+
+  /// Pasa la sesión a una clave nueva — tras cambiar la contraseña aquí o
+  /// adoptar la que se cambió en otro dispositivo (ADR 0018). Cuenta como
+  /// ingreso de la contraseña maestra (ADR 0017) y renueva la clave
+  /// cacheada para biometría, que ya no abre la bóveda.
+  Future<void> adoptRekeyedSession(UnlockedVaultResult result) async {
+    state = AsyncData(
+      VaultSessionUnlocked(
+        vault: result.vault,
+        key: result.key,
+        header: result.header,
+        fileHash: result.fileHash,
+      ),
+    );
+    _scheduleAutoLockIfUnlocked();
+    await _recordPasswordUnlock();
+    await _replaceBiometricKey(result.key);
+  }
+
+  /// La clave vieja se borra siempre. Guardar la nueva puede pedir la
+  /// biometría o fallar; en ese caso queda desactivada y el usuario la
+  /// reactiva en Seguridad — nunca queda cacheada una clave que no abre.
+  Future<void> _replaceBiometricKey(Uint8List newKey) async {
+    final port = ref.read(biometricAuthPortProvider);
+    try {
+      if (!await port.hasStoredKey()) return;
+      await port.deleteKey();
+      await port.storeKey(key: newKey);
+    } catch (_) {}
   }
 
   /// Restaura una bóveda descargada de un proveedor de sync en un

@@ -3,6 +3,7 @@ package com.lockspire.lockspire
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -13,6 +14,11 @@ import io.flutter.plugin.common.MethodChannel
 // para poder mostrar el BiometricPrompt nativo de Android; con
 // FlutterActivity el prompt de huella simplemente no aparece.
 class MainActivity : FlutterFragmentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        protectFromScreenCapture()
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         // Autofill nativo (ADR 0011) — abre la pantalla de Config donde
