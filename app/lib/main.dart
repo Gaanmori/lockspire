@@ -7,9 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'features/appearance/domain/appearance_preference.dart';
+import 'app_shell.dart';
 import 'features/appearance/presentation/appearance_controller.dart';
-import 'features/appearance/presentation/appearance_theme.dart';
+import 'features/appearance/presentation/providers/app_themes_provider.dart';
+import 'features/appearance/presentation/providers/system_accent_color_provider.dart';
 import 'features/autofill/presentation/autofill_app.dart';
 import 'features/browser_bridge/infrastructure/single_instance.dart';
 import 'features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
@@ -39,6 +40,7 @@ Future<void> main() async {
   // El tema elegido se carga antes del primer frame: si no, la app
   // mostraría un instante el tema por defecto y luego cambiaría.
   await container.read(appearanceControllerProvider.future);
+  await container.read(systemAccentColorProvider.future);
   // Igual con el tiempo de bloqueo (ADR 0016): el primer desbloqueo ya
   // usa el valor guardado.
   await container.read(autoLockTimeoutSettingProvider.future);
@@ -101,21 +103,23 @@ class MyApp extends ConsumerWidget {
       }
     });
 
-    final appearance =
-        ref.watch(appearanceControllerProvider).value ??
-        AppearancePreference.defaults;
+    final themes = ref.watch(appThemesProvider);
 
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Lockspire',
-      theme: appearance.lightTheme,
-      darkTheme: appearance.darkTheme,
-      themeMode: appearance.themeMode,
+      theme: themes.light,
+      darkTheme: themes.dark,
+      themeMode: themes.mode,
       // DesktopShell dentro de MaterialApp: necesita un Navigator para
       // mostrar el aviso de "sigue en la bandeja" al cerrar la ventana.
-      home: const DesktopShell(
+      home: DesktopShell(
         child: LinkRequestListener(
-          child: ActivityAndLifecycleWatcher(child: VaultGateScreen()),
+          child: ActivityAndLifecycleWatcher(
+            child: VaultGateScreen(
+              unlockedBuilder: (vault) => AppShell(vault: vault),
+            ),
+          ),
         ),
       ),
     );

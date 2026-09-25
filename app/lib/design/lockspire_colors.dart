@@ -48,7 +48,63 @@ class LockspirePalette extends ThemeExtension<LockspirePalette> {
     required this.danger,
   });
 
+  /// Paleta generada con el algoritmo tonal de Material 3 a partir de
+  /// [seed], para el tema "Colores del sistema". Traduce los roles de
+  /// `ColorScheme` a nuestros tokens: las pantallas no distinguen una
+  /// paleta generada de una fija.
+  factory LockspirePalette.fromSeed(Color seed, Brightness brightness) {
+    final s = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    return LockspirePalette(
+      brightness: brightness,
+      bgPage: s.surface,
+      bgSurface: s.surfaceContainerLow,
+      bgSurfaceSubtle: s.secondaryContainer,
+      bgInput: s.surfaceContainerHighest,
+      textPrimary: s.onSurface,
+      textSecondary: s.onSurfaceVariant,
+      textPlaceholder: s.outline,
+      accentDefault: s.primary,
+      accentHover: Color.lerp(s.primary, s.onSurface, 0.15)!,
+      accentSecondary: s.tertiary,
+      onAccent: s.onPrimary,
+      danger: s.error,
+    );
+  }
+
   bool get isDark => brightness == Brightness.dark;
+
+  List<Object> get _props => [
+    brightness,
+    bgPage,
+    bgSurface,
+    bgSurfaceSubtle,
+    bgInput,
+    textPrimary,
+    textSecondary,
+    textPlaceholder,
+    accentDefault,
+    accentHover,
+    accentSecondary,
+    onAccent,
+    danger,
+  ];
+
+  /// Igualdad por valor: dos paletas generadas desde el mismo color son la
+  /// misma paleta (la caché de `LockspireTheme.of` depende de esto).
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! LockspirePalette) return false;
+    final a = _props;
+    final b = other._props;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode => Object.hashAll(_props);
 
   @override
   LockspirePalette copyWith() => this;

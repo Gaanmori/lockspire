@@ -16,4 +16,6 @@ enum NavigationLayout {
 const compactWidthBreakpoint = 600.0;
 
 NavigationLayout navigationLayoutFor(double width) =>
-    width < compactWidthBreakpoint ? NavigationLayout.bar : NavigationLayout.rail;
+    width < compactWidthBreakpoint
+    ? NavigationLayout.bar
+    : NavigationLayout.rail;

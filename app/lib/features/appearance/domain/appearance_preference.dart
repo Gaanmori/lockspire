@@ -2,8 +2,10 @@
 // Copyright (C) 2026 Lockspire
 
 /// Familia de colores elegida (ver `LockspireThemeFamily` en `design/`).
-/// Cada una tiene versión clara y oscura.
-enum ThemeFamilyId { calido, menta, lavanda }
+/// Cada una tiene versión clara y oscura. [sistema] genera la paleta a partir
+/// del color del sistema operativo (Material You en Android, color de acento
+/// en escritorio).
+enum ThemeFamilyId { calido, menta, lavanda, sistema }
 
 /// Claro, oscuro, o según el modo del sistema operativo.
 enum AppearanceMode { system, light, dark }

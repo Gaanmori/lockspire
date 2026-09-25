@@ -5,9 +5,6 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lockspire/features/appearance/presentation/screens/appearance_screen.dart';
-import 'package:lockspire/features/browser_bridge/presentation/screens/browser_integration_screen.dart';
-import 'package:lockspire/features/sync/presentation/screens/sync_settings_screen.dart';
 
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
@@ -17,15 +14,21 @@ import '../../domain/ports/biometric_auth_port.dart';
 import '../providers/biometric_auth_port_provider.dart';
 import '../vault_session_controller.dart';
 import 'entry_form_screen.dart';
-import 'import_screen.dart';
-import 'security_screen.dart';
 
 /// Lista de entradas de la bóveda desbloqueada, con búsqueda y acceso a
 /// crear/editar (ver `EntryFormScreen`).
 class VaultUnlockedScreen extends ConsumerStatefulWidget {
   final Vault vault;
 
-  const VaultUnlockedScreen({super.key, required this.vault});
+  /// Mostrar Bloquear en la barra superior. Quien compone la pantalla lo
+  /// desactiva cuando la navegación ya lo ofrece (riel en escritorio).
+  final bool showLockAction;
+
+  const VaultUnlockedScreen({
+    super.key,
+    required this.vault,
+    this.showLockAction = true,
+  });
 
   @override
   ConsumerState<VaultUnlockedScreen> createState() =>
@@ -120,51 +123,16 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lockspire'),
+        // Sincronización, Seguridad y Ajustes están en la navegación
+        // principal (`HomeShell`); aquí solo queda lo propio de la bóveda.
         actions: [
-          IconButton(
-            icon: const Icon(Icons.upload_file_outlined),
-            tooltip: 'Importar desde SafeInCloud',
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const ImportScreen())),
-          ),
-          IconButton(
-            icon: const Icon(Icons.sync),
-            tooltip: 'Sincronización',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SyncSettingsScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.security_outlined),
-            tooltip: 'Seguridad',
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const SecurityScreen())),
-          ),
-          IconButton(
-            icon: const Icon(Icons.palette_outlined),
-            tooltip: 'Apariencia',
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const AppearanceScreen())),
-          ),
-          if (Platform.isWindows || Platform.isLinux)
+          if (widget.showLockAction)
             IconButton(
-              icon: const Icon(Icons.extension_outlined),
-              tooltip: 'Navegador',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const BrowserIntegrationScreen(),
-                ),
-              ),
+              icon: const Icon(Icons.lock),
+              tooltip: 'Bloquear',
+              onPressed: () =>
+                  ref.read(vaultSessionControllerProvider.notifier).lock(),
             ),
-          IconButton(
-            icon: const Icon(Icons.lock),
-            tooltip: 'Bloquear',
-            onPressed: () =>
-                ref.read(vaultSessionControllerProvider.notifier).lock(),
-          ),
         ],
       ),
       body: Column(

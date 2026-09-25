@@ -367,7 +367,25 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
        - Se reemplazó por `CheckMasterPasswordRequiredUseCase`, que evalúa en cada llamada.
        - Tests nuevos: 3 del caso de uso y 2 de widget de `UnlockVaultScreen` como regresión. App 181.
        - **Pendiente:** que el usuario confirme en Windows.
-  9. Después: `SAVE_CREDENTIAL` con confirmación en la app, Firefox, empaquetado/instalador que deje el host junto a la app automáticamente, publicación en la Chrome Web Store (añadir su ID a `allowedExtensionIds`).
+  9. **Navegación Material 3 (implementado 2026-09-25, pendiente de probar):**
+     - La app ya usaba M3 (`useMaterial3: true`). Lo pendiente era la navegación: la barra de la bóveda tenía 7 iconos.
+     - Ahora hay una feature `home` con `HomeShell`: `NavigationBar` por debajo de 600 px y `NavigationRail` por encima, con Bloquear. Cuatro secciones: Bóveda, Sincronización, Seguridad y Ajustes (Apariencia, Importar y Navegador en escritorio).
+     - SOLID:
+       - `HomeShell` y `SettingsScreen` reciben las secciones como datos (abierto/cerrado).
+       - `VaultGateScreen` recibe un `unlockedBuilder` en vez de importar la navegación, para evitar el ciclo `vault`↔`home` (inversión de dependencias).
+       - La composición vive en `lib/app_shell.dart`.
+     - Tests: 5 nuevos (app 186).
+     - Siguientes pasos M3 propuestos al usuario: `SearchBar`, "Colores del sistema" (Material You) como cuarta familia, y roles de color completos.
+     - **Corregido tras la primera prueba del usuario:** en escritorio Bloquear aparecía dos veces (riel y barra de la Bóveda). Ahora cada sección recibe la disposición activa (`HomeDestinationBuilder`), y la Bóveda solo muestra Bloquear con barra inferior.
+  10. **"Colores del sistema" (Material You) como cuarta familia de tema (implementado 2026-09-25, pendiente de ver):**
+     - La paleta se genera con `ColorScheme.fromSeed` → `LockspirePalette.fromSeed` desde el color del sistema: Android 12+ vía Material You, escritorio vía color de acento.
+     - Paquete `dynamic_color` detrás de `SystemAccentColorPort`, que devuelve ARGB (el dominio sigue sin Flutter). Sin color disponible, se usa Cálido.
+     - `appThemesProvider` es el único punto que combina preferencia y color del sistema.
+     - `LockspirePalette` tiene igualdad por valor, para que la caché de `ThemeData` no crezca.
+     - Tests de contraste WCAG también para paletas generadas desde 6 colores. App 190, extensión 9.
+     - Limitación: el popup de la extensión muestra Cálido para esta familia.
+  11. Después:
+  12. Después: `SAVE_CREDENTIAL` con confirmación en la app, Firefox, empaquetado/instalador que deje el host junto a la app automáticamente, publicación en la Chrome Web Store (añadir su ID a `allowedExtensionIds`).
 
 - "Bóveda desbloqueada" ya no es un placeholder (Fase 5) — sale de pendientes de diseño. Futuras pantallas por maquetar: configuración, `import_screen.dart`/`sync_settings_screen.dart`/`restore_vault_screen.dart` (quedaron con estilo básico/sin `AuthCard` completo — no bloqueante), lo que necesite la extensión de navegador.
 - **ADR 0009 (merge por campo) — verificación manual parcial, no un escenario controlado todavía:** durante la prueba de OneDrive en el Redmi se vio un merge real ("Se fusionaron los cambios: 1 entradas resueltas automáticamente") entre lo subido desde Windows y lo local del teléfono, lo que confirma que el camino funciona en la práctica — pero no fue el escenario específico planeado (dos dispositivos editando la misma entrada sin sincronizar entre medio, para confirmar que se resuelve solo sin picker). Queda como pendiente menor, no bloqueante, si se quiere esa prueba puntual más adelante.

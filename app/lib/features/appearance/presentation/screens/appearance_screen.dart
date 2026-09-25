@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,6 +12,7 @@ import '../../../../design/lockspire_theme.dart';
 import '../../domain/appearance_preference.dart';
 import '../appearance_controller.dart';
 import '../appearance_theme.dart';
+import '../providers/system_accent_color_provider.dart';
 
 /// Elegir familia de colores (Cálido, Menta, Lavanda) y modo (según el
 /// sistema, claro u oscuro). El cambio se aplica al instante.
@@ -22,6 +25,7 @@ class AppearanceScreen extends ConsumerWidget {
         ref.watch(appearanceControllerProvider).value ??
         AppearancePreference.defaults;
     final controller = ref.read(appearanceControllerProvider.notifier);
+    final systemArgb = ref.watch(systemAccentColorProvider).value;
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -67,13 +71,13 @@ class AppearanceScreen extends ConsumerWidget {
               const SizedBox(height: LockspireSpacing.lg),
               Text('Tema', style: textTheme.titleMedium),
               const SizedBox(height: LockspireSpacing.sm),
-              for (final family in LockspireThemeFamily.values) ...[
+              for (final family in ThemeFamilyId.values) ...[
                 _FamilyCard(
-                  family: family,
-                  selected: preference.themeFamily == family,
-                  onTap: () => controller.setFamily(
-                    ThemeFamilyId.values.byName(family.name),
-                  ),
+                  title: _titleFor(family),
+                  subtitle: _subtitleFor(family, systemArgb),
+                  palettes: palettesFor(family, systemArgb),
+                  selected: preference.family == family,
+                  onTap: () => controller.setFamily(family),
                 ),
                 const SizedBox(height: LockspireSpacing.smMd),
               ],
@@ -85,13 +89,33 @@ class AppearanceScreen extends ConsumerWidget {
   }
 }
 
+String _titleFor(ThemeFamilyId family) => switch (family) {
+  ThemeFamilyId.sistema => 'Colores del sistema',
+  ThemeFamilyId.calido || ThemeFamilyId.menta || ThemeFamilyId.lavanda =>
+    LockspireThemeFamily.values.byName(family.name).displayName,
+};
+
+String? _subtitleFor(ThemeFamilyId family, int? systemArgb) => switch (family) {
+  ThemeFamilyId.sistema when systemArgb == null =>
+    'No disponible en este equipo: se usa Cálido.',
+  ThemeFamilyId.sistema =>
+    Platform.isAndroid
+        ? 'Material You: colores de tu fondo de pantalla.'
+        : 'Color de acento del sistema.',
+  _ => null,
+};
+
 class _FamilyCard extends StatelessWidget {
-  final LockspireThemeFamily family;
+  final String title;
+  final String? subtitle;
+  final PalettePair palettes;
   final bool selected;
   final VoidCallback onTap;
 
   const _FamilyCard({
-    required this.family,
+    required this.title,
+    required this.subtitle,
+    required this.palettes,
     required this.selected,
     required this.onTap,
   });
@@ -102,7 +126,7 @@ class _FamilyCard extends StatelessWidget {
     return Semantics(
       selected: selected,
       button: true,
-      label: 'Tema ${family.displayName}',
+      label: 'Tema $title',
       child: Material(
         color: palette.bgSurface,
         borderRadius: BorderRadius.circular(LockspireRadius.md),
@@ -123,22 +147,27 @@ class _FamilyCard extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: _Preview(palette: family.light, label: 'Claro'),
+                  child: _Preview(palette: palettes.light, label: 'Claro'),
                 ),
                 const SizedBox(width: LockspireSpacing.sm),
                 Expanded(
-                  child: _Preview(palette: family.dark, label: 'Oscuro'),
+                  child: _Preview(palette: palettes.dark, label: 'Oscuro'),
                 ),
                 const SizedBox(width: LockspireSpacing.smMd),
                 SizedBox(
-                  width: 88,
+                  width: 120,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        family.displayName,
+                        title,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
+                      if (subtitle != null)
+                        Text(
+                          subtitle!,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       if (selected)
                         Row(
                           children: [

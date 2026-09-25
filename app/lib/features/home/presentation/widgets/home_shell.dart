@@ -33,67 +33,70 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    final body = IndexedStack(
-      index: _selected,
-      children: [
-        for (final destination in widget.destinations)
-          Builder(builder: destination.builder),
-      ],
-    );
-
     return LayoutBuilder(
-      builder: (context, constraints) =>
-          switch (navigationLayoutFor(constraints.maxWidth)) {
-            NavigationLayout.bar => Scaffold(
-              body: body,
-              bottomNavigationBar: NavigationBar(
-                selectedIndex: _selected,
-                onDestinationSelected: _select,
-                destinations: [
-                  for (final d in widget.destinations)
-                    NavigationDestination(
-                      icon: Icon(d.icon),
-                      selectedIcon: Icon(d.selectedIcon),
-                      label: d.label,
-                    ),
-                ],
+      builder: (context, constraints) {
+        final layout = navigationLayoutFor(constraints.maxWidth);
+        final body = IndexedStack(
+          index: _selected,
+          children: [
+            for (final destination in widget.destinations)
+              Builder(
+                builder: (context) => destination.builder(context, layout),
               ),
+          ],
+        );
+        return switch (layout) {
+          NavigationLayout.bar => Scaffold(
+            body: body,
+            bottomNavigationBar: NavigationBar(
+              selectedIndex: _selected,
+              onDestinationSelected: _select,
+              destinations: [
+                for (final d in widget.destinations)
+                  NavigationDestination(
+                    icon: Icon(d.icon),
+                    selectedIcon: Icon(d.selectedIcon),
+                    label: d.label,
+                  ),
+              ],
             ),
-            NavigationLayout.rail => Scaffold(
-              body: Row(
-                children: [
-                  NavigationRail(
-                    selectedIndex: _selected,
-                    onDestinationSelected: _select,
-                    labelType: NavigationRailLabelType.all,
-                    destinations: [
-                      for (final d in widget.destinations)
-                        NavigationRailDestination(
-                          icon: Icon(d.icon),
-                          selectedIcon: Icon(d.selectedIcon),
-                          label: Text(d.label),
-                        ),
-                    ],
-                    trailing: Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: IconButton(
-                            icon: const Icon(Icons.lock_outline),
-                            tooltip: 'Bloquear',
-                            onPressed: widget.onLock,
-                          ),
+          ),
+          NavigationLayout.rail => Scaffold(
+            body: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _selected,
+                  onDestinationSelected: _select,
+                  labelType: NavigationRailLabelType.all,
+                  destinations: [
+                    for (final d in widget.destinations)
+                      NavigationRailDestination(
+                        icon: Icon(d.icon),
+                        selectedIcon: Icon(d.selectedIcon),
+                        label: Text(d.label),
+                      ),
+                  ],
+                  trailing: Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: IconButton(
+                          icon: const Icon(Icons.lock_outline),
+                          tooltip: 'Bloquear',
+                          onPressed: widget.onLock,
                         ),
                       ),
                     ),
                   ),
-                  const VerticalDivider(width: 1, thickness: 1),
-                  Expanded(child: body),
-                ],
-              ),
+                ),
+                const VerticalDivider(width: 1, thickness: 1),
+                Expanded(child: body),
+              ],
             ),
-          },
+          ),
+        };
+      },
     );
   }
 }

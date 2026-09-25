@@ -48,9 +48,29 @@ void main() {
     expect(LockspireTheme.of(palette), same(LockspireTheme.of(palette)));
   });
 
+  // "Colores del sistema" depende del color de cada usuario: se comprueba
+  // con colores de todo el círculo cromático y un gris.
+  const seeds = {
+    'rojo': Color(0xFFD32F2F),
+    'amarillo': Color(0xFFFBC02D),
+    'verde': Color(0xFF388E3C),
+    'azul': Color(0xFF1565C0),
+    'morado': Color(0xFF7B1FA2),
+    'gris': Color(0xFF757575),
+  };
+  final generated = {
+    for (final MapEntry(key: name, value: seed) in seeds.entries) ...{
+      'sistema $name claro': LockspirePalette.fromSeed(seed, Brightness.light),
+      'sistema $name oscuro': LockspirePalette.fromSeed(seed, Brightness.dark),
+    },
+  };
+
   // Umbrales WCAG: 4.5 para texto normal, 3 para texto grande / controles.
-  test('contraste legible en todos los temas', () {
-    for (final MapEntry(key: name, value: p) in all.entries) {
+  test('contraste legible en todos los temas, incluidos los generados', () {
+    for (final MapEntry(key: name, value: p) in {
+      ...all,
+      ...generated,
+    }.entries) {
       expect(
         _contrast(p.textPrimary, p.bgPage),
         greaterThanOrEqualTo(7),

@@ -25,6 +25,8 @@ Features actuales:
 | `vault` | Bóveda cifrada (libsodium: Argon2id + XChaCha20-Poly1305, escritura atómica), sesión y auto-lock, gestión de entradas, generador y medidor de fortaleza de contraseñas, importar desde SafeInCloud (XML), desbloqueo biométrico (Android / Windows Hello). Es el patrón de referencia para las demás. |
 | `sync` | `SyncPort` + adaptadores WebDAV, Google Drive y OneDrive; merge automático de 3 vías por entrada y por campo (`domain/vault_merge.dart`, ADR 0006/0009); sync automática; ajustes de sync. |
 | `autofill` | Lado Dart del autofill de Android: `matchEntriesForPackage()` y la pantalla de selección de credencial que abre `AutofillActivity`. |
+| `home` | Navegación principal de Material 3 tras desbloquear: `HomeShell` (barra inferior en ventanas < 600 px, riel lateral en las demás) y la sección `SettingsScreen`. No conoce ninguna feature: recibe las secciones desde `lib/app_shell.dart`, la composición a nivel de app. |
+| `appearance` | Temas (3 familias × claro/oscuro) y pantalla Apariencia. |
 | `desktop` | Solo Windows/Linux (ADR 0012): `DesktopShell` (cerrar = ocultar en la bandeja, menú de bandeja, bloqueo al bloquear la sesión del SO o suspender) y `OsSessionEventsPort` con adaptadores Windows (runner C++ → `MethodChannel`) y Linux (D-Bus). |
 | `browser_bridge` | Canal con la extensión de navegador (ADR 0013): matching de origen, manejo de peticiones, servidor IPC (vía `packages/lockspire_bridge`), registro opt-in del native host en Chrome/Edge y pantalla "Navegador". |
 
