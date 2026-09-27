@@ -337,7 +337,7 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
 ## Pendiente / próximo paso
 
 - **Revisión de arquitectura, SOLID, clean code y seguridad (2026-09-25, pedida por el usuario):** informe completo en `docs/reviews/2026-09-25-revision-arquitectura-solid-seguridad.md`. Solo diagnóstico, sin cambios de código.
-  - **Plan en ejecución (2026-09-25): pasos 1 y 2 hechos, y S8 del paso 3. Pendiente de prueba manual y de commit:**
+  - **Plan en ejecución (2026-09-25): pasos 1, 2 y 3 hechos (S8 y S4 incluidos). Pendiente de prueba manual y de commit:**
     - **S1 corregido:** `SyncVaultUseCase._verifyRemote` comprueba `vault_id` y descifra el remoto con la clave de la sesión (AEAD) **antes** de escribir nada, en las tres ramas (sin bóveda local, solo cambió el remoto, merge). Si falla lanza `RemoteVaultRejectedException` y no toca el disco. 5 tests de regresión.
     - **S3 corregido:** `VaultFileCodec.decode` rechaza parámetros de Argon2id fuera de `Argon2Params.isWithinAcceptedBounds` (memoria 256 MiB–2 GiB, 3–32 iteraciones, paralelismo 1) con `UnsafeKdfParamsException`, antes de derivar.
     - **S11 corregido:** el decodificador valida longitudes y el JSON del header, y lanza `FormatException` en vez de `RangeError`.
@@ -353,7 +353,33 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - UI: Seguridad → "Cambiar contraseña maestra".
     - Tests: app 218, todos pasan (+11 de ADR 0018, +4 de la política). `flutter analyze` sin issues. Windows Debug recompilado para prueba manual.
     - **Prueba manual pendiente de S8:** cambiar la contraseña en Windows con sync activa, y en el Redmi sincronizar → debe aparecer el banner → ingresar la nueva → la entrada creada en el Redmi antes de adoptar debe conservarse.
-    - **Siguiente:** S4 (portapapeles nativo: Android `EXTRA_IS_SENSITIVE`; Windows fuera del historial y la nube; limpiar al bloquear y al salir), luego paso 4 (S2 rollback y S6 autofill por dominio, cada uno con su ADR).
+    - **S4 corregido (portapapeles):**
+      - Feature nueva `lib/features/clipboard`, con el puerto `SecureClipboardPort` y `ClipboardGuard` en application. El guardián borra a los 30 s (cada copia reinicia el plazo), al bloquear (`VaultSessionController.lock()`) y al salir desde la bandeja (`DesktopShell._quit` espera el borrado antes de destruir la ventana).
+      - **Windows:** `windows/runner/secure_clipboard.cpp`, canal `com.lockspire.lockspire/clipboard`. Copia con `ExcludeClipboardContentFromMonitorProcessing`, `CanIncludeInClipboardHistory=0` y `CanUploadToCloudClipboard=0`. Borra solo si `GetClipboardSequenceNumber` no cambió, así nunca pisa algo copiado después.
+      - **Android:** `SecureClipboard.kt` marca la copia con `EXTRA_IS_SENSITIVE` y la etiqueta "Lockspire". `clearIfOurs` no borra si la etiqueta es de otra app; sin foco, donde Android no deja leerla, borra igual.
+      - **Linux:** portapapeles de Flutter, sin marca de sensible (no hay una convención común), con borrado por comparación de contenido.
+      - Tests: +11 (guardián con `fake_async`, adaptadores con canales simulados). Se agregó `fake_async` como dev dependency. App 229, todos pasan. Compilan Windows Debug (C++ incluido) y el APK debug (Kotlin incluido).
+    - **Verificación manual de S4 (2026-09-27):**
+      - Windows: lo copiado no aparece en Win+V ✅.
+      - Android: la vista previa muestra puntos ✅.
+      - **Bug encontrado y corregido:** en Android, al pasar a segundo plano, el bloqueo (ADR 0008) borraba el portapapeles, así que no se podía pegar en otra app. Ahora `lock(keepClipboard: true)` en el bloqueo por segundo plano; lo borra el plazo de 30 s de `ClipboardGuard`. El bloqueo manual, por inactividad, por sesión del SO y la salida siguen borrando al instante. Test de regresión agregado (app 230).
+      - **Segundo bug encontrado y corregido:** a los 30 s no se borraba estando fuera de la app. Android 14+ congela las apps en segundo plano y el `Timer` de Dart no corre hasta volver. Ahora `copySensitive` recibe el plazo, y en Android `SecureClipboard.kt` programa `ClearClipboardWorker` con WorkManager (`androidx.work:work-runtime-ktx:2.10.0`, trabajo único con REPLACE). Solo programa "borrar", nunca guarda la contraseña. `clearIfOurs` cancela el trabajo pendiente. No se pide exención de batería (decisión: menos presencia en segundo plano). Si HyperOS demora mucho el borrado, la alternativa es que el usuario ponga Lockspire en "Sin restricciones" a mano. **Pendiente de confirmar en el Redmi.** App 232 tests.
+      - **Tercer hallazgo (diagnosticado con logcat en el Redmi): HyperOS descarta en silencio cualquier escritura al portapapeles desde segundo plano.** Afecta tanto a `clearPrimaryClip()` como a `setPrimaryClip(vacío)`. El borrado se ejecutaba a los 30 s justos: el proceso no estaba congelado, y el `Timer` de Dart y el trabajo de WorkManager corrieron en el mismo milisegundo. Android no dio ningún error, pero la contraseña se podía seguir pegando. En Android estándar escribir sin foco está permitido, así que ahí el borrado funciona. **Mitigación:** `ClipboardGuard.onResumed()` repite el borrado una vez al volver a Lockspire, con foco; el nativo comprueba la etiqueta para no pisar copias ajenas. `VaultSessionController.onAppLifecycleChanged(resumed)` lo invoca. **Limitación documentada:** en Xiaomi/HyperOS, mientras el usuario no vuelva a Lockspire, lo copiado sigue en el portapapeles del sistema; Android 13+ igual lo borra solo a la hora. Descartado: forzar foco con una actividad invisible (Android bloquea lanzar actividades desde segundo plano, y sería frágil). App 234 tests.
+      - **Limitación documentada, no corregible desde la app:** Gboard guarda su propia copia en su historial del portapapeles, con puntos porque respeta `EXTRA_IS_SENSITIVE`, y Android no deja que otra app la borre. Gboard la elimina sola a la hora si no está fijada. Recomendación al usuario: desactivar el historial en Gboard → Ajustes → Portapapeles, o no fijar contraseñas.
+    - **Prueba manual pendiente de S4:** copiar una contraseña en Windows → no debe aparecer en Win+V; bloquear → pegar no da nada; copiar otra cosa en otra app después de copiar en Lockspire → al bloquear no se borra. En el Redmi (Android 16): la vista previa del portapapeles debe mostrar puntos en vez de la contraseña.
+    - **S2 corregido — ADR 0019 (protección contra rollback), 2026-09-27:**
+      - `VaultHeader.revision`: un contador que solo sube, dentro del header (en claro pero autenticado como AAD). Formato v2 (`format_version`/`format_min_reader_version` = 2). Los v1 se leen como revisión 0 y su AAD no cambia, porque el campo solo se serializa en v2.
+      - Cómo sube:
+        - `SaveVaultUseCase.call`: la del archivo en disco + 1, nunca la de la sesión.
+        - `encryptFile`: la del header + 1, o una explícita.
+        - Merge de sync y adopción de contraseña: `max(local, remoto) + 1`.
+        - Cambio de contraseña: la del archivo sincronizado + 1.
+      - `rejectRollback` (en `sync_vault_use_case.dart`): si el ancestro tiene revisión > 0 y la del remoto es menor o igual, lanza `RemoteVaultRejection.rollback` sin tocar nada local. Se aplica en descarga, merge, bóveda local ausente y `AdoptRemoteMasterPasswordUseCase`. Esto cierra la consecuencia pendiente de ADR 0018: ya no se puede revertir un cambio de contraseña.
+      - Recuperación: `SyncVaultUseCase.replaceRemoteWithLocal` / `SyncController.replaceRemoteWithLocal`, con un botón "Subir la versión de este dispositivo" en Sincronización que pide confirmación y advierte revisar la cuenta de la nube si el usuario no restauró nada.
+      - Tests: +10 en `rollback_protection_test.dart`, +1 que comprueba que alterar la revisión rompe el AEAD. Se corrigió un test de manipulación del header que perdía `revision` y colisionaba con el tag trivial del `FakeCryptoPort`. App 245, todos pasan.
+      - **Todos los dispositivos deben actualizarse:** una versión vieja no abre v2. Windows Debug y el APK del Redmi se recompilaron juntos.
+      - **Prueba manual pendiente:** sincronizar normal en los dos dispositivos, con una entrada nueva en cada uno, y confirmar que no aparece ningún rechazo.
+    - **Siguiente:** S6 (autofill de Android por dominio web; necesita ADR). Después S9 y S12, que son chicos, y el refactor A1–A8.
   - Núcleo hexagonal correcto: ningún `domain/`/`application/` importa Flutter ni infraestructura.
   - **Hallazgo 🔴 S1 confirmado con una prueba:** la sync, cuando solo cambió el remoto, lo escribe en disco sin descifrarlo con la clave de la sesión y reemplaza también el ancestro. Una nube manipulada puede destruir la bóveda local. Es lo primero a arreglar.
   - Hallazgos 🟠 de seguridad:

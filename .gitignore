@@ -45,3 +45,6 @@ dist/
 # SO
 .DS_Store
 Thumbs.db
+
+# Grafo de conocimiento generado por /graphify (se regenera, no se versiona)
+graphify-out/
