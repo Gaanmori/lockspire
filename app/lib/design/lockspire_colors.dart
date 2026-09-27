@@ -120,11 +120,47 @@ class LockspirePalette extends ThemeExtension<LockspirePalette> {
 extension LockspirePaletteContext on BuildContext {
   /// Paleta del tema activo (ver `LockspireTheme.build`).
   LockspirePalette get palette =>
-      Theme.of(this).extension<LockspirePalette>() ?? LockspirePalettes.calido;
+      Theme.of(this).extension<LockspirePalette>() ?? LockspirePalettes.teal;
 }
 
 /// Las 6 paletas: 3 familias, cada una en claro y oscuro.
 abstract final class LockspirePalettes {
+  // --- Teal (tema principal y por defecto, 2026-09-27) -------------------
+
+  static const teal = LockspirePalette(
+    brightness: Brightness.light,
+    bgPage: Color(0xFFF2F9F9),
+    bgSurface: Color(0xFFFFFFFF),
+    bgSurfaceSubtle: Color(0xFFDDF0F0),
+    bgInput: Color(0xFFE6F2F2),
+    textPrimary: Color(0xFF1C2F31),
+    textSecondary: Color(0xFF5B7476),
+    textPlaceholder: Color(0xFFA3BBBC),
+    // Teal profundo: con blanco encima supera AA en los botones (≈5:1).
+    accentDefault: Color(0xFF0F7C80),
+    accentHover: Color(0xFF0B6468),
+    // El coral original de la marca queda como acento secundario.
+    accentSecondary: Color(0xFFD65A3C),
+    onAccent: Color(0xFFFFFFFF),
+    danger: Color(0xFFC23B3B),
+  );
+
+  static const tealOscuro = LockspirePalette(
+    brightness: Brightness.dark,
+    bgPage: Color(0xFF0D1B1C),
+    bgSurface: Color(0xFF152A2B),
+    bgSurfaceSubtle: Color(0xFF1C3A3C),
+    bgInput: Color(0xFF183133),
+    textPrimary: Color(0xFFE2F3F2),
+    textSecondary: Color(0xFF8FB3B3),
+    textPlaceholder: Color(0xFF52706F),
+    accentDefault: Color(0xFF35BFC0),
+    accentHover: Color(0xFF28A6A7),
+    accentSecondary: Color(0xFFF07A5A),
+    onAccent: Color(0xFF0D1B1C),
+    danger: Color(0xFFE5605F),
+  );
+
   // --- Cálido (dirección original del sistema de diseño) ----------------
 
   static const calido = LockspirePalette(

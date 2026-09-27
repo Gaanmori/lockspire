@@ -27,10 +27,14 @@ void main() {
     },
   };
 
-  test('hay 6 temas: 3 claros y 3 oscuros', () {
-    expect(all, hasLength(6));
-    expect(all.values.where((p) => !p.isDark), hasLength(3));
-    expect(all.values.where((p) => p.isDark), hasLength(3));
+  test('hay 8 temas: 4 claros y 4 oscuros', () {
+    expect(all, hasLength(8));
+    expect(all.values.where((p) => !p.isDark), hasLength(4));
+    expect(all.values.where((p) => p.isDark), hasLength(4));
+  });
+
+  test('Teal es la primera familia (tema principal)', () {
+    expect(LockspireThemeFamily.values.first, LockspireThemeFamily.teal);
   });
 
   test('cada ThemeData lleva su paleta y el brillo correcto', () {

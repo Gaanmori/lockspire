@@ -1,0 +1,183 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Lockspire
+"""Genera todos los íconos de Lockspire a partir de una sola geometría.
+
+Ícono "Candado aguja" (concepto A, 2026-09-27): un candado cuyo arco
+termina en punta, como una aguja gótica (lock + spire). Colores del tema
+Teal. La misma geometría está en docs/design/brand/lockspire-icon.svg:
+si se cambia una, cambiar la otra.
+
+Uso (desde la raíz del repo, requiere Pillow):
+
+    python tools/generate_icons.py
+
+Dibuja a 4x y reduce con Lanczos para bordes suaves.
+"""
+
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+ROOT = Path(__file__).resolve().parents[1]
+APP = ROOT / 'app'
+
+TEAL = (0x0F, 0x7C, 0x80, 255)  # fondo (accentDefault de Teal claro)
+KEYHOLE = (0x0B, 0x64, 0x68, 255)  # cerradura (accentHover)
+GLYPH = (0xF2, 0xF9, 0xF9, 255)  # candado (bgPage de Teal claro)
+CLEAR = (0, 0, 0, 0)
+SUPERSAMPLE = 4
+
+# Geometría en un lienzo de 180x180 (igual que el SVG maestro).
+CANVAS = 180
+CORNER = 40
+SHACKLE_WIDTH = 15
+BODY = (40, 90, 140, 158)
+BODY_RADIUS = 16
+KEYHOLE_CIRCLE = (90, 116, 10)
+KEYHOLE_STEM = [(84, 120), (96, 120), (99, 140), (81, 140)]
+# Alto y centro del candado (arco + cuerpo), para escalarlo solo.
+GLYPH_TOP = 30 - SHACKLE_WIDTH / 2
+GLYPH_BOTTOM = BODY[3]
+GLYPH_CENTER = (90, (GLYPH_TOP + GLYPH_BOTTOM) / 2)
+
+
+def _shackle_points(steps=400):
+    """Arco en punta: dos rectas y dos curvas cuadráticas que se unen arriba."""
+
+    def line(a, b):
+        return [(a[0] + (b[0] - a[0]) * t / steps, a[1] + (b[1] - a[1]) * t / steps)
+                for t in range(steps + 1)]
+
+    def quad(a, c, b):
+        pts = []
+        for i in range(steps + 1):
+            t = i / steps
+            x = (1 - t) ** 2 * a[0] + 2 * (1 - t) * t * c[0] + t ** 2 * b[0]
+            y = (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * c[1] + t ** 2 * b[1]
+            pts.append((x, y))
+        return pts
+
+    return (line((58, 100), (58, 76)) + quad((58, 76), (58, 52), (90, 30))
+            + quad((90, 30), (122, 52), (122, 76)) + line((122, 76), (122, 100)))
+
+
+def render(size, *, background='rounded', glyph_height=None, monochrome=False):
+    """Un PNG RGBA de size x size.
+
+    background: 'rounded' (cuadrado redondeado), 'square' (a sangre, para
+    iOS y máscaras) o None (transparente, primer plano adaptativo).
+    glyph_height: fracción del lienzo que ocupa el candado; None usa la
+    proporción del ícono maestro.
+    monochrome: candado blanco con la cerradura calada (ícono temático de
+    Android 13+).
+    """
+    n = size * SUPERSAMPLE
+    img = Image.new('RGBA', (n, n), CLEAR)
+    draw = ImageDraw.Draw(img)
+
+    if background == 'rounded':
+        draw.rounded_rectangle([0, 0, n - 1, n - 1], radius=CORNER * n / CANVAS, fill=TEAL)
+    elif background == 'square':
+        draw.rectangle([0, 0, n - 1, n - 1], fill=TEAL)
+
+    if glyph_height is None:
+        k = n / CANVAS
+        ox, oy = 0.0, 0.0
+    else:
+        k = glyph_height * n / (GLYPH_BOTTOM - GLYPH_TOP)
+        ox = n / 2 - GLYPH_CENTER[0] * k
+        oy = n / 2 - GLYPH_CENTER[1] * k
+
+    def pt(x, y):
+        return (ox + x * k, oy + y * k)
+
+    glyph = (255, 255, 255, 255) if monochrome else GLYPH
+    radius = SHACKLE_WIDTH / 2 * k
+    for x, y in _shackle_points():
+        cx, cy = pt(x, y)
+        draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=glyph)
+
+    x0, y0 = pt(BODY[0], BODY[1])
+    x1, y1 = pt(BODY[2], BODY[3])
+    draw.rounded_rectangle([x0, y0, x1, y1], radius=BODY_RADIUS * k, fill=glyph)
+
+    hole = CLEAR if monochrome else KEYHOLE
+    cx, cy = pt(KEYHOLE_CIRCLE[0], KEYHOLE_CIRCLE[1])
+    r = KEYHOLE_CIRCLE[2] * k
+    draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=hole)
+    draw.polygon([pt(x, y) for x, y in KEYHOLE_STEM], fill=hole)
+
+    return img.resize((size, size), Image.LANCZOS)
+
+
+def save(img, path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(path)
+    print(f'  {path.relative_to(ROOT)}')
+
+
+def save_ico(path, sizes):
+    images = [render(s) for s in sizes]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    images[-1].save(path, format='ICO', sizes=[(s, s) for s in sizes],
+                    append_images=images[:-1])
+    print(f'  {path.relative_to(ROOT)}')
+
+
+def main():
+    print('Marca')
+    brand = ROOT / 'docs/design/brand'
+    save(render(1024), brand / 'lockspire-icon-1024.png')
+    save(render(1024, background='square'), brand / 'lockspire-icon-square-1024.png')
+
+    print('Android')
+    res = APP / 'android/app/src/main/res'
+    for density, legacy, adaptive in [('mdpi', 48, 108), ('hdpi', 72, 162),
+                                      ('xhdpi', 96, 216), ('xxhdpi', 144, 324),
+                                      ('xxxhdpi', 192, 432)]:
+        folder = res / f'mipmap-{density}'
+        save(render(legacy), folder / 'ic_launcher.png')
+        # Adaptativo: lienzo de 108 dp con zona segura de 66 dp; el candado
+        # ocupa ~56 % del alto para quedar dentro con cualquier máscara.
+        save(render(adaptive, background=None, glyph_height=0.56),
+             folder / 'ic_launcher_foreground.png')
+        save(render(adaptive, background=None, glyph_height=0.56, monochrome=True),
+             folder / 'ic_launcher_monochrome.png')
+
+    print('Windows')
+    save_ico(APP / 'windows/runner/resources/app_icon.ico', [16, 24, 32, 48, 64, 128, 256])
+    save_ico(APP / 'assets/tray/tray_icon.ico', [16, 24, 32, 48, 64, 256])
+    save(render(144), APP / 'assets/tray/tray_icon.png')
+
+    print('Web')
+    web = APP / 'web'
+    save(render(32), web / 'favicon.png')
+    save(render(192), web / 'icons/Icon-192.png')
+    save(render(512), web / 'icons/Icon-512.png')
+    # Maskable: a sangre, con el candado dentro del círculo seguro (80 %).
+    save(render(192, background='square', glyph_height=0.5), web / 'icons/Icon-maskable-192.png')
+    save(render(512, background='square', glyph_height=0.5), web / 'icons/Icon-maskable-512.png')
+
+    print('iOS')
+    ios = APP / 'ios/Runner/Assets.xcassets/AppIcon.appiconset'
+    for name, px in [('20x20@1x', 20), ('20x20@2x', 40), ('20x20@3x', 60),
+                     ('29x29@1x', 29), ('29x29@2x', 58), ('29x29@3x', 87),
+                     ('40x40@1x', 40), ('40x40@2x', 80), ('40x40@3x', 120),
+                     ('60x60@2x', 120), ('60x60@3x', 180), ('76x76@1x', 76),
+                     ('76x76@2x', 152), ('83.5x83.5@2x', 167), ('1024x1024@1x', 1024)]:
+        # iOS aplica su propia máscara y no admite transparencia.
+        save(render(px, background='square', glyph_height=0.62).convert('RGB'),
+             ios / f'Icon-App-{name}.png')
+
+    print('macOS')
+    mac = APP / 'macos/Runner/Assets.xcassets/AppIcon.appiconset'
+    for px in [16, 32, 64, 128, 256, 512, 1024]:
+        save(render(px), mac / f'app_icon_{px}.png')
+
+    print('Extensión')
+    save(render(48), ROOT / 'extension/public/icons/icon-48.png')
+    save(render(128), ROOT / 'extension/public/icons/icon-128.png')
+
+
+if __name__ == '__main__':
+    main()

@@ -11,7 +11,7 @@ import '../domain/appearance_preference.dart';
 typedef PalettePair = ({LockspirePalette light, LockspirePalette dark});
 
 /// Paletas para [family]. [systemArgb] es el color del sistema; solo lo usa
-/// [ThemeFamilyId.sistema]. Si no hay color del sistema, se usa Cálido.
+/// [ThemeFamilyId.sistema]. Si no hay color del sistema, se usa Teal.
 PalettePair palettesFor(ThemeFamilyId family, int? systemArgb) {
   switch (family) {
     case ThemeFamilyId.sistema when systemArgb != null:
@@ -22,10 +22,13 @@ PalettePair palettesFor(ThemeFamilyId family, int? systemArgb) {
       );
     case ThemeFamilyId.sistema:
       return (
-        light: LockspirePalettes.calido,
-        dark: LockspirePalettes.calidoOscuro,
+        light: LockspirePalettes.teal,
+        dark: LockspirePalettes.tealOscuro,
       );
-    case ThemeFamilyId.calido || ThemeFamilyId.menta || ThemeFamilyId.lavanda:
+    case ThemeFamilyId.teal ||
+        ThemeFamilyId.calido ||
+        ThemeFamilyId.menta ||
+        ThemeFamilyId.lavanda:
       final fixed = LockspireThemeFamily.values.byName(family.name);
       return (light: fixed.light, dark: fixed.dark);
   }

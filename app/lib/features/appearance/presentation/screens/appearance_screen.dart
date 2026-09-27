@@ -91,13 +91,16 @@ class AppearanceScreen extends ConsumerWidget {
 
 String _titleFor(ThemeFamilyId family) => switch (family) {
   ThemeFamilyId.sistema => 'Colores del sistema',
-  ThemeFamilyId.calido || ThemeFamilyId.menta || ThemeFamilyId.lavanda =>
+  ThemeFamilyId.teal ||
+  ThemeFamilyId.calido ||
+  ThemeFamilyId.menta ||
+  ThemeFamilyId.lavanda =>
     LockspireThemeFamily.values.byName(family.name).displayName,
 };
 
 String? _subtitleFor(ThemeFamilyId family, int? systemArgb) => switch (family) {
   ThemeFamilyId.sistema when systemArgb == null =>
-    'No disponible en este equipo: se usa Cálido.',
+    'No disponible en este equipo: se usa Teal.',
   ThemeFamilyId.sistema =>
     Platform.isAndroid
         ? 'Material You: colores de tu fondo de pantalla.'

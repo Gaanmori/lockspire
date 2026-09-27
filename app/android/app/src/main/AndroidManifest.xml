@@ -5,7 +5,7 @@
          restauración de Android dejaría el almacenamiento seguro (claves
          del Keystore, que no se copian) inconsistente con los datos. -->
     <application
-        android:label="lockspire"
+        android:label="Lockspire"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"

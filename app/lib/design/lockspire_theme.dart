@@ -9,6 +9,7 @@ import 'lockspire_spacing.dart';
 /// Familias de tema: cada una con versión clara y oscura (ver
 /// docs/design/README.md).
 enum LockspireThemeFamily {
+  teal('Teal', LockspirePalettes.teal, LockspirePalettes.tealOscuro),
   calido('Cálido', LockspirePalettes.calido, LockspirePalettes.calidoOscuro),
   menta('Menta', LockspirePalettes.menta, LockspirePalettes.mentaOscuro),
   lavanda(

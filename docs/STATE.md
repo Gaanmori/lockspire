@@ -415,6 +415,21 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - En Windows no hace nada, ya que `rename` de Dart no expone write-through.
       - +2 tests, que en el CI de Ubuntu ejercen el FFI real.
     - **Plan de seguridad completo.** Todos los hallazgos S1–S12 están cerrados, salvo S13, documentado sin cambios (ADR 0008). App 267 tests.
+    - **Incidente, 2026-09-27: los APK compilados en la sesión no tenían la configuración OAuth.** El script de build no pasaba `--dart-define-from-file`, así que "Conectar con Google" fallaba (`serverClientId must be provided on Android`) sin mostrar nada.
+      - Corregido: el script ahora pasa `google_oauth_secrets.json` y `microsoft_oauth_secrets.json`.
+      - `SyncSettingsScreen._connect` muestra el error en un SnackBar.
+      - **Regla: todo build (Windows, APK) lleva los dos `--dart-define-from-file`.**
+      - Verificado por el usuario: sync y restaurar con Google Drive funcionan.
+    - **Tema Teal y nuevo ícono, 2026-09-27, pedido del usuario:**
+      - Tema **Teal** claro y oscuro (`LockspirePalettes.teal/tealOscuro`): primera familia y **tema por defecto** (`AppearancePreference.defaults`). También es el respaldo de "Colores del sistema" y de `context.palette`. El coral queda como acento secundario.
+      - La extensión tiene `teal-light` y `teal-dark` en `popup.css`, `THEME_FAMILIES` y el fallback de `sistema` → teal.
+      - Quien ya tenía otra familia guardada la conserva, porque se persiste por nombre.
+      - Pasan los tests de contraste WCAG.
+      - **Ícono "Candado aguja"** (concepto A de tres), en teal:
+        - SVG maestro en `docs/design/brand/`.
+        - Generador reproducible `tools/generate_icons.py` (Pillow) para Android (clásico, adaptativo y monocromo), Windows (app y bandeja), web, iOS, macOS y la extensión.
+        - Nombre visible en Android: "Lockspire".
+      - App 268 tests, extensión 9.
     - **Siguiente:** refactor de arquitectura A1–A8 y clean code C1–C4 del informe, en commits chicos. Siguen pendientes las pruebas manuales de S2 y S6 en el Redmi.
   - Núcleo hexagonal correcto: ningún `domain/`/`application/` importa Flutter ni infraestructura.
   - **Hallazgo 🔴 S1 confirmado con una prueba:** la sync, cuando solo cambió el remoto, lo escribe en disco sin descifrarlo con la clave de la sesión y reemplaza también el ancestro. Una nube manipulada puede destruir la bóveda local. Es lo primero a arreglar.

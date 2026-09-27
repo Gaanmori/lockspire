@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ícono de Lockspire, "Candado aguja" (2026-09-27). Misma geometría que
+     tools/generate_icons.py: si se cambia uno, cambiar el otro. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 180 180">
+  <title>Lockspire</title>
+  <rect width="180" height="180" rx="40" fill="#0F7C80"/>
+  <path d="M58 100 L58 76 Q58 52 90 30 Q122 52 122 76 L122 100" fill="none"
+        stroke="#F2F9F9" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="40" y="90" width="100" height="68" rx="16" fill="#F2F9F9"/>
+  <circle cx="90" cy="116" r="10" fill="#0B6468"/>
+  <path d="M84 120 L96 120 L99 140 L81 140 Z" fill="#0B6468"/>
+</svg>

@@ -12,8 +12,8 @@ const STORAGE_KEY = 'lockspire.theme';
 export function themeName(theme: AppTheme, prefersDark: boolean): string {
   const dark = theme.mode === 'dark' || (theme.mode === 'system' && prefersDark);
   // "Colores del sistema" se genera en la app con el algoritmo tonal de
-  // Material 3; el popup todavía no lo replica y usa Cálido.
-  const family = theme.family === 'sistema' ? 'calido' : theme.family;
+  // Material 3; el popup todavía no lo replica y usa Teal, el tema principal.
+  const family = theme.family === 'sistema' ? 'teal' : theme.family;
   return `${family}-${dark ? 'dark' : 'light'}`;
 }
 

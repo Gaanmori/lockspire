@@ -1,9 +1,41 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-/* Tokens de docs/design/README.md. Mismos 6 temas que la app
+/* Tokens de docs/design/README.md. Mismos 8 temas que la app
    (app/lib/design/lockspire_colors.dart); la app indica cuál en la
    respuesta a PING y src/theme.ts fija data-theme en <html>. */
 :root,
+:root[data-theme='teal-light'] {
+  --bg-page: #f2f9f9;
+  --bg-surface: #ffffff;
+  --bg-subtle: #ddf0f0;
+  --bg-input: #e6f2f2;
+  --text-primary: #1c2f31;
+  --text-secondary: #5b7476;
+  --accent: #0f7c80;
+  --accent-hover: #0b6468;
+  --on-accent: #ffffff;
+  --danger: #c23b3b;
+  --radius-md: 16px;
+  --radius-pill: 999px;
+  color-scheme: light;
+}
+
+:root[data-theme='teal-dark'] {
+  --bg-page: #0d1b1c;
+  --bg-surface: #152a2b;
+  --bg-subtle: #1c3a3c;
+  --bg-input: #183133;
+  --text-primary: #e2f3f2;
+  --text-secondary: #8fb3b3;
+  --accent: #35bfc0;
+  --accent-hover: #28a6a7;
+  --on-accent: #0d1b1c;
+  --danger: #e5605f;
+  color-scheme: dark;
+}
+
 :root[data-theme='calido-light'] {
+  --radius-md: 16px;
+  --radius-pill: 999px;
   --bg-page: #fff8f1;
   --bg-surface: #ffffff;
   --bg-subtle: #fdede6;

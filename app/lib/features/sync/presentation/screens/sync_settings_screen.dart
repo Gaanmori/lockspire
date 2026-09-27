@@ -74,16 +74,35 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
     _passwordController.clear();
   }
 
-  Future<void> _connectGoogleDrive() async {
-    await ref.read(syncControllerProvider.notifier).connectGoogleDrive();
-  }
+  Future<void> _connectGoogleDrive() => _connect(
+    'Google Drive',
+    ref.read(syncControllerProvider.notifier).connectGoogleDrive,
+  );
 
   Future<void> _disconnectGoogleDrive() async {
     await ref.read(syncControllerProvider.notifier).disconnectGoogleDrive();
   }
 
-  Future<void> _connectOneDrive() async {
-    await ref.read(syncControllerProvider.notifier).connectOneDrive();
+  Future<void> _connectOneDrive() => _connect(
+    'OneDrive',
+    ref.read(syncControllerProvider.notifier).connectOneDrive,
+  );
+
+  /// Un fallo al conectar se muestra: antes quedaba como excepción sin
+  /// manejar y el botón parecía no hacer nada (p. ej. un build sin la
+  /// configuración OAuth, `--dart-define-from-file`).
+  Future<void> _connect(
+    String provider,
+    Future<void> Function() connect,
+  ) async {
+    try {
+      await connect();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo conectar con $provider: $error')),
+      );
+    }
   }
 
   Future<void> _disconnectOneDrive() async {

@@ -24,22 +24,25 @@ Este documento es el resumen en texto para que cualquier agente/dev pueda implem
 
 La tabla de arriba es el tema **Cálido claro**, el original.
 
+> **Desde 2026-09-27 el tema principal y por defecto es Teal** (decisión del usuario), con el coral de Cálido como acento secundario. Cálido sigue disponible como una familia más.
+
 ### Temas (2026-09-24)
 
-Hay **3 familias, cada una en claro y oscuro** (6 temas). El usuario elige familia y modo (según el sistema, claro u oscuro) en la pantalla **Apariencia** de la app (`lib/features/appearance/`), y la extensión de navegador usa el mismo tema: la app se lo indica en la respuesta a `PING`.
+Hay **4 familias, cada una en claro y oscuro** (8 temas). El usuario elige familia y modo (según el sistema, claro u oscuro) en la pantalla **Apariencia** de la app (`lib/features/appearance/`), y la extensión de navegador usa el mismo tema: la app se lo indica en la respuesta a `PING`.
 
 | Familia | Claro: página / acento | Oscuro: página / acento |
 |---|---|---|
+| **Teal** (por defecto) | `#F2F9F9` / `#0F7C80` | `#0D1B1C` / `#35BFC0` |
 | Cálido | `#FFF8F1` / `#EA6C4D` | `#1E1714` / `#F07A5A` |
 | Menta | `#F3FAF7` / `#178A6B` | `#0F1C18` / `#3CC49B` |
 | Lavanda | `#F7F5FD` / `#6C5CE0` | `#16142A` / `#8F82F2` |
 
-**Cuarta opción, "Colores del sistema"** (Material You): la paleta se **genera** con el algoritmo tonal de M3 (`ColorScheme.fromSeed` → `LockspirePalette.fromSeed`) a partir del color del sistema operativo: los colores del fondo de pantalla en Android 12+ y el color de acento en Windows, Linux y macOS. Lo obtiene el paquete `dynamic_color`, detrás de `SystemAccentColorPort`. Si la plataforma no ofrece color, se usa Cálido. El popup de la extensión todavía no replica la paleta generada y muestra Cálido.
+**Cuarta opción, "Colores del sistema"** (Material You): la paleta se **genera** con el algoritmo tonal de M3 (`ColorScheme.fromSeed` → `LockspirePalette.fromSeed`) a partir del color del sistema operativo: los colores del fondo de pantalla en Android 12+ y el color de acento en Windows, Linux y macOS. Lo obtiene el paquete `dynamic_color`, detrás de `SystemAccentColorPort`. Si la plataforma no ofrece color, se usa Teal. El popup de la extensión todavía no replica la paleta generada y muestra Teal.
 
 Todos los tokens de cada tema están en `app/lib/design/lockspire_colors.dart` (`LockspirePalettes`) y, en espejo, en `extension/public/popup.css`.
 
 - **Código:** cada tema es una `LockspirePalette`, una `ThemeExtension` con los mismos tokens de la tabla más `onAccent` (texto sobre el acento: blanco en los claros, el fondo de página en los oscuros). `LockspireTheme.of(palette)` construye el `ThemeData` y lo guarda en caché. Las pantallas leen `context.palette.X`, nunca un color fijo, así que un tema nuevo no toca ninguna pantalla.
-- **Contraste verificado en tests** (`test/design/lockspire_theme_test.dart`, WCAG) para los 6 temas fijos y para paletas generadas desde rojo, amarillo, verde, azul, morado y gris: texto principal ≥ 7:1 sobre página y tarjetas, secundario ≥ 3:1, texto de botón sobre el acento ≥ 3:1. El verde de Menta claro se oscureció respecto a la primera propuesta (`#1F9E7A` → `#178A6B`) para cumplirlo con holgura.
+- **Contraste verificado en tests** (`test/design/lockspire_theme_test.dart`, WCAG) para los 8 temas fijos y para paletas generadas desde rojo, amarillo, verde, azul, morado y gris: texto principal ≥ 7:1 sobre página y tarjetas, secundario ≥ 3:1, texto de botón sobre el acento ≥ 3:1. El verde de Menta claro se oscureció respecto a la primera propuesta (`#1F9E7A` → `#178A6B`) para cumplirlo con holgura.
 
 ## Tipografía
 
@@ -111,3 +114,14 @@ Tras desbloquear, la app usa la **navegación adaptable de M3** con cuatro secci
 - Pantallas futuras: configuración general y la UI de la extensión de navegador.
 - ~~Modo oscuro~~: hecho, ver "Temas".
 - Maquetar en el canvas vivo los temas nuevos (hoy solo existen en código).
+
+## Ícono y marca
+
+**"Candado aguja"** (2026-09-27, elegido por el usuario entre tres conceptos): un candado cuyo arco termina en punta, como una aguja gótica. Es el nombre dibujado: lock + spire. Candado `#F2F9F9` sobre teal `#0F7C80`, con la cerradura en `#0B6468`.
+
+- **SVG maestro:** `docs/design/brand/lockspire-icon.svg`.
+- **PNG para marketing:** `lockspire-icon-1024.png` (redondeado) y `lockspire-icon-square-1024.png` (a sangre).
+- **Generador:** `python tools/generate_icons.py` produce todos los tamaños con la misma geometría:
+  - Android: el ícono clásico y el adaptativo (primer plano, fondo y monocromo para los íconos temáticos).
+  - Windows (`.ico` de la app y de la bandeja), web (incluido maskable), iOS, macOS y la extensión.
+- Si se retoca el diseño, cambiar el SVG y el script juntos y volver a generar.
