@@ -16,6 +16,7 @@ import 'features/browser_bridge/infrastructure/single_instance.dart';
 import 'features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
 import 'features/browser_bridge/presentation/widgets/link_request_listener.dart';
 import 'features/desktop/presentation/widgets/desktop_shell.dart';
+import 'features/sync/presentation/auto_sync_controller.dart';
 import 'features/vault/presentation/auto_lock_controller.dart';
 import 'features/vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
@@ -48,6 +49,8 @@ Future<void> main() async {
   // El bloqueo automático escucha la sesión desde el arranque, también en
   // la pantalla de autocompletado de Android (hallazgo A1).
   container.read(autoLockControllerProvider);
+  // La sync automática escucha los eventos de la bóveda (hallazgo A3).
+  container.read(autoSyncControllerProvider);
   if (Platform.isWindows || Platform.isLinux) {
     // DesktopShell (ADR 0012) usa window_manager, que exige inicializarse
     // antes de runApp().

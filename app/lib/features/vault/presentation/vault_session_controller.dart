@@ -4,26 +4,25 @@
 import 'dart:async';
 
 import 'package:lockspire/features/clipboard/presentation/providers/clipboard_guard_provider.dart';
-import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
-import 'package:lockspire/features/sync/presentation/providers/master_password_change_replica_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_state_port_provider.dart';
-import 'package:lockspire/features/sync/presentation/sync_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../application/change_master_password_use_case.dart';
-import '../application/create_vault_use_case.dart';
-import '../application/replace_biometric_key_use_case.dart';
 import '../application/save_vault_use_case.dart';
-import '../application/unlock_vault_use_case.dart';
 import '../application/unlocked_vault_result.dart';
 import '../domain/entities/vault.dart';
 import '../domain/ports/vault_storage_port.dart';
+import '../domain/vault_event.dart';
 import '../domain/vault_file_codec.dart';
-import 'providers/auto_sync_debounce_provider.dart';
 import 'providers/biometric_auth_port_provider.dart';
 import 'providers/clock_provider.dart';
-import 'providers/crypto_port_provider.dart';
+import 'providers/vault_events_provider.dart';
+import 'providers/change_master_password_use_case_provider.dart';
+import 'providers/create_vault_use_case_provider.dart';
+import 'providers/replace_biometric_key_use_case_provider.dart';
+import 'providers/save_vault_use_case_provider.dart';
+import 'providers/unlock_vault_use_case_provider.dart';
 import 'providers/check_master_password_required_provider.dart';
 import 'providers/password_unlock_history_port_provider.dart';
 import 'providers/vault_auth_attempt_provider.dart';
@@ -48,11 +47,8 @@ part 'vault_session_controller.g.dart';
 /// providers de composition root (`crypto_port_provider.dart`, etc.).
 @Riverpod(keepAlive: true)
 class VaultSessionController extends _$VaultSessionController {
-  Timer? _autoSyncTimer;
-
   @override
   Future<VaultSessionState> build() async {
-    ref.onDispose(() => _autoSyncTimer?.cancel());
 
     final storage = await ref.watch(vaultStoragePortProvider.future);
     final exists = await storage.exists();
@@ -69,12 +65,9 @@ class VaultSessionController extends _$VaultSessionController {
     final attempt = ref.read(vaultAuthAttemptProvider.notifier);
     attempt.state = const AsyncLoading();
     try {
-      final storage = await ref.read(vaultStoragePortProvider.future);
-      final crypto = await ref.read(cryptoPortProvider.future);
-      final created = await CreateVaultUseCase(
-        storage: storage,
-        crypto: crypto,
-      )(masterPassword: masterPassword);
+      final created = await (await ref.read(createVaultUseCaseProvider.future))(
+        masterPassword: masterPassword,
+      );
       state = AsyncData(
         VaultSessionUnlocked(
           vault: created.vault,
@@ -85,7 +78,7 @@ class VaultSessionController extends _$VaultSessionController {
       );
       attempt.state = const AsyncData(null);
       await _recordPasswordUnlock();
-      _triggerAutoSync();
+      _emit(VaultEvent.unlocked);
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }
@@ -97,12 +90,9 @@ class VaultSessionController extends _$VaultSessionController {
     final attempt = ref.read(vaultAuthAttemptProvider.notifier);
     attempt.state = const AsyncLoading();
     try {
-      final storage = await ref.read(vaultStoragePortProvider.future);
-      final crypto = await ref.read(cryptoPortProvider.future);
-      final unlocked = await UnlockVaultUseCase(
-        storage: storage,
-        crypto: crypto,
-      )(masterPassword: masterPassword);
+      final unlocked = await (await ref.read(
+        unlockVaultUseCaseProvider.future,
+      ))(masterPassword: masterPassword);
       state = AsyncData(
         VaultSessionUnlocked(
           vault: unlocked.vault,
@@ -113,7 +103,7 @@ class VaultSessionController extends _$VaultSessionController {
       );
       attempt.state = const AsyncData(null);
       await _recordPasswordUnlock();
-      _triggerAutoSync();
+      _emit(VaultEvent.unlocked);
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }
@@ -143,12 +133,9 @@ class VaultSessionController extends _$VaultSessionController {
     final attempt = ref.read(vaultAuthAttemptProvider.notifier);
     attempt.state = const AsyncLoading();
     try {
-      final storage = await ref.read(vaultStoragePortProvider.future);
-      final crypto = await ref.read(cryptoPortProvider.future);
-      final unlocked = await UnlockVaultUseCase(
-        storage: storage,
-        crypto: crypto,
-      ).reloadWithKey(key: key);
+      final unlocked = await (await ref.read(
+        unlockVaultUseCaseProvider.future,
+      )).reloadWithKey(key: key);
       state = AsyncData(
         VaultSessionUnlocked(
           vault: unlocked.vault,
@@ -158,7 +145,7 @@ class VaultSessionController extends _$VaultSessionController {
         ),
       );
       attempt.state = const AsyncData(null);
-      _triggerAutoSync();
+      _emit(VaultEvent.unlocked);
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }
@@ -173,12 +160,10 @@ class VaultSessionController extends _$VaultSessionController {
     required String newPassword,
   }) async {
     if (state.value is! VaultSessionUnlocked) return;
-    _autoSyncTimer?.cancel();
-    final result = await ChangeMasterPasswordUseCase(
-      storage: await ref.read(vaultStoragePortProvider.future),
-      crypto: await ref.read(cryptoPortProvider.future),
-      replica: await ref.read(masterPasswordChangeReplicaPortProvider.future),
-    ).call(currentPassword: currentPassword, newPassword: newPassword);
+    _emit(VaultEvent.rekeying);
+    final result = await (await ref.read(
+      changeMasterPasswordUseCaseProvider.future,
+    )).call(currentPassword: currentPassword, newPassword: newPassword);
     await adoptRekeyedSession(result);
   }
 
@@ -196,9 +181,7 @@ class VaultSessionController extends _$VaultSessionController {
       ),
     );
     await _recordPasswordUnlock();
-    await ReplaceBiometricKeyUseCase(
-      ref.read(biometricAuthPortProvider),
-    ).call(result.key);
+    await ref.read(replaceBiometricKeyUseCaseProvider).call(result.key);
   }
 
   /// Restaura una bóveda descargada de un proveedor de sync en un
@@ -221,11 +204,9 @@ class VaultSessionController extends _$VaultSessionController {
     attempt.state = const AsyncLoading();
     try {
       final storage = await ref.read(vaultStoragePortProvider.future);
-      final crypto = await ref.read(cryptoPortProvider.future);
-      final unlocked = await UnlockVaultUseCase(
-        storage: storage,
-        crypto: crypto,
-      ).unlockFile(file: file, masterPassword: masterPassword);
+      final unlocked = await (await ref.read(
+        unlockVaultUseCaseProvider.future,
+      )).unlockFile(file: file, masterPassword: masterPassword);
 
       await storage.write(file);
       final ancestorStorage = await ref.read(
@@ -271,7 +252,7 @@ class VaultSessionController extends _$VaultSessionController {
   /// copiado se borra igual cuando vence el plazo de `ClipboardGuard`, que
   /// sigue corriendo con la app en segundo plano.
   void lock({bool keepClipboard = false}) {
-    _autoSyncTimer?.cancel();
+    _emit(VaultEvent.locked);
     if (!keepClipboard) {
       unawaited(ref.read(clipboardGuardProvider).clearNow());
     }
@@ -291,12 +272,9 @@ class VaultSessionController extends _$VaultSessionController {
   Future<void> reloadFromDisk() async {
     final current = state.value;
     if (current is! VaultSessionUnlocked) return;
-    final storage = await ref.read(vaultStoragePortProvider.future);
-    final crypto = await ref.read(cryptoPortProvider.future);
-    final reloaded = await UnlockVaultUseCase(
-      storage: storage,
-      crypto: crypto,
-    ).reloadWithKey(key: current.key);
+    final reloaded = await (await ref.read(
+      unlockVaultUseCaseProvider.future,
+    )).reloadWithKey(key: current.key);
     state = AsyncData(
       VaultSessionUnlocked(
         vault: reloaded.vault,
@@ -319,32 +297,28 @@ class VaultSessionController extends _$VaultSessionController {
     final current = state.value;
     if (current is! VaultSessionUnlocked) return;
 
-    final storage = await ref.read(vaultStoragePortProvider.future);
-    final crypto = await ref.read(cryptoPortProvider.future);
+    final save = await ref.read(saveVaultUseCaseProvider.future);
+    final unlock = await ref.read(unlockVaultUseCaseProvider.future);
 
     try {
-      final file = await SaveVaultUseCase(storage: storage, crypto: crypto)
-          .call(
-            vault: newVault,
-            key: current.key,
-            header: current.header,
-            expectedFileHash: current.fileHash,
-          );
+      final file = await save.call(
+        vault: newVault,
+        key: current.key,
+        header: current.header,
+        expectedFileHash: current.fileHash,
+      );
       state = AsyncData(
         current.copyWith(
           vault: newVault,
           fileHash: VaultFileCodec.sha256Hex(file),
         ),
       );
-      _scheduleAutoSync();
+      _emit(VaultEvent.saved);
     } on VaultWriteConflictException {
       // La contraseña maestra no cambió — solo el contenido en disco
       // (típicamente otro dispositivo sincronizó). Se recarga con la
       // misma key ya retenida, sin pedir la contraseña de nuevo.
-      final reloaded = await UnlockVaultUseCase(
-        storage: storage,
-        crypto: crypto,
-      ).reloadWithKey(key: current.key);
+      final reloaded = await unlock.reloadWithKey(key: current.key);
       state = AsyncData(
         VaultSessionUnlocked(
           vault: reloaded.vault,
@@ -357,39 +331,5 @@ class VaultSessionController extends _$VaultSessionController {
     }
   }
 
-  /// Dispara sync sin esperar (fire-and-forget) tras crear/desbloquear —
-  /// eventos únicos, sin riesgo de ráfaga, así que sin debounce.
-  void _triggerAutoSync() {
-    unawaited(_maybeSyncNow());
-  }
-
-  /// Igual que [_triggerAutoSync] pero con debounce corto — se llama tras
-  /// cada guardado de entradas, donde varios guardados seguidos (ej.
-  /// editar varias entradas rápido) no deberían disparar una sync por
-  /// cada uno.
-  void _scheduleAutoSync() {
-    _autoSyncTimer?.cancel();
-    final debounce = ref.read(autoSyncDebounceProvider);
-    _autoSyncTimer = Timer(debounce, _triggerAutoSync);
-  }
-
-  /// Sin credenciales configuradas: no hace nada, ni siquiera deja un
-  /// error guardado en `syncControllerProvider` — un intento automático
-  /// silencioso no debe generar un mensaje de error que el usuario nunca
-  /// pidió ver. Cualquier otra falla (red/servidor) queda en el estado de
-  /// `SyncController` de la forma normal (vía `syncNow()`, que ya envuelve
-  /// su propio cuerpo en `AsyncValue.guard`) — el `try/catch` de acá es
-  /// una segunda red, deliberada: un intento automático (disparado sin
-  /// esperar, `unawaited`) nunca debe convertirse en una excepción sin
-  /// manejar que interrumpa otra cosa — el guardado/desbloqueo local ya
-  /// tuvo éxito antes de llegar acá, pase lo que pase con la sync.
-  Future<void> _maybeSyncNow() async {
-    try {
-      final configured = await ref.read(isSyncConfiguredProvider.future);
-      if (!configured) return;
-      await ref.read(syncControllerProvider.notifier).syncNow();
-    } catch (_) {
-      // Silencioso a propósito — ver el comentario de arriba.
-    }
-  }
+  void _emit(VaultEvent event) => ref.read(vaultEventsProvider).emit(event);
 }

@@ -4,8 +4,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/ports/vault_storage_port.dart';
-import '../../infrastructure/atomic_file_vault_storage_adapter.dart';
 import 'vault_file_path_provider.dart';
+import 'vault_storage_factory_provider.dart';
 
 part 'vault_storage_port_provider.g.dart';
 
@@ -14,5 +14,5 @@ part 'vault_storage_port_provider.g.dart';
 @Riverpod(keepAlive: true)
 Future<VaultStoragePort> vaultStoragePort(Ref ref) async {
   final path = await ref.watch(vaultFilePathProvider.future);
-  return AtomicFileVaultStorageAdapter(path);
+  return ref.watch(vaultStorageFactoryProvider)(path);
 }

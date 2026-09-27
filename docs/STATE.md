@@ -445,6 +445,7 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - **Pendiente:** A5 (casos de uso inyectados) y A3/A4 (cortar el ciclo `vault` ↔ `sync`; la sync automática y la restauración pasan a `sync`).
     - Siguen pendientes las pruebas manuales de S2 y S6 en el Redmi.
     - **Tema renombrado a Lineage (2026-09-27)**, basado en el tema por defecto de LineageOS, con los colores verificados en su código fuente (ver `docs/design/README.md`). El ícono pasa a `#167C80`. A2 y A1 verificados a mano por el usuario en Windows: CRUD de entradas y auto-bloqueo funcionan.
+    - **Pedido del usuario para después del refactor:** un tema estilo **Google Pixel**. Material You de Pixel: tonos y superficies del stock de Android y tipografía estilo Google Sans o equivalente libre.
     - **Decisión de MVP (usuario, 2026-09-27): lanzamiento sin costo → Linux y Android vía F-Droid.** Orden: primero terminar el refactor (bloque 1: A5, A3/A4); después el MVP.
       - **Bloqueante para F-Droid:** el repositorio principal solo acepta dependencias libres. `google_sign_in` usa Google Play Services (`play-services-auth`), que no es libre.
         - En Android hay que reemplazarlo: el flujo OAuth loopback con PKCE que ya usan OneDrive y el Google de escritorio, o AppAuth.

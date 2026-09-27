@@ -135,3 +135,8 @@ abstract class VaultStoragePort {
 
   Future<void> write(VaultFile file);
 }
+
+/// Crea un [VaultStoragePort] para una ruta. Lo usan otras features que
+/// necesitan guardar archivos de bóveda (p. ej. el ancestro de la sync) sin
+/// conocer el adaptador concreto (revisión 2026-09-25, hallazgo A4).
+typedef VaultStorageFactory = VaultStoragePort Function(String path);
