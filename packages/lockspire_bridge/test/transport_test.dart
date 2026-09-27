@@ -19,6 +19,7 @@ import 'dart:isolate';
 import 'dart:math';
 
 import 'package:lockspire_bridge/lockspire_bridge.dart';
+import 'package:lockspire_bridge/src/ipc/posix_ffi.dart' as posix;
 import 'package:lockspire_bridge/src/ipc/unix_socket_transport.dart';
 import 'package:lockspire_bridge/src/ipc/windows_pipe_transport.dart';
 import 'package:path/path.dart' as p;
@@ -116,8 +117,11 @@ void main() {
   BridgeServer? server;
 
   setUp(() async {
-    // createTemp usa mkdtemp → 0700, que ensureDirectory exige al padre.
     root = await Directory.systemTemp.createTemp('lockspire_bridge_');
+    // ensureDirectory exige que el padre sea 0700, como lo es
+    // $XDG_RUNTIME_DIR. createTemp no lo garantiza: respeta el umask (en
+    // los runners de GitHub queda 0755), así que se fija explícitamente.
+    if (Platform.isLinux) posix.chmod(root.path, 0x1C0);
     location = _tempLocation(root);
   });
 

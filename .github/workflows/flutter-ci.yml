@@ -13,7 +13,7 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -41,7 +41,7 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Linux build dependencies
         # GTK/CMake/Ninja: toolchain de Flutter desktop. build-essential:
@@ -77,7 +77,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -94,11 +94,17 @@ jobs:
 
       - name: native-host
         working-directory: native-host
+        # bash también en Windows (Git Bash del runner): mismo script en
+        # los dos sistemas, incluido `mkdir -p`.
+        shell: bash
         run: |
           dart pub get
           dart format --output=none --set-exit-if-changed .
           dart analyze --fatal-infos
           dart test
+          # build/ está en .gitignore: en un checkout limpio no existe y
+          # `dart compile exe` no crea el directorio de salida.
+          mkdir -p build
           dart compile exe bin/lockspire_native_host.dart -o build/lockspire-native-host
 
   extension:
@@ -107,9 +113,9 @@ jobs:
       run:
         working-directory: extension
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "24"
 
