@@ -62,6 +62,7 @@ dependencies:
   dbus: ^0.7.15
   path: ^1.9.1
   dynamic_color: ^2.1.0
+  ffi: ^2.2.0
 
 dev_dependencies:
   flutter_test:

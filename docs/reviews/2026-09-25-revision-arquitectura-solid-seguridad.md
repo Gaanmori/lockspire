@@ -59,10 +59,10 @@ Puntos fuertes: comentarios que explican el **porqué** (con referencias a ADRs)
 | S6 ✅ | 🟠 | **Autofill de Android sin dominio web:** el servicio solo conoce el paquete. En navegadores y WebViews es el del navegador, no el del sitio, así que no puede advertir de phishing. La coincidencia por paquete es heurística y ofrece todas las entradas. | En una página falsa dentro de un WebView se puede rellenar la credencial del banco sin ninguna advertencia. | Leer `webDomain` de `AssistStructure` y aplicar el mismo `entryMatchesOrigin` que la extensión. Con la vinculación app↔entrada pendiente (campo propio), avisar cuando no hay coincidencia. |
 | S7 ✅ | 🟠 | **WebDAV acepta `http://`:** usuario y contraseña del servidor viajan sin cifrar (Basic Auth). La bóveda sigue cifrada, pero la cuenta del servidor no. | En una red Wi-Fi pública se capturan las credenciales del WebDAV y, con ellas, se puede montar S1 o S2. | Rechazar `http://` salvo `localhost`, o pedir confirmación explícita. |
 | S8 ✅ | 🟠 | **No se puede cambiar la contraseña maestra**, y la de creación solo exige 8 caracteres. | Ante una sospecha de filtración no hay forma de rotarla. "12345678" es válida. | Caso de uso "cambiar contraseña maestra": re-derivar con salt nuevo, re-cifrar, subir y borrar la clave biométrica cacheada. Exigir fortaleza mínima (el estimador ya existe). |
-| S9 | 🟡 | **OAuth de Microsoft:** sin parámetro `state`, y el servidor local acepta la **primera** petición que llega, venga de donde venga. `error_description` se escribe en la página sin escapar. PKCE sí está bien. | Otra pestaña o proceso que golpee el puerto hace fallar el login. HTML inyectado en una página local. | Añadir `state`, ignorar peticiones sin él y escapar el HTML. |
+| S9 ✅ | 🟡 | **OAuth de Microsoft:** sin parámetro `state`, y el servidor local acepta la **primera** petición que llega, venga de donde venga. `error_description` se escribe en la página sin escapar. PKCE sí está bien. | Otra pestaña o proceso que golpee el puerto hace fallar el login. HTML inyectado en una página local. | Añadir `state`, ignorar peticiones sin él y escapar el HTML. |
 | S10 ✅ | 🟡 | **`android:allowBackup` no está desactivado**, y por defecto es `true`. | La bóveda (cifrada) y las preferencias entran en la copia automática de Google, y la restauración entre dispositivos queda en un estado inconsistente. | `allowBackup="false"`, o reglas de extracción que excluyan esos datos. |
 | S11 ✅ | 🟡 | **Robustez del decodificador:** longitudes del framing sin comprobar, así que un archivo truncado da `RangeError` en vez de un error claro. | Mensaje de error confuso, sin impacto de seguridad. | Validar longitudes y lanzar `FormatException`. |
-| S12 | 🟡 | **Durabilidad en Linux:** tras el `rename` atómico no se hace `fsync` del directorio. | Ante un corte de luz justo después de guardar se puede perder el último cambio. | `fsync` del directorio padre en Linux. |
+| S12 ✅ | 🟡 | **Durabilidad en Linux:** tras el `rename` atómico no se hace `fsync` del directorio. | Ante un corte de luz justo después de guardar se puede perder el último cambio. | `fsync` del directorio padre en Linux. |
 | S13 | 🟡 | **Secretos en memoria** como `Uint8List`/`String`, sin borrado explícito. **Ya documentado** (ADR 0008). | Malware con acceso a la memoria del proceso (adversario 4). | Sin cambio ahora; mantener documentado. |
 
 **Bien resuelto en seguridad:**
@@ -77,7 +77,7 @@ Puntos fuertes: comentarios que explican el **porqué** (con referencias a ADRs)
 
 ## 5. Plan recomendado
 
-> **Avance (2026-09-25):** ✅ = corregido. Pasos 1 y 2 hechos (S1, S3, S5, S7, S10, y de paso S11). Paso 3 hecho: S8 (ADR 0018) y S4. Paso 4 hecho: S2 (ADR 0019) y S6 (ADR 0020). Detalle en `docs/STATE.md`.
+> **Avance (2026-09-25):** ✅ = corregido. Pasos 1 y 2 hechos (S1, S3, S5, S7, S10, y de paso S11). Paso 3 hecho: S8 (ADR 0018) y S4. Paso 4 hecho: S2 (ADR 0019) y S6 (ADR 0020). Paso 6 (seguridad): S9 y S12 hechos. Queda S13, documentado sin cambios. Detalle en `docs/STATE.md`.
 
 1. **S1 ya**: es pérdida de datos confirmada ante una nube manipulada. Arreglo acotado y con test de regresión.
 2. **S3, S5, S7 y S10**: arreglos pequeños y de alto valor.

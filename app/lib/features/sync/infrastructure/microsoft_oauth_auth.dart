@@ -35,6 +35,93 @@ String codeChallengeFromVerifier(String verifier) {
   return base64Url.encode(hash.bytes).replaceAll('=', '');
 }
 
+/// Valor aleatorio para el parámetro `state` de OAuth (RFC 6749 §10.12):
+/// 32 bytes, base64url sin padding.
+String _generateState() => _generateCodeVerifier();
+
+/// Qué hacer con una petición que llega al servidor loopback (hallazgo
+/// S9 de la revisión 2026-09-25).
+sealed class OAuthCallbackOutcome {
+  const OAuthCallbackOutcome();
+}
+
+/// No es la redirección de este login (otra pestaña, otro proceso, el
+/// favicon, un `state` que no coincide): se responde 400 y se sigue
+/// esperando la buena.
+class OAuthCallbackIgnored extends OAuthCallbackOutcome {
+  const OAuthCallbackIgnored();
+}
+
+class OAuthCallbackCode extends OAuthCallbackOutcome {
+  final String code;
+  const OAuthCallbackCode(this.code);
+}
+
+class OAuthCallbackError extends OAuthCallbackOutcome {
+  final String message;
+  const OAuthCallbackError(this.message);
+}
+
+/// Solo cuenta la redirección a `/` con el [expectedState] exacto; todo lo
+/// demás se ignora. Sin esto, el servidor aceptaba la **primera**
+/// petición que llegara al puerto, viniera de donde viniera.
+OAuthCallbackOutcome evaluateOAuthCallback(Uri uri, String expectedState) {
+  if (uri.path != '/' && uri.path.isNotEmpty) {
+    return const OAuthCallbackIgnored();
+  }
+  final params = uri.queryParameters;
+  final state = params['state'];
+  if (state == null || !_constantTimeEquals(state, expectedState)) {
+    return const OAuthCallbackIgnored();
+  }
+  final code = params['code'];
+  if (code != null && code.isNotEmpty) return OAuthCallbackCode(code);
+  return OAuthCallbackError(
+    params['error_description'] ??
+        params['error'] ??
+        'No se recibió el código de autorización',
+  );
+}
+
+bool _constantTimeEquals(String a, String b) {
+  if (a.length != b.length) return false;
+  var diff = 0;
+  for (var i = 0; i < a.length; i++) {
+    diff |= a.codeUnitAt(i) ^ b.codeUnitAt(i);
+  }
+  return diff == 0;
+}
+
+/// Tiempo máximo esperando que el usuario complete el login en el
+/// navegador. Sin límite, cerrar el navegador dejaba la app esperando
+/// para siempre con un puerto abierto.
+const _loginTimeout = Duration(minutes: 5);
+
+/// Páginas fijas: nunca se refleja nada de la petición (antes se escribía
+/// `error_description` sin escapar, hallazgo S9). El detalle del error se
+/// muestra en la app.
+const _successPage =
+    '<!doctype html><meta charset="utf-8"><title>Lockspire</title>'
+    '<p>Listo, ya podés volver a Lockspire.</p>';
+const _errorPage =
+    '<!doctype html><meta charset="utf-8"><title>Lockspire</title>'
+    '<p>No se pudo conectar. Volvé a Lockspire para ver el detalle.</p>';
+
+Future<void> _respond(HttpRequest request, int status, String? html) async {
+  request.response
+    ..statusCode = status
+    ..headers.set('Cache-Control', 'no-store')
+    // Defensa en profundidad: la página no puede cargar ni ejecutar nada.
+    ..headers.set('Content-Security-Policy', "default-src 'none'")
+    ..headers.set('Referrer-Policy', 'no-referrer');
+  if (html != null) {
+    request.response
+      ..headers.contentType = ContentType.html
+      ..write(html);
+  }
+  await request.response.close();
+}
+
 /// Autenticación contra OneDrive (Microsoft identity platform) — unificada
 /// para Android y Windows, a diferencia del split de Google Drive
 /// (`google_drive_android_auth.dart`/`google_drive_windows_auth.dart`):
@@ -56,6 +143,7 @@ class MicrosoftOAuthAuth {
   Future<OneDriveConnection> connectInteractive() async {
     final verifier = _generateCodeVerifier();
     final challenge = codeChallengeFromVerifier(verifier);
+    final state = _generateState();
 
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     try {
@@ -68,6 +156,7 @@ class MicrosoftOAuthAuth {
           'scope': _scopes,
           'code_challenge': challenge,
           'code_challenge_method': 'S256',
+          'state': state,
         },
       );
 
@@ -79,22 +168,13 @@ class MicrosoftOAuthAuth {
         throw StateError('No se pudo abrir el navegador del sistema');
       }
 
-      final request = await server.first;
-      final code = request.uri.queryParameters['code'];
-      final error = request.uri.queryParameters['error_description'];
-      request.response
-        ..statusCode = 200
-        ..headers.contentType = ContentType.html
-        ..write(
-          error == null
-              ? '<html><body>Listo, ya podés volver a Lockspire.</body></html>'
-              : '<html><body>Ocurrió un error: $error</body></html>',
-        );
-      await request.response.close();
-
-      if (code == null) {
-        throw StateError(error ?? 'No se recibió el código de autorización');
-      }
+      final code = await _awaitAuthorizationCode(server, state).timeout(
+        _loginTimeout,
+        onTimeout: () => throw StateError(
+          'Se agotó el tiempo para iniciar sesión en Microsoft. Probá de '
+          'nuevo.',
+        ),
+      );
 
       final tokens = await _exchangeCode(
         code: code,
@@ -110,6 +190,27 @@ class MicrosoftOAuthAuth {
     } finally {
       await server.close(force: true);
     }
+  }
+
+  /// Atiende peticiones hasta que llega la redirección de este login
+  /// ([evaluateOAuthCallback]); las demás reciben un 400 y se ignoran.
+  Future<String> _awaitAuthorizationCode(
+    HttpServer server,
+    String expectedState,
+  ) async {
+    await for (final request in server) {
+      switch (evaluateOAuthCallback(request.uri, expectedState)) {
+        case OAuthCallbackIgnored():
+          await _respond(request, HttpStatus.badRequest, null);
+        case OAuthCallbackCode(:final code):
+          await _respond(request, HttpStatus.ok, _successPage);
+          return code;
+        case OAuthCallbackError(:final message):
+          await _respond(request, HttpStatus.ok, _errorPage);
+          throw StateError(message);
+      }
+    }
+    throw StateError('El servidor local se cerró antes de recibir el login');
   }
 
   /// Reconexión sin interacción, a partir del refresh token guardado —

@@ -3,8 +3,11 @@
 
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
 import '../domain/ports/vault_storage_port.dart';
 import '../domain/vault_file_codec.dart';
+import 'directory_fsync.dart';
 
 export '../domain/vault_file_codec.dart' show UnsupportedVaultFormatException;
 
@@ -15,7 +18,9 @@ export '../domain/vault_file_codec.dart' show UnsupportedVaultFormatException;
 /// necesite mover los mismos bytes (ej. sync remoto).
 ///
 /// La escritura es siempre atómica (temporal + fsync + rename, nunca
-/// sobrescritura en sitio) — regla fijada en CLAUDE.md.
+/// sobrescritura en sitio) — regla fijada en CLAUDE.md — y, en Linux y
+/// Android, durable también ante un corte de luz: después del rename se
+/// sincroniza el directorio ([fsyncDirectory], hallazgo S12).
 class AtomicFileVaultStorageAdapter implements VaultStoragePort {
   final String path;
 
@@ -48,5 +53,6 @@ class AtomicFileVaultStorageAdapter implements VaultStoragePort {
 
     // Rename atómico al path final — nunca sobrescritura en sitio.
     await tempFile.rename(target.path);
+    fsyncDirectory(p.dirname(target.absolute.path));
   }
 }

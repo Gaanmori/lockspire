@@ -397,7 +397,25 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - Límite documentado: el dominio lo informa la app que muestra la página. La verificación fuerte (Digital Asset Links o navegadores con certificado fijado) queda como mejora futura.
       - Tests: +16 de dominio, +6 de widget (incluye "página falsa → advierte → Cancelar no rellena"). App 261, todos pasan.
       - **Prueba manual pendiente en el Redmi:** login en Chrome de un sitio con entrada guardada (debe rellenar directo), una entrada sin URL (debe aparecer el diálogo "recordar") y el login de Crunchyroll en WebView (debe verse "dentro de la app …").
-    - **Siguiente:** S9 (OAuth de Microsoft: `state` y HTML escapado) y S12 (fsync del directorio en Linux), que son chicos. Después el refactor A1–A8.
+    - **CI arreglado (2026-09-27):** fallaba desde el commit de la extensión.
+      - `lockspire_bridge` en Linux: el test usaba una carpeta temporal 0755 y `IpcLocation.ensureDirectory` exige, a propósito, un padre 0700. Ahora el test hace `chmod 0700`.
+      - `native-host` en Windows: `dart compile exe` no crea `build/`. Ahora se hace `mkdir -p build` con `shell: bash`.
+      - `actions/checkout` y `actions/setup-node` pasan a v5 (Node 24).
+      - Pipeline en verde.
+    - **S9 corregido:** `microsoft_oauth_auth.dart`.
+      - `state` aleatorio de 32 bytes en la autorización.
+      - `evaluateOAuthCallback` (pura): solo acepta `/` con el `state` exacto, comparado en tiempo constante. Todo lo demás recibe 400 y se sigue esperando.
+      - Páginas fijas, que nunca reflejan `error_description`, con CSP `default-src 'none'`, `no-store` y `no-referrer`.
+      - Timeout de 5 minutos.
+      - El login de Google en escritorio usa `googleapis_auth`, sin cambios.
+      - +4 tests.
+    - **S12 corregido:** `fsyncDirectory` (`vault/infrastructure/directory_fsync.dart`, FFI `open`/`fsync`/`close` vía `DynamicLibrary.process()`, Linux y Android) después del `rename` en `AtomicFileVaultStorageAdapter`.
+      - Es best-effort: nunca lanza, porque el archivo ya quedó escrito.
+      - Se agregó `ffi` como dependencia directa.
+      - En Windows no hace nada, ya que `rename` de Dart no expone write-through.
+      - +2 tests, que en el CI de Ubuntu ejercen el FFI real.
+    - **Plan de seguridad completo.** Todos los hallazgos S1–S12 están cerrados, salvo S13, documentado sin cambios (ADR 0008). App 267 tests.
+    - **Siguiente:** refactor de arquitectura A1–A8 y clean code C1–C4 del informe, en commits chicos. Siguen pendientes las pruebas manuales de S2 y S6 en el Redmi.
   - Núcleo hexagonal correcto: ningún `domain/`/`application/` importa Flutter ni infraestructura.
   - **Hallazgo 🔴 S1 confirmado con una prueba:** la sync, cuando solo cambió el remoto, lo escribe en disco sin descifrarlo con la clave de la sesión y reemplaza también el ancestro. Una nube manipulada puede destruir la bóveda local. Es lo primero a arreglar.
   - Hallazgos 🟠 de seguridad:
