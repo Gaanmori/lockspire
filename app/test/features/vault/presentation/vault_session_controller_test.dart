@@ -7,6 +7,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/features/clipboard/domain/ports/secure_clipboard_port.dart';
+import 'package:lockspire/features/clipboard/presentation/providers/clipboard_guard_provider.dart';
 import 'package:lockspire/features/sync/application/sync_vault_use_case.dart';
 import 'package:lockspire/features/sync/presentation/providers/active_sync_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
@@ -73,6 +75,7 @@ List<Override> _reminderOverrides(
   Duration timeout = _shortTimeout,
   bool lockOnBackground = true,
   DateTime Function()? clock,
+  SecureClipboardPort? clipboard,
 }) {
   final crypto = FakeCryptoPort();
   final storage = FakeVaultStoragePort();
@@ -85,6 +88,9 @@ List<Override> _reminderOverrides(
       autoLockTimeoutProvider.overrideWith((ref) => timeout),
       lockOnBackgroundProvider.overrideWith((ref) => lockOnBackground),
       biometricAuthPortProvider.overrideWith((ref) => biometric),
+      secureClipboardPortProvider.overrideWithValue(
+        clipboard ?? _FakeClipboard(),
+      ),
       ..._reminderOverrides(history, clock: clock),
     ],
   );
@@ -98,6 +104,19 @@ List<Override> _reminderOverrides(
       history: history,
     ),
   );
+}
+
+class _FakeClipboard implements SecureClipboardPort {
+  int clears = 0;
+
+  @override
+  Future<void> copySensitive(
+    String text, {
+    required Duration clearAfter,
+  }) async {}
+
+  @override
+  Future<void> clearIfStillOurs() async => clears++;
 }
 
 class _SyncTestFakes {
@@ -362,6 +381,37 @@ void main() {
         );
       },
     );
+
+    // Regresión: en Android el usuario sale de Lockspire para pegar en otra
+    // app. Si el bloqueo por segundo plano borraba el portapapeles, pegar
+    // era imposible. Lo borra el plazo de ClipboardGuard.
+    test('pasar a segundo plano bloquea pero NO borra el portapapeles; '
+        'bloquear a mano sí (S4)', () async {
+      final clipboard = _FakeClipboard();
+      final built = _buildContainer(
+        timeout: const Duration(minutes: 5),
+        clipboard: clipboard,
+      );
+      final container = built.container;
+      final notifier = built.container.read(
+        vaultSessionControllerProvider.notifier,
+      );
+      await built.container.read(vaultSessionControllerProvider.future);
+      await notifier.createVault(_masterPassword);
+      await container.read(clipboardGuardProvider).copy('secreto');
+
+      notifier.onAppLifecycleChanged(AppLifecycleState.paused);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        built.container.read(vaultSessionControllerProvider).value,
+        isA<VaultSessionLocked>(),
+      );
+      expect(clipboard.clears, 0);
+
+      notifier.lock();
+      await Future<void>.delayed(Duration.zero);
+      expect(clipboard.clears, 1);
+    });
 
     test(
       'onAppLifecycleChanged(inactive) NO bloquea (se ignora a propósito)',

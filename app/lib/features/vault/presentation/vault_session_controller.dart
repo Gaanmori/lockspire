@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart' show AppLifecycleState;
+import 'package:lockspire/features/clipboard/presentation/providers/clipboard_guard_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/master_password_change_replica_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
@@ -306,9 +307,20 @@ class VaultSessionController extends _$VaultSessionController {
     } catch (_) {}
   }
 
-  void lock() {
+  /// Bloquea la sesión y, salvo [keepClipboard], borra ya cualquier
+  /// secreto copiado (hallazgo S4).
+  ///
+  /// [keepClipboard] solo lo usa el bloqueo al pasar a segundo plano en
+  /// Android: ahí el usuario sale de Lockspire justamente para pegar en
+  /// otra app, y borrar en ese momento haría imposible copiar y pegar. Lo
+  /// copiado se borra igual cuando vence el plazo de `ClipboardGuard`, que
+  /// sigue corriendo con la app en segundo plano.
+  void lock({bool keepClipboard = false}) {
     _inactivityTimer?.cancel();
     _autoSyncTimer?.cancel();
+    if (!keepClipboard) {
+      unawaited(ref.read(clipboardGuardProvider).clearNow());
+    }
     state = const AsyncData(VaultSessionLocked());
     // Limpia cualquier error/loading de un intento anterior — la próxima
     // vez que se muestre UnlockVaultScreen debe arrancar en blanco, no con
@@ -461,12 +473,15 @@ class VaultSessionController extends _$VaultSessionController {
   /// propósito, ver ADR 0008. En escritorio no hace nada: ocultar la
   /// ventana no bloquea (ADR 0012, ver `lockOnBackgroundProvider`).
   void onAppLifecycleChanged(AppLifecycleState lifecycleState) {
+    if (lifecycleState == AppLifecycleState.resumed) {
+      unawaited(ref.read(clipboardGuardProvider).onResumed());
+    }
     if (!ref.read(lockOnBackgroundProvider)) return;
     final isBackgrounded =
         lifecycleState == AppLifecycleState.paused ||
         lifecycleState == AppLifecycleState.hidden;
     if (isBackgrounded && state.value is VaultSessionUnlocked) {
-      lock();
+      lock(keepClipboard: true);
     }
   }
 

@@ -6,6 +6,7 @@
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "secure_clipboard.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -34,6 +35,40 @@ bool FlutterWindow::OnCreate() {
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(), "com.lockspire/os_session",
           &flutter::StandardMethodCodec::GetInstance());
+  clipboard_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(),
+          "com.lockspire.lockspire/clipboard",
+          &flutter::StandardMethodCodec::GetInstance());
+  clipboard_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+                 result) {
+        const auto* args = call.arguments();
+        if (call.method_name() == "copySensitive" && args &&
+            std::holds_alternative<std::string>(*args)) {
+          auto sequence = secure_clipboard::CopySensitiveText(
+              GetHandle(), std::get<std::string>(*args));
+          if (!sequence) {
+            result->Error("COPY_FAILED", "No se pudo copiar");
+            return;
+          }
+          result->Success(
+              flutter::EncodableValue(static_cast<int64_t>(*sequence)));
+        } else if (call.method_name() == "clearIfUnchanged" && args &&
+                   (std::holds_alternative<int32_t>(*args) ||
+                    std::holds_alternative<int64_t>(*args))) {
+          int64_t sequence = std::holds_alternative<int32_t>(*args)
+                                 ? std::get<int32_t>(*args)
+                                 : std::get<int64_t>(*args);
+          result->Success(flutter::EncodableValue(
+              secure_clipboard::ClearIfUnchanged(
+                  GetHandle(), static_cast<DWORD>(sequence))));
+        } else {
+          result->NotImplemented();
+        }
+      });
+
   // Sin esto Windows no envía WM_WTSSESSION_CHANGE a la ventana. Si falla,
   // quedan la inactividad y el bloqueo manual (ADR 0012).
   session_notifications_registered_ =
@@ -57,6 +92,7 @@ void FlutterWindow::OnDestroy() {
     session_notifications_registered_ = false;
   }
   os_session_channel_ = nullptr;
+  clipboard_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }

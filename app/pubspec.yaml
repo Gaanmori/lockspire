@@ -80,6 +80,7 @@ dev_dependencies:
   # Solo para FakeLocalAuthentication en tests — necesita el tipo
   # AuthMessages, que local_auth.dart no re-exporta en su barrel público.
   local_auth_platform_interface: ^1.1.0
+  fake_async: ^1.3.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

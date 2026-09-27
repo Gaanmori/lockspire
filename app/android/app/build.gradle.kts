@@ -58,4 +58,9 @@ dependencies {
     // Credential mientras se mantenga esta versión (confirmado con el
     // compilador real, no solo con la documentación).
     implementation("androidx.credentials:credentials:1.6.0")
+
+    // Borrado del portapapeles (hallazgo S4): Android congela las apps en
+    // segundo plano, así que un temporizador en Dart no corre hasta volver
+    // a abrir Lockspire. WorkManager lo ejecuta el sistema.
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
 }

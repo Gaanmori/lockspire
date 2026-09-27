@@ -4,10 +4,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_colors.dart';
+import '../../../clipboard/presentation/providers/clipboard_guard_provider.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../application/memorable_wordlists.dart';
 import '../../application/password_generator.dart';
@@ -20,8 +20,6 @@ import '../widgets/auth_card.dart';
 /// Modo de generación elegido en el panel del generador — ver
 /// `_buildPasswordGeneratorPanel`.
 enum _PasswordGenerationMode { random, memorable }
-
-const _clipboardAutoClear = Duration(seconds: 30);
 
 // Se guardan como campos más dentro de `fields` (mismo criterio que
 // `username`/`password`/`url`/`notes` — no hay jerarquía de subclases,
@@ -240,25 +238,23 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     });
   }
 
-  /// Copia [value] y lo borra del portapapeles a los 30s **solo si sigue
-  /// siendo exactamente ese valor** — cada copia se verifica contra su
-  /// propio contenido capturado por closure, nunca contra un flag
-  /// compartido de "hay un timer pendiente". Así, copiar dos campos
-  /// seguidos no hace que el primer timer borre lo que copió el segundo.
+  /// Copia [value] como secreto: marcado como sensible donde la
+  /// plataforma lo permite y borrado a los 30 s, al bloquear o al salir
+  /// (ver `ClipboardGuard`, hallazgo S4).
   Future<void> _copyToClipboard(String label, String value) async {
     if (value.isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: value));
+    final guard = ref.read(clipboardGuardProvider);
+    await guard.copy(value);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$label copiado — se borra en 30s')),
+        SnackBar(
+          content: Text(
+            '$label copiado — se borra en ${guard.clearAfter.inSeconds} s '
+            'o al bloquear',
+          ),
+        ),
       );
     }
-    Timer(_clipboardAutoClear, () async {
-      final current = await Clipboard.getData(Clipboard.kTextPlain);
-      if (current?.text == value) {
-        await Clipboard.setData(const ClipboardData(text: ''));
-      }
-    });
   }
 
   String get _appBarTitle =>

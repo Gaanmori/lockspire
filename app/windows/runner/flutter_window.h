@@ -40,6 +40,11 @@ class FlutterWindow : public Win32Window {
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
       os_session_channel_;
 
+  // Canal `com.lockspire.lockspire/clipboard` (hallazgo S4, ver
+  // lib/features/clipboard/infrastructure/windows_secure_clipboard_adapter.dart).
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
+      clipboard_channel_;
+
   bool session_notifications_registered_ = false;
 };
 

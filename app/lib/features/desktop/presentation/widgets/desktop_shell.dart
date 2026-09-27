@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../../clipboard/presentation/providers/clipboard_guard_provider.dart';
 import '../../../vault/presentation/vault_session_controller.dart';
 import '../../../vault/presentation/vault_session_state.dart';
 import '../../infrastructure/tray_hint_store.dart';
@@ -109,6 +110,9 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
     if (_quitting) return;
     _quitting = true;
     _lockVault();
+    // Esperar al borrado antes de destruir la ventana: en Windows lo hace
+    // el runner nativo, que necesita la ventana viva (hallazgo S4).
+    await ref.read(clipboardGuardProvider).clearNow();
     await trayManager.destroy();
     await windowManager.setPreventClose(false);
     await windowManager.destroy();
