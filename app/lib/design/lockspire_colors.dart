@@ -120,44 +120,48 @@ class LockspirePalette extends ThemeExtension<LockspirePalette> {
 extension LockspirePaletteContext on BuildContext {
   /// Paleta del tema activo (ver `LockspireTheme.build`).
   LockspirePalette get palette =>
-      Theme.of(this).extension<LockspirePalette>() ?? LockspirePalettes.teal;
+      Theme.of(this).extension<LockspirePalette>() ?? LockspirePalettes.lineage;
 }
 
 /// Las 6 paletas: 3 familias, cada una en claro y oscuro.
 abstract final class LockspirePalettes {
-  // --- Teal (tema principal y por defecto, 2026-09-27) -------------------
+  // --- Lineage (tema principal y por defecto, 2026-09-27) ----------------
+  //
+  // Basado en el tema por defecto de LineageOS. Claro: su paleta de marca
+  // (lineage_wiki `_sass/lineage/_theme.scss`; `lineage_accent` = #167C80 en
+  // SetupWizard). Oscuro: lo que muestra Android con LineageOS, que pasa la
+  // semilla #167C80 por el algoritmo tonal de Material You (primary tono 80)
+  // sobre los fondos oscuros de su marca.
 
-  static const teal = LockspirePalette(
+  static const lineage = LockspirePalette(
     brightness: Brightness.light,
-    bgPage: Color(0xFFF2F9F9),
+    bgPage: Color(0xFFF6FAFA),
     bgSurface: Color(0xFFFFFFFF),
-    bgSurfaceSubtle: Color(0xFFDDF0F0),
-    bgInput: Color(0xFFE6F2F2),
-    textPrimary: Color(0xFF1C2F31),
-    textSecondary: Color(0xFF5B7476),
-    textPlaceholder: Color(0xFFA3BBBC),
-    // Teal profundo: con blanco encima supera AA en los botones (≈5:1).
-    accentDefault: Color(0xFF0F7C80),
-    accentHover: Color(0xFF0B6468),
-    // El coral original de la marca queda como acento secundario.
-    accentSecondary: Color(0xFFD65A3C),
+    bgSurfaceSubtle: Color(0xFFCCE8E9),
+    bgInput: Color(0xFFE1EFEF),
+    textPrimary: Color(0xFF3C4858),
+    textSecondary: Color(0xFF6C757D),
+    textPlaceholder: Color(0xFFA3B2B8),
+    accentDefault: Color(0xFF167C80),
+    accentHover: Color(0xFF324B4C),
+    accentSecondary: Color(0xFF1F6B3A),
     onAccent: Color(0xFFFFFFFF),
     danger: Color(0xFFC23B3B),
   );
 
-  static const tealOscuro = LockspirePalette(
+  static const lineageOscuro = LockspirePalette(
     brightness: Brightness.dark,
-    bgPage: Color(0xFF0D1B1C),
-    bgSurface: Color(0xFF152A2B),
-    bgSurfaceSubtle: Color(0xFF1C3A3C),
-    bgInput: Color(0xFF183133),
-    textPrimary: Color(0xFFE2F3F2),
-    textSecondary: Color(0xFF8FB3B3),
-    textPlaceholder: Color(0xFF52706F),
-    accentDefault: Color(0xFF35BFC0),
-    accentHover: Color(0xFF28A6A7),
-    accentSecondary: Color(0xFFF07A5A),
-    onAccent: Color(0xFF0D1B1C),
+    bgPage: Color(0xFF121212),
+    bgSurface: Color(0xFF1F2526),
+    bgSurfaceSubtle: Color(0xFF243738),
+    bgInput: Color(0xFF212626),
+    textPrimary: Color(0xFFE6ECEF),
+    textSecondary: Color(0xFFA3B2B8),
+    textPlaceholder: Color(0xFF6B7B7D),
+    accentDefault: Color(0xFF80D4D8),
+    accentHover: Color(0xFF6CC2C6),
+    accentSecondary: Color(0xFF8FD4A5),
+    onAccent: Color(0xFF003739),
     danger: Color(0xFFE5605F),
   );
 

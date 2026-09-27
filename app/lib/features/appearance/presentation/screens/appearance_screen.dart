@@ -91,7 +91,7 @@ class AppearanceScreen extends ConsumerWidget {
 
 String _titleFor(ThemeFamilyId family) => switch (family) {
   ThemeFamilyId.sistema => 'Colores del sistema',
-  ThemeFamilyId.teal ||
+  ThemeFamilyId.lineage ||
   ThemeFamilyId.calido ||
   ThemeFamilyId.menta ||
   ThemeFamilyId.lavanda =>
@@ -100,7 +100,7 @@ String _titleFor(ThemeFamilyId family) => switch (family) {
 
 String? _subtitleFor(ThemeFamilyId family, int? systemArgb) => switch (family) {
   ThemeFamilyId.sistema when systemArgb == null =>
-    'No disponible en este equipo: se usa Teal.',
+    'No disponible en este equipo: se usa Lineage.',
   ThemeFamilyId.sistema =>
     Platform.isAndroid
         ? 'Material You: colores de tu fondo de pantalla.'

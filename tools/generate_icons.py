@@ -4,7 +4,7 @@
 
 Ícono "Candado aguja" (concepto A, 2026-09-27): un candado cuyo arco
 termina en punta, como una aguja gótica (lock + spire). Colores del tema
-Teal. La misma geometría está en docs/design/brand/lockspire-icon.svg:
+Lineage. La misma geometría está en docs/design/brand/lockspire-icon.svg:
 si se cambia una, cambiar la otra.
 
 Uso (desde la raíz del repo, requiere Pillow):
@@ -21,9 +21,9 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / 'app'
 
-TEAL = (0x0F, 0x7C, 0x80, 255)  # fondo (accentDefault de Teal claro)
-KEYHOLE = (0x0B, 0x64, 0x68, 255)  # cerradura (accentHover)
-GLYPH = (0xF2, 0xF9, 0xF9, 255)  # candado (bgPage de Teal claro)
+BRAND = (0x16, 0x7C, 0x80, 255)  # fondo: #167C80, teal de LineageOS
+KEYHOLE = (0x32, 0x4B, 0x4C, 255)  # cerradura: #324B4C (accentHover)
+GLYPH = (0xF6, 0xFA, 0xFA, 255)  # candado: #F6FAFA (bgPage de Lineage)
 CLEAR = (0, 0, 0, 0)
 SUPERSAMPLE = 4
 
@@ -76,9 +76,9 @@ def render(size, *, background='rounded', glyph_height=None, monochrome=False):
     draw = ImageDraw.Draw(img)
 
     if background == 'rounded':
-        draw.rounded_rectangle([0, 0, n - 1, n - 1], radius=CORNER * n / CANVAS, fill=TEAL)
+        draw.rounded_rectangle([0, 0, n - 1, n - 1], radius=CORNER * n / CANVAS, fill=BRAND)
     elif background == 'square':
-        draw.rectangle([0, 0, n - 1, n - 1], fill=TEAL)
+        draw.rectangle([0, 0, n - 1, n - 1], fill=BRAND)
 
     if glyph_height is None:
         k = n / CANVAS

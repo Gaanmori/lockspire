@@ -57,7 +57,7 @@ Future<AppThemes> _themes(ProviderContainer container) async {
 }
 
 void main() {
-  test('sin nada guardado: Teal, según el sistema', () async {
+  test('sin nada guardado: Lineage, según el sistema', () async {
     final container = _container(_FakePort());
     final themes = await _themes(container);
     expect(
@@ -65,8 +65,8 @@ void main() {
       AppearancePreference.defaults,
     );
     expect(themes.mode, ThemeMode.system);
-    expect(_palette(themes.light), LockspirePalettes.teal);
-    expect(_palette(themes.dark), LockspirePalettes.tealOscuro);
+    expect(_palette(themes.light), LockspirePalettes.lineage);
+    expect(_palette(themes.dark), LockspirePalettes.lineageOscuro);
   });
 
   test('carga lo guardado', () async {
@@ -125,7 +125,7 @@ void main() {
       expect(_palette(themes.dark)!.isDark, isTrue);
     });
 
-    test('sin color del sistema, usa Teal', () async {
+    test('sin color del sistema, usa Lineage', () async {
       final container = _container(
         _FakePort(
           const AppearancePreference(
@@ -135,7 +135,7 @@ void main() {
         ),
       );
       final themes = await _themes(container);
-      expect(_palette(themes.light), LockspirePalettes.teal);
+      expect(_palette(themes.light), LockspirePalettes.lineage);
     });
 
     test('dos paletas del mismo color son iguales (la caché de temas '

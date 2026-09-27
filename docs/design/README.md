@@ -24,7 +24,7 @@ Este documento es el resumen en texto para que cualquier agente/dev pueda implem
 
 La tabla de arriba es el tema **Cálido claro**, el original.
 
-> **Desde 2026-09-27 el tema principal y por defecto es Teal** (decisión del usuario), con el coral de Cálido como acento secundario. Cálido sigue disponible como una familia más.
+> **Desde 2026-09-27 el tema principal y por defecto es Lineage** (decisión del usuario), basado en el tema por defecto de LineageOS. Cálido sigue disponible como una familia más.
 
 ### Temas (2026-09-24)
 
@@ -32,17 +32,32 @@ Hay **4 familias, cada una en claro y oscuro** (8 temas). El usuario elige famil
 
 | Familia | Claro: página / acento | Oscuro: página / acento |
 |---|---|---|
-| **Teal** (por defecto) | `#F2F9F9` / `#0F7C80` | `#0D1B1C` / `#35BFC0` |
+| **Lineage** (por defecto) | `#F6FAFA` / `#167C80` | `#121212` / `#80D4D8` |
 | Cálido | `#FFF8F1` / `#EA6C4D` | `#1E1714` / `#F07A5A` |
 | Menta | `#F3FAF7` / `#178A6B` | `#0F1C18` / `#3CC49B` |
 | Lavanda | `#F7F5FD` / `#6C5CE0` | `#16142A` / `#8F82F2` |
 
-**Cuarta opción, "Colores del sistema"** (Material You): la paleta se **genera** con el algoritmo tonal de M3 (`ColorScheme.fromSeed` → `LockspirePalette.fromSeed`) a partir del color del sistema operativo: los colores del fondo de pantalla en Android 12+ y el color de acento en Windows, Linux y macOS. Lo obtiene el paquete `dynamic_color`, detrás de `SystemAccentColorPort`. Si la plataforma no ofrece color, se usa Teal. El popup de la extensión todavía no replica la paleta generada y muestra Teal.
+**Cuarta opción, "Colores del sistema"** (Material You): la paleta se **genera** con el algoritmo tonal de M3 (`ColorScheme.fromSeed` → `LockspirePalette.fromSeed`) a partir del color del sistema operativo: los colores del fondo de pantalla en Android 12+ y el color de acento en Windows, Linux y macOS. Lo obtiene el paquete `dynamic_color`, detrás de `SystemAccentColorPort`. Si la plataforma no ofrece color, se usa Lineage. El popup de la extensión todavía no replica la paleta generada y muestra Lineage.
 
 Todos los tokens de cada tema están en `app/lib/design/lockspire_colors.dart` (`LockspirePalettes`) y, en espejo, en `extension/public/popup.css`.
 
 - **Código:** cada tema es una `LockspirePalette`, una `ThemeExtension` con los mismos tokens de la tabla más `onAccent` (texto sobre el acento: blanco en los claros, el fondo de página en los oscuros). `LockspireTheme.of(palette)` construye el `ThemeData` y lo guarda en caché. Las pantallas leen `context.palette.X`, nunca un color fijo, así que un tema nuevo no toca ninguna pantalla.
 - **Contraste verificado en tests** (`test/design/lockspire_theme_test.dart`, WCAG) para los 8 temas fijos y para paletas generadas desde rojo, amarillo, verde, azul, morado y gris: texto principal ≥ 7:1 sobre página y tarjetas, secundario ≥ 3:1, texto de botón sobre el acento ≥ 3:1. El verde de Menta claro se oscureció respecto a la primera propuesta (`#1F9E7A` → `#178A6B`) para cumplirlo con holgura.
+
+### Tema Lineage: de dónde salen los colores
+
+Basado en el tema por defecto de **LineageOS**, verificado en su código fuente el 2026-09-27:
+- **Claro:** la paleta de marca de la wiki (`LineageOS/lineage_wiki`, `_sass/lineage/_theme.scss`):
+  - primario `#167C80`, que también es `lineage_accent` en `android_packages_apps_SetupWizard`;
+  - oscuro de marca `#324B4C`;
+  - fondos `#F6FAFA`, `#E1EFEF` y `#CCE8E9`;
+  - texto `#3C4858` y `#6C757D`;
+  - éxito `#1F6B3A`.
+- **Oscuro:** en Android, LineageOS pasa la semilla `#167C80` por el algoritmo tonal de Material You (`lineage_accent` oscuro = `system_accent1_100`).
+  - Acento: el tono 80 que da esa semilla (`#80D4D8`, texto encima `#003739`).
+  - Fondos oscuros de marca: `#121212`, `#1F2526` y `#243738`.
+
+Nota para la comercialización: "LineageOS" es una marca de su proyecto. El tema se llama "Lineage" por su inspiración; antes de lanzar conviene confirmar que el nombre no sugiera una afiliación, o renombrarlo.
 
 ## Tipografía
 
@@ -117,7 +132,7 @@ Tras desbloquear, la app usa la **navegación adaptable de M3** con cuatro secci
 
 ## Ícono y marca
 
-**"Candado aguja"** (2026-09-27, elegido por el usuario entre tres conceptos): un candado cuyo arco termina en punta, como una aguja gótica. Es el nombre dibujado: lock + spire. Candado `#F2F9F9` sobre teal `#0F7C80`, con la cerradura en `#0B6468`.
+**"Candado aguja"** (2026-09-27, elegido por el usuario entre tres conceptos): un candado cuyo arco termina en punta, como una aguja gótica. Es el nombre dibujado: lock + spire. Candado `#F6FAFA` sobre el teal de LineageOS `#167C80`, con la cerradura en `#324B4C`.
 
 - **SVG maestro:** `docs/design/brand/lockspire-icon.svg`.
 - **PNG para marketing:** `lockspire-icon-1024.png` (redondeado) y `lockspire-icon-square-1024.png` (a sangre).

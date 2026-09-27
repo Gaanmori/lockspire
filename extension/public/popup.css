@@ -3,15 +3,15 @@
    (app/lib/design/lockspire_colors.dart); la app indica cuál en la
    respuesta a PING y src/theme.ts fija data-theme en <html>. */
 :root,
-:root[data-theme='teal-light'] {
-  --bg-page: #f2f9f9;
+:root[data-theme='lineage-light'] {
+  --bg-page: #f6fafa;
   --bg-surface: #ffffff;
-  --bg-subtle: #ddf0f0;
-  --bg-input: #e6f2f2;
-  --text-primary: #1c2f31;
-  --text-secondary: #5b7476;
-  --accent: #0f7c80;
-  --accent-hover: #0b6468;
+  --bg-subtle: #cce8e9;
+  --bg-input: #e1efef;
+  --text-primary: #3c4858;
+  --text-secondary: #6c757d;
+  --accent: #167c80;
+  --accent-hover: #324b4c;
   --on-accent: #ffffff;
   --danger: #c23b3b;
   --radius-md: 16px;
@@ -19,16 +19,16 @@
   color-scheme: light;
 }
 
-:root[data-theme='teal-dark'] {
-  --bg-page: #0d1b1c;
-  --bg-surface: #152a2b;
-  --bg-subtle: #1c3a3c;
-  --bg-input: #183133;
-  --text-primary: #e2f3f2;
-  --text-secondary: #8fb3b3;
-  --accent: #35bfc0;
-  --accent-hover: #28a6a7;
-  --on-accent: #0d1b1c;
+:root[data-theme='lineage-dark'] {
+  --bg-page: #121212;
+  --bg-surface: #1f2526;
+  --bg-subtle: #243738;
+  --bg-input: #212626;
+  --text-primary: #e6ecef;
+  --text-secondary: #a3b2b8;
+  --accent: #80d4d8;
+  --accent-hover: #6cc2c6;
+  --on-accent: #003739;
   --danger: #e5605f;
   color-scheme: dark;
 }

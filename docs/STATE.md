@@ -421,11 +421,11 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - **Regla: todo build (Windows, APK) lleva los dos `--dart-define-from-file`.**
       - Verificado por el usuario: sync y restaurar con Google Drive funcionan.
     - **Tema Teal y nuevo ícono, 2026-09-27, pedido del usuario:**
-      - Tema **Teal** claro y oscuro (`LockspirePalettes.teal/tealOscuro`): primera familia y **tema por defecto** (`AppearancePreference.defaults`). También es el respaldo de "Colores del sistema" y de `context.palette`. El coral queda como acento secundario.
-      - La extensión tiene `teal-light` y `teal-dark` en `popup.css`, `THEME_FAMILIES` y el fallback de `sistema` → teal.
+      - Tema **Lineage** claro y oscuro (`LockspirePalettes.lineage/lineageOscuro`), primero llamado Teal y **basado en el tema por defecto de LineageOS** (ver `docs/design/README.md`): primera familia y **tema por defecto** (`AppearancePreference.defaults`). También es el respaldo de "Colores del sistema" y de `context.palette`.
+      - La extensión tiene `lineage-light` y `lineage-dark` en `popup.css`, `THEME_FAMILIES` y el fallback de `sistema` → lineage.
       - Quien ya tenía otra familia guardada la conserva, porque se persiste por nombre.
       - Pasan los tests de contraste WCAG.
-      - **Ícono "Candado aguja"** (concepto A de tres), en teal:
+      - **Ícono "Candado aguja"** (concepto A de tres), en el teal de LineageOS `#167C80`:
         - SVG maestro en `docs/design/brand/`.
         - Generador reproducible `tools/generate_icons.py` (Pillow) para Android (clásico, adaptativo y monocromo), Windows (app y bandeja), web, iOS, macOS y la extensión.
         - Nombre visible en Android: "Lockspire".
@@ -444,6 +444,18 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - App 272 tests.
       - **Pendiente:** A5 (casos de uso inyectados) y A3/A4 (cortar el ciclo `vault` ↔ `sync`; la sync automática y la restauración pasan a `sync`).
     - Siguen pendientes las pruebas manuales de S2 y S6 en el Redmi.
+    - **Tema renombrado a Lineage (2026-09-27)**, basado en el tema por defecto de LineageOS, con los colores verificados en su código fuente (ver `docs/design/README.md`). El ícono pasa a `#167C80`. A2 y A1 verificados a mano por el usuario en Windows: CRUD de entradas y auto-bloqueo funcionan.
+    - **Decisión de MVP (usuario, 2026-09-27): lanzamiento sin costo → Linux y Android vía F-Droid.** Orden: primero terminar el refactor (bloque 1: A5, A3/A4); después el MVP.
+      - **Bloqueante para F-Droid:** el repositorio principal solo acepta dependencias libres. `google_sign_in` usa Google Play Services (`play-services-auth`), que no es libre.
+        - En Android hay que reemplazarlo: el flujo OAuth loopback con PKCE que ya usan OneDrive y el Google de escritorio, o AppAuth.
+        - La otra opción es un *flavor* `fdroid` sin Google Drive.
+        - Verificar también que `androidx.credentials` no arrastre `credentials-play-services-auth`.
+        - Google Drive y OneDrive van a llevar el anti-feature "NonFreeNet" (servicio de red no libre). Está permitido, solo se etiqueta.
+      - **Configuración OAuth:** F-Droid compila desde el código fuente público, así que los `*_oauth_secrets.json` ignorados no van a estar. Los clientes públicos con PKCE no tienen secreto real, por lo que se pueden versionar. El `client_secret` de Google para apps instaladas no es confidencial según Google. Hay que decidir esto antes.
+      - **Firma:** F-Droid firma con su propia clave, salvo que se logren builds reproducibles. No hace falta keystore propio para el MVP en F-Droid.
+      - **Linux sin costo:** AppImage en GitHub Releases y/o Flathub. El paquete tiene que registrar el native host de la extensión (ADR 0014).
+      - **Extensión sin costo:** Chrome Web Store cobra una tarifa de registro única. Edge Add-ons es gratis; Firefox también, pero la extensión hoy es solo para Chromium. Alternativa: instalación manual (modo desarrollador) documentada.
+      - Siguen siendo bloqueantes, cueste o no: **exportar la bóveda**, política de privacidad (la pide F-Droid y conviene de todos modos), enlace al código por la AGPL, pruebas de punta a punta y pasar los textos a "usted" (C4).
   - Núcleo hexagonal correcto: ningún `domain/`/`application/` importa Flutter ni infraestructura.
   - **Hallazgo 🔴 S1 confirmado con una prueba:** la sync, cuando solo cambió el remoto, lo escribe en disco sin descifrarlo con la clave de la sesión y reemplaza también el ancestro. Una nube manipulada puede destruir la bóveda local. Es lo primero a arreglar.
   - Hallazgos 🟠 de seguridad:

@@ -23,7 +23,7 @@ export interface CredentialSummary {
   username: string;
 }
 
-export const THEME_FAMILIES = ['teal', 'calido', 'menta', 'lavanda', 'sistema'] as const;
+export const THEME_FAMILIES = ['lineage', 'calido', 'menta', 'lavanda', 'sistema'] as const;
 export const THEME_MODES = ['system', 'light', 'dark'] as const;
 
 export interface AppTheme {

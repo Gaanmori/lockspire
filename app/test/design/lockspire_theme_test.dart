@@ -33,8 +33,8 @@ void main() {
     expect(all.values.where((p) => p.isDark), hasLength(4));
   });
 
-  test('Teal es la primera familia (tema principal)', () {
-    expect(LockspireThemeFamily.values.first, LockspireThemeFamily.teal);
+  test('Lineage es la primera familia (tema principal)', () {
+    expect(LockspireThemeFamily.values.first, LockspireThemeFamily.lineage);
   });
 
   test('cada ThemeData lleva su paleta y el brillo correcto', () {

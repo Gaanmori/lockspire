@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Teal de la marca (accentDefault del tema Teal claro). -->
-    <color name="ic_launcher_background">#0F7C80</color>
+    <!-- Teal de la marca: #167C80, el de LineageOS (tema Lineage). -->
+    <color name="ic_launcher_background">#167C80</color>
 </resources>
