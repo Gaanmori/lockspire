@@ -34,6 +34,38 @@ class Vault {
     );
   }
 
+  /// Operaciones sobre las entradas (revisión 2026-09-25, hallazgo A2):
+  /// la regla de negocio vive en el dominio, no en el controller. Son puras
+  /// y reciben la hora ([now], en UTC) para poder testearlas sin reloj
+  /// real. Un [id] inexistente deja la bóveda igual.
+
+  Vault withEntryAdded(VaultEntry entry) => withEntriesAdded([entry]);
+
+  /// Varias de una vez, p. ej. el resultado de una importación.
+  Vault withEntriesAdded(Iterable<VaultEntry> added) =>
+      copyWith(entries: [...entries, ...added]);
+
+  Vault withEntryUpdated({
+    required String id,
+    required String title,
+    required Map<String, String> fields,
+    required DateTime now,
+  }) => _mapEntry(
+    id,
+    (e) => e.copyWith(title: title, fields: fields, modifiedAt: now),
+  );
+
+  /// Borrado suave (tombstone): la entrada queda en la lista marcada como
+  /// borrada, para que el merge (ADR 0006) propague el borrado a los demás
+  /// dispositivos en vez de resucitarla.
+  Vault withEntryDeleted(String id, {required DateTime now}) => _mapEntry(
+    id,
+    (e) => e.copyWith(deleted: true, deletedAt: now, modifiedAt: now),
+  );
+
+  Vault _mapEntry(String id, VaultEntry Function(VaultEntry) change) =>
+      copyWith(entries: [for (final e in entries) e.id == id ? change(e) : e]);
+
   Map<String, dynamic> toJson() => {
     'schema_version': schemaVersion,
     'vault_id': vaultId,

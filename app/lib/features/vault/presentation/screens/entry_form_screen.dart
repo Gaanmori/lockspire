@@ -14,7 +14,7 @@ import '../../application/password_generator.dart';
 import '../../application/password_strength_estimator.dart';
 import '../../application/save_vault_use_case.dart';
 import '../../domain/entities/vault_entry.dart';
-import '../vault_session_controller.dart';
+import '../vault_entries_controller.dart';
 import '../widgets/auth_card.dart';
 
 /// Modo de generación elegido en el panel del generador — ver
@@ -145,7 +145,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     };
 
     try {
-      final controller = ref.read(vaultSessionControllerProvider.notifier);
+      final controller = ref.read(vaultEntriesControllerProvider);
       if (_isEditing) {
         await controller.updateEntry(
           id: widget.entry!.id,
@@ -195,7 +195,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     if (confirmed != true || !mounted) return;
 
     await ref
-        .read(vaultSessionControllerProvider.notifier)
+        .read(vaultEntriesControllerProvider)
         .deleteEntry(widget.entry!.id);
     if (mounted) Navigator.of(context).pop();
   }

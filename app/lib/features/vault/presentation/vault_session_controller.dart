@@ -2,9 +2,7 @@
 // Copyright (C) 2026 Lockspire
 
 import 'dart:async';
-import 'dart:typed_data';
 
-import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:lockspire/features/clipboard/presentation/providers/clipboard_guard_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/master_password_change_replica_port_provider.dart';
@@ -15,21 +13,19 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../application/change_master_password_use_case.dart';
 import '../application/create_vault_use_case.dart';
+import '../application/replace_biometric_key_use_case.dart';
 import '../application/save_vault_use_case.dart';
 import '../application/unlock_vault_use_case.dart';
 import '../application/unlocked_vault_result.dart';
 import '../domain/entities/vault.dart';
-import '../domain/entities/vault_entry.dart';
 import '../domain/ports/vault_storage_port.dart';
 import '../domain/vault_file_codec.dart';
-import 'providers/auto_lock_timeout_provider.dart';
 import 'providers/auto_sync_debounce_provider.dart';
 import 'providers/biometric_auth_port_provider.dart';
 import 'providers/clock_provider.dart';
 import 'providers/crypto_port_provider.dart';
 import 'providers/check_master_password_required_provider.dart';
 import 'providers/password_unlock_history_port_provider.dart';
-import 'providers/lock_on_background_provider.dart';
 import 'providers/vault_auth_attempt_provider.dart';
 import 'providers/vault_storage_port_provider.dart';
 import 'vault_session_state.dart';
@@ -40,8 +36,9 @@ part 'vault_session_controller.g.dart';
 /// adaptadores reales de `infrastructure/` (vía los providers de
 /// composition root) — el resto de la UI solo habla con este controller.
 ///
-/// También gestiona el auto-lock (ver docs/adr/0008-sesion-auto-lock.md):
-/// por inactividad y al pasar la app a segundo plano.
+/// El bloqueo automático está en `AutoLockController`, las entradas en
+/// `VaultEntriesController` y la configuración biométrica en
+/// `BiometricUnlockController` (revisión 2026-09-25, hallazgo A1).
 ///
 /// `keepAlive: true` es deliberado, no solo conveniencia: si este
 /// controller se auto-dispusiera al quedar momentáneamente sin listeners
@@ -51,23 +48,11 @@ part 'vault_session_controller.g.dart';
 /// providers de composition root (`crypto_port_provider.dart`, etc.).
 @Riverpod(keepAlive: true)
 class VaultSessionController extends _$VaultSessionController {
-  Timer? _inactivityTimer;
   Timer? _autoSyncTimer;
 
   @override
   Future<VaultSessionState> build() async {
-    ref.onDispose(() {
-      _inactivityTimer?.cancel();
-      _autoSyncTimer?.cancel();
-    });
-
-    // Si el usuario cambia el tiempo de bloqueo (ADR 0016), el temporizador
-    // en curso se reprograma ya con el valor nuevo. `listen` (no `watch`):
-    // cambiar el ajuste no debe reconstruir la sesión.
-    ref.listen(
-      autoLockTimeoutProvider,
-      (_, _) => _scheduleAutoLockIfUnlocked(),
-    );
+    ref.onDispose(() => _autoSyncTimer?.cancel());
 
     final storage = await ref.watch(vaultStoragePortProvider.future);
     final exists = await storage.exists();
@@ -104,7 +89,6 @@ class VaultSessionController extends _$VaultSessionController {
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }
-    _scheduleAutoLockIfUnlocked();
   }
 
   /// Desbloquea la bóveda existente. Ver el comentario de [createVault]:
@@ -133,7 +117,6 @@ class VaultSessionController extends _$VaultSessionController {
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }
-    _scheduleAutoLockIfUnlocked();
   }
 
   /// Desbloquea con la clave cacheada tras la biometría/PIN del sistema
@@ -179,22 +162,6 @@ class VaultSessionController extends _$VaultSessionController {
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }
-    _scheduleAutoLockIfUnlocked();
-  }
-
-  /// Activa el desbloqueo biométrico — cachea la clave ya derivada de la
-  /// sesión actual detrás de la biometría/PIN del sistema. Solo tiene
-  /// sentido con la bóveda ya desbloqueada (llamar justo después de un
-  /// desbloqueo real con contraseña); no hace nada si no lo está.
-  Future<void> enableBiometricUnlock() async {
-    final current = state.value;
-    if (current is! VaultSessionUnlocked) return;
-    await ref.read(biometricAuthPortProvider).storeKey(key: current.key);
-  }
-
-  /// Desactiva el desbloqueo biométrico — borra la clave cacheada.
-  Future<void> disableBiometricUnlock() async {
-    await ref.read(biometricAuthPortProvider).deleteKey();
   }
 
   /// Cambia la contraseña maestra (ADR 0018). Lanza
@@ -228,21 +195,10 @@ class VaultSessionController extends _$VaultSessionController {
         fileHash: result.fileHash,
       ),
     );
-    _scheduleAutoLockIfUnlocked();
     await _recordPasswordUnlock();
-    await _replaceBiometricKey(result.key);
-  }
-
-  /// La clave vieja se borra siempre. Guardar la nueva puede pedir la
-  /// biometría o fallar; en ese caso queda desactivada y el usuario la
-  /// reactiva en Seguridad — nunca queda cacheada una clave que no abre.
-  Future<void> _replaceBiometricKey(Uint8List newKey) async {
-    final port = ref.read(biometricAuthPortProvider);
-    try {
-      if (!await port.hasStoredKey()) return;
-      await port.deleteKey();
-      await port.storeKey(key: newKey);
-    } catch (_) {}
+    await ReplaceBiometricKeyUseCase(
+      ref.read(biometricAuthPortProvider),
+    ).call(result.key);
   }
 
   /// Restaura una bóveda descargada de un proveedor de sync en un
@@ -292,7 +248,6 @@ class VaultSessionController extends _$VaultSessionController {
     } catch (error, stackTrace) {
       attempt.state = AsyncError(error, stackTrace);
     }
-    _scheduleAutoLockIfUnlocked();
   }
 
   /// Registra un desbloqueo con la contraseña maestra (ADR 0017) y reinicia
@@ -316,7 +271,6 @@ class VaultSessionController extends _$VaultSessionController {
   /// copiado se borra igual cuando vence el plazo de `ClipboardGuard`, que
   /// sigue corriendo con la app en segundo plano.
   void lock({bool keepClipboard = false}) {
-    _inactivityTimer?.cancel();
     _autoSyncTimer?.cancel();
     if (!keepClipboard) {
       unawaited(ref.read(clipboardGuardProvider).clearNow());
@@ -353,72 +307,15 @@ class VaultSessionController extends _$VaultSessionController {
     );
   }
 
-  /// Agrega una entrada nueva de tipo contraseña. Lanza
-  /// [VaultWriteConflictException] si la bóveda cambió en disco desde la
-  /// última lectura de esta sesión (ver `SaveVaultUseCase`) — en ese caso
+  /// Único punto de escritura de la bóveda desbloqueada: cifra, guarda y
+  /// actualiza la sesión. Lo usan las operaciones sobre entradas
+  /// (`VaultEntriesController`, revisión 2026-09-25, hallazgo A1).
+  ///
+  /// Lanza [VaultWriteConflictException] si la bóveda cambió en disco desde
+  /// la última lectura de esta sesión (ver `SaveVaultUseCase`); en ese caso
   /// el estado ya queda actualizado con la versión fresca antes de
   /// relanzar, para que un reintento inmediato parta de datos vigentes.
-  Future<void> addEntry({
-    required String title,
-    Map<String, String> fields = const {},
-  }) async {
-    final current = state.value;
-    if (current is! VaultSessionUnlocked) return;
-    final entry = VaultEntry.create(title: title, fields: fields);
-    await _persist(
-      current.vault.copyWith(entries: [...current.vault.entries, entry]),
-    );
-  }
-
-  /// Agrega varias entradas de una vez (ej. resultado de una importación,
-  /// ver `VaultImportSource`). Ver [addEntry] para el manejo de conflicto
-  /// de guardado.
-  Future<void> importEntries(List<VaultEntry> entries) async {
-    final current = state.value;
-    if (current is! VaultSessionUnlocked) return;
-    await _persist(
-      current.vault.copyWith(entries: [...current.vault.entries, ...entries]),
-    );
-  }
-
-  /// Edita una entrada existente. Ver [addEntry] para el manejo de
-  /// conflicto de guardado.
-  Future<void> updateEntry({
-    required String id,
-    required String title,
-    required Map<String, String> fields,
-  }) async {
-    final current = state.value;
-    if (current is! VaultSessionUnlocked) return;
-    final now = DateTime.now().toUtc();
-    final entries = current.vault.entries
-        .map(
-          (e) => e.id == id
-              ? e.copyWith(title: title, fields: fields, modifiedAt: now)
-              : e,
-        )
-        .toList();
-    await _persist(current.vault.copyWith(entries: entries));
-  }
-
-  /// Borrado suave (tombstone) — no quita la entrada de la lista, la marca
-  /// como borrada (ver comentario en `VaultEntry.deleted`). Ver [addEntry]
-  /// para el manejo de conflicto de guardado.
-  Future<void> deleteEntry(String id) async {
-    final current = state.value;
-    if (current is! VaultSessionUnlocked) return;
-    final now = DateTime.now().toUtc();
-    final entries = current.vault.entries
-        .map(
-          (e) => e.id == id
-              ? e.copyWith(deleted: true, deletedAt: now, modifiedAt: now)
-              : e,
-        )
-        .toList();
-    await _persist(current.vault.copyWith(entries: entries));
-  }
-
-  Future<void> _persist(Vault newVault) async {
+  Future<void> saveVault(Vault newVault) async {
     final current = state.value;
     if (current is! VaultSessionUnlocked) return;
 
@@ -458,38 +355,6 @@ class VaultSessionController extends _$VaultSessionController {
       );
       rethrow;
     }
-  }
-
-  /// Reinicia el temporizador de inactividad. No hace nada si la bóveda
-  /// no está desbloqueada — no hay nada que proteger todavía.
-  void registerActivity() {
-    if (state.value is VaultSessionUnlocked) {
-      _scheduleAutoLockIfUnlocked();
-    }
-  }
-
-  /// Reenviado desde [ActivityAndLifecycleWatcher]. Bloquea inmediatamente
-  /// al pasar a segundo plano (`paused`/`hidden`) — `inactive` se ignora a
-  /// propósito, ver ADR 0008. En escritorio no hace nada: ocultar la
-  /// ventana no bloquea (ADR 0012, ver `lockOnBackgroundProvider`).
-  void onAppLifecycleChanged(AppLifecycleState lifecycleState) {
-    if (lifecycleState == AppLifecycleState.resumed) {
-      unawaited(ref.read(clipboardGuardProvider).onResumed());
-    }
-    if (!ref.read(lockOnBackgroundProvider)) return;
-    final isBackgrounded =
-        lifecycleState == AppLifecycleState.paused ||
-        lifecycleState == AppLifecycleState.hidden;
-    if (isBackgrounded && state.value is VaultSessionUnlocked) {
-      lock(keepClipboard: true);
-    }
-  }
-
-  void _scheduleAutoLockIfUnlocked() {
-    _inactivityTimer?.cancel();
-    if (state.value is! VaultSessionUnlocked) return;
-    final timeout = ref.read(autoLockTimeoutProvider);
-    _inactivityTimer = Timer(timeout, lock);
   }
 
   /// Dispara sync sin esperar (fire-and-forget) tras crear/desbloquear —

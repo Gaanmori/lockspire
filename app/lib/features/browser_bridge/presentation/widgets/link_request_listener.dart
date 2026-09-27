@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../vault/presentation/vault_session_controller.dart';
+import '../../../vault/presentation/vault_entries_controller.dart';
 import '../../../vault/presentation/vault_session_state.dart';
 import '../../application/handle_bridge_request.dart';
 import '../providers/pending_link_request_provider.dart';
@@ -93,7 +94,7 @@ class LinkRequestListener extends ConsumerWidget {
     }
     try {
       await ref
-          .read(vaultSessionControllerProvider.notifier)
+          .read(vaultEntriesControllerProvider)
           .updateEntry(
             id: entry.id,
             title: entry.title,

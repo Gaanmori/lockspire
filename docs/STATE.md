@@ -430,7 +430,20 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
         - Generador reproducible `tools/generate_icons.py` (Pillow) para Android (clásico, adaptativo y monocromo), Windows (app y bandeja), web, iOS, macOS y la extensión.
         - Nombre visible en Android: "Lockspire".
       - App 268 tests, extensión 9.
-    - **Siguiente:** refactor de arquitectura A1–A8 y clean code C1–C4 del informe, en commits chicos. Siguen pendientes las pruebas manuales de S2 y S6 en el Redmi.
+    - **Decisiones del usuario sobre la revisión (2026-09-27):**
+      - **A8:** documentar en un ADR la excepción de ubicación del Kotlin (Gradle la exige).
+      - **C4:** los textos de la app en español neutro con **"usted"** ("Ingrese", "puede"). La documentación no cambia.
+      - Orden: bloque 1 (A2 → A1 → A5 → A3/A4) y después bloque 2 (A6, A7, C1–C4).
+    - **Refactor, bloque 1 (en curso):**
+      - **A2 hecho:** `Vault.withEntryAdded`, `withEntriesAdded`, `withEntryUpdated` y `withEntryDeleted`, puros y con la hora inyectada (+4 tests de dominio).
+      - **A1 hecho:** `VaultSessionController` (525 → 395 líneas) queda con la sesión: crear, desbloquear, cambiar la contraseña, restaurar, bloquear, recargar y `saveVault` como único punto de escritura. Se separaron:
+        - `VaultEntriesController`: CRUD e importación.
+        - `BiometricUnlockController`: activar y desactivar, más el caso de uso `ReplaceBiometricKeyUseCase`.
+        - `AutoLockController`: **escucha** la sesión en vez de que la sesión lo invoque. Se instancia en `main.dart`, así cubre también la pantalla de autocompletado.
+      - El reintento del portapapeles al volver a la app pasó a `ActivityAndLifecycleWatcher`.
+      - App 272 tests.
+      - **Pendiente:** A5 (casos de uso inyectados) y A3/A4 (cortar el ciclo `vault` ↔ `sync`; la sync automática y la restauración pasan a `sync`).
+    - Siguen pendientes las pruebas manuales de S2 y S6 en el Redmi.
   - Núcleo hexagonal correcto: ningún `domain/`/`application/` importa Flutter ni infraestructura.
   - **Hallazgo 🔴 S1 confirmado con una prueba:** la sync, cuando solo cambió el remoto, lo escribe en disco sin descifrarlo con la clave de la sesión y reemplaza también el ancestro. Una nube manipulada puede destruir la bóveda local. Es lo primero a arreglar.
   - Hallazgos 🟠 de seguridad:

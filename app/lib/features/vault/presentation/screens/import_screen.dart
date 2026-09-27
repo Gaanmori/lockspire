@@ -13,7 +13,7 @@ import '../../application/save_vault_use_case.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../../infrastructure/safeincloud_xml_import_source.dart';
 import '../providers/vault_import_source_provider.dart';
-import '../vault_session_controller.dart';
+import '../vault_entries_controller.dart';
 
 /// Importar contraseñas desde un export XML de SafeInCloud (ver
 /// docs/STATE.md — Fase 6, docs/THREAT_MODEL.md actor #8).
@@ -89,9 +89,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     });
 
     try {
-      await ref
-          .read(vaultSessionControllerProvider.notifier)
-          .importEntries(candidates);
+      await ref.read(vaultEntriesControllerProvider).importEntries(candidates);
       if (!mounted) return;
       setState(() => _candidates = null);
       await _showDeleteReminderDialog(candidates.length);

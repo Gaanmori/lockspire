@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../vault_session_controller.dart';
+import '../../../clipboard/presentation/providers/clipboard_guard_provider.dart';
+import '../auto_lock_controller.dart';
 
 /// Envuelve toda la app: detecta actividad del usuario (para reiniciar el
 /// timer de auto-lock) y cambios de ciclo de vida (para bloquear al pasar
@@ -33,9 +36,14 @@ class _ActivityAndLifecycleWatcherState
   void initState() {
     super.initState();
     _lifecycleListener = AppLifecycleListener(
-      onStateChange: (state) => ref
-          .read(vaultSessionControllerProvider.notifier)
-          .onAppLifecycleChanged(state),
+      onStateChange: (state) {
+        ref.read(autoLockControllerProvider).onAppLifecycleChanged(state);
+        // Reintenta el borrado del portapapeles si venció fuera de la app
+        // (HyperOS lo descarta en segundo plano, ver ClipboardGuard).
+        if (state == AppLifecycleState.resumed) {
+          unawaited(ref.read(clipboardGuardProvider).onResumed());
+        }
+      },
     );
     HardwareKeyboard.instance.addHandler(_onKeyEvent);
   }
@@ -53,7 +61,7 @@ class _ActivityAndLifecycleWatcherState
   }
 
   void _registerActivity() {
-    ref.read(vaultSessionControllerProvider.notifier).registerActivity();
+    ref.read(autoLockControllerProvider).registerActivity();
   }
 
   @override

@@ -29,6 +29,9 @@ import 'package:lockspire/features/vault/presentation/providers/password_unlock_
 import 'package:lockspire/features/vault/presentation/providers/lock_on_background_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_auth_attempt_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
+import 'package:lockspire/features/vault/presentation/auto_lock_controller.dart';
+import 'package:lockspire/features/vault/presentation/biometric_unlock_controller.dart';
+import 'package:lockspire/features/vault/presentation/vault_entries_controller.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
 
@@ -95,6 +98,8 @@ List<Override> _reminderOverrides(
     ],
   );
   addTearDown(container.dispose);
+  // Como en main.dart: el bloqueo automático escucha la sesión.
+  container.read(autoLockControllerProvider);
   return (
     container: container,
     fakes: _TestFakes(
@@ -166,6 +171,8 @@ class _SyncTestFakes {
     ],
   );
   addTearDown(container.dispose);
+  // Como en main.dart: el bloqueo automático escucha la sesión.
+  container.read(autoLockControllerProvider);
   return (
     container: container,
     fakes: _SyncTestFakes(
@@ -188,7 +195,7 @@ void main() {
       final notifier = container.read(vaultSessionControllerProvider.notifier);
       await container.read(vaultSessionControllerProvider.future);
       await notifier.createVault(_masterPassword);
-      await notifier.enableBiometricUnlock();
+      await container.read(biometricUnlockControllerProvider).enable();
       final key =
           (container.read(vaultSessionControllerProvider).value!
                   as VaultSessionUnlocked)
@@ -287,6 +294,7 @@ void main() {
           ],
         );
         addTearDown(container.dispose);
+        container.read(autoLockControllerProvider);
         final notifier = container.read(
           vaultSessionControllerProvider.notifier,
         );
@@ -343,7 +351,7 @@ void main() {
 
       // A mitad del timeout original se registra actividad -> se reinicia.
       await Future<void>.delayed(_shortTimeout ~/ 2);
-      notifier.registerActivity();
+      container.read(autoLockControllerProvider).registerActivity();
       await Future<void>.delayed(
         _shortTimeout ~/ 2 + const Duration(milliseconds: 15),
       );
@@ -373,7 +381,9 @@ void main() {
         await container.read(vaultSessionControllerProvider.future);
         await notifier.createVault(_masterPassword);
 
-        notifier.onAppLifecycleChanged(AppLifecycleState.paused);
+        container
+            .read(autoLockControllerProvider)
+            .onAppLifecycleChanged(AppLifecycleState.paused);
 
         expect(
           container.read(vaultSessionControllerProvider).value,
@@ -400,7 +410,9 @@ void main() {
       await notifier.createVault(_masterPassword);
       await container.read(clipboardGuardProvider).copy('secreto');
 
-      notifier.onAppLifecycleChanged(AppLifecycleState.paused);
+      container
+          .read(autoLockControllerProvider)
+          .onAppLifecycleChanged(AppLifecycleState.paused);
       await Future<void>.delayed(Duration.zero);
       expect(
         built.container.read(vaultSessionControllerProvider).value,
@@ -424,7 +436,9 @@ void main() {
         await container.read(vaultSessionControllerProvider.future);
         await notifier.createVault(_masterPassword);
 
-        notifier.onAppLifecycleChanged(AppLifecycleState.inactive);
+        container
+            .read(autoLockControllerProvider)
+            .onAppLifecycleChanged(AppLifecycleState.inactive);
 
         expect(
           container.read(vaultSessionControllerProvider).value,
@@ -441,8 +455,12 @@ void main() {
       await container.read(vaultSessionControllerProvider.future);
       await notifier.createVault(_masterPassword);
 
-      notifier.onAppLifecycleChanged(AppLifecycleState.hidden);
-      notifier.onAppLifecycleChanged(AppLifecycleState.paused);
+      container
+          .read(autoLockControllerProvider)
+          .onAppLifecycleChanged(AppLifecycleState.hidden);
+      container
+          .read(autoLockControllerProvider)
+          .onAppLifecycleChanged(AppLifecycleState.paused);
       expect(
         container.read(vaultSessionControllerProvider).value,
         isA<VaultSessionUnlocked>(),
@@ -477,9 +495,14 @@ void main() {
       );
       expect(container.read(vaultAuthAttemptProvider).isLoading, isTrue);
 
-      expect(() => notifier.registerActivity(), returnsNormally);
       expect(
-        () => notifier.onAppLifecycleChanged(AppLifecycleState.paused),
+        () => container.read(autoLockControllerProvider).registerActivity(),
+        returnsNormally,
+      );
+      expect(
+        () => container
+            .read(autoLockControllerProvider)
+            .onAppLifecycleChanged(AppLifecycleState.paused),
         returnsNormally,
       );
 
@@ -512,48 +535,37 @@ void main() {
   });
 
   group('VaultSessionController — desbloqueo biométrico (ADR 0010)', () {
-    test(
-      'enableBiometricUnlock() no hace nada si la bóveda no está desbloqueada',
-      () async {
-        final built = _buildContainer(timeout: const Duration(minutes: 5));
-        final container = built.container;
-        final notifier = container.read(
-          vaultSessionControllerProvider.notifier,
-        );
-        await container.read(vaultSessionControllerProvider.future);
+    test('enable() no hace nada si la bóveda no está desbloqueada', () async {
+      final built = _buildContainer(timeout: const Duration(minutes: 5));
+      final container = built.container;
+      await container.read(vaultSessionControllerProvider.future);
 
-        await notifier.enableBiometricUnlock();
+      await container.read(biometricUnlockControllerProvider).enable();
 
-        expect(await built.fakes.biometric.hasStoredKey(), isFalse);
-      },
-    );
+      expect(await built.fakes.biometric.hasStoredKey(), isFalse);
+    });
 
-    test(
-      'enableBiometricUnlock() guarda la clave de la sesión actual',
-      () async {
-        final built = _buildContainer(timeout: const Duration(minutes: 5));
-        final container = built.container;
-        final notifier = container.read(
-          vaultSessionControllerProvider.notifier,
-        );
-        await container.read(vaultSessionControllerProvider.future);
-        await notifier.createVault(_masterPassword);
-
-        await notifier.enableBiometricUnlock();
-
-        expect(await built.fakes.biometric.hasStoredKey(), isTrue);
-      },
-    );
-
-    test('disableBiometricUnlock() borra la clave guardada', () async {
+    test('enable() guarda la clave de la sesión actual', () async {
       final built = _buildContainer(timeout: const Duration(minutes: 5));
       final container = built.container;
       final notifier = container.read(vaultSessionControllerProvider.notifier);
       await container.read(vaultSessionControllerProvider.future);
       await notifier.createVault(_masterPassword);
-      await notifier.enableBiometricUnlock();
 
-      await notifier.disableBiometricUnlock();
+      await container.read(biometricUnlockControllerProvider).enable();
+
+      expect(await built.fakes.biometric.hasStoredKey(), isTrue);
+    });
+
+    test('disable() borra la clave guardada', () async {
+      final built = _buildContainer(timeout: const Duration(minutes: 5));
+      final container = built.container;
+      final notifier = container.read(vaultSessionControllerProvider.notifier);
+      await container.read(vaultSessionControllerProvider.future);
+      await notifier.createVault(_masterPassword);
+      await container.read(biometricUnlockControllerProvider).enable();
+
+      await container.read(biometricUnlockControllerProvider).disable();
 
       expect(await built.fakes.biometric.hasStoredKey(), isFalse);
     });
@@ -610,10 +622,12 @@ void main() {
       await container.read(vaultSessionControllerProvider.future);
       await notifier.createVault(_masterPassword);
 
-      await notifier.addEntry(
-        title: 'Ejemplo',
-        fields: {'username': 'gaan', 'password': 'correcto-caballo'},
-      );
+      await container
+          .read(vaultEntriesControllerProvider)
+          .addEntry(
+            title: 'Ejemplo',
+            fields: {'username': 'gaan', 'password': 'correcto-caballo'},
+          );
 
       final state =
           container.read(vaultSessionControllerProvider).value
@@ -630,9 +644,11 @@ void main() {
       final notifier = container.read(vaultSessionControllerProvider.notifier);
       await container.read(vaultSessionControllerProvider.future);
       await notifier.createVault(_masterPassword);
-      await notifier.addEntry(title: 'Ya existía', fields: {});
+      await container
+          .read(vaultEntriesControllerProvider)
+          .addEntry(title: 'Ya existía', fields: {});
 
-      await notifier.importEntries([
+      await container.read(vaultEntriesControllerProvider).importEntries([
         VaultEntry.create(title: 'Importada 1', fields: {'username': 'a'}),
         VaultEntry.create(title: 'Importada 2', fields: {'username': 'b'}),
       ]);
@@ -657,7 +673,9 @@ void main() {
         );
         await container.read(vaultSessionControllerProvider.future);
         await notifier.createVault(_masterPassword);
-        await notifier.addEntry(title: 'Original', fields: {'username': 'a'});
+        await container
+            .read(vaultEntriesControllerProvider)
+            .addEntry(title: 'Original', fields: {'username': 'a'});
 
         final id =
             (container.read(vaultSessionControllerProvider).value
@@ -667,11 +685,9 @@ void main() {
                 .first
                 .id;
 
-        await notifier.updateEntry(
-          id: id,
-          title: 'Editado',
-          fields: {'username': 'b'},
-        );
+        await container
+            .read(vaultEntriesControllerProvider)
+            .updateEntry(id: id, title: 'Editado', fields: {'username': 'b'});
 
         final state =
             container.read(vaultSessionControllerProvider).value
@@ -692,7 +708,9 @@ void main() {
         );
         await container.read(vaultSessionControllerProvider.future);
         await notifier.createVault(_masterPassword);
-        await notifier.addEntry(title: 'Para borrar');
+        await container
+            .read(vaultEntriesControllerProvider)
+            .addEntry(title: 'Para borrar');
 
         final id =
             (container.read(vaultSessionControllerProvider).value
@@ -702,7 +720,7 @@ void main() {
                 .first
                 .id;
 
-        await notifier.deleteEntry(id);
+        await container.read(vaultEntriesControllerProvider).deleteEntry(id);
 
         final state =
             container.read(vaultSessionControllerProvider).value
@@ -724,7 +742,7 @@ void main() {
       final callsAfterCreate = built.fakes.crypto.deriveKeyCalls;
       expect(callsAfterCreate, 1);
 
-      await notifier.addEntry(title: 'A');
+      await container.read(vaultEntriesControllerProvider).addEntry(title: 'A');
       final id =
           (container.read(vaultSessionControllerProvider).value
                   as VaultSessionUnlocked)
@@ -732,8 +750,10 @@ void main() {
               .entries
               .first
               .id;
-      await notifier.updateEntry(id: id, title: 'A editado', fields: {});
-      await notifier.deleteEntry(id);
+      await container
+          .read(vaultEntriesControllerProvider)
+          .updateEntry(id: id, title: 'A editado', fields: {});
+      await container.read(vaultEntriesControllerProvider).deleteEntry(id);
 
       expect(built.fakes.crypto.deriveKeyCalls, callsAfterCreate);
     });
@@ -769,7 +789,9 @@ void main() {
       // Esta sesión sigue con el estado viejo en memoria (no sabe del
       // cambio externo) e intenta guardar algo propio.
       await expectLater(
-        notifier.addEntry(title: 'Se pierde el intento'),
+        container
+            .read(vaultEntriesControllerProvider)
+            .addEntry(title: 'Se pierde el intento'),
         throwsA(isA<VaultWriteConflictException>()),
       );
 
@@ -872,8 +894,12 @@ void main() {
         await Future<void>.delayed(_shortTimeout * 3);
         final callsAfterCreate = built.fakes.syncPort.uploadVaultCalls;
 
-        await notifier.addEntry(title: 'A');
-        await notifier.addEntry(title: 'B');
+        await container
+            .read(vaultEntriesControllerProvider)
+            .addEntry(title: 'A');
+        await container
+            .read(vaultEntriesControllerProvider)
+            .addEntry(title: 'B');
         // Las dos quedan dentro de la misma ventana de debounce — solo
         // debería correr una sync, no dos.
         await Future<void>.delayed(_shortTimeout * 3);

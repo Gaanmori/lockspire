@@ -14,7 +14,7 @@ import '../../domain/ports/biometric_auth_port.dart';
 import '../providers/auto_lock_timeout_setting_provider.dart';
 import '../providers/biometric_auth_port_provider.dart';
 import '../providers/master_password_reminder_setting_provider.dart';
-import '../vault_session_controller.dart';
+import '../biometric_unlock_controller.dart';
 import 'change_master_password_screen.dart';
 
 const _settingsChannel = MethodChannel('com.lockspire.lockspire/settings');
@@ -76,11 +76,11 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
 
   Future<void> _toggle(bool value) async {
     setState(() => _busy = true);
-    final controller = ref.read(vaultSessionControllerProvider.notifier);
+    final controller = ref.read(biometricUnlockControllerProvider);
     if (value) {
-      await controller.enableBiometricUnlock();
+      await controller.enable();
     } else {
-      await controller.disableBiometricUnlock();
+      await controller.disable();
     }
     if (!mounted) return;
     setState(() => _busy = false);

@@ -9,7 +9,7 @@ import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../../vault/domain/entities/vault.dart';
 import '../../../vault/domain/entities/vault_entry.dart';
-import '../../../vault/presentation/vault_session_controller.dart';
+import '../../../vault/presentation/vault_entries_controller.dart';
 import '../../../browser_bridge/domain/origin_matcher.dart';
 import '../../domain/autofill_web_origin.dart';
 import '../../domain/match_entries_for_package.dart';
@@ -57,7 +57,7 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
   /// extensión (ADR 0015).
   Future<void> _linkSiteAndSubmit(VaultEntry entry, String origin) async {
     await ref
-        .read(vaultSessionControllerProvider.notifier)
+        .read(vaultEntriesControllerProvider)
         .updateEntry(
           id: entry.id,
           title: entry.title,
@@ -75,7 +75,7 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
     required String password,
   }) async {
     await ref
-        .read(vaultSessionControllerProvider.notifier)
+        .read(vaultEntriesControllerProvider)
         .addEntry(
           title: origin != null ? Uri.parse(origin).host : packageName,
           fields: {

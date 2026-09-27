@@ -12,6 +12,7 @@ import '../../domain/entities/vault.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../../domain/ports/biometric_auth_port.dart';
 import '../providers/biometric_auth_port_provider.dart';
+import '../biometric_unlock_controller.dart';
 import '../vault_session_controller.dart';
 import 'entry_form_screen.dart';
 
@@ -94,9 +95,7 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
     );
     if (!mounted) return;
     if (activar == true) {
-      await ref
-          .read(vaultSessionControllerProvider.notifier)
-          .enableBiometricUnlock();
+      await ref.read(biometricUnlockControllerProvider).enable();
     } else {
       await port.markOnboardingDismissed();
     }

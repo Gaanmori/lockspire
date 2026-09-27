@@ -16,6 +16,7 @@ import 'features/browser_bridge/infrastructure/single_instance.dart';
 import 'features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
 import 'features/browser_bridge/presentation/widgets/link_request_listener.dart';
 import 'features/desktop/presentation/widgets/desktop_shell.dart';
+import 'features/vault/presentation/auto_lock_controller.dart';
 import 'features/vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
 import 'features/vault/presentation/vault_session_controller.dart';
@@ -44,6 +45,9 @@ Future<void> main() async {
   // Igual con el tiempo de bloqueo (ADR 0016): el primer desbloqueo ya
   // usa el valor guardado.
   await container.read(autoLockTimeoutSettingProvider.future);
+  // El bloqueo automático escucha la sesión desde el arranque, también en
+  // la pantalla de autocompletado de Android (hallazgo A1).
+  container.read(autoLockControllerProvider);
   if (Platform.isWindows || Platform.isLinux) {
     // DesktopShell (ADR 0012) usa window_manager, que exige inicializarse
     // antes de runApp().
