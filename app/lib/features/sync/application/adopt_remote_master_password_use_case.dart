@@ -53,6 +53,10 @@ class AdoptRemoteMasterPasswordUseCase {
       );
     }
 
+    // Sin esto, volver a subir un archivo con la contraseña vieja revertiría
+    // el cambio (consecuencia pendiente de ADR 0018, cerrada por ADR 0019).
+    await rejectRollback(remoteFile, ancestorStorage);
+
     final newKey = await crypto.deriveKey(
       masterPassword: newPassword,
       salt: remoteFile.header.salt,
@@ -95,10 +99,20 @@ class AdoptRemoteMasterPasswordUseCase {
       remote: remoteVault,
     ).autoMerged;
 
-    final written = await SaveVaultUseCase(
-      storage: localStorage,
-      crypto: crypto,
-    ).encryptFile(vault: merged, key: newKey, header: remoteFile.header);
+    final written =
+        await SaveVaultUseCase(
+          storage: localStorage,
+          crypto: crypto,
+        ).encryptFile(
+          vault: merged,
+          key: newKey,
+          header: remoteFile.header,
+          revision:
+              (local.header.revision > remoteFile.header.revision
+                  ? local.header.revision
+                  : remoteFile.header.revision) +
+              1,
+        );
     await remote.uploadVault(written);
     await localStorage.write(written);
     await _markSynced(written);

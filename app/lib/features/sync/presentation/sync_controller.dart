@@ -150,6 +150,15 @@ class SyncController extends _$SyncController {
     });
   }
 
+  /// Tras un `RemoteVaultRejection.rollback`, con confirmación del usuario:
+  /// reemplaza la nube con la bóveda de este dispositivo (ADR 0019).
+  Future<void> replaceRemoteWithLocal() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () async => (await _buildUseCase()).replaceRemoteWithLocal(),
+    );
+  }
+
   /// Tras un `RemoteVaultRejection.passwordChanged`: adopta la contraseña
   /// maestra que se cambió en otro dispositivo (ADR 0018). Lanza
   /// `IncorrectMasterPasswordException` si [newPassword] no abre la bóveda

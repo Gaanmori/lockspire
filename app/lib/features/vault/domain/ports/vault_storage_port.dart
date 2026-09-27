@@ -20,6 +20,12 @@ class VaultHeader {
   final DateTime createdAt;
   final Argon2Params kdfParams;
 
+  /// Contador que solo sube: cada archivo nuevo tiene una revisión mayor que
+  /// la del archivo del que parte. La sync rechaza un remoto que no supere
+  /// la del último archivo sincronizado (protección contra rollback, ADR
+  /// 0019). Los archivos v1 no lo tienen y se leen como 0.
+  final int revision;
+
   const VaultHeader({
     required this.formatVersion,
     required this.formatMinReaderVersion,
@@ -28,7 +34,27 @@ class VaultHeader {
     required this.vaultId,
     required this.createdAt,
     required this.kdfParams,
+    this.revision = 0,
   });
+
+  VaultHeader copyWith({
+    int? formatVersion,
+    int? formatMinReaderVersion,
+    Uint8List? salt,
+    Uint8List? nonce,
+    Argon2Params? kdfParams,
+    int? revision,
+  }) => VaultHeader(
+    formatVersion: formatVersion ?? this.formatVersion,
+    formatMinReaderVersion:
+        formatMinReaderVersion ?? this.formatMinReaderVersion,
+    salt: salt ?? this.salt,
+    nonce: nonce ?? this.nonce,
+    vaultId: vaultId,
+    createdAt: createdAt,
+    kdfParams: kdfParams ?? this.kdfParams,
+    revision: revision ?? this.revision,
+  );
 
   Map<String, dynamic> _baseJson() => {
     'format_version': formatVersion,
@@ -41,6 +67,9 @@ class VaultHeader {
       'iterations': kdfParams.iterations,
       'parallelism': kdfParams.parallelism,
     },
+    // Solo en v2 (ADR 0019): así el AAD de los archivos v1 no cambia y
+    // siguen descifrándose.
+    if (formatVersion >= revisionFormatVersion) 'revision': revision,
   };
 
   /// Serialización determinista del header, usada como AAD del AEAD (ver
@@ -77,9 +106,13 @@ class VaultHeader {
         iterations: kdf['iterations'] as int,
         parallelism: kdf['parallelism'] as int,
       ),
+      revision: (json['revision'] as int?) ?? 0,
     );
   }
 }
+
+/// Primera versión del formato con [VaultHeader.revision] (ADR 0019).
+const revisionFormatVersion = 2;
 
 /// Archivo de bóveda completo tal como vive en disco: header en claro +
 /// payload cifrado (blob único, ver docs/adr/0004-formato-boveda-v1.md).

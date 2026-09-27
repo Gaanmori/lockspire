@@ -94,6 +94,42 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
     await ref.read(syncControllerProvider.notifier).syncNow();
   }
 
+  bool _isRollback(Object? error) =>
+      error is RemoteVaultRejectedException &&
+      error.reason == RemoteVaultRejection.rollback;
+
+  /// ADR 0019: solo el usuario sabe si restauró a propósito una copia
+  /// vieja en la nube. Si no fue él, puede ser una manipulación y conviene
+  /// revisar el acceso a la cuenta antes que nada.
+  Future<void> _confirmReplaceRemote() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Reemplazar la copia de la nube?'),
+        content: const Text(
+          'La nube tiene una versión más vieja que la de este dispositivo. '
+          'Si restauraste una copia antigua a propósito, podés reemplazarla '
+          'con la de este dispositivo: no perdés nada que tengas aquí.\n\n'
+          'Si no fuiste vos, alguien pudo haber accedido a tu cuenta de la '
+          'nube: cambiá esa contraseña antes de seguir.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Reemplazar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(syncControllerProvider.notifier).replaceRemoteWithLocal();
+    }
+  }
+
   String _describeResult(SyncResult result) => switch (result) {
     SyncUploaded() => 'Se subió la bóveda al servidor.',
     SyncDownloaded() => 'Se bajó la bóveda del servidor.',
@@ -338,15 +374,22 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                       : const Text('Sincronizar ahora'),
                 ),
                 const SizedBox(height: LockspireSpacing.md),
-                if (syncState.hasError)
+                if (syncState.hasError) ...[
                   Text(
                     'No se pudo sincronizar: ${syncState.error}',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                     ),
                     textAlign: TextAlign.center,
-                  )
-                else if (syncState.value != null)
+                  ),
+                  if (_isRollback(syncState.error)) ...[
+                    const SizedBox(height: LockspireSpacing.md),
+                    OutlinedButton(
+                      onPressed: _confirmReplaceRemote,
+                      child: const Text('Subir la versión de este dispositivo'),
+                    ),
+                  ],
+                ] else if (syncState.value != null)
                   Text(
                     _describeResult(syncState.value!),
                     textAlign: TextAlign.center,

@@ -54,24 +54,45 @@ class SaveVaultUseCase {
     if (VaultFileCodec.sha256Hex(current) != expectedFileHash) {
       throw VaultWriteConflictException();
     }
-    return _encryptAndWrite(vault: vault, key: key, header: header);
+    // La revisión sale del archivo en disco, no de la sesión: nunca se
+    // repite un número aunque la sesión tenga un header viejo (ADR 0019).
+    return _encryptAndWrite(
+      vault: vault,
+      key: key,
+      header: header,
+      revision: current.header.revision + 1,
+    );
   }
 
   /// Primera escritura de una bóveda recién creada — todavía no hay nada
   /// previo en disco con qué comparar, así que no aplica el chequeo de
   /// conflicto de [call]. Usado únicamente por `CreateVaultUseCase`.
+  ///
+  /// [revision] como en [encryptFile].
   Future<VaultFile> saveInitial({
     required Vault vault,
     required Uint8List key,
     required VaultHeader header,
-  }) => _encryptAndWrite(vault: vault, key: key, header: header);
+    int? revision,
+  }) => _encryptAndWrite(
+    vault: vault,
+    key: key,
+    header: header,
+    revision: revision,
+  );
 
   Future<VaultFile> _encryptAndWrite({
     required Vault vault,
     required Uint8List key,
     required VaultHeader header,
+    int? revision,
   }) async {
-    final file = await encryptFile(vault: vault, key: key, header: header);
+    final file = await encryptFile(
+      vault: vault,
+      key: key,
+      header: header,
+      revision: revision,
+    );
     await storage.write(file);
     return file;
   }
@@ -79,27 +100,34 @@ class SaveVaultUseCase {
   /// Cifra [vault] con [key] y los metadatos de [header] (nonce nuevo)
   /// **sin escribir nada** — para quien necesita el archivo antes de
   /// decidir dónde persistirlo (cambio de contraseña, ADR 0018).
+  ///
+  /// El archivo sale siempre en formato v2 con [revision], o con la de
+  /// [header] + 1 si no se indica (ADR 0019): cada archivo nuevo supera al
+  /// que reemplaza.
   Future<VaultFile> encryptFile({
     required Vault vault,
     required Uint8List key,
     required VaultHeader header,
+    int? revision,
   }) async {
+    final target = header.copyWith(
+      formatVersion: header.formatVersion < revisionFormatVersion
+          ? revisionFormatVersion
+          : header.formatVersion,
+      formatMinReaderVersion:
+          header.formatMinReaderVersion < revisionFormatVersion
+          ? revisionFormatVersion
+          : header.formatMinReaderVersion,
+      revision: revision ?? header.revision + 1,
+    );
     final encrypted = await crypto.encrypt(
       key: key,
       plaintext: vault.toJsonBytes(),
-      aad: header.toAadBytes(),
+      aad: target.toAadBytes(),
     );
 
     return VaultFile(
-      header: VaultHeader(
-        formatVersion: header.formatVersion,
-        formatMinReaderVersion: header.formatMinReaderVersion,
-        salt: header.salt,
-        nonce: encrypted.nonce,
-        vaultId: header.vaultId,
-        createdAt: header.createdAt,
-        kdfParams: header.kdfParams,
-      ),
+      header: target.copyWith(nonce: encrypted.nonce),
       encryptedPayload: encrypted.ciphertext,
     );
   }

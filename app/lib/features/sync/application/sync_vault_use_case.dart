@@ -64,6 +64,11 @@ enum RemoteVaultRejection {
   /// cambió en otro dispositivo (ADR 0018). Se resuelve con
   /// `AdoptRemoteMasterPasswordUseCase`, pidiendo la contraseña nueva.
   passwordChanged,
+
+  /// Es una versión igual o más vieja que la última que este dispositivo
+  /// sincronizó (ADR 0019): una copia antigua restaurada o una
+  /// manipulación. Se resuelve con "Subir la versión de este dispositivo".
+  rollback,
 }
 
 /// El archivo de la nube no pasó la validación y **no se escribió nada**
@@ -85,6 +90,10 @@ class RemoteVaultRejectedException implements Exception {
     RemoteVaultRejection.passwordChanged =>
       'La contraseña maestra se cambió en otro dispositivo. Ingresá la '
           'contraseña nueva para seguir sincronizando.',
+    RemoteVaultRejection.rollback =>
+      'La nube tiene una versión más vieja que la que este dispositivo ya '
+          'sincronizó: puede ser una copia antigua restaurada o una '
+          'manipulación. No se cambió nada en este dispositivo.',
   };
 }
 
@@ -127,6 +136,7 @@ class SyncVaultUseCase {
 
     if (!localExists) {
       final remoteFile = await remote.downloadVault();
+      await rejectRollback(remoteFile, ancestorStorage);
       await _verifyRemote(remoteFile);
       await localStorage.write(remoteFile);
       await _markSynced(remoteFile);
@@ -154,6 +164,7 @@ class SyncVaultUseCase {
     }
 
     if (remoteChanged && !localChanged) {
+      await rejectRollback(remoteFile, ancestorStorage);
       await _verifyRemote(remoteFile);
       await localStorage.write(remoteFile);
       await _markSynced(remoteFile);
@@ -163,6 +174,7 @@ class SyncVaultUseCase {
     // Cambiaron los dos: merge de 3 vías (ADR 0006) + merge por campo para
     // cualquier choque real (ADR 0009) — siempre termina resuelto, nunca
     // hace falta un segundo paso.
+    await rejectRollback(remoteFile, ancestorStorage);
     final ancestorFile = await ancestorStorage.exists()
         ? await ancestorStorage.read()
         : null;
@@ -178,18 +190,38 @@ class SyncVaultUseCase {
       remote: remoteVault,
     );
 
-    await _saveAndUpload(analysis.autoMerged);
+    await _saveAndUpload(
+      analysis.autoMerged,
+      revision: _nextRevision(local, remoteFile),
+    );
     return SyncMerged(
       autoResolvedCount: analysis.autoResolvedCount,
       fieldConflictsResolved: analysis.fieldConflictsResolved,
     );
   }
 
-  Future<VaultFile> _saveAndUpload(Vault vault) async {
+  /// Recuperación de un [RemoteVaultRejection.rollback] (ADR 0019): el
+  /// usuario confirma que la nube quedó vieja y la reemplaza con la bóveda
+  /// de este dispositivo, la más nueva que conoce. No descarga nada.
+  Future<SyncResult> replaceRemoteWithLocal() async {
+    final local = await localStorage.read();
+    await remote.uploadVault(local);
+    await _markSynced(local);
+    return const SyncUploaded();
+  }
+
+  /// El merge supera a los dos lados (ADR 0019).
+  int _nextRevision(VaultFile local, VaultFile remote) =>
+      (local.header.revision > remote.header.revision
+          ? local.header.revision
+          : remote.header.revision) +
+      1;
+
+  Future<VaultFile> _saveAndUpload(Vault vault, {required int revision}) async {
     final written = await SaveVaultUseCase(
       storage: localStorage,
       crypto: crypto,
-    ).saveInitial(vault: vault, key: key, header: header);
+    ).saveInitial(vault: vault, key: key, header: header, revision: revision);
     await remote.uploadVault(written);
     await _markSynced(written);
     return written;
@@ -256,4 +288,21 @@ bool sameKeyDerivation(VaultHeader a, VaultHeader b) {
     if (a.salt[i] != b.salt[i]) return false;
   }
   return true;
+}
+
+/// Rechaza [remoteFile] si no supera la revisión del ancestro, el último
+/// archivo que este dispositivo sincronizó (ADR 0019). Sin ancestro, o con
+/// un ancestro v1 (revisión 0), no hay contra qué comparar y se confía.
+/// Solo se llama cuando el remoto cambió respecto del ancestro: un cambio
+/// legítimo siempre sube la revisión, así que la igualdad también se
+/// rechaza.
+Future<void> rejectRollback(
+  VaultFile remoteFile,
+  VaultStoragePort ancestorStorage,
+) async {
+  if (!await ancestorStorage.exists()) return;
+  final baseline = (await ancestorStorage.read()).header.revision;
+  if (baseline > 0 && remoteFile.header.revision <= baseline) {
+    throw const RemoteVaultRejectedException(RemoteVaultRejection.rollback);
+  }
 }

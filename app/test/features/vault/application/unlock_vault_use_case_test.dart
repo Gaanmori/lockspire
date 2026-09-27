@@ -53,6 +53,7 @@ void main() {
           vaultId: original.header.vaultId,
           createdAt: original.header.createdAt.add(const Duration(days: 1)),
           kdfParams: original.header.kdfParams,
+          revision: original.header.revision,
         ),
         encryptedPayload: original.encryptedPayload,
       );
@@ -64,6 +65,33 @@ void main() {
         throwsA(isA<StateError>()),
       );
     });
+
+    test(
+      'subir la revisión en el header rompe la autenticación (ADR 0019)',
+      () async {
+        final storage = FakeVaultStoragePort();
+        final crypto = FakeCryptoPort();
+        const masterPassword = 'correcto-caballo-batería-grapa';
+        await CreateVaultUseCase(storage: storage, crypto: crypto)(
+          masterPassword: masterPassword,
+        );
+
+        final original = storage.stored!;
+        storage.stored = VaultFile(
+          header: original.header.copyWith(
+            revision: original.header.revision + 100,
+          ),
+          encryptedPayload: original.encryptedPayload,
+        );
+
+        await expectLater(
+          UnlockVaultUseCase(storage: storage, crypto: crypto)(
+            masterPassword: masterPassword,
+          ),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
   });
 
   group('UnlockVaultUseCase.unlockFile (Fase 9 — restaurar bóveda)', () {

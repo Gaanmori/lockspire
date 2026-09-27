@@ -96,6 +96,8 @@ class ChangeMasterPasswordUseCase {
             vaultId: synced.header.vaultId,
             createdAt: synced.header.createdAt,
             kdfParams: defaultArgon2Params,
+            // encryptFile la sube en 1 (ADR 0019).
+            revision: synced.header.revision,
           ),
         );
 

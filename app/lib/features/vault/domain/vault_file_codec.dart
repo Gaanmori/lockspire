@@ -37,7 +37,8 @@ class UnsafeKdfParamsException implements Exception {
       'Puede estar dañado o haber sido modificado; no se abrió.';
 }
 
-const _currentSupportedFormatVersion = 1;
+// v2 agrega la revisión anti-rollback (ADR 0019); v1 se sigue leyendo.
+const _currentSupportedFormatVersion = revisionFormatVersion;
 const _headerStart = 10; // magic(4) + formatVersion(2) + headerLen(4)
 final _magic = Uint8List.fromList(utf8.encode('LKSP'));
 
@@ -114,15 +115,7 @@ abstract final class VaultFileCodec {
     final encryptedPayload = bytes.sublist(_headerStart + headerLen);
 
     return VaultFile(
-      header: VaultHeader(
-        formatVersion: formatVersion,
-        formatMinReaderVersion: header.formatMinReaderVersion,
-        salt: header.salt,
-        nonce: header.nonce,
-        vaultId: header.vaultId,
-        createdAt: header.createdAt,
-        kdfParams: header.kdfParams,
-      ),
+      header: header.copyWith(formatVersion: formatVersion),
       encryptedPayload: encryptedPayload,
     );
   }
