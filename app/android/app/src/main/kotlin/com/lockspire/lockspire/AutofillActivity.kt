@@ -50,6 +50,10 @@ class AutofillActivity : FlutterFragmentActivity() {
     private var legacySavePassword: String? = null
     private var legacyRequestingPackage: String? = null
 
+    // Página web que pide (ADR 0020), solo desde el AutofillService legado.
+    private var webDomain: String? = null
+    private var webScheme: String? = null
+
     override fun getInitialRoute(): String = "/autofill"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,6 +66,8 @@ class AutofillActivity : FlutterFragmentActivity() {
         legacySaveUsername = intent.getStringExtra(EXTRA_LEGACY_SAVE_USERNAME)
         legacySavePassword = intent.getStringExtra(EXTRA_LEGACY_SAVE_PASSWORD)
         legacyRequestingPackage = intent.getStringExtra(EXTRA_REQUESTING_PACKAGE)
+        webDomain = intent.getStringExtra(EXTRA_WEB_DOMAIN)
+        webScheme = intent.getStringExtra(EXTRA_WEB_SCHEME)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -96,6 +102,8 @@ class AutofillActivity : FlutterFragmentActivity() {
             return mapOf(
                 "mode" to "create",
                 "packageName" to (legacyRequestingPackage ?: ""),
+                "webDomain" to webDomain,
+                "webScheme" to webScheme,
                 "username" to legacySaveUsername,
                 "password" to legacySavePassword,
             )
@@ -104,6 +112,8 @@ class AutofillActivity : FlutterFragmentActivity() {
             return mapOf(
                 "mode" to "get",
                 "packageName" to (legacyRequestingPackage ?: ""),
+                "webDomain" to webDomain,
+                "webScheme" to webScheme,
             )
         }
         getRequest?.let {
@@ -193,5 +203,7 @@ class AutofillActivity : FlutterFragmentActivity() {
         const val EXTRA_LEGACY_SAVE_USERNAME = "legacy_save_username"
         const val EXTRA_LEGACY_SAVE_PASSWORD = "legacy_save_password"
         const val EXTRA_REQUESTING_PACKAGE = "requesting_package"
+        const val EXTRA_WEB_DOMAIN = "web_domain"
+        const val EXTRA_WEB_SCHEME = "web_scheme"
     }
 }

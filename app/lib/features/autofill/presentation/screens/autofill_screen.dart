@@ -10,6 +10,8 @@ import '../../../../design/lockspire_spacing.dart';
 import '../../../vault/domain/entities/vault.dart';
 import '../../../vault/domain/entities/vault_entry.dart';
 import '../../../vault/presentation/vault_session_controller.dart';
+import '../../../browser_bridge/domain/origin_matcher.dart';
+import '../../domain/autofill_web_origin.dart';
 import '../../domain/match_entries_for_package.dart';
 
 const _channel = MethodChannel('com.lockspire.lockspire/autofill');
@@ -50,16 +52,37 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
         'password': entry.fields['password'] ?? '',
       });
 
+  /// "Rellenar y recordar este sitio" (ADR 0020): la entrada pasa a
+  /// coincidir sola la próxima vez, igual que al vincular desde la
+  /// extensión (ADR 0015).
+  Future<void> _linkSiteAndSubmit(VaultEntry entry, String origin) async {
+    await ref
+        .read(vaultSessionControllerProvider.notifier)
+        .updateEntry(
+          id: entry.id,
+          title: entry.title,
+          fields: {...entry.fields, 'url': linkedUrlForOrigin(origin)},
+        );
+    await _submitGet(entry);
+  }
+
+  /// Con página web, la entrada nueva se titula con el sitio y guarda su
+  /// URL, en vez del paquete del navegador (ADR 0020).
   Future<void> _submitCreate({
     required String packageName,
+    required String? origin,
     required String username,
     required String password,
   }) async {
     await ref
         .read(vaultSessionControllerProvider.notifier)
         .addEntry(
-          title: packageName,
-          fields: {'username': username, 'password': password},
+          title: origin != null ? Uri.parse(origin).host : packageName,
+          fields: {
+            'username': username,
+            'password': password,
+            if (origin != null) 'url': linkedUrlForOrigin(origin),
+          },
         );
     await _channel.invokeMethod('submitCreate');
   }
@@ -79,14 +102,21 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             final request = snapshot.data!;
+            final origin = webOriginFor(
+              webDomain: request['webDomain'] as String?,
+              webScheme: request['webScheme'] as String?,
+            );
             return switch (request['mode']) {
               'get' => _GetCredentialView(
                 vault: widget.vault,
                 packageName: request['packageName'] as String? ?? '',
-                onPick: _submitGet,
+                origin: origin,
+                onFill: _submitGet,
+                onLinkAndFill: _linkSiteAndSubmit,
               ),
               'create' => _CreateCredentialView(
                 packageName: request['packageName'] as String? ?? '',
+                origin: origin,
                 username: request['username'] as String? ?? '',
                 password: request['password'] as String? ?? '',
                 onSave: _submitCreate,
@@ -112,12 +142,18 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
 class _GetCredentialView extends StatefulWidget {
   final Vault vault;
   final String packageName;
-  final ValueChanged<VaultEntry> onPick;
+
+  /// Sitio que pide (ADR 0020), o `null` si es una app nativa.
+  final String? origin;
+  final Future<void> Function(VaultEntry entry) onFill;
+  final Future<void> Function(VaultEntry entry, String origin) onLinkAndFill;
 
   const _GetCredentialView({
     required this.vault,
     required this.packageName,
-    required this.onPick,
+    required this.origin,
+    required this.onFill,
+    required this.onLinkAndFill,
   });
 
   @override
@@ -134,12 +170,102 @@ class _GetCredentialViewState extends State<_GetCredentialView> {
     super.dispose();
   }
 
+  /// Sin página web se rellena directo, como antes (ADR 0011). Con
+  /// página web decide la coincidencia con el sitio (ADR 0020).
+  Future<void> _pick(VaultEntry entry) async {
+    final origin = widget.origin;
+    if (origin == null) return widget.onFill(entry);
+    switch (classifyEntryForOrigin(entry, origin)) {
+      case EntrySiteMatch.matches:
+        return widget.onFill(entry);
+      case EntrySiteMatch.otherSite:
+        if (await _confirmOtherSite(entry, origin)) {
+          return widget.onFill(entry);
+        }
+      case EntrySiteMatch.noSite:
+        switch (await _askNoSite(entry, origin)) {
+          case _NoSiteChoice.linkAndFill:
+            return widget.onLinkAndFill(entry, origin);
+          case _NoSiteChoice.fillOnce:
+            return widget.onFill(entry);
+          case _NoSiteChoice.cancel || null:
+            return;
+        }
+    }
+  }
+
+  Future<bool> _confirmOtherSite(VaultEntry entry, String origin) async {
+    final pageHost = Uri.parse(origin).host;
+    final entrySite = entry.fields['url'] ?? '';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.warning_amber_rounded,
+          color: Theme.of(context).colorScheme.error,
+        ),
+        title: const Text('¿Es el sitio correcto?'),
+        content: Text(
+          '"${entry.title}" es de $entrySite, pero la página que la pide es '
+          '$pageHost.\n\n'
+          'Si no esperabas este sitio, puede ser una página falsa que intenta '
+          'robar tu contraseña (phishing).',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Rellenar igual'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
+  Future<_NoSiteChoice?> _askNoSite(VaultEntry entry, String origin) =>
+      showDialog<_NoSiteChoice>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Esta entrada no tiene sitio'),
+          content: Text(
+            '"${entry.title}" no tiene un sitio guardado, así que Lockspire '
+            'no puede comprobar que ${Uri.parse(origin).host} sea el '
+            'correcto.\n\n'
+            'Si lo recordás, la próxima vez se va a rellenar sola, y solo en '
+            'este sitio.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(_NoSiteChoice.cancel),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(_NoSiteChoice.fillOnce),
+              child: const Text('Solo esta vez'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(_NoSiteChoice.linkAndFill),
+              child: const Text('Rellenar y recordar'),
+            ),
+          ],
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
-    final matched = matchEntriesForPackage(
-      entries: widget.vault.entries,
-      packageName: widget.packageName,
-    );
+    final origin = widget.origin;
+    final matched = origin != null
+        ? sortEntriesForOrigin(entries: widget.vault.entries, origin: origin)
+        : matchEntriesForPackage(
+            entries: widget.vault.entries,
+            packageName: widget.packageName,
+          );
     final query = _query.trim().toLowerCase();
     final entries = query.isEmpty
         ? matched
@@ -147,6 +273,7 @@ class _GetCredentialViewState extends State<_GetCredentialView> {
 
     return Column(
       children: [
+        _RequesterHeader(packageName: widget.packageName, origin: origin),
         Padding(
           padding: const EdgeInsets.fromLTRB(
             LockspireSpacing.lg,
@@ -189,12 +316,16 @@ class _GetCredentialViewState extends State<_GetCredentialView> {
                   itemBuilder: (context, index) {
                     final entry = entries[index];
                     final username = entry.fields['username'];
+                    final sameSite =
+                        origin != null &&
+                        classifyEntryForOrigin(entry, origin) ==
+                            EntrySiteMatch.matches;
                     return Material(
                       color: context.palette.bgSurface,
                       borderRadius: BorderRadius.circular(16),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
-                        onTap: () => widget.onPick(entry),
+                        onTap: () => _pick(entry),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: LockspireSpacing.md,
@@ -203,9 +334,26 @@ class _GetCredentialViewState extends State<_GetCredentialView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                entry.title,
-                                style: Theme.of(context).textTheme.bodyMedium,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      entry.title,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                  if (sameSite)
+                                    Icon(
+                                      Icons.verified_outlined,
+                                      size: 18,
+                                      semanticLabel: 'Coincide con el sitio',
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
+                                ],
                               ),
                               if (username != null && username.isNotEmpty)
                                 Text(
@@ -225,12 +373,67 @@ class _GetCredentialViewState extends State<_GetCredentialView> {
   }
 }
 
+enum _NoSiteChoice { linkAndFill, fillOnce, cancel }
+
+/// Quién pide la credencial (ADR 0020): el sitio y la app que lo muestra,
+/// para que el usuario note si no es el que esperaba.
+class _RequesterHeader extends StatelessWidget {
+  final String packageName;
+  final String? origin;
+
+  const _RequesterHeader({required this.packageName, required this.origin});
+
+  @override
+  Widget build(BuildContext context) {
+    final origin = this.origin;
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        LockspireSpacing.lg,
+        LockspireSpacing.md,
+        LockspireSpacing.lg,
+        0,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            origin != null ? Icons.language : Icons.apps,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: LockspireSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  origin != null
+                      ? Uri.parse(origin).host
+                      : (packageName.isEmpty ? 'App desconocida' : packageName),
+                  style: theme.textTheme.titleMedium,
+                ),
+                Text(
+                  origin != null
+                      ? describeRequestingApp(packageName)
+                      : 'App de Android',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CreateCredentialView extends StatelessWidget {
   final String packageName;
+  final String? origin;
   final String username;
   final String password;
   final Future<void> Function({
     required String packageName,
+    required String? origin,
     required String username,
     required String password,
   })
@@ -239,6 +442,7 @@ class _CreateCredentialView extends StatelessWidget {
 
   const _CreateCredentialView({
     required this.packageName,
+    required this.origin,
     required this.username,
     required this.password,
     required this.onSave,
@@ -260,7 +464,8 @@ class _CreateCredentialView extends StatelessWidget {
             ),
             const SizedBox(height: LockspireSpacing.sm),
             Text(
-              '$packageName — $username',
+              '${origin != null ? Uri.parse(origin!).host : packageName} — '
+              '$username',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -270,6 +475,7 @@ class _CreateCredentialView extends StatelessWidget {
               child: FilledButton(
                 onPressed: () => onSave(
                   packageName: packageName,
+                  origin: origin,
                   username: username,
                   password: password,
                 ),

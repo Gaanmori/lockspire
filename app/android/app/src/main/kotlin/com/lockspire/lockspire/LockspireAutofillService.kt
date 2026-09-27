@@ -6,6 +6,7 @@ package com.lockspire.lockspire
 import android.app.PendingIntent
 import android.app.assist.AssistStructure
 import android.content.Intent
+import android.os.Build
 import android.os.CancellationSignal
 import android.service.autofill.AutofillService
 import android.service.autofill.Dataset
@@ -67,6 +68,7 @@ class LockspireAutofillService : AutofillService() {
             usernameId = fields.usernameId,
             passwordId = fields.passwordId,
             requestingPackage = requestingPackage,
+            web = fields.web,
         )
 
         // Sugerencia genérica gateada por autenticación — mismo patrón
@@ -122,6 +124,7 @@ class LockspireAutofillService : AutofillService() {
                     putExtra(AutofillActivity.EXTRA_LEGACY_SAVE_USERNAME, username)
                     putExtra(AutofillActivity.EXTRA_LEGACY_SAVE_PASSWORD, password)
                     putExtra(AutofillActivity.EXTRA_REQUESTING_PACKAGE, requestingPackage)
+                    putWebExtras(fields.web)
                 }
                 startActivity(intent)
             }
@@ -133,11 +136,13 @@ class LockspireAutofillService : AutofillService() {
         usernameId: AutofillId?,
         passwordId: AutofillId?,
         requestingPackage: String,
+        web: WebPage?,
     ): PendingIntent {
         val intent = Intent(this, AutofillActivity::class.java).apply {
             usernameId?.let { putExtra(AutofillActivity.EXTRA_LEGACY_USERNAME_ID, it) }
             passwordId?.let { putExtra(AutofillActivity.EXTRA_LEGACY_PASSWORD_ID, it) }
             putExtra(AutofillActivity.EXTRA_REQUESTING_PACKAGE, requestingPackage)
+            putWebExtras(web)
         }
         return PendingIntent.getActivity(
             this,
@@ -147,7 +152,24 @@ class LockspireAutofillService : AutofillService() {
         )
     }
 
-    private data class FoundFields(val usernameId: AutofillId?, val passwordId: AutofillId?)
+    /**
+     * Dominio (y esquema, Android 9+) de la página web que pide autofill,
+     * tal como lo informan el navegador o el `WebView` (ADR 0020). Solo se
+     * pasa a Dart, que es quien decide; el servicio no interpreta nada.
+     */
+    private data class WebPage(val domain: String, val scheme: String?)
+
+    private fun Intent.putWebExtras(web: WebPage?) {
+        if (web == null) return
+        putExtra(AutofillActivity.EXTRA_WEB_DOMAIN, web.domain)
+        web.scheme?.let { putExtra(AutofillActivity.EXTRA_WEB_SCHEME, it) }
+    }
+
+    private data class FoundFields(
+        val usernameId: AutofillId?,
+        val passwordId: AutofillId?,
+        val web: WebPage?,
+    )
 
     /**
      * Heurística en tres capas, en este orden: (1) `AutofillHints`
@@ -158,8 +180,26 @@ class LockspireAutofillService : AutofillService() {
     private fun findAutofillFields(structure: AssistStructure): FoundFields {
         var usernameId: AutofillId? = null
         var passwordId: AutofillId? = null
+        // El dominio más cercano al campo de contraseña: el del nodo web que
+        // lo contiene (un WebView puede convivir con vistas nativas).
+        var web: WebPage? = null
+        var passwordWeb: WebPage? = null
 
-        fun visit(node: AssistStructure.ViewNode) {
+        fun visit(node: AssistStructure.ViewNode, inheritedWeb: WebPage?) {
+            val nodeDomain = node.webDomain
+            val currentWeb = if (!nodeDomain.isNullOrBlank()) {
+                WebPage(
+                    domain = nodeDomain,
+                    scheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        node.webScheme
+                    } else {
+                        null
+                    },
+                )
+            } else {
+                inheritedWeb
+            }
+            if (web == null && currentWeb != null) web = currentWeb
             val id = node.autofillId
             if (id != null) {
                 // Hints no estándar en apps reales (confirmado en
@@ -205,19 +245,20 @@ class LockspireAutofillService : AutofillService() {
 
                 if (passwordId == null && (isPasswordHint || isPasswordHtml || isPasswordInputType)) {
                     passwordId = id
+                    passwordWeb = currentWeb
                 } else if (usernameId == null && (isUsernameHint || isUsernameHtml || isUsernameInputType)) {
                     usernameId = id
                 }
             }
             for (i in 0 until node.childCount) {
-                visit(node.getChildAt(i))
+                visit(node.getChildAt(i), currentWeb)
             }
         }
 
         for (i in 0 until structure.windowNodeCount) {
-            visit(structure.getWindowNodeAt(i).rootViewNode)
+            visit(structure.getWindowNodeAt(i).rootViewNode, null)
         }
-        return FoundFields(usernameId, passwordId)
+        return FoundFields(usernameId, passwordId, passwordWeb ?: web)
     }
 
     private fun findTypedValue(structure: AssistStructure, target: AutofillId): String? {

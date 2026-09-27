@@ -379,7 +379,25 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - Tests: +10 en `rollback_protection_test.dart`, +1 que comprueba que alterar la revisión rompe el AEAD. Se corrigió un test de manipulación del header que perdía `revision` y colisionaba con el tag trivial del `FakeCryptoPort`. App 245, todos pasan.
       - **Todos los dispositivos deben actualizarse:** una versión vieja no abre v2. Windows Debug y el APK del Redmi se recompilaron juntos.
       - **Prueba manual pendiente:** sincronizar normal en los dos dispositivos, con una entrada nueva en cada uno, y confirmar que no aparece ningún rechazo.
-    - **Siguiente:** S6 (autofill de Android por dominio web; necesita ADR). Después S9 y S12, que son chicos, y el refactor A1–A8.
+    - **S6 corregido — ADR 0020 (autofill de Android por dominio web), 2026-09-27:**
+      - `LockspireAutofillService` lee `webDomain` y `webScheme` (API 28+) del nodo web más cercano al campo de contraseña y los pasa como extras. `AutofillActivity` los agrega al mapa del pedido en los modos "get" y "create" del camino legado. El nativo no decide nada.
+      - Dominio puro nuevo, `autofill/domain/autofill_web_origin.dart`:
+        - `webOriginFor`: si el esquema es desconocido asume `http` (protección contra downgrade); rechaza dominios con ruta, userinfo o query.
+        - `classifyEntryForOrigin` → `matches`, `otherSite` o `noSite`, con las reglas de la extensión (`entryMatchesOrigin`).
+        - `sortEntriesForOrigin` pone primero las del sitio sin ocultar el resto.
+        - `describeRequestingApp` da el nombre legible de navegadores conocidos, solo para mostrar.
+      - `AutofillScreen`:
+        - Encabezado con el sitio y la app que lo pide.
+        - Ícono de "coincide" en las entradas del sitio, que se rellenan directo.
+        - Advertencia de phishing, con "Cancelar" como acción principal, si la entrada es de otro sitio.
+        - Diálogo "Rellenar y recordar / Solo esta vez / Cancelar" si la entrada no tiene sitio; recordar guarda la URL con `linkedUrlForOrigin`.
+        - Guardar desde un sitio titula la entrada con el host y guarda su URL.
+        - Las apps nativas, sin dominio, siguen como antes (heurística por paquete).
+      - Credential Manager queda sin dominio: solo lo informa a navegadores privilegiados. Pendiente como mejora.
+      - Límite documentado: el dominio lo informa la app que muestra la página. La verificación fuerte (Digital Asset Links o navegadores con certificado fijado) queda como mejora futura.
+      - Tests: +16 de dominio, +6 de widget (incluye "página falsa → advierte → Cancelar no rellena"). App 261, todos pasan.
+      - **Prueba manual pendiente en el Redmi:** login en Chrome de un sitio con entrada guardada (debe rellenar directo), una entrada sin URL (debe aparecer el diálogo "recordar") y el login de Crunchyroll en WebView (debe verse "dentro de la app …").
+    - **Siguiente:** S9 (OAuth de Microsoft: `state` y HTML escapado) y S12 (fsync del directorio en Linux), que son chicos. Después el refactor A1–A8.
   - Núcleo hexagonal correcto: ningún `domain/`/`application/` importa Flutter ni infraestructura.
   - **Hallazgo 🔴 S1 confirmado con una prueba:** la sync, cuando solo cambió el remoto, lo escribe en disco sin descifrarlo con la clave de la sesión y reemplaza también el ancestro. Una nube manipulada puede destruir la bóveda local. Es lo primero a arreglar.
   - Hallazgos 🟠 de seguridad:
