@@ -55,8 +55,8 @@ Leyenda: ✅ corregido en esta revisión · 📄 aceptado y documentado · 🟡 
 
 | # | Sev. | Recomendación |
 |---|---|---|
-| A9 | 🟡 | **`SyncController`** (295 líneas) junta conectar/desconectar/mudar nubes con sincronizar/adoptar contraseña. Separar un `SyncAccountsController` cuando se toque de nuevo. |
-| A10 | 🟡 | **Pantallas grandes:** `entry_form_screen` (542), `autofill_screen` (519), `vault_unlocked_screen` (484), `sync_settings_screen` (471). Ya delegan en widgets propios; extraer más si siguen creciendo. |
+| A9 ✅ | 🟡 | **`SyncController`** (295 líneas) juntaba conectar/desconectar/mudar nubes con sincronizar/adoptar contraseña. **Hecho:** `SyncAccountsController` (cuentas, activar nube, mudanza; 177 líneas) y `SyncController` (sync, reemplazar la nube, adoptar contraseña; 145). |
+| A10 ✅ | 🟡 | **Pantallas grandes.** **Hecho:** `autofill_screen` 519→161 (`GetCredentialView`, `CreateCredentialView`); `vault_unlocked_screen` 484→325 (`EntryTile`, `VaultEmptyState`); `entry_form_screen` 542→471 (`CardFieldsSection`, `DocumentFieldsSection`, `entry_type_label`); `sync_settings_screen` 472→399 (`CloudAccountSection`, una sola para Drive y OneDrive); `import_screen` delega en `PrepareImportUseCase`. |
 
 ## Clean code
 
@@ -80,8 +80,8 @@ Leyenda: ✅ corregido en esta revisión · 📄 aceptado y documentado · 🟡 
 
 | # | Sev. | Recomendación |
 |---|---|---|
-| T1 | 🟡 | El Kotlin del autofill no tiene tests unitarios, incluida la regla de S14. Se verificó en el Redmi, y la parte que decide en Dart sí tiene tests. |
-| T2 | 🟡 | Sin tests de widgets para Exportar, Importar y el formulario por tipo. La lógica debajo sí está cubierta (`interchange_test`, `entry_fields_test`, `vault_import_merge`). |
+| T1 ✅ | 🟡 | El Kotlin del autofill no tenía tests. **Hecho:** la regla de coincidencia pasó a `AutofillMatcher` (Kotlin puro, sin Android) con `AutofillMatcherTest` (JUnit), que cubre S14: una app cualquiera no recibe la cuenta del banco, la app guardada sí, nada de https→http ni dominios parecidos. `./gradlew :app:testDebugUnitTest` (con `JAVA_HOME` = el JBR de Android Studio). |
+| T2 ✅ | 🟡 | Sin tests de Exportar e Importar. **Hecho:** `PrepareImportUseCase` (lógica de importar fuera de la pantalla) con `prepare_import_use_case_test` y `export_import_screens_test` (widgets: formatos ofrecidos, contraseña incorrecta, aviso y confirmación de formato sin cifrar, pantalla de importar). |
 
 ## Preparación para release
 

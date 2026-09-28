@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,10 +9,10 @@ import 'package:lockspire/shared/platform_capabilities.dart';
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../application/save_vault_use_case.dart';
+import '../../application/prepare_import_use_case.dart';
 import '../../application/vault_transfer_use_cases.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../../domain/vault_import_merge.dart';
-import '../providers/crypto_port_provider.dart';
 import '../providers/vault_import_source_provider.dart';
 import '../vault_entries_controller.dart';
 import '../vault_session_controller.dart';
@@ -82,42 +79,33 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         setState(() => _busy = false);
         return;
       }
-      final extension = picked.name.split('.').last.toLowerCase();
       // readAsBytes() funciona igual haya un path local o no — no se crea
       // ninguna copia propia del archivo (docs/THREAT_MODEL.md, actor #8).
       final bytes = await picked.readAsBytes();
-
-      final List<VaultEntry> incoming;
-      if (extension == 'lockspire') {
-        final backup = await _readBackup(bytes);
-        if (backup == null) {
-          setState(() => _busy = false);
-          return;
-        }
-        incoming = backup;
-        _sourceUnencrypted = false;
-      } else {
-        final source = ref.read(vaultImportSourceProvider(extension));
-        if (source == null) {
-          throw FormatException(
-            'Formato no reconocido: .$extension. Use un XML de SafeInCloud, '
-            'un CSV, un JSON de Bitwarden o un respaldo .lockspire.',
-          );
-        }
-        incoming = await source.parse(utf8.decode(bytes));
-        _sourceUnencrypted = true;
-      }
-
       final session = ref.read(vaultSessionControllerProvider).value;
-      final existing = session is VaultSessionUnlocked
-          ? session.vault.entries
-          : const <VaultEntry>[];
+      final prepared =
+          await (await ref.read(prepareImportUseCaseProvider.future)).call(
+            bytes: bytes,
+            fileName: picked.name,
+            existing: session is VaultSessionUnlocked
+                ? session.vault.entries
+                : const <VaultEntry>[],
+            askBackupPassword: () => showDialog<String>(
+              context: context,
+              builder: (_) => const _BackupPasswordDialog(),
+            ),
+          );
+      if (!mounted) return;
       setState(() {
-        _selection = selectEntriesToImport(
-          existing: existing,
-          incoming: incoming,
-        );
         _busy = false;
+        if (prepared == null) return;
+        _selection = prepared.selection;
+        _sourceUnencrypted = prepared.sourceUnencrypted;
+      });
+    } on UnknownImportFormatException catch (e) {
+      setState(() {
+        _busy = false;
+        _errorMessage = '$e';
       });
     } on IncorrectBackupPasswordException catch (e) {
       setState(() {
@@ -135,19 +123,6 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _errorMessage = 'No se pudo leer el archivo: $e';
       });
     }
-  }
-
-  /// Pide la contraseña del respaldo y lo abre. `null` si se canceló.
-  Future<List<VaultEntry>?> _readBackup(Uint8List bytes) async {
-    final password = await showDialog<String>(
-      context: context,
-      builder: (_) => const _BackupPasswordDialog(),
-    );
-    if (password == null || !mounted) return null;
-    final crypto = await ref.read(cryptoPortProvider.future);
-    return ReadEncryptedBackupUseCase(
-      crypto: crypto,
-    ).call(bytes: bytes, password: password);
   }
 
   Future<void> _confirmImport() async {

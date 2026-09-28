@@ -3,12 +3,15 @@
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../application/prepare_import_use_case.dart';
+import '../../application/vault_transfer_use_cases.dart';
 import '../../domain/ports/vault_exporter.dart';
 import '../../domain/ports/vault_import_source.dart';
 import '../../infrastructure/interchange/bitwarden_json.dart';
 import '../../infrastructure/interchange/csv_exporters.dart';
 import '../../infrastructure/interchange/csv_import_source.dart';
 import '../../infrastructure/safeincloud_xml_import_source.dart';
+import 'crypto_port_provider.dart';
 
 part 'vault_import_source_provider.g.dart';
 
@@ -33,3 +36,13 @@ List<VaultExporter> vaultExporters(Ref ref) => [
   BitwardenJsonExporter(),
   ChromeCsvExporter(),
 ];
+
+/// Del archivo elegido a lo que se va a importar (ADR 0027).
+@Riverpod(keepAlive: true)
+Future<PrepareImportUseCase> prepareImportUseCase(Ref ref) async =>
+    PrepareImportUseCase(
+      sourceFor: (extension) => ref.read(vaultImportSourceProvider(extension)),
+      readBackup: ReadEncryptedBackupUseCase(
+        crypto: await ref.watch(cryptoPortProvider.future),
+      ),
+    );

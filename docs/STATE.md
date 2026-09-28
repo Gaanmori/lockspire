@@ -688,6 +688,21 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
 
+### Revisión final pre-MVP (2026-09-28) — `docs/reviews/2026-09-28-revision-final-pre-mvp.md`
+
+- **Corregido en la revisión:**
+  - **S14 🔴:** autofill directo por dominio declarado por cualquier app. Ahora solo navegadores conocidos o apps guardadas en la entrada.
+  - **R1 🔴:** faltaba `INTERNET` en el manifiesto principal. El release no sincronizaba.
+  - **S16:** el autofill descargaba la bóveda para la consulta previa.
+  - Duplicación de `normalizeFieldName`.
+  - Consulta previa al desbloqueo reactivada, solo en silencio (`loadRemoteForCheck`, `GoogleDriveAndroidAuth.authorizeWithoutUi`).
+- **Recomendaciones hechas a pedido del usuario:**
+  - **A9:** `SyncAccountsController` separado de `SyncController`.
+  - **A10:** pantallas divididas en widgets.
+  - **T1:** `AutofillMatcher` + JUnit.
+  - **T2:** `PrepareImportUseCase` + tests de widgets de Exportar e Importar.
+- **Pendiente:** build release completo (el primer intento se trabó por un bloqueo de `.dart_tool/hooks_runner/shared/sodium/.lock` al correr dos builds a la vez: nunca correr dos compilaciones de Flutter en paralelo). Firma propia para Play.
+
 ### Bug: pedía activar la huella tras adoptar una contraseña nueva (2026-09-28, encontrado por el usuario)
 
 - **Causa:** carrera. `adoptRekeyedSession` abría la bóveda y **después** reemplazaba la clave de biometría (borrar y guardar). `VaultUnlockedScreen._maybeShowBiometricOptIn` podía consultar `hasStoredKey()` justo entre el borrado y el guardado, y ofrecía activar la huella a quien ya la tenía.
