@@ -52,7 +52,11 @@ Future<void> main() async {
   // la pantalla de autocompletado de Android (hallazgo A1).
   container.read(autoLockControllerProvider);
   // La sync automática escucha los eventos de la bóveda (hallazgo A3).
-  container.read(autoSyncControllerProvider);
+  // No en el autocompletado de Android: rellenar no necesita la nube, y
+  // conectar Google Drive ahí muestra la ventana "Iniciando sesión" encima
+  // de la app que pide (ADR 0026). Lo guardado desde ahí se sube en la
+  // próxima sync de la app.
+  if (!isAutofill) container.read(autoSyncControllerProvider);
   if (Platform.isWindows || Platform.isLinux) {
     // DesktopShell (ADR 0012) usa window_manager, que exige inicializarse
     // antes de runApp().

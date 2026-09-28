@@ -486,6 +486,16 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - Si un campo `login`/`password`/`website` se repetía en la misma tarjeta, el último pisaba al anterior y se perdía en silencio. Ahora el primero va a su campo y los demás a `notes` con la línea transicional.
       - Se importan las notas de la tarjeta (`<notes>`), por si el export las trae fuera de los `<field>`.
       - Siguen sin importarse las etiquetas (carpetas), los adjuntos (`<file>`/`<image>`) y la estrella. Importar dos veces duplica las entradas: no hay deduplicación.
+    - **Autofill en el Redmi, prueba S6 con Crunchyroll (WebView) — verificado por el usuario (2026-09-28):** la entrada correcta apareció primera, con el ✓ por coincidir con `sso.crunchyroll.com`, y se rellenó. Arreglos:
+      - La sugerencia "Lockspire" apenas se veía en apps con tema oscuro. Ahora usa un layout propio con colores fijos e ícono (`res/layout/autofill_suggestion.xml`).
+      - Aparecía la hoja "Iniciando sesión" de Google en cada pantalla de bloqueo, por la consulta a la nube de ADR 0024 (Google Drive en Android siempre muestra esa hoja). Ahora esa consulta no se hace con Google Drive en Android; el aviso llega igual por la marca de la sync.
+    - **ADR 0026 — sesión de autofill en Android (2026-09-28).** El usuario esperaba no tener que desbloquear en cada relleno y eligió "cuentas en el desplegable" con la duración del auto-bloqueo.
+      - Tras desbloquear en `AutofillActivity`, Dart envía a `AutofillSession` (Kotlin, solo memoria) las contraseñas con sitio o app: título, usuario, contraseña, host + "exige https" y paquetes.
+      - El servicio ofrece hasta 5 cuentas que coinciden, en el desplegable y como sugerencia del teclado (`InlineSuggestions`, `androidx.autofill:autofill:1.1.0`), más "Rellenar con Lockspire".
+      - Coincidencia: por dominio si hay página web; por paquete exacto si es una app nativa.
+      - La sesión se borra al vencer el tiempo o al apagar la pantalla.
+      - Tests Dart: `autofill_session_test.dart` (3). **Verificado por el usuario en el Redmi:** tras el primer relleno, la cuenta aparece directo sin repetir el flujo.
+      - La ventana de Google seguía apareciendo, porque la consulta de ADR 0024 construía igual la conexión a Google Drive (`attemptLightweightAuthentication`). Ahora `SyncPasswordChangedElsewhere` recibe `loadRemote` y solo conecta si va a consultar. Además el motor de autofill ya no lanza la sync automática (`main.dart`): lo guardado desde el autofill se sube en la próxima sync de la app.
     - **ADR 0025 — tarjetas, documentos, varios sitios y apps, y campos a medida (2026-09-28).** Pedido del usuario tras revisar el export de SafeInCloud.
       - Modelo: siguen siendo keys de texto en `fields`, con convención en `vault/domain/entities/entry_fields.dart` (`url`/`url_N`, `app`/`app_N`, `card_*`, `doc_*`, `custom:<nombre>`, `hidden:<nombre>`). `VaultEntryType` gana `card` y `document`, y un tipo desconocido se lee como `password`. **Todos los dispositivos deben actualizarse:** las versiones anteriores no abren una bóveda con tarjetas o documentos.
       - Import de SafeInCloud reescrito:

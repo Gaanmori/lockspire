@@ -4,10 +4,14 @@
 import 'package:lockspire/features/vault/application/password_changed_elsewhere_port.dart';
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
+import 'package:lockspire/shared/platform_capabilities.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../../domain/ports/active_sync_provider_port.dart';
 
 import '../../application/sync_password_changed_elsewhere.dart';
 import 'active_sync_port_provider.dart';
+import 'current_active_sync_provider_provider.dart';
 import 'sync_ancestor_storage_port_provider.dart';
 import 'sync_state_port_provider.dart';
 
@@ -23,8 +27,12 @@ Future<PasswordChangedElsewherePort> syncPasswordChangedElsewhere(
   return SyncPasswordChangedElsewhere(
     localStorage: await ref.watch(vaultStoragePortProvider.future),
     ancestorStorage: await ref.watch(syncAncestorStoragePortProvider.future),
-    remote: await ref.watch(activeSyncPortProvider.future),
+    loadRemote: () => ref.read(activeSyncPortProvider.future),
     syncState: ref.watch(syncStatePortProvider),
     crypto: await ref.watch(cryptoPortProvider.future),
+    remoteCheckAllowed:
+        !(ref.watch(platformCapabilitiesProvider).isAndroid &&
+            await ref.watch(currentActiveSyncProviderProvider.future) ==
+                SyncProviderId.googleDrive),
   );
 }

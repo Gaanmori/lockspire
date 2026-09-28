@@ -18,7 +18,9 @@ import android.service.autofill.SaveInfo
 import android.service.autofill.SaveRequest
 import android.text.InputType
 import android.view.View
+import android.service.autofill.InlinePresentation
 import android.view.autofill.AutofillId
+import android.view.autofill.AutofillValue
 import android.widget.RemoteViews
 import kotlin.random.Random
 
@@ -38,6 +40,10 @@ import kotlin.random.Random
  * [LockspireCredentialProviderService].
  */
 class LockspireAutofillService : AutofillService() {
+
+    private companion object {
+        const val MAX_DIRECT_ACCOUNTS = 5
+    }
 
     override fun onFillRequest(
         request: FillRequest,
@@ -73,25 +79,52 @@ class LockspireAutofillService : AutofillService() {
 
         // Sugerencia genérica gateada por autenticación — mismo patrón
         // "autenticar antes de revelar nada" que ya usa Credential
-        // Manager, confirmado contra el código real de Bitwarden. Sin
-        // diseño custom en esta pasada (RemoteViews mínimo).
-        val presentation = RemoteViews(
-            packageName,
-            android.R.layout.simple_list_item_1,
-        ).apply { setTextViewText(android.R.id.text1, "Lockspire") }
+        // Manager, confirmado contra el código real de Bitwarden. Layout
+        // propio con colores fijos: con `simple_list_item_1` el texto
+        // salía oscuro sobre fondo oscuro en apps con tema oscuro
+        // (Crunchyroll, verificación manual en el Redmi).
+        val presentation = RemoteViews(packageName, R.layout.autofill_suggestion)
+        val inline = InlineSuggestions(this, request)
 
+        val responseBuilder = FillResponse.Builder()
+
+        // Sesión de autofill (ADR 0026): tras desbloquear para rellenar, las
+        // cuentas que coinciden van directo en el desplegable y el teclado.
+        val accounts = AutofillSession.matching(
+            context = this,
+            packageName = requestingPackage,
+            webDomain = fields.web?.domain,
+            webScheme = fields.web?.scheme,
+        ).take(MAX_DIRECT_ACCOUNTS)
+        for ((index, account) in accounts.withIndex()) {
+            val accountView = RemoteViews(packageName, R.layout.autofill_account).apply {
+                setTextViewText(R.id.autofill_title, account.title)
+                setTextViewText(R.id.autofill_subtitle, account.username)
+            }
+            val accountInline = inline.presentation(index, account.title, account.username)
+            val builder = Dataset.Builder()
+            fields.usernameId?.let {
+                builder.setField(it, AutofillValue.forText(account.username), accountView, accountInline)
+            }
+            fields.passwordId?.let {
+                builder.setField(it, AutofillValue.forText(account.password), accountView, accountInline)
+            }
+            responseBuilder.addDataset(builder.build())
+        }
+
+        val lockspireInline = inline.presentation(accounts.size, "Lockspire", null)
         val datasetBuilder = Dataset.Builder()
         fields.usernameId?.let {
-            datasetBuilder.setValue(it, null, presentation)
+            datasetBuilder.setField(it, null, presentation, lockspireInline)
         }
         fields.passwordId?.let {
-            datasetBuilder.setValue(it, null, presentation)
+            datasetBuilder.setField(it, null, presentation, lockspireInline)
         }
         val dataset = datasetBuilder
             .setAuthentication(pendingIntent.intentSender)
             .build()
 
-        val responseBuilder = FillResponse.Builder().addDataset(dataset)
+        responseBuilder.addDataset(dataset)
         if (fields.usernameId != null && fields.passwordId != null) {
             responseBuilder.setSaveInfo(
                 SaveInfo.Builder(
@@ -130,6 +163,21 @@ class LockspireAutofillService : AutofillService() {
             }
         }
         saveCallback.onSuccess()
+    }
+
+    /** Valor, vista del desplegable y, si el teclado las pide, sugerencia en línea. */
+    @Suppress("DEPRECATION")
+    private fun Dataset.Builder.setField(
+        id: AutofillId,
+        value: AutofillValue?,
+        view: RemoteViews,
+        inline: InlinePresentation?,
+    ) {
+        if (inline != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            setValue(id, value, view, inline)
+        } else {
+            setValue(id, value, view)
+        }
     }
 
     private fun createAutofillPendingIntent(

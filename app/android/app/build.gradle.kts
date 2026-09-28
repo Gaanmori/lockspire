@@ -63,4 +63,8 @@ dependencies {
     // segundo plano, así que un temporizador en Dart no corre hasta volver
     // a abrir Lockspire. WorkManager lo ejecuta el sistema.
     implementation("androidx.work:work-runtime-ktx:2.10.0")
+
+    // Sugerencias de autofill en la barra del teclado (ADR 0026):
+    // InlineSuggestionUi, la plantilla estándar que usan los teclados.
+    implementation("androidx.autofill:autofill:1.1.0")
 }

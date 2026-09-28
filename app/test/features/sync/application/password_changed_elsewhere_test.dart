@@ -41,7 +41,7 @@ class _Device {
   SyncPasswordChangedElsewhere get port => SyncPasswordChangedElsewhere(
     localStorage: local,
     ancestorStorage: ancestor,
-    remote: remote,
+    loadRemote: () async => remote,
     syncState: syncState,
     crypto: crypto,
   );
@@ -166,7 +166,7 @@ void main() {
       final offline = SyncPasswordChangedElsewhere(
         localStorage: b.local,
         ancestorStorage: b.ancestor,
-        remote: _OfflineSyncPort(),
+        loadRemote: () async => _OfflineSyncPort(),
         syncState: b.syncState,
         crypto: crypto,
       );

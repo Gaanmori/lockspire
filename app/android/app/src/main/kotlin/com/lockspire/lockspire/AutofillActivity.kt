@@ -83,6 +83,13 @@ class AutofillActivity : FlutterFragmentActivity() {
                         )
                         result.success(null)
                     }
+                    "startSession" -> {
+                        @Suppress("UNCHECKED_CAST")
+                        val items = call.argument<List<Map<String, Any?>>>("items") ?: emptyList()
+                        val ttl = (call.argument<Number>("ttlMillis") ?: 0).toLong()
+                        AutofillSession.start(this, items, ttl)
+                        result.success(null)
+                    }
                     "submitCreate" -> {
                         submitCreate()
                         result.success(null)

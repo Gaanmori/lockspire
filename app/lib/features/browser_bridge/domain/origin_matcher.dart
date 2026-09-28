@@ -56,6 +56,21 @@ String linkedUrlForOrigin(String origin) {
   return uri.replace(host: stripped).toString();
 }
 
+/// Un sitio guardado reducido a lo que usa el autofill nativo de Android
+/// (ADR 0026), que aplica las mismas reglas que [entryMatchesOrigin]: host
+/// igual o subdominio, y una entrada `https` nunca en una página `http`.
+typedef StoredSite = ({String host, bool httpsOnly});
+
+/// `null` si [url] no es un sitio web o fija un puerto: el autofill nativo
+/// no conoce el puerto de la página, así que no puede comprobarlo.
+StoredSite? storedSiteForNativeAutofill(String url) {
+  final stored = _parseStoredUrl(url);
+  if (stored == null || stored.hasPort) return null;
+  final host = _normalizeHost(stored.host);
+  if (host.isEmpty) return null;
+  return (host: host, httpsOnly: stored.scheme.toLowerCase() == 'https');
+}
+
 const _webSchemes = {'http', 'https'};
 
 Uri? _parseStoredUrl(String? raw) {

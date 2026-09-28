@@ -12,6 +12,8 @@ import '../../../vault/domain/entities/entry_fields.dart';
 import '../../../vault/domain/entities/vault_entry.dart';
 import '../../../vault/presentation/vault_entries_controller.dart';
 import '../../../browser_bridge/domain/origin_matcher.dart';
+import '../../../vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
+import '../../domain/autofill_session.dart';
 import '../../domain/autofill_web_origin.dart';
 import '../../domain/match_entries_for_package.dart';
 
@@ -36,6 +38,24 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
   void initState() {
     super.initState();
     _requestFuture = _fetchRequest();
+    _startNativeSession();
+  }
+
+  /// Se desbloqueó para rellenar: durante el tiempo del auto-bloqueo, el
+  /// servicio nativo ofrece directamente las cuentas que coinciden (ADR
+  /// 0026). Un fallo solo significa que la próxima vez se vuelve a pedir
+  /// desbloqueo, como antes.
+  Future<void> _startNativeSession() async {
+    try {
+      final timeout = await ref.read(autoLockTimeoutSettingProvider.future);
+      await _channel.invokeMethod('startSession', {
+        'ttlMillis': timeout.duration.inMilliseconds,
+        'items': [
+          for (final item in autofillSessionItems(widget.vault.entries))
+            item.toChannel(),
+        ],
+      });
+    } catch (_) {}
   }
 
   Future<Map<String, dynamic>> _fetchRequest() async {

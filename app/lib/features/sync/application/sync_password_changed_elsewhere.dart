@@ -18,16 +18,28 @@ import 'sync_vault_use_case.dart';
 class SyncPasswordChangedElsewhere implements PasswordChangedElsewherePort {
   final VaultStoragePort localStorage;
   final VaultStoragePort ancestorStorage;
-  final SyncPort? remote;
+
+  /// La nube activa, pedida solo cuando hace falta: prepararla puede
+  /// mostrar una ventana (Google Drive en Android), así que no se hace al
+  /// abrir la pantalla de bloqueo si la consulta está desactivada.
+  final Future<SyncPort?> Function() loadRemote;
   final SyncStatePort syncState;
   final CryptoPort crypto;
+
+  /// Si [checkRemote] puede ir a la nube. `false` cuando hacerlo mostraría
+  /// una ventana al usuario: Google Drive en Android siempre muestra
+  /// "Iniciando sesión" para dar acceso, y verlo en cada pantalla de
+  /// bloqueo (también al rellenar en otra app) confunde. Sin la consulta,
+  /// el aviso llega igual por la marca que deja la sync.
+  final bool remoteCheckAllowed;
 
   const SyncPasswordChangedElsewhere({
     required this.localStorage,
     required this.ancestorStorage,
-    required this.remote,
+    required this.loadRemote,
     required this.syncState,
     required this.crypto,
+    this.remoteCheckAllowed = true,
   });
 
   @override
@@ -39,9 +51,10 @@ class SyncPasswordChangedElsewhere implements PasswordChangedElsewherePort {
   /// pudo publicarla, la nube sigue igual que en la última sync y tampoco.
   @override
   Future<bool> checkRemote() async {
-    final remote = this.remote;
-    if (remote == null) return isPending();
+    if (!remoteCheckAllowed) return isPending();
     try {
+      final remote = await loadRemote();
+      if (remote == null) return await isPending();
       if (!await localStorage.exists() || !await remote.remoteVaultExists()) {
         return await isPending();
       }
@@ -68,7 +81,7 @@ class SyncPasswordChangedElsewhere implements PasswordChangedElsewherePort {
     required String newPassword,
     String? previousPassword,
   }) async {
-    final remote = this.remote;
+    final remote = await loadRemote();
     if (remote == null) {
       throw StateError('Conecte la nube de su bóveda en Sincronización.');
     }
