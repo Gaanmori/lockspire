@@ -15,6 +15,7 @@ import 'features/sync/presentation/screens/sync_settings_screen.dart';
 import 'features/sync/presentation/widgets/password_changed_elsewhere_banner.dart';
 import 'features/sync/presentation/widgets/sync_home_banner.dart';
 import 'features/vault/domain/entities/vault.dart';
+import 'features/vault/presentation/screens/export_screen.dart';
 import 'features/vault/presentation/screens/import_screen.dart';
 import 'features/vault/presentation/screens/security_screen.dart';
 import 'features/vault/presentation/screens/vault_unlocked_screen.dart';
@@ -74,9 +75,17 @@ class AppShell extends ConsumerWidget {
               ),
               SettingsItem(
                 icon: Icons.upload_file_outlined,
-                title: 'Importar desde SafeInCloud',
-                subtitle: 'Traer sus contraseñas desde un archivo XML',
+                title: 'Importar',
+                subtitle:
+                    'Desde SafeInCloud, Bitwarden, Chrome, KeePassXC o un '
+                    'respaldo de Lockspire',
                 builder: (_) => const ImportScreen(),
+              ),
+              SettingsItem(
+                icon: Icons.download_outlined,
+                title: 'Exportar',
+                subtitle: 'Respaldo cifrado, o CSV/JSON para otro gestor',
+                builder: (_) => const ExportScreen(),
               ),
               if (ref.watch(platformCapabilitiesProvider).isDesktop)
                 SettingsItem(

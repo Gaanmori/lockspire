@@ -486,6 +486,17 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - Si un campo `login`/`password`/`website` se repetía en la misma tarjeta, el último pisaba al anterior y se perdía en silencio. Ahora el primero va a su campo y los demás a `notes` con la línea transicional.
       - Se importan las notas de la tarjeta (`<notes>`), por si el export las trae fuera de los `<field>`.
       - Siguen sin importarse las etiquetas (carpetas), los adjuntos (`<file>`/`<image>`) y la estrella. Importar dos veces duplica las entradas: no hay deduplicación.
+    - **ADR 0027 — exportar e importar (2026-09-28).** Requisito del MVP; el usuario eligió los formatos.
+      - Exportar (`ExportScreen`, en Ajustes): respaldo cifrado `.lockspire` (el archivo de la bóveda tal cual), CSV de Bitwarden, JSON de Bitwarden y CSV de Chrome.
+        - Siempre pide la contraseña maestra (`VerifyMasterPasswordUseCase`, comparación en tiempo constante).
+        - En los formatos sin cifrar, advierte antes y recuerda borrar el archivo después.
+        - El archivo se guarda con `FilePicker.saveFile`.
+      - Importar (`ImportScreen`, ahora "Importar"): XML de SafeInCloud, CSV autodetectado (Bitwarden/Chrome/Firefox/KeePassXC/genérico), JSON de Bitwarden sin cifrar y respaldo `.lockspire` con su contraseña (`ReadEncryptedBackupUseCase`).
+        - Nunca duplica (`selectEntriesToImport`: mismo `id`, o mismo tipo, título, usuario, contraseña y número).
+        - En Android elige cualquier archivo y valida la extensión después.
+      - Formatos en `vault/infrastructure/interchange/`, detrás de `VaultImportSource` y del nuevo `VaultExporter`. Apps como `androidapp://`. Los ida y vuelta Lockspire→Bitwarden JSON→Lockspire y Lockspire→Bitwarden CSV→Lockspire son exactos (CSV: los campos ocultos vuelven visibles).
+      - Tests: `interchange_test.dart` (17).
+      - **Pendiente de probar a mano:** exportar el respaldo en Windows y en Android (`saveFile` con SAF) e importarlo; exportar CSV/JSON e importarlos en Bitwarden o KeePassXC.
     - **Autofill en el Redmi, prueba S6 con Crunchyroll (WebView) — verificado por el usuario (2026-09-28):** la entrada correcta apareció primera, con el ✓ por coincidir con `sso.crunchyroll.com`, y se rellenó. Arreglos:
       - La sugerencia "Lockspire" apenas se veía en apps con tema oscuro. Ahora usa un layout propio con colores fijos e ícono (`res/layout/autofill_suggestion.xml`).
       - Aparecía la hoja "Iniciando sesión" de Google en cada pantalla de bloqueo, por la consulta a la nube de ADR 0024 (Google Drive en Android siempre muestra esa hoja). Ahora esa consulta no se hace con Google Drive en Android; el aviso llega igual por la marca de la sync.
@@ -535,7 +546,7 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       1. Windows: textos en "usted" (desbloqueo, Seguridad, Sincronización, entradas) y tema Pixel en Apariencia.
       2. Windows ↔ Redmi: editar una entrada en Windows y que se sincronice sola (A3, eventos). En el Redmi tiene que llegar sin tocar nada.
       3. S2: sync normal en los dos dispositivos, sin rechazos de "versión más vieja".
-      4. S6 en el Redmi: login en Chrome con una entrada con URL (rellena directo), una entrada sin URL (diálogo "recordar") y Crunchyroll en WebView ("dentro de la app…").
+      4. S6 en el Redmi: **verificado (2026-09-28)** Crunchyroll en la app (WebView) y en Chrome. Falta el caso de una entrada sin URL (diálogo "recordar").
       5. ~~S8: cambio de contraseña entre dispositivos~~ — verificado (2026-09-28, junto con ADR 0024).
       6. S5 en el Redmi: la miniatura de recientes sale en negro.
       7. Restaurar desde la nube (A3): en un dispositivo sin bóveda, "Restaurarla desde la nube".
