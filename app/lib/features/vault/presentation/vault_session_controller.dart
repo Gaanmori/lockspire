@@ -210,7 +210,14 @@ class VaultSessionController extends _$VaultSessionController {
   /// adoptar la que se cambió en otro dispositivo (ADR 0018). Cuenta como
   /// ingreso de la contraseña maestra (ADR 0017) y renueva la clave
   /// cacheada para biometría, que ya no abre la bóveda.
+  ///
+  /// La clave de la biometría se reemplaza **antes** de mostrar la bóveda:
+  /// al abrirse, la pantalla revisa si hay biometría configurada para
+  /// ofrecerla, y hacerlo después preguntaba de nuevo a quien ya la tenía
+  /// activa (visto en el Redmi al adoptar una contraseña cambiada en
+  /// Windows).
   Future<void> adoptRekeyedSession(UnlockedVaultResult result) async {
+    await ref.read(replaceBiometricKeyUseCaseProvider).call(result.key);
     state = AsyncData(
       VaultSessionUnlocked(
         vault: result.vault,
@@ -220,7 +227,6 @@ class VaultSessionController extends _$VaultSessionController {
       ),
     );
     await _recordPasswordUnlock();
-    await ref.read(replaceBiometricKeyUseCaseProvider).call(result.key);
   }
 
   /// Abre la sesión con una bóveda restaurada desde la nube y ya descifrada
