@@ -462,6 +462,17 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - App 281 tests, extensión 9. **Todos los hallazgos de la revisión 2026-09-25 están cerrados**, salvo S13, documentado sin cambios.
       - **Tema Pixel (2026-09-28, pedido del usuario):** familia `pixel` (`LockspirePalettes.pixel/pixelOscuro`), después de Lineage, que sigue siendo el tema por defecto. Es Material You *tonal spot* con semilla `#4285F4`, calculada con `fromSeed` y fijada. La extensión tiene `pixel-light` y `pixel-dark`. 10 temas; pasan los tests de contraste.
       - **Siguiente: pruebas manuales pendientes** (checklist abajo), después el MVP (Linux + F-Droid).
+    - **Fixes del 2026-09-28 tras probar en el Redmi:**
+      - **Selección tonal y secundario de Lineage:** el verde `#1F6B3A` no era de LineageOS. Pasó a los tonos secundarios de Material You de `#167C80`. El tema define `secondaryContainer` = `bgSurfaceSubtle`, así que lo seleccionado es un contenedor tonal y no un bloque sólido. Hay un test de contraste nuevo.
+      - **Capturas en desarrollo:** `protectFromScreenCapture` no aplica `FLAG_SECURE` si el APK es *debuggable*. En release queda siempre activo (S5 intacto para lo publicado).
+      - **OneDrive en Android (ADR 0022):** el loopback fallaba porque HyperOS congela la app mientras está en el navegador. Ahora la vuelta llega por `com.lockspire.lockspire://oauth2redirect`:
+        - `OAuthRedirectActivity` la recibe, `AndroidOAuthAppRedirect` la entrega a Dart y `waitForOAuthCode` aplica la misma regla de `state`.
+        - En escritorio sigue el loopback.
+        - La URI quedó registrada en Azure ("Aplicaciones móviles y de escritorio") y el usuario verificó que OneDrive conecta y sincroniza en el Redmi.
+      - **La huella no aparecía tras un bloqueo sin reiniciar la app** (diagnosticado con logcat). Al pasar a segundo plano la bóveda se bloquea (ADR 0008) y `UnlockVaultScreen` disparaba el prompt automático con la app todavía en segundo plano. Android no lo muestra y `local_auth` quedaba con una autenticación "en curso" trabada, así que los toques siguientes fallaban en silencio hasta reiniciar la app.
+        - El auto-prompt ahora espera a `resumed`, con un `AppLifecycleListener`.
+        - `AndroidBiometricAuthAdapter.readKey` hace `stopAuthentication()` antes de `authenticate()`, en un try aislado.
+        - **Pendiente de confirmar en el Redmi.**
     - **Checklist de pruebas manuales pendientes (al 2026-09-28):**
       1. Windows: textos en "usted" (desbloqueo, Seguridad, Sincronización, entradas) y tema Pixel en Apariencia.
       2. Windows ↔ Redmi: editar una entrada en Windows y que se sincronice sola (A3, eventos). En el Redmi tiene que llegar sin tocar nada.

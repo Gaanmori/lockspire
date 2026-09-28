@@ -66,6 +66,14 @@ class AndroidBiometricAuthAdapter implements BiometricAuthPort {
   @override
   Future<Uint8List?> readKey() async {
     try {
+      // Si un intento anterior quedó "en curso" (p. ej. se pidió con la app en
+      // segundo plano), local_auth rechaza el nuevo sin mostrar nada. Se
+      // cancela antes de pedir la huella.
+      try {
+        await _localAuth.stopAuthentication();
+      } catch (_) {
+        // Nunca debe impedir pedir la huella.
+      }
       final verified = await _localAuth.authenticate(
         localizedReason: _promptReason,
       );

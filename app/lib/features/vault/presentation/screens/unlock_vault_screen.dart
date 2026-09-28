@@ -61,11 +61,30 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
       return;
     }
     setState(() => _biometricAvailable = true);
-    await _submitWithBiometrics();
+    // Al pasar a segundo plano la bóveda se bloquea (ADR 0008) y esta
+    // pantalla aparece con la app todavía en segundo plano. Android no puede
+    // mostrar el diálogo de huella así, y local_auth quedaba con una
+    // autenticación "en curso" trabada: los toques siguientes en "Usar la
+    // huella" no hacían nada hasta reiniciar la app. Por eso, si no está en
+    // primer plano, se espera a que vuelva.
+    if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+      await _submitWithBiometrics();
+    } else {
+      _promptWhenResumed = AppLifecycleListener(
+        onResume: () {
+          _promptWhenResumed?.dispose();
+          _promptWhenResumed = null;
+          if (mounted) _submitWithBiometrics();
+        },
+      );
+    }
   }
+
+  AppLifecycleListener? _promptWhenResumed;
 
   @override
   void dispose() {
+    _promptWhenResumed?.dispose();
     _passwordController.dispose();
     super.dispose();
   }

@@ -9,6 +9,7 @@ import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+import 'oauth_app_redirect.dart';
 import 'one_drive_connection.dart';
 
 const _authorizeEndpoint =
@@ -83,6 +84,26 @@ OAuthCallbackOutcome evaluateOAuthCallback(Uri uri, String expectedState) {
   );
 }
 
+/// Espera en [redirects] la vuelta de este login (dirección propia, ADR
+/// 0022). Las que no traen el [expectedState] se ignoran, igual que en
+/// loopback: solo la redirección de este login entrega el código.
+Future<String> waitForOAuthCode(
+  Stream<Uri> redirects,
+  String expectedState,
+) async {
+  await for (final uri in redirects) {
+    switch (evaluateOAuthCallback(uri, expectedState)) {
+      case OAuthCallbackIgnored():
+        continue;
+      case OAuthCallbackCode(:final code):
+        return code;
+      case OAuthCallbackError(:final message):
+        throw StateError(message);
+    }
+  }
+  throw StateError('Se cerró la espera del inicio de sesión');
+}
+
 bool _constantTimeEquals(String a, String b) {
   if (a.length != b.length) return false;
   var diff = 0;
@@ -122,20 +143,29 @@ Future<void> _respond(HttpRequest request, int status, String? html) async {
   await request.response.close();
 }
 
-/// Autenticación contra OneDrive (Microsoft identity platform) — unificada
-/// para Android y Windows, a diferencia del split de Google Drive
-/// (`google_drive_android_auth.dart`/`google_drive_windows_auth.dart`):
-/// Microsoft no tiene SDK first-party de Flutter en ninguna plataforma, y
-/// su propia documentación recomienda el patrón loopback (`http://localhost`,
-/// sin puerto fijo) + navegador del sistema para apps que usan el
-/// navegador del sistema, sin distinguir plataforma (alineado con RFC
-/// 8252). Cliente público con PKCE — sin client secret.
+/// Autenticación contra OneDrive (Microsoft identity platform) con el
+/// navegador del sistema (RFC 8252). Es cliente público con PKCE, sin client
+/// secret. La vuelta del navegador depende de la plataforma:
+///
+/// - En escritorio, loopback (`http://localhost` con puerto libre).
+/// - En Android, la dirección propia `com.lockspire.lockspire://oauth2redirect`
+///   (ADR 0022). El loopback fallaba en HyperOS: la app queda congelada
+///   mientras el usuario está en el navegador y nadie atiende la redirección.
 class MicrosoftOAuthAuth {
   final String _clientId;
   final http.Client _http;
 
-  MicrosoftOAuthAuth(this._clientId, {http.Client? httpClient})
-    : _http = httpClient ?? http.Client();
+  /// Si se indica, el navegador vuelve a la app por esta dirección propia en
+  /// vez de por loopback (Android, ADR 0022). Si no, loopback (escritorio).
+  final OAuthAppRedirect? _appRedirect;
+
+  MicrosoftOAuthAuth(
+    this._clientId, {
+    http.Client? httpClient,
+    OAuthAppRedirect? appRedirect,
+  }) : _http = httpClient ?? http.Client(),
+       // ignore: prefer_initializing_formals, parámetro público sin guion bajo
+       _appRedirect = appRedirect;
 
   /// Conexión interactiva — abre el navegador del sistema para el
   /// consentimiento. Solo debe llamarse desde el botón "Conectar con
@@ -145,9 +175,17 @@ class MicrosoftOAuthAuth {
     final challenge = codeChallengeFromVerifier(verifier);
     final state = _generateState();
 
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final appRedirect = _appRedirect;
+    final server = appRedirect == null
+        ? await HttpServer.bind(InternetAddress.loopbackIPv4, 0)
+        : null;
     try {
-      final redirectUri = 'http://localhost:${server.port}';
+      final redirectUri =
+          appRedirect?.redirectUri ?? 'http://localhost:${server!.port}';
+      // Escuchar antes de abrir el navegador: la vuelta puede ser rápida.
+      final codeFuture = appRedirect != null
+          ? waitForOAuthCode(appRedirect.redirects, state)
+          : _awaitAuthorizationCode(server!, state);
       final authorizeUri = Uri.parse(_authorizeEndpoint).replace(
         queryParameters: {
           'client_id': _clientId,
@@ -168,7 +206,7 @@ class MicrosoftOAuthAuth {
         throw StateError('No se pudo abrir el navegador del sistema');
       }
 
-      final code = await _awaitAuthorizationCode(server, state).timeout(
+      final code = await codeFuture.timeout(
         _loginTimeout,
         onTimeout: () => throw StateError(
           'Se agotó el tiempo para iniciar sesión en Microsoft. Pruebe de '
@@ -188,7 +226,7 @@ class MicrosoftOAuthAuth {
         accessToken: tokens['access_token'] as String,
       );
     } finally {
-      await server.close(force: true);
+      await server?.close(force: true);
     }
   }
 

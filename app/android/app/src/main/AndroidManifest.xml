@@ -32,6 +32,23 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Vuelta del login de OneDrive (ADR 0022): la abre el navegador con
+             com.lockspire.lockspire://oauth2redirect. Sin interfaz; entrega
+             la URI a Dart y trae la app al frente. -->
+        <activity
+            android:name=".OAuthRedirectActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.lockspire.lockspire" android:host="oauth2redirect" />
+            </intent-filter>
+        </activity>
         <!-- Autofill nativo (ADR 0011) — no exportada: solo puede
              lanzarla el PendingIntent que arma nuestro propio
              LockspireCredentialProviderService, nunca un intent externo

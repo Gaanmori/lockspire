@@ -66,4 +66,46 @@ void main() {
       );
     });
   });
+
+  group(
+    'waitForOAuthCode — vuelta por dirección propia en Android (ADR 0022)',
+    () {
+      Uri app(Map<String, String> params) => Uri(
+        scheme: 'com.lockspire.lockspire',
+        host: 'oauth2redirect',
+        queryParameters: params,
+      );
+
+      test(
+        'ignora redirecciones ajenas y devuelve el código de este login',
+        () async {
+          final code = await waitForOAuthCode(
+            Stream.fromIterable([
+              app({'code': 'inyectado', 'state': 'otro'}),
+              app({'code': 'inyectado'}),
+              app({'code': 'bueno', 'state': _state}),
+            ]),
+            _state,
+          );
+          expect(code, 'bueno');
+        },
+      );
+
+      test('un error con el state correcto se propaga', () async {
+        await expectLater(
+          waitForOAuthCode(
+            Stream.value(
+              app({
+                'error': 'access_denied',
+                'error_description': 'No',
+                'state': _state,
+              }),
+            ),
+            _state,
+          ),
+          throwsA(isA<StateError>()),
+        );
+      });
+    },
+  );
 }
