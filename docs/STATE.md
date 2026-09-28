@@ -701,7 +701,7 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - **A10:** pantallas divididas en widgets.
   - **T1:** `AutofillMatcher` + JUnit.
   - **T2:** `PrepareImportUseCase` + tests de widgets de Exportar e Importar.
-- **Pendiente:** build release completo (el primer intento se trabó por un bloqueo de `.dart_tool/hooks_runner/shared/sodium/.lock` al correr dos builds a la vez: nunca correr dos compilaciones de Flutter en paralelo). Firma propia para Play.
+- **CI ampliado (2026-09-28):** `.github/workflows/flutter-ci.yml` ahora compila el **APK release** y corre los tests de Kotlin (job `android`, deja el APK como artifact por 14 días) y el **release de Windows** (`build-windows`). Primera ejecución (run 36481487434): los 7 jobs en verde, incluidos los 340 tests de Dart. El build release y los tests de Kotlin ya no hace falta correrlos en local (en local se trababan por el bloqueo de `.dart_tool/hooks_runner/shared/sodium/.lock` al correr dos builds a la vez). En CI no hay credenciales OAuth: el APK de CI compila, pero no conecta Drive ni OneDrive. **Pendiente:** firma propia para Play (y dar las credenciales a CI como secrets).
 
 ### Bug: pedía activar la huella tras adoptar una contraseña nueva (2026-09-28, encontrado por el usuario)
 
