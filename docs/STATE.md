@@ -680,6 +680,42 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - Modelo de licencia familiar / licencia de por vida — no aplica: es un modelo de negocio de una app paga de código cerrado, Lockspire es AGPLv3 y de código abierto, el marco entero no tiene el mismo sentido acá.
   - **Generador de códigos 2FA/TOTP como tipo de entrada propio (RFC 6238).** Se llegó a implementar completo y verificado (ver la entrada correspondiente en Completado) y el usuario pidió explícitamente quitarlo: "La verdad la del otp. NO me interesa. Yo lo quitaria y descartaria." Revertido en la misma sesión — no reintroducir sin que el usuario lo pida de nuevo.
 
+### MVP — canales y checklist (ADR 0028, decidido 2026-09-28)
+
+Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome Web Store y Edge Add-ons. **F-Droid fuera por ahora.** Costo total: US$30 (Play US$25, Chrome US$5).
+
+1. [ ] **Google Play:** crear la cuenta (usuario) y arrancar la prueba cerrada de 12 probadores × 14 días cuanto antes.
+2. [x] **Pantalla "Acerca de"** (`features/about`: versión, AGPLv3, código fuente, política, licencias de terceros) y **política de privacidad** (`docs/privacy-policy.md`, ES + EN, con la declaración de uso limitado de Google). Falta **publicarla con GitHub Pages** (usuario: Settings → Pages → rama `main`, carpeta `/docs`); la app enlaza a `https://gaanmori.github.io/lockspire/privacy-policy`.
+3. [ ] **Android release:** clave de firma propia (hoy release firma con la de depuración), build release probado en el Redmi (S5, R8 con libsodium y el autofill), targetSdk vigente.
+4. [ ] **Google Cloud a producción:** verificar la pantalla de consentimiento (nombre, logo, dominio, política); quizá revisión del permiso `drive.appdata`.
+5. [ ] **Microsoft Store:** MSIX y comprobar que Chrome/Edge encuentran el native host con la app instalada desde la tienda.
+6. [ ] **Linux:** verificar en Linux Mint (bandeja, bloqueo, extensión, native host) y generar AppImage; después Snap (confinamiento y native host) y Flathub.
+7. [ ] **Extensión:** publicarla en Chrome Web Store y Edge Add-ons (justificar `nativeMessaging`, política de privacidad).
+8. [ ] **Fichas de cada tienda:** capturas, descripción, imagen destacada 1024×500, seguridad de datos y clasificación de contenido.
+9. [ ] Pruebas manuales pendientes (autofill sin URL, restaurar desde la nube, aviso de mudanza, exportar/importar).
+
+### Google Drive en Android sin Play Services — hallazgo (2026-09-28)
+
+- Documentación oficial de Google (developers.google.com/identity/protocols/oauth2/native-app): "Custom URI schemes are no longer supported on Android and Chrome apps"; el loopback está "DEPRECATED for Android, Chrome app and iOS OAuth client types". Para Android, Google solo apoya su login nativo (Play Services).
+- **Corrige una suposición del ADR 0022:** la dirección propia `com.lockspire.lockspire://` sirve para OneDrive, **no** para Google. Cuando se decida, va en un ADR nuevo que lo referencie.
+- Opciones para un build sin Play Services:
+  - (a) cliente "escritorio" + loopback, con un servicio en primer plano corto durante el login para que HyperOS no congele la app (hay que probarlo);
+  - (b) cliente "iOS" usado desde Android (gris);
+  - (c) build de F-Droid sin Google Drive.
+- El usuario preguntó por **conservar el login actual para Play Store**: es posible con dos builds (F-Droid quita `google_sign_in` y cambia un archivo en su receta). Costo: mantener dos formas de conectar Drive.
+- Costos de Play Store:
+  - US$25 únicos, verificación de identidad y prueba cerrada de 12 probadores durante 14 días (cuentas personales nuevas).
+  - Pasar el proyecto de Google Cloud a producción (verificación de la pantalla de consentimiento y quizá revisión del permiso de Drive).
+  - Clave de firma release propia (hoy release firma con la de depuración), ficha y seguridad de datos.
+  - Programa de verificación de desarrolladores de Android anunciado para 2026, que también afecta a F-Droid.
+
+### Android TV (idea del usuario, 2026-09-28) — fuera del MVP
+
+- Opción elegida: "enviar desde el teléfono". La TV sería solo receptora (sin bóveda): al tocar el campo de contraseña en la TV, el usuario elige la cuenta en el teléfono, que la envía cifrada por la red local tras un emparejamiento.
+- **Riesgo a descartar antes de programar:** que las apps de TV (Netflix, Disney+, etc.) activen el autofill; muchas usan teclado propio o login con código. Prueba barata: instalar el APK por ADB en la TV, `adb shell settings put secure autofill_service com.lockspire.lockspire/.LockspireAutofillService`, y ver si aparece "Rellenar con Lockspire".
+- **Plan B si no se activa:** que el teléfono escriba en la TV con el protocolo de control remoto de Android TV (como la app "Google TV"). No hace falta nada instalado en la TV, pero el protocolo no está documentado (se conoce por ingeniería inversa).
+- **Pendientes de diseño:** emparejamiento sin cámara (comparar un código de 6 dígitos en ambos equipos), descubrimiento en la red local sin dependencias no libres (F-Droid), interfaz con D-pad, banner y `LEANBACK_LAUNCHER`.
+
 ## Bloqueos / preguntas abiertas
 
 - **No bloqueante, a resolver en Google Cloud Console cuando el usuario llegue ahí:** si el scope `drive.appdata` (Fase 8) exige "verificación básica" de Google para salir de modo Testing, o si apps de uso personal quedan exceptuadas — la documentación pública de Google no es consistente en esto. No cambia nada del código ni bloquea la implementación, solo el trámite de publicación de la app OAuth.

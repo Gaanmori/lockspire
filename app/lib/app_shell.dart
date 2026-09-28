@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'shared/platform_capabilities.dart';
+import 'features/about/presentation/screens/about_screen.dart';
 import 'features/appearance/presentation/screens/appearance_screen.dart';
 import 'features/browser_bridge/presentation/screens/browser_integration_screen.dart';
 import 'features/home/presentation/home_destination.dart';
@@ -94,6 +95,12 @@ class AppShell extends ConsumerWidget {
                   subtitle: 'Conectar con la extensión de Chrome/Edge',
                   builder: (_) => const BrowserIntegrationScreen(),
                 ),
+              SettingsItem(
+                icon: Icons.info_outline,
+                title: 'Acerca de',
+                subtitle: 'Versión, licencia y código fuente',
+                builder: (_) => const AboutScreen(),
+              ),
             ],
           ),
         ),
