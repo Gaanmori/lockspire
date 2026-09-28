@@ -131,7 +131,9 @@ abstract final class LockspirePalettes {
   // (lineage_wiki `_sass/lineage/_theme.scss`; `lineage_accent` = #167C80 en
   // SetupWizard). Oscuro: lo que muestra Android con LineageOS, que pasa la
   // semilla #167C80 por el algoritmo tonal de Material You (primary tono 80)
-  // sobre los fondos oscuros de su marca.
+  // sobre los fondos oscuros de su marca. Su paleta de marca es la paleta
+  // secundaria de Material You de #167C80: "brand-light" #CCE8E9 y
+  // "brand-dark" #324B4C son el contenedor secundario claro y su texto.
 
   static const lineage = LockspirePalette(
     brightness: Brightness.light,
@@ -144,7 +146,8 @@ abstract final class LockspirePalettes {
     textPlaceholder: Color(0xFFA3B2B8),
     accentDefault: Color(0xFF167C80),
     accentHover: Color(0xFF324B4C),
-    accentSecondary: Color(0xFF1F6B3A),
+    // Secundario de Material You de #167C80 (el de la interfaz de LineageOS).
+    accentSecondary: Color(0xFF4A6364),
     onAccent: Color(0xFFFFFFFF),
     danger: Color(0xFFC23B3B),
   );
@@ -153,14 +156,16 @@ abstract final class LockspirePalettes {
     brightness: Brightness.dark,
     bgPage: Color(0xFF121212),
     bgSurface: Color(0xFF1F2526),
-    bgSurfaceSubtle: Color(0xFF243738),
+    // #324B4C: "brand-dark" de la wiki = contenedor secundario oscuro de
+    // Material You para #167C80.
+    bgSurfaceSubtle: Color(0xFF324B4C),
     bgInput: Color(0xFF212626),
     textPrimary: Color(0xFFE6ECEF),
     textSecondary: Color(0xFFA3B2B8),
     textPlaceholder: Color(0xFF6B7B7D),
     accentDefault: Color(0xFF80D4D8),
     accentHover: Color(0xFF6CC2C6),
-    accentSecondary: Color(0xFF8FD4A5),
+    accentSecondary: Color(0xFFB1CCCD),
     onAccent: Color(0xFF003739),
     danger: Color(0xFFE5605F),
   );

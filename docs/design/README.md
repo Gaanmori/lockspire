@@ -53,8 +53,9 @@ Basado en el tema por defecto de **LineageOS**, verificado en su código fuente 
   - oscuro de marca `#324B4C`;
   - fondos `#F6FAFA`, `#E1EFEF` y `#CCE8E9`;
   - texto `#3C4858` y `#6C757D`;
-  - éxito `#1F6B3A`.
+  - secundario `#4A6364`, el tono secundario de Material You de `#167C80`. Al principio se usó el verde de éxito de la wiki (`#1F6B3A`), y el usuario notó que no era de LineageOS.
 - **Oscuro:** en Android, LineageOS pasa la semilla `#167C80` por el algoritmo tonal de Material You (`lineage_accent` oscuro = `system_accent1_100`).
+- **Clave:** la paleta de marca de LineageOS **es** la paleta secundaria de Material You de `#167C80`. "brand-light" `#CCE8E9` y "brand-dark" `#324B4C` coinciden exactamente con el contenedor secundario claro y su texto (en oscuro, al revés). Por eso lo seleccionado se ve teal claro con texto teal oscuro.
   - Acento: el tono 80 que da esa semilla (`#80D4D8`, texto encima `#003739`).
   - Fondos oscuros de marca: `#121212`, `#1F2526` y `#243738`.
 
@@ -63,6 +64,10 @@ Nota para la comercialización: "LineageOS" es una marca de su proyecto. El tema
 ### Tema Pixel: de dónde salen los colores
 
 El aspecto de un **Google Pixel**. Material You genera todos los colores con el algoritmo tonal (*tonal spot*) a partir de una semilla; aquí la semilla es el azul de Google `#4285F4`. Los valores se calcularon con el mismo algoritmo que usa "Colores del sistema" (`LockspirePalette.fromSeed`) y quedaron fijos como en las demás familias. Por eso el acento no es el azul puro de Google: *tonal spot* lo suaviza, igual que en un Pixel. La tipografía sigue siendo la de Lockspire; Google Sans no tiene licencia libre.
+
+### Estado seleccionado (todos los temas)
+
+Lo seleccionado (segmentos, chips, indicador de la barra de navegación) usa un **contenedor tonal**, como en Material You: `secondaryContainer` = `bgSurfaceSubtle` con el texto principal encima, y no el acento sólido. Hasta el 2026-09-28 el tema no definía `secondaryContainer`, Flutter usaba `secondary`, y lo seleccionado salía como un bloque del color secundario. El contraste de ese texto se verifica en los tests (≥ 4.5:1).
 
 ## Tipografía
 

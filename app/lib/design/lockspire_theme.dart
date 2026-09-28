@@ -110,6 +110,12 @@ abstract final class LockspireTheme {
       onPrimary: p.onAccent,
       secondary: p.accentSecondary,
       onSecondary: p.onAccent,
+      // Lo seleccionado (segmentos, chips, indicador de navegación) usa un
+      // contenedor tonal, como en Material You, no el acento sólido. Sin
+      // esto, Flutter usa `secondary` y lo seleccionado era un bloque del
+      // color secundario.
+      secondaryContainer: p.bgSurfaceSubtle,
+      onSecondaryContainer: p.textPrimary,
       error: p.danger,
       onError: p.isDark ? p.bgPage : Colors.white,
       surface: p.bgSurface,

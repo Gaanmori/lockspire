@@ -100,6 +100,11 @@ void main() {
         greaterThanOrEqualTo(2.5),
         reason: '$name: botones con borde de acento sobre la página',
       );
+      expect(
+        _contrast(p.textPrimary, p.bgSurfaceSubtle),
+        greaterThanOrEqualTo(4.5),
+        reason: '$name: texto de lo seleccionado (contenedor tonal)',
+      );
     }
   });
 }
