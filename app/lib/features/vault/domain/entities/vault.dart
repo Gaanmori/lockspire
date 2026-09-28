@@ -75,6 +75,17 @@ class Vault {
     (e) => e.copyWith(deleted: true, deletedAt: now, modifiedAt: now),
   );
 
+  /// Varias a la vez, en un solo guardado (selección múltiple).
+  Vault withEntriesDeleted(Set<String> ids, {required DateTime now}) =>
+      copyWith(
+        entries: [
+          for (final e in entries)
+            ids.contains(e.id) && !e.deleted
+                ? e.copyWith(deleted: true, deletedAt: now, modifiedAt: now)
+                : e,
+        ],
+      );
+
   Vault _mapEntry(String id, VaultEntry Function(VaultEntry) change) =>
       copyWith(entries: [for (final e in entries) e.id == id ? change(e) : e]);
 

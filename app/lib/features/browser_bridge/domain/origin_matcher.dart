@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import '../../vault/domain/entities/entry_fields.dart';
 import '../../vault/domain/entities/vault_entry.dart';
 
 /// ¿Puede la extensión rellenar [entry] en una página de [origin]? (ADR
 /// 0013, "Matching de origen").
 ///
-/// - Solo entradas de contraseña no borradas, con una URL parseable.
+/// - Solo entradas de contraseña no borradas, con alguna URL parseable
+///   (cualquiera de sus sitios, ADR 0025).
 /// - Host igual, o [origin] subdominio del host guardado
 ///   (`login.example.com` sí para una entrada `example.com`; al revés no).
 /// - Una entrada guardada como `https` nunca coincide con una página
@@ -18,7 +20,12 @@ import '../../vault/domain/entities/vault_entry.dart';
 /// `https://xn--and-6ma2c.com` que envía el navegador.
 bool entryMatchesOrigin(VaultEntry entry, String origin) {
   if (entry.deleted || entry.type != VaultEntryType.password) return false;
-  final stored = _parseStoredUrl(entry.fields['url']);
+  // Cualquiera de los sitios de la entrada (ADR 0025).
+  return entry.urls.any((url) => _urlMatchesOrigin(url, origin));
+}
+
+bool _urlMatchesOrigin(String url, String origin) {
+  final stored = _parseStoredUrl(url);
   final request = Uri.tryParse(origin);
   if (stored == null || request == null) return false;
   if (!_webSchemes.contains(request.scheme) || request.host.isEmpty) {

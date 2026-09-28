@@ -25,6 +25,7 @@ class PasswordChangedElsewhereBanner extends ConsumerWidget {
     if (!changedElsewhere) return const SizedBox.shrink();
 
     return MaterialBanner(
+      forceActionsBelow: true,
       leading: const Icon(Icons.key_outlined),
       content: const Text(
         'La contraseña maestra se cambió en otro dispositivo. Ingrese la '

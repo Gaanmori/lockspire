@@ -13,4 +13,10 @@ abstract class SyncStatePort {
   Future<String?> lastSyncedHash();
 
   Future<void> saveLastSyncedHash(String hash);
+
+  /// Una sync detectó que la contraseña maestra se cambió en otro
+  /// dispositivo y todavía no se adoptó aquí (ADR 0024).
+  Future<bool> passwordChangedElsewhere();
+
+  Future<void> setPasswordChangedElsewhere(bool value);
 }

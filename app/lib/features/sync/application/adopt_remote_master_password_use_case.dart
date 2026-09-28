@@ -8,6 +8,8 @@ import 'package:lockspire/features/sync/domain/ports/sync_state_port.dart';
 import 'package:lockspire/features/sync/domain/vault_merge.dart';
 import 'package:lockspire/features/vault/application/change_master_password_use_case.dart'
     show IncorrectMasterPasswordException;
+import 'package:lockspire/features/vault/application/password_changed_elsewhere_port.dart'
+    show PreviousPasswordRequiredException;
 import 'package:lockspire/features/vault/application/save_vault_use_case.dart';
 import 'package:lockspire/features/vault/application/unlocked_vault_result.dart';
 import 'package:lockspire/features/vault/domain/entities/vault.dart';
@@ -31,8 +33,11 @@ class AdoptRemoteMasterPasswordUseCase {
   final SyncStatePort syncState;
   final CryptoPort crypto;
 
-  /// Clave y header de la sesión actual (contraseña vieja).
-  final Uint8List currentKey;
+  /// Clave y header de la sesión actual (contraseña vieja). Sin sesión
+  /// (desbloqueo con la contraseña nueva, ADR 0024) la clave es `null` y el
+  /// header es el del archivo local: alcanza mientras no haya cambios
+  /// locales que descifrar.
+  final Uint8List? currentKey;
   final VaultHeader currentHeader;
 
   const AdoptRemoteMasterPasswordUseCase({
@@ -76,6 +81,7 @@ class AdoptRemoteMasterPasswordUseCase {
     if (!localChanged) {
       await localStorage.write(remoteFile);
       await _markSynced(remoteFile);
+      await syncState.setPasswordChangedElsewhere(false);
       return UnlockedVaultResult(
         vault: remoteVault,
         key: newKey,
@@ -117,6 +123,7 @@ class AdoptRemoteMasterPasswordUseCase {
     await localStorage.write(written);
     await _markSynced(written);
 
+    await syncState.setPasswordChangedElsewhere(false);
     return UnlockedVaultResult(
       vault: merged,
       key: newKey,
@@ -131,10 +138,14 @@ class AdoptRemoteMasterPasswordUseCase {
     VaultFile file,
     Uint8List newKey,
     VaultFile remoteFile,
-  ) => _decrypt(
-    file,
-    sameKeyDerivation(file.header, remoteFile.header) ? newKey : currentKey,
-  );
+  ) {
+    if (sameKeyDerivation(file.header, remoteFile.header)) {
+      return _decrypt(file, newKey);
+    }
+    final oldKey = currentKey;
+    if (oldKey == null) throw const PreviousPasswordRequiredException();
+    return _decrypt(file, oldKey);
+  }
 
   /// Sin ancestro legible el merge sigue siendo correcto, solo más
   /// conservador (ADR 0006): nunca se pierde una entrada.

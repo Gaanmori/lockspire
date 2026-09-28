@@ -43,4 +43,14 @@ class FakeSyncStatePort implements SyncStatePort {
   Future<void> saveLastSyncedHash(String hash) async {
     _lastSyncedHash = hash;
   }
+
+  bool passwordChangedElsewhereFlag = false;
+
+  @override
+  Future<bool> passwordChangedElsewhere() async => passwordChangedElsewhereFlag;
+
+  @override
+  Future<void> setPasswordChangedElsewhere(bool value) async {
+    passwordChangedElsewhereFlag = value;
+  }
 }

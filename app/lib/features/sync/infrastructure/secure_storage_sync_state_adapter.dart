@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../domain/ports/sync_state_port.dart';
 
 const _keyLastSyncedHash = 'sync.last_synced_hash';
+const _keyPasswordChangedElsewhere = 'sync.password_changed_elsewhere';
 
 /// [SyncStatePort] (hash del último archivo sincronizado).
 /// Sobre el almacenamiento seguro del sistema (nunca texto plano en disco).
@@ -22,4 +23,13 @@ class SecureStorageSyncStateAdapter implements SyncStatePort {
   @override
   Future<void> saveLastSyncedHash(String hash) =>
       _storage.write(key: _keyLastSyncedHash, value: hash);
+
+  @override
+  Future<bool> passwordChangedElsewhere() async =>
+      await _storage.read(key: _keyPasswordChangedElsewhere) == 'true';
+
+  @override
+  Future<void> setPasswordChangedElsewhere(bool value) => value
+      ? _storage.write(key: _keyPasswordChangedElsewhere, value: 'true')
+      : _storage.delete(key: _keyPasswordChangedElsewhere);
 }

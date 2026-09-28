@@ -4,7 +4,8 @@
 import 'package:uuid/uuid.dart';
 
 /// Tipo de una entrada de bóveda, ver formato v1 (docs/adr/0004-formato-boveda-v1.md).
-enum VaultEntryType { password, passkey, note }
+/// `card` y `document`: ADR 0025.
+enum VaultEntryType { password, passkey, note, card, document }
 
 /// Key reservada para tratar `title` como un campo más en el merge por
 /// campo (ver docs/adr/0009-merge-automatico-por-campo.md) sin mezclarlo en
@@ -77,22 +78,24 @@ class VaultEntry {
     this.fieldHistory = const {},
   });
 
-  /// Crea una entrada nueva de tipo [VaultEntryType.password] (único tipo
-  /// que cubre esta pasada, ver docs/STATE.md — Fase 5) con id y timestamps
-  /// generados.
+  /// Crea una entrada nueva (por defecto una contraseña) con id y
+  /// timestamps generados.
   factory VaultEntry.create({
     required String title,
+    VaultEntryType type = VaultEntryType.password,
     Map<String, String> fields = const {},
+    Map<String, List<FieldHistoryRecord>> fieldHistory = const {},
     Uuid uuid = const Uuid(),
   }) {
     final now = DateTime.now().toUtc();
     return VaultEntry(
       id: uuid.v4(),
-      type: VaultEntryType.password,
+      type: type,
       title: title,
       createdAt: now,
       modifiedAt: now,
       fields: fields,
+      fieldHistory: fieldHistory,
     );
   }
 
@@ -137,7 +140,11 @@ class VaultEntry {
     final historyJson = json['field_history'] as Map?;
     return VaultEntry(
       id: json['id'] as String,
-      type: VaultEntryType.values.byName(json['type'] as String),
+      // Un tipo que esta versión no conoce se trata como contraseña en vez
+      // de impedir abrir la bóveda (ADR 0025).
+      type:
+          VaultEntryType.values.asNameMap()[json['type'] as String] ??
+          VaultEntryType.password,
       title: json['title'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
       modifiedAt: DateTime.parse(json['modified_at'] as String),

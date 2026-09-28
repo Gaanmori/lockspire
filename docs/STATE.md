@@ -1,6 +1,6 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-28 (ADR 0023 — nube de la bóveda y mudanza, implementado y con tests, pendiente de prueba manual entre Windows y el Redmi). Anterior: 2026-09-24 (soporte Linux; ADR 0012 — escritorio en la bandeja del sistema, bloqueo por inactividad/sesión del SO; ADR 0013 — native host en Dart + canal IPC + extensión Chrome/Edge v1. Todo implementado y con tests, **pendiente de verificación manual** — ver la entrada "Linux, bandeja y extensión de navegador" en Completado y el punch list en Pendiente). Anterior: 2026-09-12 (ADR 0010 — desbloqueo biométrico, confirmado en Android y Windows; OneDrive implementado y verificado como tercer y último proveedor de sync — Dropbox descartado —, con un bug de navegación real encontrado y corregido; ADR 0011 — autofill nativo en Android, Credential Manager + `AutofillService` legado, núcleo funcionando en el Redmi tras 4 bugs reales encontrados y corregidos en verificación manual, vinculación automática app↔entrada pedida por el usuario para la próxima sesión — ver Completado/Pendiente)
+Última actualización: 2026-09-28 (ADR 0024 — contraseña cambiada en otro dispositivo se pide al abrir; ADR 0023 — nube de la bóveda y mudanza, implementado y con tests, pendiente de prueba manual entre Windows y el Redmi). Anterior: 2026-09-24 (soporte Linux; ADR 0012 — escritorio en la bandeja del sistema, bloqueo por inactividad/sesión del SO; ADR 0013 — native host en Dart + canal IPC + extensión Chrome/Edge v1. Todo implementado y con tests, **pendiente de verificación manual** — ver la entrada "Linux, bandeja y extensión de navegador" en Completado y el punch list en Pendiente). Anterior: 2026-09-12 (ADR 0010 — desbloqueo biométrico, confirmado en Android y Windows; OneDrive implementado y verificado como tercer y último proveedor de sync — Dropbox descartado —, con un bug de navegación real encontrado y corregido; ADR 0011 — autofill nativo en Android, Credential Manager + `AutofillService` legado, núcleo funcionando en el Redmi tras 4 bugs reales encontrados y corregidos en verificación manual, vinculación automática app↔entrada pedida por el usuario para la próxima sesión — ver Completado/Pendiente)
 
 ## Fase actual
 
@@ -479,17 +479,57 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - `MoveVaultToProviderUseCase`: sync con la nube vieja → valida la nueva (otra bóveda o no auténtica = se cancela sin tocar nada) → marca `syncHome` → sube el aviso a la vieja → fusiona sin ancestro o sube a la nueva.
       - UI: conectar otra nube con la bóveda desbloqueada pide confirmación ("¿Mudar la bóveda a X?"). `SyncHomeBanner` en el `AppShell` avisa del desajuste o de la mudanza. Bóvedas anteriores fijan su nube en la primera sync con éxito.
       - Tests: `test/features/sync/application/sync_home_test.dart` (7). Suite completa: 290 en verde.
-      - **Pendiente de probar a mano:** abrir la versión nueva primero en el dispositivo cuya nube es la buena (fija `syncHome`); en el otro, sincronizar → debe salir el aviso; conectar la nube correcta → sin mudanza, fusiona. Probar también mudar a propósito y ver el aviso en el otro dispositivo.
+      - **Verificado por el usuario (2026-09-28):** unificó Windows (Drive) y el Redmi (OneDrive) con la mudanza y quedaron sincronizados. Falta ver el aviso en el otro dispositivo tras una mudanza a propósito.
+      - Guía de prueba original: abrir la versión nueva primero en el dispositivo cuya nube es la buena (fija `syncHome`); en el otro, sincronizar → debe salir el aviso; conectar la nube correcta → sin mudanza, fusiona. Probar también mudar a propósito y ver el aviso en el otro dispositivo.
       - Todos los dispositivos deben tener esta versión: una versión anterior que guarde pierde `sync_home`.
+    - **Import de SafeInCloud, dos arreglos antes de la importación real del usuario (2026-09-28):**
+      - Si un campo `login`/`password`/`website` se repetía en la misma tarjeta, el último pisaba al anterior y se perdía en silencio. Ahora el primero va a su campo y los demás a `notes` con la línea transicional.
+      - Se importan las notas de la tarjeta (`<notes>`), por si el export las trae fuera de los `<field>`.
+      - Siguen sin importarse las etiquetas (carpetas), los adjuntos (`<file>`/`<image>`) y la estrella. Importar dos veces duplica las entradas: no hay deduplicación.
+    - **ADR 0025 — tarjetas, documentos, varios sitios y apps, y campos a medida (2026-09-28).** Pedido del usuario tras revisar el export de SafeInCloud.
+      - Modelo: siguen siendo keys de texto en `fields`, con convención en `vault/domain/entities/entry_fields.dart` (`url`/`url_N`, `app`/`app_N`, `card_*`, `doc_*`, `custom:<nombre>`, `hidden:<nombre>`). `VaultEntryType` gana `card` y `document`, y un tipo desconocido se lee como `password`. **Todos los dispositivos deben actualizarse:** las versiones anteriores no abren una bóveda con tarjetas o documentos.
+      - Import de SafeInCloud reescrito:
+        - tarjeta si hay `autofill="cc-*"`; documento por símbolo o por fechas sin credenciales;
+        - todos los sitios y apps van a sus campos; el resto de campos con su nombre (PIN, contraseñas extra y secreto 2FA como ocultos);
+        - historial `history` → `fieldHistory` (los 3 más recientes);
+        - no se importan fechas, etiquetas, color, hash ni `record`. Ya no se generan líneas transicionales.
+      - UI:
+        - "+" pregunta Contraseña, Tarjeta o Documento;
+        - el formulario tiene secciones por tipo y listas de sitios web y apps Android con agregar/quitar;
+        - "Otros campos" a medida (visibles u ocultos), con copiar en cada uno;
+        - la lista muestra un ícono por tipo y `•••• 1234` en las tarjetas; la búsqueda incluye sitios, titular y nombre;
+        - el historial pasa a llamarse "Valores anteriores";
+        - al guardar se conservan las keys que el formulario no maneja.
+      - Autofill: la extensión y Android usan todos los sitios de la entrada. En Android el paquete exacto va primero. Tarjetas y documentos no se ofrecen para logins.
+      - Tests: `entry_fields_test.dart` (8) e import reescrito (9). Suite: 308 en verde.
+      - Selección múltiple en la lista (pedido del usuario): pulsación larga o el botón "Seleccionar", luego "Seleccionar todo" y "Eliminar" con confirmación. Es un solo guardado con tombstones (`Vault.withEntriesDeleted`), así que la sync propaga el borrado.
+      - **Import real hecho por el usuario en Windows (2026-09-28):** 229 entradas (223 contraseñas, 5 tarjetas, 1 documento). Falta revisar a mano algunas entradas importadas y que lleguen al Redmi por sync. Arreglado de paso: el aviso final se estiraba a todo el ancho en escritorio.
+      - **Pendiente:** probar a mano en Windows y el Redmi (crear una tarjeta y un documento, varios sitios y apps, campos a medida) e importar el export real de SafeInCloud. El autofill de tarjetas no está hecho.
+    - **Export de SafeInCloud, análisis de un archivo de prueba del usuario (2026-09-28). Solo la estructura; no se retuvo ningún valor.**
+      - Elementos de primer nivel: `card`, `label` (id, name, type), `ghost` (etiquetas borradas), `record` (historial del generador: no se importa). **El export incluye la papelera completa** (`deleted="true"`, con historial) y las plantillas (`template="true"`).
+      - Atributos de `card`: `title`, `id`, `symbol`, `color`, `star`, `type` (`card`/`note`/ausente), `website_icon`, `autofill`, `first_stamp`/`time_stamp` (ms, creación y modificación). Hijos: `field`, `notes`, `label_id`, `custom_icon`.
+      - Atributos de `field`: `name`, `type`, `autofill` (`username`, `current-password`, `url`, `one-time-code`, `cc-number`, `cc-name`, `cc-exp`, `cc-csc`, `off`), `history` (JSON `{ms: valor anterior}`), `score` y `hash` (MD5 de la contraseña: no se importa).
+      - Tipos de campo: `login`, `password`, `website` (varios por tarjeta, hasta 5), `application` (paquete Android, varios por tarjeta), `one_time_password`, `number`, `text`, `expiry`, `pin`, `phone`, `date`.
+      - Plantillas de SafeInCloud: tarjeta de crédito, cuenta web/email, DNI/pasaporte, seguro, afiliación, cuenta bancaria, carné, seguridad social, router Wi-Fi, ISP, licencia de software, nota.
+      - Brechas del import actual: los `text` pierden su nombre; `application`, TOTP, `date`/`pin`/`number`/`phone`/`expiry` van a notas como líneas transicionales; sitios extra a notas; no se importan historial, fechas, etiquetas ni `type="note"`.
+    - **ADR 0024 — contraseña cambiada en otro dispositivo: se pide la nueva al abrir, sin biometría (2026-09-28).** Pedido del usuario tras probar S8: el aviso solo aparecía al entrar a Sincronización.
+      - Una sync con `passwordChanged` guarda una marca (`SyncStatePort.passwordChangedElsewhere`). Una sync exitosa o la adopción la borran.
+      - `UnlockVaultScreen`: con la marca pide "Contraseña maestra nueva", sin huella ni Windows Hello. `unlockWithBiometrics` también lo respeta. Sin marca, revisa la nube en segundo plano (solo el header; la copia tiene que ser más nueva que la última sincronizada) y cambia de modo si detecta el cambio.
+      - Con cambios locales sin sincronizar pide también la contraseña anterior. Salida: "No tengo la contraseña nueva" → entra con la anterior, sin biometría.
+      - Puerto `PasswordChangedElsewherePort` en `vault/application`, implementado en `sync` (`SyncPasswordChangedElsewhere`) y conectado en `app_composition.dart`.
+      - Banners de sync con `forceActionsBelow` (el texto se veía en una columna angosta en el teléfono).
+      - Tests: `password_changed_elsewhere_test.dart` (7) y la verificación en `app_composition_test.dart`. Suite: 297 en verde.
+      - **Verificado por el usuario (2026-09-28):** cambió la contraseña en el Redmi y Windows la pidió al abrir, sin Windows Hello. Con eso también queda cubierta la prueba manual de S8 (cambio de contraseña entre dispositivos).
+      - Guía original: cambiar la contraseña en Windows → en el Redmi, bloquear y volver a abrir → debe pedir la nueva sin huella → después la huella vuelve a funcionar.
     - **Checklist de pruebas manuales pendientes (al 2026-09-28):**
       1. Windows: textos en "usted" (desbloqueo, Seguridad, Sincronización, entradas) y tema Pixel en Apariencia.
       2. Windows ↔ Redmi: editar una entrada en Windows y que se sincronice sola (A3, eventos). En el Redmi tiene que llegar sin tocar nada.
       3. S2: sync normal en los dos dispositivos, sin rechazos de "versión más vieja".
       4. S6 en el Redmi: login en Chrome con una entrada con URL (rellena directo), una entrada sin URL (diálogo "recordar") y Crunchyroll en WebView ("dentro de la app…").
-      5. S8: cambiar la contraseña maestra en Windows y adoptarla en el Redmi desde el aviso.
+      5. ~~S8: cambio de contraseña entre dispositivos~~ — verificado (2026-09-28, junto con ADR 0024).
       6. S5 en el Redmi: la miniatura de recientes sale en negro.
       7. Restaurar desde la nube (A3): en un dispositivo sin bóveda, "Restaurarla desde la nube".
-      8. Instalar en el Redmi el APK del bloque 2 y del tema Pixel (compilado, sin instalar porque el teléfono no estaba conectado).
+      8. ~~Instalar en el Redmi el APK del bloque 2 y del tema Pixel~~ — hecho (2026-09-28).
     - Siguen pendientes las pruebas manuales de S2 y S6 en el Redmi.
     - **Tema renombrado a Lineage (2026-09-27)**, basado en el tema por defecto de LineageOS, con los colores verificados en su código fuente (ver `docs/design/README.md`). El ícono pasa a `#167C80`. A2 y A1 verificados a mano por el usuario en Windows: CRUD de entradas y auto-bloqueo funcionan.
     - **Pedido del usuario para después del refactor:** un tema estilo **Google Pixel**. Material You de Pixel: tonos y superficies del stock de Android y tipografía estilo Google Sans o equivalente libre.

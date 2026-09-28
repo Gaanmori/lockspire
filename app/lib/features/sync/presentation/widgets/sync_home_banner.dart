@@ -29,6 +29,7 @@ class SyncHomeBanner extends ConsumerWidget {
     if (message == null) return const SizedBox.shrink();
 
     return MaterialBanner(
+      forceActionsBelow: true,
       leading: const Icon(Icons.cloud_sync_outlined),
       content: Text(message),
       actions: [

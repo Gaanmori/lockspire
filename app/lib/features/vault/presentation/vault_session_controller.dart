@@ -21,6 +21,7 @@ import 'providers/replace_biometric_key_use_case_provider.dart';
 import 'providers/save_vault_use_case_provider.dart';
 import 'providers/unlock_vault_use_case_provider.dart';
 import 'providers/check_master_password_required_provider.dart';
+import 'providers/password_changed_elsewhere_port_provider.dart';
 import 'providers/password_unlock_history_port_provider.dart';
 import 'providers/vault_auth_attempt_provider.dart';
 import 'providers/vault_storage_port_provider.dart';
@@ -121,10 +122,12 @@ class VaultSessionController extends _$VaultSessionController {
   /// no hace nada aunque la pantalla lo haya llamado: la regla se aplica
   /// aquí, no solo ocultando el botón.
   Future<void> unlockWithBiometrics() async {
-    if (await ref.read(checkMasterPasswordRequiredProvider)()) return;
+    if (await _passwordRequired()) return;
     final port = ref.read(biometricAuthPortProvider);
     final key = await port.readKey();
     if (key == null) return;
+    // La nube pudo revelar el cambio mientras el prompt estaba abierto.
+    if (await _passwordChangedElsewhere()) return;
 
     final attempt = ref.read(vaultAuthAttemptProvider.notifier);
     attempt.state = const AsyncLoading();
@@ -140,6 +143,46 @@ class VaultSessionController extends _$VaultSessionController {
           fileHash: unlocked.fileHash,
         ),
       );
+      attempt.state = const AsyncData(null);
+      _emit(VaultEvent.unlocked);
+    } catch (error, stackTrace) {
+      attempt.state = AsyncError(error, stackTrace);
+    }
+  }
+
+  /// Sin biometría si venció el plazo de ADR 0017 o si la contraseña se
+  /// cambió en otro dispositivo (ADR 0024).
+  Future<bool> _passwordRequired() async =>
+      await ref.read(checkMasterPasswordRequiredProvider)() ||
+      await _passwordChangedElsewhere();
+
+  Future<bool> _passwordChangedElsewhere() async {
+    try {
+      return await (await ref.read(
+        passwordChangedElsewherePortProvider.future,
+      )).isPending();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Desbloquea con la contraseña maestra que se cambió en otro
+  /// dispositivo (ADR 0024) y deja este con ella. Mismo manejo de
+  /// progreso/error que [unlock]: [PreviousPasswordRequiredException] pide
+  /// también la anterior, porque hay cambios locales sin sincronizar.
+  Future<void> unlockWithNewPassword({
+    required String newPassword,
+    String? previousPassword,
+  }) async {
+    final attempt = ref.read(vaultAuthAttemptProvider.notifier);
+    attempt.state = const AsyncLoading();
+    try {
+      final port = await ref.read(passwordChangedElsewherePortProvider.future);
+      final result = await port.unlockWithNewPassword(
+        newPassword: newPassword,
+        previousPassword: previousPassword,
+      );
+      await adoptRekeyedSession(result);
       attempt.state = const AsyncData(null);
       _emit(VaultEvent.unlocked);
     } catch (error, stackTrace) {

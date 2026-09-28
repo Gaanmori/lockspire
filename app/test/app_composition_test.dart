@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/app_composition.dart';
 import 'package:lockspire/features/sync/application/sync_master_password_change_replica.dart';
+import 'package:lockspire/features/sync/application/sync_password_changed_elsewhere.dart';
+import 'package:lockspire/features/vault/application/password_changed_elsewhere_port.dart';
+import 'package:lockspire/features/vault/presentation/providers/password_changed_elsewhere_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/active_sync_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_state_port_provider.dart';
@@ -40,6 +43,12 @@ void main() {
         await container.read(masterPasswordChangeReplicaPortProvider.future),
         isA<SyncMasterPasswordChangeReplica>(),
       );
+      // Sin esta, un cambio de contraseña en otro dispositivo no se pediría
+      // al abrir la app (ADR 0024).
+      expect(
+        await container.read(passwordChangedElsewherePortProvider.future),
+        isA<SyncPasswordChangedElsewhere>(),
+      );
     });
 
     test('sin la conexión, vault por sí solo no replica nada', () async {
@@ -49,6 +58,10 @@ void main() {
       expect(
         await container.read(masterPasswordChangeReplicaPortProvider.future),
         isA<LocalOnlyMasterPasswordChangeReplica>(),
+      );
+      expect(
+        await container.read(passwordChangedElsewherePortProvider.future),
+        isA<NoPasswordChangedElsewhere>(),
       );
     });
   });

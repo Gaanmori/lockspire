@@ -8,10 +8,12 @@ import 'package:lockspire/shared/platform_capabilities.dart';
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../domain/entities/vault.dart';
+import '../../domain/entities/entry_fields.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../../domain/ports/biometric_auth_port.dart';
 import '../providers/biometric_auth_port_provider.dart';
 import '../biometric_unlock_controller.dart';
+import '../vault_entries_controller.dart';
 import '../vault_session_controller.dart';
 import 'entry_form_screen.dart';
 
@@ -38,6 +40,57 @@ class VaultUnlockedScreen extends ConsumerStatefulWidget {
 class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
   final _searchController = TextEditingController();
   String _query = '';
+
+  /// Ids seleccionados; `null` = no se está seleccionando.
+  Set<String>? _selected;
+
+  bool get _selecting => _selected != null;
+
+  void _toggle(VaultEntry entry) => setState(() {
+    final selected = _selected ??= {};
+    if (!selected.remove(entry.id)) selected.add(entry.id);
+  });
+
+  Future<void> _deleteSelected() async {
+    final ids = _selected ?? const <String>{};
+    if (ids.isEmpty) return;
+    final n = ids.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(n == 1 ? '¿Eliminar 1 entrada?' : '¿Eliminar $n entradas?'),
+        content: const Text(
+          'Se eliminan de la bóveda en este dispositivo y en los demás al '
+          'sincronizar.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await ref.read(vaultEntriesControllerProvider).deleteEntries(ids);
+    if (!mounted) return;
+    setState(() => _selected = null);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          n == 1 ? 'Se eliminó 1 entrada' : 'Se eliminaron $n entradas',
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -105,36 +158,108 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
   List<VaultEntry> get _filteredEntries {
     final query = _query.trim().toLowerCase();
     final visible = widget.vault.entries.where((e) => !e.deleted);
+    bool contains(String? value) =>
+        value?.toLowerCase().contains(query) ?? false;
     final matching = query.isEmpty
         ? visible
         : visible.where(
             (e) =>
-                e.title.toLowerCase().contains(query) ||
-                (e.fields['username']?.toLowerCase().contains(query) ?? false),
+                contains(e.title) ||
+                contains(e.fields[EntryFields.username]) ||
+                contains(e.fields[EntryFields.cardHolder]) ||
+                contains(e.fields[EntryFields.docName]) ||
+                e.urls.any(contains),
           );
     return matching.toList()
       ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+  }
+
+  /// Elige qué crear: contraseña, tarjeta o documento (ADR 0025).
+  Future<void> _addEntry() async {
+    final type = await showModalBottomSheet<VaultEntryType>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (type, label) in const [
+              (VaultEntryType.password, 'Contraseña'),
+              (VaultEntryType.card, 'Tarjeta'),
+              (VaultEntryType.document, 'Documento'),
+            ])
+              ListTile(
+                leading: Icon(type.icon),
+                title: Text(label),
+                onTap: () => Navigator.of(sheetContext).pop(type),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (type == null || !mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => EntryFormScreen(type: type)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final entries = _filteredEntries;
 
+    final selected = _selected ?? const <String>{};
+    final allSelected =
+        entries.isNotEmpty && entries.every((e) => selected.contains(e.id));
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lockspire'),
-        // Sincronización, Seguridad y Ajustes están en la navegación
-        // principal (`HomeShell`); aquí solo queda lo propio de la bóveda.
-        actions: [
-          if (widget.showLockAction)
-            IconButton(
-              icon: const Icon(Icons.lock),
-              tooltip: 'Bloquear',
-              onPressed: () =>
-                  ref.read(vaultSessionControllerProvider.notifier).lock(),
+      appBar: _selecting
+          ? AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: 'Cancelar selección',
+                onPressed: () => setState(() => _selected = null),
+              ),
+              title: Text('${selected.length} seleccionadas'),
+              actions: [
+                IconButton(
+                  icon: Icon(allSelected ? Icons.deselect : Icons.select_all),
+                  tooltip: allSelected
+                      ? 'Quitar selección'
+                      : 'Seleccionar todo',
+                  onPressed: () => setState(
+                    () => _selected = allSelected
+                        ? <String>{}
+                        : {for (final e in entries) e.id},
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: 'Eliminar seleccionadas',
+                  onPressed: selected.isEmpty ? null : _deleteSelected,
+                ),
+              ],
+            )
+          : AppBar(
+              title: const Text('Lockspire'),
+              // Sincronización, Seguridad y Ajustes están en la navegación
+              // principal (`HomeShell`); aquí solo queda lo propio de la bóveda.
+              actions: [
+                if (entries.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.checklist),
+                    tooltip: 'Seleccionar',
+                    onPressed: () => setState(() => _selected = <String>{}),
+                  ),
+                if (widget.showLockAction)
+                  IconButton(
+                    icon: const Icon(Icons.lock),
+                    tooltip: 'Bloquear',
+                    onPressed: () => ref
+                        .read(vaultSessionControllerProvider.notifier)
+                        .lock(),
+                  ),
+              ],
             ),
-        ],
-      ),
       body: Column(
         children: [
           Padding(
@@ -147,7 +272,7 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
             child: TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                hintText: 'Buscar por título o usuario',
+                hintText: 'Buscar por título, usuario o sitio',
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: (value) => setState(() => _query = value),
@@ -170,26 +295,60 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
                       final entry = entries[index];
                       return _EntryTile(
                         entry: entry,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => EntryFormScreen(entry: entry),
-                          ),
-                        ),
+                        selected: _selecting
+                            ? selected.contains(entry.id)
+                            : null,
+                        onLongPress: () => _toggle(entry),
+                        onTap: _selecting
+                            ? () => _toggle(entry)
+                            : () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => EntryFormScreen(entry: entry),
+                                ),
+                              ),
                       );
                     },
                   ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        tooltip: 'Agregar contraseña',
-        onPressed: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const EntryFormScreen())),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _selecting
+          ? null
+          : FloatingActionButton(
+              tooltip: 'Agregar',
+              onPressed: _addEntry,
+              child: const Icon(Icons.add),
+            ),
     );
   }
+}
+
+/// Segunda línea de la fila: el usuario, o en una tarjeta los últimos 4
+/// dígitos (nunca el número completo) y en un documento el nombre.
+String? _subtitle(VaultEntry entry) {
+  String? nonEmpty(String? v) => (v == null || v.isEmpty) ? null : v;
+  switch (entry.type) {
+    case VaultEntryType.card:
+      final digits = (entry.fields[EntryFields.cardNumber] ?? '').replaceAll(
+        RegExp(r'\D'),
+        '',
+      );
+      final last4 = digits.length >= 4
+          ? '•••• ${digits.substring(digits.length - 4)}'
+          : null;
+      return [
+        ?last4,
+        ?nonEmpty(entry.fields[EntryFields.cardHolder]),
+      ].join(' · ').ifEmptyNull;
+    case VaultEntryType.document:
+      return nonEmpty(entry.fields[EntryFields.docName]);
+    default:
+      return nonEmpty(entry.fields[EntryFields.username]);
+  }
+}
+
+extension on String {
+  String? get ifEmptyNull => isEmpty ? null : this;
 }
 
 /// Fila de lista — icono/inicial + título + subtítulo + chevron, ver
@@ -197,16 +356,23 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
 class _EntryTile extends StatelessWidget {
   final VaultEntry entry;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
-  const _EntryTile({required this.entry, required this.onTap});
+  /// `null` fuera del modo selección.
+  final bool? selected;
+
+  const _EntryTile({
+    required this.entry,
+    required this.onTap,
+    required this.onLongPress,
+    this.selected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final username = entry.fields['username'];
-    final subtitle = (username != null && username.isNotEmpty)
-        ? username
-        : null;
+    final subtitle = _subtitle(entry);
     final initial = entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?';
+    final isLogin = entry.type == VaultEntryType.password;
 
     return Material(
       color: context.palette.bgSurface,
@@ -214,6 +380,7 @@ class _EntryTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: LockspireSpacing.md,
@@ -229,13 +396,19 @@ class _EntryTile extends StatelessWidget {
                   color: context.palette.bgSurfaceSubtle,
                   shape: BoxShape.circle,
                 ),
-                child: Text(
-                  initial,
-                  style: TextStyle(
-                    color: context.palette.accentDefault,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                child: isLogin
+                    ? Text(
+                        initial,
+                        style: TextStyle(
+                          color: context.palette.accentDefault,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      )
+                    : Icon(
+                        entry.type.icon,
+                        size: 20,
+                        color: context.palette.accentDefault,
+                      ),
               ),
               const SizedBox(width: LockspireSpacing.smMd),
               Expanded(
@@ -254,7 +427,13 @@ class _EntryTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: context.palette.textPlaceholder),
+              if (selected != null)
+                Checkbox(value: selected, onChanged: (_) => onTap())
+              else
+                Icon(
+                  Icons.chevron_right,
+                  color: context.palette.textPlaceholder,
+                ),
             ],
           ),
         ),

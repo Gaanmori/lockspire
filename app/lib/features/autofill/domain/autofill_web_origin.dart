@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import '../../vault/domain/entities/entry_fields.dart';
 import '../../browser_bridge/domain/origin_matcher.dart';
 import '../../vault/domain/entities/vault_entry.dart';
 
@@ -44,8 +45,7 @@ enum EntrySiteMatch {
 /// Mismas reglas que la extensión de escritorio ([entryMatchesOrigin],
 /// ADR 0013): host igual o subdominio, sin downgrade `https`→`http`.
 EntrySiteMatch classifyEntryForOrigin(VaultEntry entry, String origin) {
-  final url = entry.fields['url']?.trim() ?? '';
-  if (url.isEmpty) return EntrySiteMatch.noSite;
+  if (entry.urls.isEmpty) return EntrySiteMatch.noSite;
   return entryMatchesOrigin(entry, origin)
       ? EntrySiteMatch.matches
       : EntrySiteMatch.otherSite;
@@ -58,7 +58,7 @@ List<VaultEntry> sortEntriesForOrigin({
   required List<VaultEntry> entries,
   required String origin,
 }) {
-  final visible = entries.where((e) => !e.deleted).toList();
+  final visible = entries.where(_isLogin).toList();
   final matched = <VaultEntry>[];
   final rest = <VaultEntry>[];
   for (final entry in visible) {
@@ -94,3 +94,7 @@ String describeRequestingApp(String packageName) {
   if (packageName.isEmpty) return 'en una app desconocida';
   return 'dentro de la app $packageName';
 }
+
+/// Solo las contraseñas se ofrecen para rellenar un login: tarjetas y
+/// documentos (ADR 0025) no tienen usuario ni contraseña.
+bool _isLogin(VaultEntry e) => !e.deleted && e.type == VaultEntryType.password;

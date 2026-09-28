@@ -31,10 +31,12 @@ class VaultEntriesController {
   /// Agrega una entrada nueva de tipo contraseña.
   Future<void> addEntry({
     required String title,
+    VaultEntryType type = VaultEntryType.password,
     Map<String, String> fields = const {},
   }) => _save(
-    (vault) =>
-        vault.withEntryAdded(VaultEntry.create(title: title, fields: fields)),
+    (vault) => vault.withEntryAdded(
+      VaultEntry.create(title: title, type: type, fields: fields),
+    ),
   );
 
   /// Agrega varias entradas de una vez (p. ej. una importación, ver
@@ -58,6 +60,10 @@ class VaultEntriesController {
   /// Borrado suave (tombstone), ver `Vault.withEntryDeleted`.
   Future<void> deleteEntry(String id) =>
       _save((vault) => vault.withEntryDeleted(id, now: _now()));
+
+  /// Elimina varias entradas en un solo guardado (y una sola sync).
+  Future<void> deleteEntries(Set<String> ids) =>
+      _save((vault) => vault.withEntriesDeleted(ids, now: _now()));
 
   DateTime _now() => _ref.read(clockProvider)().toUtc();
 

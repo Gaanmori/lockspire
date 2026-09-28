@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../../vault/domain/entities/vault.dart';
+import '../../../vault/domain/entities/entry_fields.dart';
 import '../../../vault/domain/entities/vault_entry.dart';
 import '../../../vault/presentation/vault_entries_controller.dart';
 import '../../../browser_bridge/domain/origin_matcher.dart';
@@ -196,7 +197,7 @@ class _GetCredentialViewState extends State<_GetCredentialView> {
 
   Future<bool> _confirmOtherSite(VaultEntry entry, String origin) async {
     final pageHost = Uri.parse(origin).host;
-    final entrySite = entry.fields['url'] ?? '';
+    final entrySite = entry.urls.join(', ');
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

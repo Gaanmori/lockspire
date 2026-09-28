@@ -11,7 +11,6 @@ import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../application/save_vault_use_case.dart';
 import '../../domain/entities/vault_entry.dart';
-import '../../infrastructure/safeincloud_xml_import_source.dart';
 import '../providers/vault_import_source_provider.dart';
 import '../vault_entries_controller.dart';
 
@@ -34,11 +33,23 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   bool _busy = false;
   String? _errorMessage;
 
-  bool get _hasTransitionalData =>
-      _candidates?.any(
-        (e) => e.fields['notes']?.contains('[$transitionalPrefix ') ?? false,
-      ) ??
-      false;
+  /// "12 contraseñas, 3 tarjetas y 1 documento" (ADR 0025).
+  String get _summary {
+    final candidates = _candidates ?? const [];
+    int count(VaultEntryType type) =>
+        candidates.where((e) => e.type == type).length;
+    String part(int n, String one, String many) => '$n ${n == 1 ? one : many}';
+    final parts = [
+      part(count(VaultEntryType.password), 'contraseña', 'contraseñas'),
+      if (count(VaultEntryType.card) > 0)
+        part(count(VaultEntryType.card), 'tarjeta', 'tarjetas'),
+      if (count(VaultEntryType.document) > 0)
+        part(count(VaultEntryType.document), 'documento', 'documentos'),
+    ];
+    return parts.length == 1
+        ? parts.single
+        : '${parts.sublist(0, parts.length - 1).join(', ')} y ${parts.last}';
+  }
 
   Future<void> _pickFile() async {
     setState(() {
@@ -113,10 +124,14 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Importación completada'),
-        content: Text(
-          'Se importaron $count entradas. Por su seguridad: el archivo de '
-          'exportación que eligió no está cifrado. Bórrelo del lugar '
-          'donde lo guardó: Lockspire no puede borrarlo por usted.',
+        // Sin tope, en escritorio el texto se estira a todo el ancho.
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Text(
+            'Se importaron $count entradas. Por su seguridad: el archivo de '
+            'exportación que eligió no está cifrado. Bórrelo del lugar '
+            'donde lo guardó: Lockspire no puede borrarlo por usted.',
+          ),
         ),
         actions: [
           FilledButton(
@@ -201,16 +216,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           style: Theme.of(context).textTheme.headlineSmall,
           textAlign: TextAlign.center,
         ),
-        if (_hasTransitionalData) ...[
-          const SizedBox(height: LockspireSpacing.sm),
-          Text(
-            'Algunas tienen datos que Lockspire todavía no muestra de '
-            'forma estructurada (ej. TOTP, tarjetas) — quedan guardados '
-            'como texto en la nota de esa entrada.',
-            style: Theme.of(context).textTheme.bodySmall,
-            textAlign: TextAlign.center,
-          ),
-        ],
+        const SizedBox(height: LockspireSpacing.sm),
+        Text(
+          _summary,
+          style: Theme.of(context).textTheme.bodySmall,
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: LockspireSpacing.md),
         ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: 300),

@@ -151,6 +151,21 @@ class SyncController extends _$SyncController {
       }
       return result;
     });
+    await _rememberPasswordChangedElsewhere();
+  }
+
+  /// Anota si la contraseña cambió en otro dispositivo, para pedirla al
+  /// abrir la app sin biometría (ADR 0024). Solo escribe si cambia.
+  Future<void> _rememberPasswordChangedElsewhere() async {
+    final error = state.error;
+    final changed =
+        error is RemoteVaultRejectedException &&
+        error.reason == RemoteVaultRejection.passwordChanged;
+    if (!changed && state.hasError) return;
+    final syncState = ref.read(syncStatePortProvider);
+    if (await syncState.passwordChangedElsewhere() != changed) {
+      await syncState.setPasswordChangedElsewhere(changed);
+    }
   }
 
   /// Activa [id] como nube de sync. Con la bóveda desbloqueada es una
