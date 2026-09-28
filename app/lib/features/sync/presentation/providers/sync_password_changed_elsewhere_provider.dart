@@ -27,7 +27,7 @@ Future<PasswordChangedElsewherePort> syncPasswordChangedElsewhere(
   return SyncPasswordChangedElsewhere(
     localStorage: await ref.watch(vaultStoragePortProvider.future),
     ancestorStorage: await ref.watch(syncAncestorStoragePortProvider.future),
-    loadRemote: () => ref.read(activeSyncPortProvider.future),
+    loadRemote: () => freshActiveSyncPort(ref),
     syncState: ref.watch(syncStatePortProvider),
     crypto: await ref.watch(cryptoPortProvider.future),
     remoteCheckAllowed:

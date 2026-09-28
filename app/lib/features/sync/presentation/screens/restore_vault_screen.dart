@@ -74,6 +74,10 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
       _searchError = null;
     });
     try {
+      // Token fresco, como `freshActiveSyncPort` (aquí hay un WidgetRef).
+      ref
+        ..invalidate(syncPortForProvider)
+        ..invalidate(activeSyncPortProvider);
       final syncPort = await ref.read(activeSyncPortProvider.future);
       if (syncPort == null) {
         setState(() {

@@ -64,6 +64,7 @@ dependencies:
   dynamic_color: ^2.1.0
   ffi: ^2.2.0
   package_info_plus: ^10.2.1
+  google_sign_in_platform_interface: 3.1.0
 
 dev_dependencies:
   flutter_test:

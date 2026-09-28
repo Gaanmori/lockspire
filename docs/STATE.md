@@ -680,6 +680,14 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - Modelo de licencia familiar / licencia de por vida — no aplica: es un modelo de negocio de una app paga de código cerrado, Lockspire es AGPLv3 y de código abierto, el marco entero no tiene el mismo sentido acá.
   - **Generador de códigos 2FA/TOTP como tipo de entrada propio (RFC 6238).** Se llegó a implementar completo y verificado (ver la entrada correspondiente en Completado) y el usuario pidió explícitamente quitarlo: "La verdad la del otp. NO me interesa. Yo lo quitaria y descartaria." Revertido en la misma sesión — no reintroducir sin que el usuario lo pida de nuevo.
 
+### Bug: token de la nube vencido (2026-09-28, encontrado por el usuario)
+
+- **Síntoma:** en el Redmi, al ingresar la contraseña nueva (cambiada en Windows), apareció "Access was denied … error="invalid_token"" de Google Drive.
+- **Causa:** `activeSyncPortProvider`/`syncPortFor` son `keepAlive` y guardan el puerto con un token de acceso que caduca (~1 h en Google y Microsoft). Con la app abierta más de una hora, la siguiente operación contra la nube usaba el token vencido.
+- **Arreglo:** `freshActiveSyncPort` y `freshSyncPortFor` (en `active_sync_port_provider.dart`) invalidan y arman el puerto de nuevo antes de cada operación: sync, adoptar contraseña, consulta previa al desbloqueo, mudanza, restaurar, y la réplica del cambio de contraseña (envoltorio `_FreshRemoteReplica`).
+- **Pendiente de confirmar en el Redmi.**
+- **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse si esto se confirma. **Pendiente de confirmar en el Redmi.**
+
 ### MVP — canales y checklist (ADR 0028, decidido 2026-09-28)
 
 Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome Web Store y Edge Add-ons. **F-Droid fuera por ahora.** Costo total: US$30 (Play US$25, Chrome US$5).

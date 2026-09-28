@@ -34,6 +34,26 @@ Future<SyncPort?> activeSyncPort(Ref ref) async {
   return ref.watch(syncPortForProvider(provider).future);
 }
 
+/// El puerto de la nube activa armado **de nuevo**, con un token fresco.
+///
+/// Los puertos llevan un token de acceso que caduca (~1 h en Google y
+/// Microsoft) y los providers de arriba los guardan mientras viva el
+/// proceso. En Android la app puede seguir abierta horas: sin esto, la
+/// siguiente operación usaba un token vencido y la nube respondía
+/// `invalid_token` (visto en el Redmi al adoptar una contraseña cambiada en
+/// Windows). Toda operación contra la nube pasa por aquí.
+Future<SyncPort?> freshActiveSyncPort(Ref ref) {
+  ref.invalidate(syncPortForProvider);
+  ref.invalidate(activeSyncPortProvider);
+  return ref.read(activeSyncPortProvider.future);
+}
+
+/// Como [freshActiveSyncPort], para una nube concreta.
+Future<SyncPort?> freshSyncPortFor(Ref ref, SyncProviderId provider) {
+  ref.invalidate(syncPortForProvider(provider));
+  return ref.read(syncPortForProvider(provider).future);
+}
+
 /// El puerto de una nube cualquiera, conectada en este dispositivo (`null`
 /// si no lo está). Lo usa también la mudanza entre nubes (ADR 0023).
 @Riverpod(keepAlive: true)
@@ -65,7 +85,7 @@ Future<SyncPort?> syncPortFor(Ref ref, SyncProviderId provider) async {
 
       final connection = await ref
           .watch(googleDriveAndroidAuthProvider)
-          .reconnectSilently();
+          .reconnectSilently(email: account.email);
       if (connection == null) return null;
       return GoogleDriveSyncAdapter(connection.httpClient);
 

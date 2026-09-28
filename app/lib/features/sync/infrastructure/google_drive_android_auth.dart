@@ -3,6 +3,7 @@
 
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
 
 import 'google_drive_connection.dart';
 import 'google_drive_scopes.dart';
@@ -48,8 +49,37 @@ class GoogleDriveAndroidAuth {
   /// sync. Devuelve `null` si no hay sesión previa o quedó revocada; en
   /// ese caso hace falta `connectInteractive()` de nuevo (el usuario lo
   /// dispara desde `SyncSettingsScreen`).
-  Future<GoogleDriveConnection?> reconnectSilently() async {
+  ///
+  /// Primero pide el token directamente a la API de autorización de
+  /// Android para la cuenta [email] ya conectada: si el permiso de Drive
+  /// sigue dado, lo entrega **sin mostrar nada**. La hoja "Iniciando
+  /// sesión" sale del paso de *autenticación* (Credential Manager), que
+  /// aquí solo se usa como respaldo si lo anterior no alcanza. Antes se
+  /// autenticaba siempre, y como cada operación arma la conexión con un
+  /// token fresco, la hoja aparecía en cada sync.
+  Future<GoogleDriveConnection?> reconnectSilently({String? email}) async {
     await _ensureInitialized();
+    if (email != null && email.isNotEmpty) {
+      final tokens = await GoogleSignInPlatform.instance
+          .clientAuthorizationTokensForScopes(
+            ClientAuthorizationTokensForScopesParameters(
+              request: AuthorizationRequestDetails(
+                scopes: _scopes,
+                userId: null,
+                email: email,
+                promptIfUnauthorized: false,
+              ),
+            ),
+          );
+      if (tokens != null) {
+        return GoogleDriveConnection(
+          email: email,
+          httpClient: GoogleSignInClientAuthorization(
+            accessToken: tokens.accessToken,
+          ).authClient(scopes: _scopes),
+        );
+      }
+    }
     final account = await GoogleSignIn.instance
         .attemptLightweightAuthentication();
     if (account == null) return null;

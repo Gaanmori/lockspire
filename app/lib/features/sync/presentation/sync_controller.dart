@@ -194,13 +194,11 @@ class SyncController extends _$SyncController {
     required SyncProviderId to,
   }) async {
     final session = _requireUnlockedSession();
-    final toPort = await ref.read(syncPortForProvider(to).future);
+    final toPort = await freshSyncPortFor(ref, to);
     if (toPort == null) {
       throw StateError('No se pudo conectar con ${syncProviderName(to)}.');
     }
-    final fromPort = from == null
-        ? null
-        : await ref.read(syncPortForProvider(from).future);
+    final fromPort = from == null ? null : await freshSyncPortFor(ref, from);
     await MoveVaultToProviderUseCase(
       localStorage: await ref.read(vaultStoragePortProvider.future),
       ancestorStorage: await ref.read(syncAncestorStoragePortProvider.future),
@@ -258,7 +256,7 @@ class SyncController extends _$SyncController {
   }
 
   Future<SyncPort> _requireSyncPort() async {
-    final syncPort = await ref.read(activeSyncPortProvider.future);
+    final syncPort = await freshActiveSyncPort(ref);
     if (syncPort == null) {
       throw StateError(
         'Configure un proveedor de sync primero (WebDAV, Google Drive u OneDrive)',
