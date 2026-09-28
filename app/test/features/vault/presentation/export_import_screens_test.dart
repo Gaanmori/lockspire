@@ -62,6 +62,12 @@ Future<void> _pump(
   Widget screen,
 ) async {
   addTearDown(container.dispose);
+  // Alta como un teléfono: la lista de Exportar solo construye lo que se
+  // ve, y en los 800×600 por defecto el último formato y el campo de
+  // contraseña quedaban fuera.
+  tester.view.physicalSize = const Size(1080, 2400);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
@@ -93,7 +99,7 @@ void main() {
 
       await tester.enterText(find.byType(TextField), 'no es esta');
       await tester.runAsync(() async {
-        await tester.tap(find.text('Exportar'));
+        await tester.tap(find.widgetWithText(FilledButton, 'Exportar'));
         await Future<void>.delayed(const Duration(milliseconds: 100));
       });
       await tester.pumpAndSettle();
@@ -111,7 +117,7 @@ void main() {
       expect(find.textContaining('no está cifrado'), findsOneWidget);
 
       await tester.enterText(find.byType(TextField), _password);
-      await tester.tap(find.text('Exportar'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Exportar'));
       await tester.pumpAndSettle();
       expect(find.text('El archivo no va a estar cifrado'), findsOneWidget);
 
