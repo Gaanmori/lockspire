@@ -27,9 +27,9 @@ PalettePair palettesFor(ThemeFamilyId family, int? systemArgb) {
       );
     case ThemeFamilyId.lineage ||
         ThemeFamilyId.pixel ||
-        ThemeFamilyId.calido ||
-        ThemeFamilyId.menta ||
-        ThemeFamilyId.lavanda:
+        ThemeFamilyId.ubuntu ||
+        ThemeFamilyId.mint ||
+        ThemeFamilyId.windows:
       final fixed = LockspireThemeFamily.values.byName(family.name);
       return (light: fixed.light, dark: fixed.dark);
   }

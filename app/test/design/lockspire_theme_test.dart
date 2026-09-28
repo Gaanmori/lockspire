@@ -48,7 +48,7 @@ void main() {
   });
 
   test('LockspireTheme.of reutiliza el ThemeData de cada paleta', () {
-    final palette = LockspirePalettes.menta;
+    final palette = LockspirePalettes.mint;
     expect(LockspireTheme.of(palette), same(LockspireTheme.of(palette)));
   });
 

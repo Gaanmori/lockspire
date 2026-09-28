@@ -8,10 +8,10 @@ import { parseResponse } from '../src/protocol.ts';
 import { themeName } from '../src/theme.ts';
 
 test('themeName: modo fijo ignora el sistema; system lo sigue', () => {
-  assert.equal(themeName({ family: 'menta', mode: 'light' }, true), 'menta-light');
-  assert.equal(themeName({ family: 'menta', mode: 'dark' }, false), 'menta-dark');
-  assert.equal(themeName({ family: 'lavanda', mode: 'system' }, true), 'lavanda-dark');
-  assert.equal(themeName({ family: 'calido', mode: 'system' }, false), 'calido-light');
+  assert.equal(themeName({ family: 'mint', mode: 'light' }, true), 'mint-light');
+  assert.equal(themeName({ family: 'mint', mode: 'dark' }, false), 'mint-dark');
+  assert.equal(themeName({ family: 'windows', mode: 'system' }, true), 'windows-dark');
+  assert.equal(themeName({ family: 'ubuntu', mode: 'system' }, false), 'ubuntu-light');
 });
 
 test('"Colores del sistema" se muestra como Cálido en el popup', () => {
@@ -24,12 +24,12 @@ test('PONG con tema válido lo expone; desconocido o ausente se ignora', () => {
   const pong = (theme: unknown) =>
     parseResponse({ v: 1, id: 'a', type: 'PONG', locked: false, theme }, 'a');
 
-  assert.deepEqual(pong({ family: 'menta', mode: 'dark' }), {
+  assert.deepEqual(pong({ family: 'mint', mode: 'dark' }), {
     type: 'PONG',
     locked: false,
-    theme: { family: 'menta', mode: 'dark' },
+    theme: { family: 'mint', mode: 'dark' },
   });
-  for (const bad of [undefined, null, 'menta', { family: 'neon', mode: 'dark' }, { family: 'menta' }]) {
+  for (const bad of [undefined, null, 'mint', { family: 'neon', mode: 'dark' }, { family: 'mint' }]) {
     assert.deepEqual(pong(bad), { type: 'PONG', locked: false }, JSON.stringify(bad));
   }
 });

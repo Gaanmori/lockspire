@@ -486,6 +486,8 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - Si un campo `login`/`password`/`website` se repetía en la misma tarjeta, el último pisaba al anterior y se perdía en silencio. Ahora el primero va a su campo y los demás a `notes` con la línea transicional.
       - Se importan las notas de la tarjeta (`<notes>`), por si el export las trae fuera de los `<field>`.
       - Siguen sin importarse las etiquetas (carpetas), los adjuntos (`<file>`/`<image>`) y la estrella. Importar dos veces duplica las entradas: no hay deduplicación.
+    - **Temas (2026-09-28, pedido del usuario):** se quitaron Cálido, Menta y Lavanda y se agregaron Ubuntu (Yaru, `#E95420`), Linux Mint (Mint-Y de la versión actual con Cinnamon, `#35A854`) y Windows 11 (WinUI 3, `#005FB8` / `#60CDFF`). Los colores se verificaron en el código fuente de Yaru y mint-themes; el detalle está en `docs/design/README.md`. Un tema guardado que ya no existe vuelve a Lineage. La extensión se actualizó (`popup.css`, `THEME_FAMILIES`). Contraste WCAG en verde. **Pendiente de revisar a mano en Apariencia.**
+    - **Pruebas manuales pendientes de ADR 0027** (el usuario las dejó para después): respaldo cifrado en Windows y Android, CSV/JSON en otro gestor.
     - **ADR 0027 — exportar e importar (2026-09-28).** Requisito del MVP; el usuario eligió los formatos.
       - Exportar (`ExportScreen`, en Ajustes): respaldo cifrado `.lockspire` (el archivo de la bóveda tal cual), CSV de Bitwarden, JSON de Bitwarden y CSV de Chrome.
         - Siempre pide la contraseña maestra (`VerifyMasterPasswordUseCase`, comparación en tiempo constante).

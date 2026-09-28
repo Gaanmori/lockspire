@@ -120,12 +120,12 @@ void main() {
       generatePassword: (length) => '',
       requestLink: (_) {},
       currentAppearance: () => const AppearancePreference(
-        family: ThemeFamilyId.menta,
+        family: ThemeFamilyId.mint,
         mode: AppearanceMode.dark,
       ),
     );
     expect(themed(const PingRequest('a'))['theme'], {
-      'family': 'menta',
+      'family': 'mint',
       'mode': 'dark',
     });
   });

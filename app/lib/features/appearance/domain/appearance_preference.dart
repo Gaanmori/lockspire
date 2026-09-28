@@ -5,7 +5,10 @@
 /// Cada una tiene versión clara y oscura. [sistema] genera la paleta a partir
 /// del color del sistema operativo (Material You en Android, color de acento
 /// en escritorio).
-enum ThemeFamilyId { lineage, pixel, calido, menta, lavanda, sistema }
+///
+/// Un valor guardado que ya no existe (Cálido, Menta y Lavanda se quitaron
+/// el 2026-09-28) vuelve al tema por defecto al leerse.
+enum ThemeFamilyId { lineage, pixel, ubuntu, mint, windows, sistema }
 
 /// Claro, oscuro, o según el modo del sistema operativo.
 enum AppearanceMode { system, light, dark }
@@ -16,7 +19,7 @@ class AppearancePreference {
 
   const AppearancePreference({required this.family, required this.mode});
 
-  /// Cálido, siguiendo el modo del sistema.
+  /// Lineage, siguiendo el modo del sistema.
   static const defaults = AppearancePreference(
     family: ThemeFamilyId.lineage,
     mode: AppearanceMode.system,

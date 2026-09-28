@@ -13,7 +13,7 @@ import '../appearance_controller.dart';
 import '../appearance_theme.dart';
 import '../providers/system_accent_color_provider.dart';
 
-/// Elegir familia de colores (Cálido, Menta, Lavanda) y modo (según el
+/// Elegir familia de colores (Lineage, Pixel, Ubuntu, Linux Mint, Windows 11) y modo (según el
 /// sistema, claro u oscuro). El cambio se aplica al instante.
 class AppearanceScreen extends ConsumerWidget {
   const AppearanceScreen({super.key});
@@ -98,9 +98,9 @@ String _titleFor(ThemeFamilyId family) => switch (family) {
   ThemeFamilyId.sistema => 'Colores del sistema',
   ThemeFamilyId.lineage ||
   ThemeFamilyId.pixel ||
-  ThemeFamilyId.calido ||
-  ThemeFamilyId.menta ||
-  ThemeFamilyId.lavanda =>
+  ThemeFamilyId.ubuntu ||
+  ThemeFamilyId.mint ||
+  ThemeFamilyId.windows =>
     LockspireThemeFamily.values.byName(family.name).displayName,
 };
 

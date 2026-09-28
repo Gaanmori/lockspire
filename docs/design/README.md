@@ -22,9 +22,11 @@ Este documento es el resumen en texto para que cualquier agente/dev pueda implem
 | `accent/secondary` | `#4FA391` | Confirmaciones / éxito |
 | `danger` | `#C23B3B` | Errores (ej. contraseña incorrecta) |
 
-La tabla de arriba es el tema **Cálido claro**, el original.
+La tabla de arriba es el tema **Cálido claro**, el original (quitado el 2026-09-28).
 
-> **Desde 2026-09-27 el tema principal y por defecto es Lineage** (decisión del usuario), basado en el tema por defecto de LineageOS. Cálido sigue disponible como una familia más.
+> **Desde 2026-09-27 el tema principal y por defecto es Lineage** (decisión del usuario), basado en el tema por defecto de LineageOS.
+>
+> **2026-09-28:** se quitaron Cálido, Menta y Lavanda y se agregaron **Ubuntu**, **Linux Mint** y **Windows 11**, basados en los temas de cada sistema (ver abajo). Quien tuviera guardado un tema quitado vuelve a Lineage.
 
 ### Temas (2026-09-24)
 
@@ -34,16 +36,22 @@ Hay **5 familias, cada una en claro y oscuro** (10 temas). El usuario elige fami
 |---|---|---|
 | **Lineage** (por defecto) | `#F6FAFA` / `#167C80` | `#121212` / `#80D4D8` |
 | **Pixel** | `#F9F9FF` / `#445E91` | `#111318` / `#ADC6FF` |
-| Cálido | `#FFF8F1` / `#EA6C4D` | `#1E1714` / `#F07A5A` |
-| Menta | `#F3FAF7` / `#178A6B` | `#0F1C18` / `#3CC49B` |
-| Lavanda | `#F7F5FD` / `#6C5CE0` | `#16142A` / `#8F82F2` |
+| **Ubuntu** | `#FAFAFA` / `#E95420` | `#262626` / `#E95420` |
+| **Linux Mint** | `#F8F8F9` / `#35A854` | `#2E2E33` / `#35A854` |
+| **Windows 11** | `#F3F3F3` / `#005FB8` | `#202020` / `#60CDFF` |
 
 **Cuarta opción, "Colores del sistema"** (Material You): la paleta se **genera** con el algoritmo tonal de M3 (`ColorScheme.fromSeed` → `LockspirePalette.fromSeed`) a partir del color del sistema operativo: los colores del fondo de pantalla en Android 12+ y el color de acento en Windows, Linux y macOS. Lo obtiene el paquete `dynamic_color`, detrás de `SystemAccentColorPort`. Si la plataforma no ofrece color, se usa Lineage. El popup de la extensión todavía no replica la paleta generada y muestra Lineage.
 
 Todos los tokens de cada tema están en `app/lib/design/lockspire_colors.dart` (`LockspirePalettes`) y, en espejo, en `extension/public/popup.css`.
 
 - **Código:** cada tema es una `LockspirePalette`, una `ThemeExtension` con los mismos tokens de la tabla más `onAccent` (texto sobre el acento: blanco en los claros, el fondo de página en los oscuros). `LockspireTheme.of(palette)` construye el `ThemeData` y lo guarda en caché. Las pantallas leen `context.palette.X`, nunca un color fijo, así que un tema nuevo no toca ninguna pantalla.
-- **Contraste verificado en tests** (`test/design/lockspire_theme_test.dart`, WCAG) para los 10 temas fijos y para paletas generadas desde rojo, amarillo, verde, azul, morado y gris: texto principal ≥ 7:1 sobre página y tarjetas, secundario ≥ 3:1, texto de botón sobre el acento ≥ 3:1. El verde de Menta claro se oscureció respecto a la primera propuesta (`#1F9E7A` → `#178A6B`) para cumplirlo con holgura.
+- **Contraste verificado en tests** (`test/design/lockspire_theme_test.dart`, WCAG) para los 10 temas fijos y para paletas generadas desde rojo, amarillo, verde, azul, morado y gris: texto principal ≥ 7:1 sobre página y tarjetas, secundario ≥ 3:1, texto de botón sobre el acento ≥ 3:1. El más justo es el botón de Linux Mint (3,05:1): es el verde real de Mint-Y con texto blanco, como en el sistema.
+
+### Temas Ubuntu, Linux Mint y Windows 11: de dónde salen los colores (2026-09-28)
+
+- **Ubuntu:** tema Yaru (`github.com/ubuntu/yaru`, `common/accent-colors.scss.in`). Acento naranja `#E95420` con texto blanco; fondo claro `#FAFAFA`, oscuro gris neutro (~`#2C2C2C`). Secundario: berenjena de la marca `#77216F`.
+- **Linux Mint:** tema Mint-Y de la versión actual con Cinnamon (`github.com/linuxmint/mint-themes`, `src/Mint-Y/gtk-3.0/sass/_colors.scss`). Acento `#35A854`; claro sobre `#EBEBED` (fondo `#F8F8F9`, base `#FFFFFF`), oscuro sobre `#222226` (fondo `#2E2E33`, base `#333339`); texto al 87 % de negro/blanco; secundario, su azul de enlaces `#5294E2`.
+- **Windows 11:** Fluent/WinUI 3 con el acento azul por defecto. `AccentFillColorDefault` `#005FB8` (texto blanco) en claro y `#60CDFF` (texto negro) en oscuro; fondo Mica `#F3F3F3` / `#202020`, tarjetas `#FFFFFF` / `#2B2B2B`; texto `#1A1A1A` / blanco y secundario `#5D5D5D` / `#C5C5C5`; rojo crítico `#C42B1C` / `#FF99A4`.
 
 ### Tema Lineage: de dónde salen los colores
 

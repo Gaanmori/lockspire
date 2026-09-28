@@ -210,107 +210,122 @@ abstract final class LockspirePalettes {
     danger: Color(0xFFFFB4AB),
   );
 
-  // --- Cálido (dirección original del sistema de diseño) ----------------
+  // --- Ubuntu (2026-09-28) ------------------------------------------------
+  //
+  // Tema Yaru de Ubuntu (github.com/ubuntu/yaru, `accent-colors.scss.in`):
+  // acento naranja #E95420 con texto blanco, fondo claro #FAFAFA y oscuro
+  // gris neutro (~#2C2C2C). Secundario: la berenjena de la marca, #77216F.
 
-  static const calido = LockspirePalette(
+  static const ubuntu = LockspirePalette(
     brightness: Brightness.light,
-    bgPage: Color(0xFFFFF8F1),
+    bgPage: Color(0xFFFAFAFA),
     bgSurface: Color(0xFFFFFFFF),
-    bgSurfaceSubtle: Color(0xFFFDEDE6),
-    bgInput: Color(0xFFF6ECE1),
-    textPrimary: Color(0xFF3A2E2A),
-    textSecondary: Color(0xFF8A7A73),
-    textPlaceholder: Color(0xFFC9B8AF),
-    accentDefault: Color(0xFFEA6C4D),
-    accentHover: Color(0xFFD65A3C),
-    accentSecondary: Color(0xFF4FA391),
+    bgSurfaceSubtle: Color(0xFFFBDDD2),
+    bgInput: Color(0xFFEFEFEF),
+    textPrimary: Color(0xFF3D3D3D),
+    textSecondary: Color(0xFF6F6F6F),
+    textPlaceholder: Color(0xFF9A9A9A),
+    accentDefault: Color(0xFFE95420),
+    accentHover: Color(0xFFC7461A),
+    accentSecondary: Color(0xFF77216F),
     onAccent: Color(0xFFFFFFFF),
-    danger: Color(0xFFC23B3B),
+    danger: Color(0xFFC7162B),
   );
 
-  static const calidoOscuro = LockspirePalette(
+  static const ubuntuOscuro = LockspirePalette(
     brightness: Brightness.dark,
-    bgPage: Color(0xFF1E1714),
-    bgSurface: Color(0xFF2A211D),
-    bgSurfaceSubtle: Color(0xFF3A2C26),
-    bgInput: Color(0xFF332823),
-    textPrimary: Color(0xFFF5E9E2),
-    textSecondary: Color(0xFFBBA89E),
-    textPlaceholder: Color(0xFF7D6A61),
-    accentDefault: Color(0xFFF07A5A),
-    accentHover: Color(0xFFE0664A),
-    accentSecondary: Color(0xFF5FBFA8),
-    onAccent: Color(0xFF1E1714),
-    danger: Color(0xFFE5605F),
+    bgPage: Color(0xFF262626),
+    bgSurface: Color(0xFF2C2C2C),
+    bgSurfaceSubtle: Color(0xFF5A2E1E),
+    bgInput: Color(0xFF333333),
+    textPrimary: Color(0xFFF7F7F7),
+    textSecondary: Color(0xFFB8B8B8),
+    textPlaceholder: Color(0xFF7A7A7A),
+    accentDefault: Color(0xFFE95420),
+    accentHover: Color(0xFFF06A3B),
+    accentSecondary: Color(0xFFC57BBE),
+    onAccent: Color(0xFFFFFFFF),
+    danger: Color(0xFFF0616F),
   );
 
-  // --- Menta -------------------------------------------------------------
+  // --- Linux Mint (2026-09-28) --------------------------------------------
+  //
+  // Tema Mint-Y de la versión actual de Linux Mint con Cinnamon
+  // (github.com/linuxmint/mint-themes, `Mint-Y/gtk-3.0/sass/_colors.scss`):
+  // acento verde #35A854 con texto blanco; claro sobre #EBEBED (fondo
+  // #F8F8F9, base #FFFFFF); oscuro sobre #222226 (fondo #2E2E33, base
+  // #333339); texto al 87 % de negro/blanco. Secundario: su azul de
+  // enlaces #5294E2.
 
-  static const menta = LockspirePalette(
+  static const mint = LockspirePalette(
     brightness: Brightness.light,
-    bgPage: Color(0xFFF3FAF7),
+    bgPage: Color(0xFFF8F8F9),
     bgSurface: Color(0xFFFFFFFF),
-    bgSurfaceSubtle: Color(0xFFDDF2EA),
-    bgInput: Color(0xFFE7F3EE),
-    textPrimary: Color(0xFF1F3A33),
-    textSecondary: Color(0xFF5F7A72),
-    textPlaceholder: Color(0xFF9FB8B0),
-    // Más oscuro que el verde de la vista previa: con blanco encima
-    // alcanza contraste AA en los botones.
-    accentDefault: Color(0xFF178A6B),
-    accentHover: Color(0xFF12735A),
-    accentSecondary: Color(0xFF3D7BD9),
+    bgSurfaceSubtle: Color(0xFFD5EEDC),
+    bgInput: Color(0xFFEBEBED),
+    textPrimary: Color(0xFF212121),
+    textSecondary: Color(0xFF616161),
+    textPlaceholder: Color(0xFF9E9E9E),
+    accentDefault: Color(0xFF35A854),
+    accentHover: Color(0xFF2C8C46),
+    accentSecondary: Color(0xFF5294E2),
     onAccent: Color(0xFFFFFFFF),
-    danger: Color(0xFFC23B3B),
+    danger: Color(0xFFD93025),
   );
 
-  static const mentaOscuro = LockspirePalette(
+  static const mintOscuro = LockspirePalette(
     brightness: Brightness.dark,
-    bgPage: Color(0xFF0F1C18),
-    bgSurface: Color(0xFF172822),
-    bgSurfaceSubtle: Color(0xFF1F3A31),
-    bgInput: Color(0xFF1A2F28),
-    textPrimary: Color(0xFFE3F2EC),
-    textSecondary: Color(0xFF92B3A8),
-    textPlaceholder: Color(0xFF557368),
-    accentDefault: Color(0xFF3CC49B),
-    accentHover: Color(0xFF2FAE87),
-    accentSecondary: Color(0xFF6FA3F0),
-    onAccent: Color(0xFF0F1C18),
-    danger: Color(0xFFE5605F),
+    bgPage: Color(0xFF2E2E33),
+    bgSurface: Color(0xFF333339),
+    bgSurfaceSubtle: Color(0xFF264A31),
+    bgInput: Color(0xFF3A3A40),
+    textPrimary: Color(0xFFEDEDED),
+    textSecondary: Color(0xFFB0B0B5),
+    textPlaceholder: Color(0xFF7C7C82),
+    accentDefault: Color(0xFF35A854),
+    accentHover: Color(0xFF3FBF61),
+    accentSecondary: Color(0xFF5294E2),
+    onAccent: Color(0xFFFFFFFF),
+    danger: Color(0xFFFC4138),
   );
 
-  // --- Lavanda -----------------------------------------------------------
+  // --- Windows 11 (2026-09-28) --------------------------------------------
+  //
+  // Fluent / WinUI 3 con el acento azul por defecto de Windows 11: acento
+  // #005FB8 con texto blanco en claro y #60CDFF con texto negro en oscuro
+  // (AccentFillColorDefault); fondo Mica #F3F3F3 / #202020, tarjetas
+  // #FFFFFF / #2B2B2B, texto #1A1A1A y secundario #5D5D5D en claro,
+  // blanco y #C5C5C5 en oscuro; rojo "crítico" #C42B1C / #FF99A4.
 
-  static const lavanda = LockspirePalette(
+  static const windows = LockspirePalette(
     brightness: Brightness.light,
-    bgPage: Color(0xFFF7F5FD),
+    bgPage: Color(0xFFF3F3F3),
     bgSurface: Color(0xFFFFFFFF),
-    bgSurfaceSubtle: Color(0xFFECE8FB),
-    bgInput: Color(0xFFEEEBF7),
-    textPrimary: Color(0xFF2E2A45),
-    textSecondary: Color(0xFF7A7496),
-    textPlaceholder: Color(0xFFB3AECB),
-    accentDefault: Color(0xFF6C5CE0),
-    accentHover: Color(0xFF5A4ACB),
-    accentSecondary: Color(0xFF3FA28C),
+    bgSurfaceSubtle: Color(0xFFCCE4F7),
+    bgInput: Color(0xFFFBFBFB),
+    textPrimary: Color(0xFF1A1A1A),
+    textSecondary: Color(0xFF5D5D5D),
+    textPlaceholder: Color(0xFF8A8A8A),
+    accentDefault: Color(0xFF005FB8),
+    accentHover: Color(0xFF1A6FC0),
+    accentSecondary: Color(0xFF0078D4),
     onAccent: Color(0xFFFFFFFF),
-    danger: Color(0xFFC23B3B),
+    danger: Color(0xFFC42B1C),
   );
 
-  static const lavandaOscuro = LockspirePalette(
+  static const windowsOscuro = LockspirePalette(
     brightness: Brightness.dark,
-    bgPage: Color(0xFF16142A),
-    bgSurface: Color(0xFF201D38),
-    bgSurfaceSubtle: Color(0xFF2C2850),
-    bgInput: Color(0xFF252144),
-    textPrimary: Color(0xFFECE9FA),
-    textSecondary: Color(0xFFA6A1C4),
-    textPlaceholder: Color(0xFF625D84),
-    accentDefault: Color(0xFF8F82F2),
-    accentHover: Color(0xFF7B6DE6),
-    accentSecondary: Color(0xFF5CC2A8),
-    onAccent: Color(0xFF16142A),
-    danger: Color(0xFFE5605F),
+    bgPage: Color(0xFF202020),
+    bgSurface: Color(0xFF2B2B2B),
+    bgSurfaceSubtle: Color(0xFF1F3A52),
+    bgInput: Color(0xFF2D2D2D),
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFC5C5C5),
+    textPlaceholder: Color(0xFF8B8B8B),
+    accentDefault: Color(0xFF60CDFF),
+    accentHover: Color(0xFF4CC2FF),
+    accentSecondary: Color(0xFF99EBFF),
+    onAccent: Color(0xFF000000),
+    danger: Color(0xFFFF99A4),
   );
 }

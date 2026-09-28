@@ -15,12 +15,12 @@ enum LockspireThemeFamily {
     LockspirePalettes.lineageOscuro,
   ),
   pixel('Pixel', LockspirePalettes.pixel, LockspirePalettes.pixelOscuro),
-  calido('Cálido', LockspirePalettes.calido, LockspirePalettes.calidoOscuro),
-  menta('Menta', LockspirePalettes.menta, LockspirePalettes.mentaOscuro),
-  lavanda(
-    'Lavanda',
-    LockspirePalettes.lavanda,
-    LockspirePalettes.lavandaOscuro,
+  ubuntu('Ubuntu', LockspirePalettes.ubuntu, LockspirePalettes.ubuntuOscuro),
+  mint('Linux Mint', LockspirePalettes.mint, LockspirePalettes.mintOscuro),
+  windows(
+    'Windows 11',
+    LockspirePalettes.windows,
+    LockspirePalettes.windowsOscuro,
   );
 
   final String displayName;

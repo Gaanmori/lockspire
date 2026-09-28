@@ -73,14 +73,14 @@ void main() {
     final container = _container(
       _FakePort(
         const AppearancePreference(
-          family: ThemeFamilyId.lavanda,
+          family: ThemeFamilyId.windows,
           mode: AppearanceMode.dark,
         ),
       ),
     );
     final themes = await _themes(container);
     expect(themes.mode, ThemeMode.dark);
-    expect(_palette(themes.dark), LockspirePalettes.lavandaOscuro);
+    expect(_palette(themes.dark), LockspirePalettes.windowsOscuro);
   });
 
   test('cambiar familia y modo se aplica y se guarda', () async {
@@ -89,18 +89,18 @@ void main() {
     await _themes(container);
     final controller = container.read(appearanceControllerProvider.notifier);
 
-    await controller.setFamily(ThemeFamilyId.menta);
+    await controller.setFamily(ThemeFamilyId.mint);
     await controller.setMode(AppearanceMode.light);
 
     const expected = AppearancePreference(
-      family: ThemeFamilyId.menta,
+      family: ThemeFamilyId.mint,
       mode: AppearanceMode.light,
     );
     expect(container.read(appearanceControllerProvider).value, expected);
     expect(port.stored, expected);
     expect(
       _palette(container.read(appThemesProvider).light),
-      LockspirePalettes.menta,
+      LockspirePalettes.mint,
     );
   });
 
