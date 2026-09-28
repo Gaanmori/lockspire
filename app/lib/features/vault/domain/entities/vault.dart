@@ -18,19 +18,31 @@ class Vault {
   final List<VaultFolder> folders;
   final List<VaultEntry> entries;
 
+  /// En qué nube se sincroniza esta bóveda (ADR 0023): un identificador que
+  /// interpreta `sync` (`webdav`, `googleDrive`, `oneDrive`). Viaja cifrado
+  /// con la bóveda, así todos los dispositivos lo conocen. `null` en bóvedas
+  /// que todavía no se sincronizaron (o anteriores a ese ADR).
+  final String? syncHome;
+
   const Vault({
     required this.vaultId,
     required this.schemaVersion,
     this.folders = const [],
     this.entries = const [],
+    this.syncHome,
   });
 
-  Vault copyWith({List<VaultFolder>? folders, List<VaultEntry>? entries}) {
+  Vault copyWith({
+    List<VaultFolder>? folders,
+    List<VaultEntry>? entries,
+    String? syncHome,
+  }) {
     return Vault(
       vaultId: vaultId,
       schemaVersion: schemaVersion,
       folders: folders ?? this.folders,
       entries: entries ?? this.entries,
+      syncHome: syncHome ?? this.syncHome,
     );
   }
 
@@ -71,6 +83,7 @@ class Vault {
     'vault_id': vaultId,
     'folders': folders.map((f) => f.toJson()).toList(),
     'entries': entries.map((e) => e.toJson()).toList(),
+    'sync_home': ?syncHome,
   };
 
   factory Vault.fromJson(Map<String, dynamic> json) {
@@ -83,6 +96,7 @@ class Vault {
       entries: (json['entries'] as List? ?? const [])
           .map((e) => VaultEntry.fromJson(e as Map<String, dynamic>))
           .toList(),
+      syncHome: json['sync_home'] as String?,
     );
   }
 

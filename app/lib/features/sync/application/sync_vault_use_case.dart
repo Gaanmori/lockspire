@@ -3,6 +3,7 @@
 
 import 'dart:typed_data';
 
+import 'package:lockspire/features/sync/domain/ports/active_sync_provider_port.dart';
 import 'package:lockspire/features/sync/domain/ports/sync_port.dart';
 import 'package:lockspire/features/sync/domain/ports/sync_state_port.dart';
 import 'package:lockspire/features/sync/domain/vault_merge.dart';
@@ -50,6 +51,44 @@ class SyncMerged extends SyncResult {
     required this.fieldConflictsResolved,
   });
 }
+
+/// Lo que bajó de la nube dice que la bóveda **se mudó** a otra nube (ADR
+/// 0023). Se guardó localmente, pero no se subió nada a esta nube: este
+/// dispositivo tiene que conectar [to].
+class SyncVaultMoved extends SyncResult {
+  final SyncProviderId to;
+
+  const SyncVaultMoved(this.to);
+}
+
+/// La bóveda de este dispositivo vive en otra nube (ADR 0023): no se subió
+/// ni se bajó nada.
+class SyncHomeMismatchException implements Exception {
+  final SyncProviderId vaultHome;
+  final SyncProviderId active;
+
+  const SyncHomeMismatchException({
+    required this.vaultHome,
+    required this.active,
+  });
+
+  @override
+  String toString() =>
+      'Su bóveda se sincroniza con ${syncProviderName(vaultHome)}, pero este '
+      'dispositivo está conectado a ${syncProviderName(active)}. Conecte '
+      '${syncProviderName(vaultHome)} en Sincronización para seguir.';
+}
+
+/// Nombre para mostrar de cada nube.
+String syncProviderName(SyncProviderId id) => switch (id) {
+  SyncProviderId.webdav => 'WebDAV',
+  SyncProviderId.googleDrive => 'Google Drive',
+  SyncProviderId.oneDrive => 'OneDrive',
+};
+
+/// Interpreta `Vault.syncHome` (ADR 0023). Un valor desconocido se ignora.
+SyncProviderId? syncHomeOf(Vault vault) =>
+    SyncProviderId.values.asNameMap()[vault.syncHome];
 
 /// Por qué se rechazó el archivo remoto.
 enum RemoteVaultRejection {
@@ -109,6 +148,11 @@ class SyncVaultUseCase {
   final Uint8List key;
   final VaultHeader header;
 
+  /// La nube con la que sincroniza este dispositivo. Si se indica, se
+  /// comprueba contra la nube de la bóveda (ADR 0023). `null` la omite (p.
+  /// ej. la sync previa al cambio de contraseña, ADR 0018).
+  final SyncProviderId? activeProvider;
+
   const SyncVaultUseCase({
     required this.localStorage,
     required this.ancestorStorage,
@@ -117,10 +161,27 @@ class SyncVaultUseCase {
     required this.crypto,
     required this.key,
     required this.header,
+    this.activeProvider,
   });
+
+  /// Si lo que quedó es de otra nube, la bóveda se mudó (ADR 0023).
+  bool _movedAway(Vault vault) {
+    final home = syncHomeOf(vault);
+    return activeProvider != null && home != null && home != activeProvider;
+  }
 
   Future<SyncResult> call() async {
     final localExists = await localStorage.exists();
+    // ADR 0023: si la bóveda local vive en otra nube, no se toca nada.
+    if (localExists && activeProvider != null) {
+      final home = syncHomeOf(await _decrypt(await localStorage.read()));
+      if (home != null && home != activeProvider) {
+        throw SyncHomeMismatchException(
+          vaultHome: home,
+          active: activeProvider!,
+        );
+      }
+    }
     final remoteExists = await remote.remoteVaultExists();
 
     if (!localExists && !remoteExists) {
@@ -165,9 +226,12 @@ class SyncVaultUseCase {
 
     if (remoteChanged && !localChanged) {
       await rejectRollback(remoteFile, ancestorStorage);
-      await _verifyRemote(remoteFile);
+      final downloaded = await _verifyRemote(remoteFile);
       await localStorage.write(remoteFile);
       await _markSynced(remoteFile);
+      if (_movedAway(downloaded)) {
+        return SyncVaultMoved(syncHomeOf(downloaded)!);
+      }
       return const SyncDownloaded();
     }
 
@@ -190,6 +254,18 @@ class SyncVaultUseCase {
       remote: remoteVault,
     );
 
+    // ADR 0023: si la nube anuncia una mudanza, lo fusionado se guarda
+    // solo localmente; los cambios de este dispositivo esperan a que conecte
+    // la nube nueva, donde se van a fusionar.
+    if (_movedAway(analysis.autoMerged)) {
+      await SaveVaultUseCase(storage: localStorage, crypto: crypto).saveInitial(
+        vault: analysis.autoMerged,
+        key: key,
+        header: header,
+        revision: _nextRevision(local, remoteFile),
+      );
+      return SyncVaultMoved(syncHomeOf(analysis.autoMerged)!);
+    }
     await _saveAndUpload(
       analysis.autoMerged,
       revision: _nextRevision(local, remoteFile),

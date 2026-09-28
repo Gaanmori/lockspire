@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/design/lockspire_spacing.dart';
 
+import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
+import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
+
 import '../../application/sync_vault_use_case.dart';
 import '../../domain/ports/active_sync_provider_port.dart';
 import '../../domain/ports/google_drive_account_port.dart';
@@ -54,6 +57,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!await _confirmMove(SyncProviderId.webdav)) return;
 
     // Si se deja la contraseña vacía al editar credenciales existentes,
     // se conserva la actual en vez de sobrescribirla con un valor vacío.
@@ -75,7 +79,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
   }
 
   Future<void> _connectGoogleDrive() => _connect(
-    'Google Drive',
+    SyncProviderId.googleDrive,
     ref.read(syncControllerProvider.notifier).connectGoogleDrive,
   );
 
@@ -84,7 +88,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
   }
 
   Future<void> _connectOneDrive() => _connect(
-    'OneDrive',
+    SyncProviderId.oneDrive,
     ref.read(syncControllerProvider.notifier).connectOneDrive,
   );
 
@@ -92,17 +96,58 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
   /// manejar y el botón parecía no hacer nada (p. ej. un build sin la
   /// configuración OAuth, `--dart-define-from-file`).
   Future<void> _connect(
-    String provider,
+    SyncProviderId provider,
     Future<void> Function() connect,
   ) async {
+    if (!await _confirmMove(provider)) return;
     try {
       await connect();
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo conectar con $provider: $error')),
+        SnackBar(
+          content: Text(
+            'No se pudo conectar con ${syncProviderName(provider)}: $error',
+          ),
+        ),
       );
     }
+  }
+
+  /// Si la bóveda ya vive en otra nube, conectar [target] la **muda** (ADR
+  /// 0023): se pide confirmación explicando qué pasa con los demás
+  /// dispositivos.
+  Future<bool> _confirmMove(SyncProviderId target) async {
+    final session = ref.read(vaultSessionControllerProvider).value;
+    if (session is! VaultSessionUnlocked) return true;
+    final home = syncHomeOf(session.vault);
+    if (home == null || home == target) return true;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('¿Mudar la bóveda a ${syncProviderName(target)}?'),
+        content: Text(
+          'Su bóveda se sincroniza con ${syncProviderName(home)}. Si continúa, '
+          'pasa a sincronizarse con ${syncProviderName(target)} y se deja un '
+          'aviso en ${syncProviderName(home)}.\n\n'
+          'Sus otros dispositivos van a recibir ese aviso la próxima vez que '
+          'sincronicen, y tendrán que conectar ${syncProviderName(target)} '
+          'para seguir. No se pierde nada: lo que esté en '
+          '${syncProviderName(target)} se fusiona con esta bóveda.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Mudar'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
   }
 
   Future<void> _disconnectOneDrive() async {
@@ -162,6 +207,9 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
           ? 'Se fusionaron los cambios: $autoResolvedCount entradas '
                 'resueltas automáticamente.'
           : 'Se fusionaron los cambios.',
+    SyncVaultMoved(:final to) =>
+      'Su bóveda se mudó a ${syncProviderName(to)}. Conéctela arriba para '
+          'seguir sincronizando.',
   };
 
   Widget _buildProviderPicker() {

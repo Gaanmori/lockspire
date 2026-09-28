@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/clipboard/domain/ports/secure_clipboard_port.dart';
 import 'package:lockspire/features/clipboard/presentation/providers/clipboard_guard_provider.dart';
 import 'package:lockspire/features/sync/application/sync_vault_use_case.dart';
+import 'package:lockspire/features/sync/presentation/providers/current_active_sync_provider_provider.dart';
 import 'package:lockspire/features/sync/presentation/auto_sync_controller.dart';
 import 'package:lockspire/features/sync/presentation/restore_vault_controller.dart';
 import 'package:lockspire/features/sync/presentation/providers/active_sync_port_provider.dart';
@@ -165,6 +166,7 @@ class _SyncTestFakes {
       autoSyncDebounceProvider.overrideWith((ref) => syncDebounce),
       isSyncConfiguredProvider.overrideWith((ref) async => hasCredentials),
       activeSyncPortProvider.overrideWith((ref) async => syncPort),
+      currentActiveSyncProviderProvider.overrideWith((ref) async => null),
       syncStatePortProvider.overrideWith((ref) => syncState),
       syncAncestorStoragePortProvider.overrideWith(
         (ref) async => ancestorStorage,

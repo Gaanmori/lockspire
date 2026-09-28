@@ -1,6 +1,6 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-24 (soporte Linux; ADR 0012 — escritorio en la bandeja del sistema, bloqueo por inactividad/sesión del SO; ADR 0013 — native host en Dart + canal IPC + extensión Chrome/Edge v1. Todo implementado y con tests, **pendiente de verificación manual** — ver la entrada "Linux, bandeja y extensión de navegador" en Completado y el punch list en Pendiente). Anterior: 2026-09-12 (ADR 0010 — desbloqueo biométrico, confirmado en Android y Windows; OneDrive implementado y verificado como tercer y último proveedor de sync — Dropbox descartado —, con un bug de navegación real encontrado y corregido; ADR 0011 — autofill nativo en Android, Credential Manager + `AutofillService` legado, núcleo funcionando en el Redmi tras 4 bugs reales encontrados y corregidos en verificación manual, vinculación automática app↔entrada pedida por el usuario para la próxima sesión — ver Completado/Pendiente)
+Última actualización: 2026-09-28 (ADR 0023 — nube de la bóveda y mudanza, implementado y con tests, pendiente de prueba manual entre Windows y el Redmi). Anterior: 2026-09-24 (soporte Linux; ADR 0012 — escritorio en la bandeja del sistema, bloqueo por inactividad/sesión del SO; ADR 0013 — native host en Dart + canal IPC + extensión Chrome/Edge v1. Todo implementado y con tests, **pendiente de verificación manual** — ver la entrada "Linux, bandeja y extensión de navegador" en Completado y el punch list en Pendiente). Anterior: 2026-09-12 (ADR 0010 — desbloqueo biométrico, confirmado en Android y Windows; OneDrive implementado y verificado como tercer y último proveedor de sync — Dropbox descartado —, con un bug de navegación real encontrado y corregido; ADR 0011 — autofill nativo en Android, Credential Manager + `AutofillService` legado, núcleo funcionando en el Redmi tras 4 bugs reales encontrados y corregidos en verificación manual, vinculación automática app↔entrada pedida por el usuario para la próxima sesión — ver Completado/Pendiente)
 
 ## Fase actual
 
@@ -472,7 +472,15 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - **La huella no aparecía tras un bloqueo sin reiniciar la app** (diagnosticado con logcat). Al pasar a segundo plano la bóveda se bloquea (ADR 0008) y `UnlockVaultScreen` disparaba el prompt automático con la app todavía en segundo plano. Android no lo muestra y `local_auth` quedaba con una autenticación "en curso" trabada, así que los toques siguientes fallaban en silencio hasta reiniciar la app.
         - El auto-prompt ahora espera a `resumed`, con un `AppLifecycleListener`.
         - `AndroidBiometricAuthAdapter.readKey` hace `stopAuthentication()` antes de `authenticate()`, en un try aislado.
-        - **Pendiente de confirmar en el Redmi.**
+        - Confirmado por el usuario en el Redmi: la huella aparece al volver y al tocar "Usar la huella" sin reiniciar la app.
+    - **ADR 0023 — la bóveda sabe en qué nube vive; cambiar de nube es una mudanza (2026-09-28).** El usuario encontró Windows en Google Drive y el Redmi en OneDrive, divergiendo en silencio.
+      - `Vault.syncHome` (`sync_home`, opcional, cifrado). El merge propaga una mudanza hecha en otro dispositivo.
+      - `SyncVaultUseCase(activeProvider:)`: si la bóveda vive en otra nube lanza `SyncHomeMismatchException` sin subir ni bajar nada; si lo que baja dice que se mudó, guarda solo en local y devuelve `SyncVaultMoved`.
+      - `MoveVaultToProviderUseCase`: sync con la nube vieja → valida la nueva (otra bóveda o no auténtica = se cancela sin tocar nada) → marca `syncHome` → sube el aviso a la vieja → fusiona sin ancestro o sube a la nueva.
+      - UI: conectar otra nube con la bóveda desbloqueada pide confirmación ("¿Mudar la bóveda a X?"). `SyncHomeBanner` en el `AppShell` avisa del desajuste o de la mudanza. Bóvedas anteriores fijan su nube en la primera sync con éxito.
+      - Tests: `test/features/sync/application/sync_home_test.dart` (7). Suite completa: 290 en verde.
+      - **Pendiente de probar a mano:** abrir la versión nueva primero en el dispositivo cuya nube es la buena (fija `syncHome`); en el otro, sincronizar → debe salir el aviso; conectar la nube correcta → sin mudanza, fusiona. Probar también mudar a propósito y ver el aviso en el otro dispositivo.
+      - Todos los dispositivos deben tener esta versión: una versión anterior que guarde pierde `sync_home`.
     - **Checklist de pruebas manuales pendientes (al 2026-09-28):**
       1. Windows: textos en "usted" (desbloqueo, Seguridad, Sincronización, entradas) y tema Pixel en Apariencia.
       2. Windows ↔ Redmi: editar una entrada en Windows y que se sincronice sola (A3, eventos). En el Redmi tiene que llegar sin tocar nada.

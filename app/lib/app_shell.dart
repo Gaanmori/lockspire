@@ -13,6 +13,7 @@ import 'features/home/presentation/screens/settings_screen.dart';
 import 'features/home/presentation/widgets/home_shell.dart';
 import 'features/sync/presentation/screens/sync_settings_screen.dart';
 import 'features/sync/presentation/widgets/password_changed_elsewhere_banner.dart';
+import 'features/sync/presentation/widgets/sync_home_banner.dart';
 import 'features/vault/domain/entities/vault.dart';
 import 'features/vault/presentation/screens/import_screen.dart';
 import 'features/vault/presentation/screens/security_screen.dart';
@@ -32,7 +33,10 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return HomeShell(
       onLock: () => ref.read(vaultSessionControllerProvider.notifier).lock(),
-      banner: const PasswordChangedElsewhereBanner(),
+      banner: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [PasswordChangedElsewhereBanner(), SyncHomeBanner()],
+      ),
       destinations: [
         HomeDestination(
           label: 'Bóveda',

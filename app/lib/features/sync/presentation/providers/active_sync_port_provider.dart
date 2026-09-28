@@ -24,12 +24,20 @@ part 'active_sync_port_provider.g.dart';
 /// `null` si no hay ninguno configurado, o si Google Drive está activo
 /// pero la reconexión silenciosa falló (sesión revocada — el usuario
 /// necesita reconectar desde `SyncSettingsScreen`).
+/// El puerto de la nube activa en este dispositivo.
 @Riverpod(keepAlive: true)
 Future<SyncPort?> activeSyncPort(Ref ref) async {
   final provider = await ref
       .watch(activeSyncProviderPortProvider)
       .activeProvider();
+  if (provider == null) return null;
+  return ref.watch(syncPortForProvider(provider).future);
+}
 
+/// El puerto de una nube cualquiera, conectada en este dispositivo (`null`
+/// si no lo está). Lo usa también la mudanza entre nubes (ADR 0023).
+@Riverpod(keepAlive: true)
+Future<SyncPort?> syncPortFor(Ref ref, SyncProviderId provider) async {
   switch (provider) {
     case SyncProviderId.webdav:
       final credentials = await ref.watch(
@@ -81,8 +89,5 @@ Future<SyncPort?> activeSyncPort(Ref ref) async {
         );
       }
       return OneDriveSyncAdapter(connection.accessToken);
-
-    case null:
-      return null;
   }
 }

@@ -126,6 +126,11 @@ MergeAnalysis mergeVaults({
       schemaVersion: local.schemaVersion,
       folders: local.folders,
       entries: merged,
+      // ADR 0023: si la nube cambió la nube de la bóveda (una mudanza hecha
+      // en otro dispositivo), gana la nube; si no, se queda la local.
+      syncHome: remote.syncHome != ancestor?.syncHome
+          ? remote.syncHome ?? local.syncHome
+          : local.syncHome,
     ),
     autoResolvedCount: autoResolvedCount,
     fieldConflictsResolved: fieldConflictsResolved,
