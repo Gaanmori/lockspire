@@ -321,7 +321,7 @@ Map<String, Object?> _response(
   Map<String, Object?> fields = const {},
 ]) => {'v': protocolVersion, 'id': id, 'type': type, ...fields};
 
-/// [themeFamily] (`lineage`/`calido`/`menta`/`lavanda`) y [themeMode]
+/// [themeFamily] (`lineage`/`pixel`/`calido`/`menta`/`lavanda`) y [themeMode]
 /// (`system`/`light`/`dark`) le dicen a la extensión con qué tema pintarse
 /// para que coincida con la app. Opcionales: una app sin preferencia de
 /// tema no los envía.

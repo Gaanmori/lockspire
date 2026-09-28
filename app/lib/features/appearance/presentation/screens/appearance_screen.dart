@@ -97,6 +97,7 @@ class AppearanceScreen extends ConsumerWidget {
 String _titleFor(ThemeFamilyId family) => switch (family) {
   ThemeFamilyId.sistema => 'Colores del sistema',
   ThemeFamilyId.lineage ||
+  ThemeFamilyId.pixel ||
   ThemeFamilyId.calido ||
   ThemeFamilyId.menta ||
   ThemeFamilyId.lavanda =>

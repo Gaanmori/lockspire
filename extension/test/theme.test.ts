@@ -17,6 +17,7 @@ test('themeName: modo fijo ignora el sistema; system lo sigue', () => {
 test('"Colores del sistema" se muestra como Cálido en el popup', () => {
   assert.equal(themeName({ family: 'sistema', mode: 'dark' }, false), 'lineage-dark');
   assert.equal(themeName({ family: 'lineage', mode: 'light' }, true), 'lineage-light');
+  assert.equal(themeName({ family: 'pixel', mode: 'system' }, true), 'pixel-dark');
 });
 
 test('PONG con tema válido lo expone; desconocido o ausente se ignora', () => {

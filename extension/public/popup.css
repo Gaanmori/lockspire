@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-/* Tokens de docs/design/README.md. Mismos 8 temas que la app
+/* Tokens de docs/design/README.md. Mismos 10 temas que la app
    (app/lib/design/lockspire_colors.dart); la app indica cuál en la
    respuesta a PING y src/theme.ts fija data-theme en <html>. */
 :root,
@@ -30,6 +30,34 @@
   --accent-hover: #6cc2c6;
   --on-accent: #003739;
   --danger: #e5605f;
+  color-scheme: dark;
+}
+
+:root[data-theme='pixel-light'] {
+  --bg-page: #f9f9ff;
+  --bg-surface: #f3f3fa;
+  --bg-subtle: #dbe2f9;
+  --bg-input: #e2e2e9;
+  --text-primary: #1a1b20;
+  --text-secondary: #44474f;
+  --accent: #445e91;
+  --accent-hover: #3e5480;
+  --on-accent: #ffffff;
+  --danger: #ba1a1a;
+  color-scheme: light;
+}
+
+:root[data-theme='pixel-dark'] {
+  --bg-page: #111318;
+  --bg-surface: #1a1b20;
+  --bg-subtle: #3f4759;
+  --bg-input: #33353a;
+  --text-primary: #e2e2e9;
+  --text-secondary: #c4c6d0;
+  --accent: #adc6ff;
+  --accent-hover: #b5cafc;
+  --on-accent: #102f60;
+  --danger: #ffb4ab;
   color-scheme: dark;
 }
 

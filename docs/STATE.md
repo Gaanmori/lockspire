@@ -460,7 +460,17 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
       - **C3:** las listas de palabras (7.550 líneas de Dart) pasaron a `assets/wordlists/es.txt` y `en.txt`, detrás de `WordListPort` y `AssetWordListAdapter`. Procedencia y licencias en `assets/wordlists/README.md`. El generador carga la lista de forma asíncrona.
       - **C4:** toda la interfaz está en español neutro con **"usted"**: app, popup de la extensión, página de OAuth y mensaje nativo de Android. `test/ui_register_test.dart` falla si vuelve a aparecer voseo o tuteo en los literales de `lib/`.
       - App 281 tests, extensión 9. **Todos los hallazgos de la revisión 2026-09-25 están cerrados**, salvo S13, documentado sin cambios.
-      - Siguiente: el tema estilo Google Pixel (pedido del usuario) y después el MVP (Linux + F-Droid, ver arriba).
+      - **Tema Pixel (2026-09-28, pedido del usuario):** familia `pixel` (`LockspirePalettes.pixel/pixelOscuro`), después de Lineage, que sigue siendo el tema por defecto. Es Material You *tonal spot* con semilla `#4285F4`, calculada con `fromSeed` y fijada. La extensión tiene `pixel-light` y `pixel-dark`. 10 temas; pasan los tests de contraste.
+      - **Siguiente: pruebas manuales pendientes** (checklist abajo), después el MVP (Linux + F-Droid).
+    - **Checklist de pruebas manuales pendientes (al 2026-09-28):**
+      1. Windows: textos en "usted" (desbloqueo, Seguridad, Sincronización, entradas) y tema Pixel en Apariencia.
+      2. Windows ↔ Redmi: editar una entrada en Windows y que se sincronice sola (A3, eventos). En el Redmi tiene que llegar sin tocar nada.
+      3. S2: sync normal en los dos dispositivos, sin rechazos de "versión más vieja".
+      4. S6 en el Redmi: login en Chrome con una entrada con URL (rellena directo), una entrada sin URL (diálogo "recordar") y Crunchyroll en WebView ("dentro de la app…").
+      5. S8: cambiar la contraseña maestra en Windows y adoptarla en el Redmi desde el aviso.
+      6. S5 en el Redmi: la miniatura de recientes sale en negro.
+      7. Restaurar desde la nube (A3): en un dispositivo sin bóveda, "Restaurarla desde la nube".
+      8. Instalar en el Redmi el APK del bloque 2 y del tema Pixel (compilado, sin instalar porque el teléfono no estaba conectado).
     - Siguen pendientes las pruebas manuales de S2 y S6 en el Redmi.
     - **Tema renombrado a Lineage (2026-09-27)**, basado en el tema por defecto de LineageOS, con los colores verificados en su código fuente (ver `docs/design/README.md`). El ícono pasa a `#167C80`. A2 y A1 verificados a mano por el usuario en Windows: CRUD de entradas y auto-bloqueo funcionan.
     - **Pedido del usuario para después del refactor:** un tema estilo **Google Pixel**. Material You de Pixel: tonos y superficies del stock de Android y tipografía estilo Google Sans o equivalente libre.

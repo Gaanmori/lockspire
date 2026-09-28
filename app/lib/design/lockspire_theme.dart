@@ -14,6 +14,7 @@ enum LockspireThemeFamily {
     LockspirePalettes.lineage,
     LockspirePalettes.lineageOscuro,
   ),
+  pixel('Pixel', LockspirePalettes.pixel, LockspirePalettes.pixelOscuro),
   calido('Cálido', LockspirePalettes.calido, LockspirePalettes.calidoOscuro),
   menta('Menta', LockspirePalettes.menta, LockspirePalettes.mentaOscuro),
   lavanda(

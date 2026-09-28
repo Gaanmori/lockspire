@@ -27,10 +27,10 @@ void main() {
     },
   };
 
-  test('hay 8 temas: 4 claros y 4 oscuros', () {
-    expect(all, hasLength(8));
-    expect(all.values.where((p) => !p.isDark), hasLength(4));
-    expect(all.values.where((p) => p.isDark), hasLength(4));
+  test('hay 10 temas: 5 claros y 5 oscuros', () {
+    expect(all, hasLength(10));
+    expect(all.values.where((p) => !p.isDark), hasLength(5));
+    expect(all.values.where((p) => p.isDark), hasLength(5));
   });
 
   test('Lineage es la primera familia (tema principal)', () {

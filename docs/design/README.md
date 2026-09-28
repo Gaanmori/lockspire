@@ -28,11 +28,12 @@ La tabla de arriba es el tema **Cálido claro**, el original.
 
 ### Temas (2026-09-24)
 
-Hay **4 familias, cada una en claro y oscuro** (8 temas). El usuario elige familia y modo (según el sistema, claro u oscuro) en la pantalla **Apariencia** de la app (`lib/features/appearance/`), y la extensión de navegador usa el mismo tema: la app se lo indica en la respuesta a `PING`.
+Hay **5 familias, cada una en claro y oscuro** (10 temas). El usuario elige familia y modo (según el sistema, claro u oscuro) en la pantalla **Apariencia** de la app (`lib/features/appearance/`), y la extensión de navegador usa el mismo tema: la app se lo indica en la respuesta a `PING`.
 
 | Familia | Claro: página / acento | Oscuro: página / acento |
 |---|---|---|
 | **Lineage** (por defecto) | `#F6FAFA` / `#167C80` | `#121212` / `#80D4D8` |
+| **Pixel** | `#F9F9FF` / `#445E91` | `#111318` / `#ADC6FF` |
 | Cálido | `#FFF8F1` / `#EA6C4D` | `#1E1714` / `#F07A5A` |
 | Menta | `#F3FAF7` / `#178A6B` | `#0F1C18` / `#3CC49B` |
 | Lavanda | `#F7F5FD` / `#6C5CE0` | `#16142A` / `#8F82F2` |
@@ -42,7 +43,7 @@ Hay **4 familias, cada una en claro y oscuro** (8 temas). El usuario elige famil
 Todos los tokens de cada tema están en `app/lib/design/lockspire_colors.dart` (`LockspirePalettes`) y, en espejo, en `extension/public/popup.css`.
 
 - **Código:** cada tema es una `LockspirePalette`, una `ThemeExtension` con los mismos tokens de la tabla más `onAccent` (texto sobre el acento: blanco en los claros, el fondo de página en los oscuros). `LockspireTheme.of(palette)` construye el `ThemeData` y lo guarda en caché. Las pantallas leen `context.palette.X`, nunca un color fijo, así que un tema nuevo no toca ninguna pantalla.
-- **Contraste verificado en tests** (`test/design/lockspire_theme_test.dart`, WCAG) para los 8 temas fijos y para paletas generadas desde rojo, amarillo, verde, azul, morado y gris: texto principal ≥ 7:1 sobre página y tarjetas, secundario ≥ 3:1, texto de botón sobre el acento ≥ 3:1. El verde de Menta claro se oscureció respecto a la primera propuesta (`#1F9E7A` → `#178A6B`) para cumplirlo con holgura.
+- **Contraste verificado en tests** (`test/design/lockspire_theme_test.dart`, WCAG) para los 10 temas fijos y para paletas generadas desde rojo, amarillo, verde, azul, morado y gris: texto principal ≥ 7:1 sobre página y tarjetas, secundario ≥ 3:1, texto de botón sobre el acento ≥ 3:1. El verde de Menta claro se oscureció respecto a la primera propuesta (`#1F9E7A` → `#178A6B`) para cumplirlo con holgura.
 
 ### Tema Lineage: de dónde salen los colores
 
@@ -58,6 +59,10 @@ Basado en el tema por defecto de **LineageOS**, verificado en su código fuente 
   - Fondos oscuros de marca: `#121212`, `#1F2526` y `#243738`.
 
 Nota para la comercialización: "LineageOS" es una marca de su proyecto. El tema se llama "Lineage" por su inspiración; antes de lanzar conviene confirmar que el nombre no sugiera una afiliación, o renombrarlo.
+
+### Tema Pixel: de dónde salen los colores
+
+El aspecto de un **Google Pixel**. Material You genera todos los colores con el algoritmo tonal (*tonal spot*) a partir de una semilla; aquí la semilla es el azul de Google `#4285F4`. Los valores se calcularon con el mismo algoritmo que usa "Colores del sistema" (`LockspirePalette.fromSeed`) y quedaron fijos como en las demás familias. Por eso el acento no es el azul puro de Google: *tonal spot* lo suaviza, igual que en un Pixel. La tipografía sigue siendo la de Lockspire; Google Sans no tiene licencia libre.
 
 ## Tipografía
 

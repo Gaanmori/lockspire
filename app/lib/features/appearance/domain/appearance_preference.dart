@@ -5,7 +5,7 @@
 /// Cada una tiene versión clara y oscura. [sistema] genera la paleta a partir
 /// del color del sistema operativo (Material You en Android, color de acento
 /// en escritorio).
-enum ThemeFamilyId { lineage, calido, menta, lavanda, sistema }
+enum ThemeFamilyId { lineage, pixel, calido, menta, lavanda, sistema }
 
 /// Claro, oscuro, o según el modo del sistema operativo.
 enum AppearanceMode { system, light, dark }

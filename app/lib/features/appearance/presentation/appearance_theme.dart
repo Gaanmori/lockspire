@@ -26,6 +26,7 @@ PalettePair palettesFor(ThemeFamilyId family, int? systemArgb) {
         dark: LockspirePalettes.lineageOscuro,
       );
     case ThemeFamilyId.lineage ||
+        ThemeFamilyId.pixel ||
         ThemeFamilyId.calido ||
         ThemeFamilyId.menta ||
         ThemeFamilyId.lavanda:

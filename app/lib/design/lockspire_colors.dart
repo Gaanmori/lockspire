@@ -165,6 +165,46 @@ abstract final class LockspirePalettes {
     danger: Color(0xFFE5605F),
   );
 
+  // --- Pixel (2026-09-28) --------------------------------------------------
+  //
+  // El aspecto de un Google Pixel: Material You genera todos los colores
+  // con el algoritmo tonal ("tonal spot") a partir de una semilla. Semilla:
+  // el azul de Google #4285F4. Valores calculados con el mismo algoritmo que
+  // usa "Colores del sistema" (`LockspirePalette.fromSeed`) y fijados aquí
+  // para que sean una familia como las demás.
+
+  static const pixel = LockspirePalette(
+    brightness: Brightness.light,
+    bgPage: Color(0xFFF9F9FF),
+    bgSurface: Color(0xFFF3F3FA),
+    bgSurfaceSubtle: Color(0xFFDBE2F9),
+    bgInput: Color(0xFFE2E2E9),
+    textPrimary: Color(0xFF1A1B20),
+    textSecondary: Color(0xFF44474F),
+    textPlaceholder: Color(0xFF74777F),
+    accentDefault: Color(0xFF445E91),
+    accentHover: Color(0xFF3E5480),
+    accentSecondary: Color(0xFF715573),
+    onAccent: Color(0xFFFFFFFF),
+    danger: Color(0xFFBA1A1A),
+  );
+
+  static const pixelOscuro = LockspirePalette(
+    brightness: Brightness.dark,
+    bgPage: Color(0xFF111318),
+    bgSurface: Color(0xFF1A1B20),
+    bgSurfaceSubtle: Color(0xFF3F4759),
+    bgInput: Color(0xFF33353A),
+    textPrimary: Color(0xFFE2E2E9),
+    textSecondary: Color(0xFFC4C6D0),
+    textPlaceholder: Color(0xFF8E9099),
+    accentDefault: Color(0xFFADC6FF),
+    accentHover: Color(0xFFB5CAFC),
+    accentSecondary: Color(0xFFDEBCDF),
+    onAccent: Color(0xFF102F60),
+    danger: Color(0xFFFFB4AB),
+  );
+
   // --- Cálido (dirección original del sistema de diseño) ----------------
 
   static const calido = LockspirePalette(
