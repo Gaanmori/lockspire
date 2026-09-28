@@ -442,7 +442,13 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
         - `AutoLockController`: **escucha** la sesión en vez de que la sesión lo invoque. Se instancia en `main.dart`, así cubre también la pantalla de autocompletado.
       - El reintento del portapapeles al volver a la app pasó a `ActivityAndLifecycleWatcher`.
       - App 272 tests.
-      - **Pendiente:** A5 (casos de uso inyectados) y A3/A4 (cortar el ciclo `vault` ↔ `sync`; la sync automática y la restauración pasan a `sync`).
+      - **A5 hecho:** un provider por caso de uso (`create`, `unlock`, `save`, `changeMasterPassword`, `replaceBiometricKey` `…UseCaseProvider`). El controller de sesión no construye ninguno.
+      - **A4 hecho:** `VaultStorageFactory` (typedef en el puerto) y `vaultStorageFactoryProvider`. El ancestro de sync lo usa sin conocer `AtomicFileVaultStorageAdapter`.
+      - **A3 hecho, `vault` ya no importa nada de `sync`:**
+        - **Sync automática:** la sesión publica `VaultEvent` (unlocked, saved, locked, rekeying) en `vaultEventsProvider`, y `sync/presentation/auto_sync_controller.dart` escucha: sync inmediata al abrir, con debounce al guardar, y cancela al bloquear o cambiar la clave. `autoSyncDebounceProvider` pasó a `sync`. Se instancia en `main.dart`.
+        - **Restaurar:** `RestoreVaultFromRemoteUseCase` y `RestoreVaultController` en `sync`. `RestoreVaultScreen` se movió a `sync/presentation/screens` y se inyecta como `restoreVaultBuilder` en `VaultGateScreen` → `CreateVaultScreen` desde `main.dart`. La sesión solo expone `openRestoredSession`.
+        - **Cambio de contraseña:** `vault` define `masterPasswordChangeReplicaPortProvider` con `LocalOnlyMasterPasswordChangeReplica` por defecto. `lib/app_composition.dart` (`appOverrides()`, usado por `main.dart`) lo conecta con `syncMasterPasswordChangeReplicaProvider`. `test/app_composition_test.dart` falla si esa conexión se pierde.
+      - App 274 tests. **Bloque 1 completo.** Siguiente: bloque 2 (A6, A7, A8-ADR, C1–C4 con la UI en "usted"), después el tema estilo Pixel y el MVP.
     - Siguen pendientes las pruebas manuales de S2 y S6 en el Redmi.
     - **Tema renombrado a Lineage (2026-09-27)**, basado en el tema por defecto de LineageOS, con los colores verificados en su código fuente (ver `docs/design/README.md`). El ícono pasa a `#167C80`. A2 y A1 verificados a mano por el usuario en Windows: CRUD de entradas y auto-bloqueo funcionan.
     - **Pedido del usuario para después del refactor:** un tema estilo **Google Pixel**. Material You de Pixel: tonos y superficies del stock de Android y tipografía estilo Google Sans o equivalente libre.

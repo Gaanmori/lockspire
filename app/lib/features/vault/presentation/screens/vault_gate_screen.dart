@@ -21,7 +21,14 @@ import 'unlock_vault_screen.dart';
 class VaultGateScreen extends ConsumerWidget {
   final Widget Function(Vault vault) unlockedBuilder;
 
-  const VaultGateScreen({super.key, required this.unlockedBuilder});
+  /// Ver `CreateVaultScreen.restoreVaultBuilder`.
+  final WidgetBuilder? restoreVaultBuilder;
+
+  const VaultGateScreen({
+    super.key,
+    required this.unlockedBuilder,
+    this.restoreVaultBuilder,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,7 +57,9 @@ class VaultGateScreen extends ConsumerWidget {
         ),
       ),
       data: (state) => switch (state) {
-        VaultSessionNoVault() => const CreateVaultScreen(),
+        VaultSessionNoVault() => CreateVaultScreen(
+          restoreVaultBuilder: restoreVaultBuilder,
+        ),
         VaultSessionLocked() => const UnlockVaultScreen(),
         VaultSessionUnlocked(:final vault) => unlockedBuilder(vault),
       },

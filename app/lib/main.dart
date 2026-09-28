@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'app_composition.dart';
 import 'app_shell.dart';
 import 'features/appearance/presentation/appearance_controller.dart';
 import 'features/appearance/presentation/providers/app_themes_provider.dart';
@@ -17,6 +18,7 @@ import 'features/browser_bridge/presentation/providers/browser_bridge_provider.d
 import 'features/browser_bridge/presentation/widgets/link_request_listener.dart';
 import 'features/desktop/presentation/widgets/desktop_shell.dart';
 import 'features/sync/presentation/auto_sync_controller.dart';
+import 'features/sync/presentation/screens/restore_vault_screen.dart';
 import 'features/vault/presentation/auto_lock_controller.dart';
 import 'features/vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
@@ -38,7 +40,7 @@ Future<void> main() async {
   final isAutofill =
       WidgetsBinding.instance.platformDispatcher.defaultRouteName ==
       '/autofill';
-  final container = ProviderContainer();
+  final container = ProviderContainer(overrides: appOverrides());
   // El tema elegido se carga antes del primer frame: si no, la app
   // mostraría un instante el tema por defecto y luego cambiaría.
   await container.read(appearanceControllerProvider.future);
@@ -125,6 +127,7 @@ class MyApp extends ConsumerWidget {
           child: ActivityAndLifecycleWatcher(
             child: VaultGateScreen(
               unlockedBuilder: (vault) => AppShell(vault: vault),
+              restoreVaultBuilder: (_) => const RestoreVaultScreen(),
             ),
           ),
         ),

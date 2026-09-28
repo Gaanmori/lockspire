@@ -11,6 +11,7 @@ import 'package:lockspire/features/clipboard/domain/ports/secure_clipboard_port.
 import 'package:lockspire/features/clipboard/presentation/providers/clipboard_guard_provider.dart';
 import 'package:lockspire/features/sync/application/sync_vault_use_case.dart';
 import 'package:lockspire/features/sync/presentation/auto_sync_controller.dart';
+import 'package:lockspire/features/sync/presentation/restore_vault_controller.dart';
 import 'package:lockspire/features/sync/presentation/providers/active_sync_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
@@ -172,8 +173,9 @@ class _SyncTestFakes {
     ],
   );
   addTearDown(container.dispose);
-  // Como en main.dart: el bloqueo automático escucha la sesión.
+  // Como en main.dart: el bloqueo y la sync automáticos escuchan la sesión.
   container.read(autoLockControllerProvider);
+  container.read(autoSyncControllerProvider);
   return (
     container: container,
     fakes: _SyncTestFakes(
@@ -916,7 +918,6 @@ void main() {
         'no un conflicto falso)', () async {
       final built = _buildContainerWithSync();
       final container = built.container;
-      final notifier = container.read(vaultSessionControllerProvider.notifier);
       await container.read(vaultSessionControllerProvider.future);
 
       // Simula un VaultFile ya "descargado" de otro dispositivo — creado
@@ -929,10 +930,9 @@ void main() {
       )(masterPassword: _masterPassword);
       final downloadedFile = remoteStorage.stored!;
 
-      await notifier.restoreFromDownloadedFile(
-        file: downloadedFile,
-        masterPassword: _masterPassword,
-      );
+      await container
+          .read(restoreVaultControllerProvider)
+          .restore(file: downloadedFile, masterPassword: _masterPassword);
 
       expect(
         container.read(vaultSessionControllerProvider).value,
@@ -951,7 +951,6 @@ void main() {
         'en vaultAuthAttemptProvider y la sesión sigue sin bóveda', () async {
       final built = _buildContainerWithSync();
       final container = built.container;
-      final notifier = container.read(vaultSessionControllerProvider.notifier);
       await container.read(vaultSessionControllerProvider.future);
 
       final remoteStorage = FakeVaultStoragePort();
@@ -961,10 +960,12 @@ void main() {
       )(masterPassword: _masterPassword);
       final downloadedFile = remoteStorage.stored!;
 
-      await notifier.restoreFromDownloadedFile(
-        file: downloadedFile,
-        masterPassword: 'contraseña-incorrecta',
-      );
+      await container
+          .read(restoreVaultControllerProvider)
+          .restore(
+            file: downloadedFile,
+            masterPassword: 'contraseña-incorrecta',
+          );
 
       expect(
         container.read(vaultSessionControllerProvider).value,

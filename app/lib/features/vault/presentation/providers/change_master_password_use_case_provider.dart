@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'package:lockspire/features/sync/presentation/providers/master_password_change_replica_port_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../application/change_master_password_use_case.dart';
 import 'crypto_port_provider.dart';
+import 'master_password_change_replica_port_provider.dart';
 import 'vault_storage_port_provider.dart';
 
 part 'change_master_password_use_case_provider.g.dart';

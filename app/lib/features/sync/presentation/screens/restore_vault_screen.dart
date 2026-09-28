@@ -3,15 +3,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lockspire/features/sync/presentation/providers/active_sync_port_provider.dart';
-import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
-import 'package:lockspire/features/sync/presentation/screens/sync_settings_screen.dart';
 
-import '../../../../design/lockspire_spacing.dart';
-import '../../domain/ports/vault_storage_port.dart';
-import '../providers/vault_auth_attempt_provider.dart';
-import '../vault_session_controller.dart';
-import '../widgets/auth_card.dart';
+import 'package:lockspire/design/lockspire_spacing.dart';
+import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
+import 'package:lockspire/features/vault/presentation/providers/vault_auth_attempt_provider.dart';
+import 'package:lockspire/features/vault/presentation/widgets/auth_card.dart';
+
+import '../providers/active_sync_port_provider.dart';
+import '../providers/is_sync_configured_provider.dart';
+import '../restore_vault_controller.dart';
+import 'sync_settings_screen.dart';
 
 enum _RestoreStep {
   configureProvider,
@@ -106,8 +107,8 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
   Future<void> _submitPassword() async {
     if (!_formKey.currentState!.validate()) return;
     await ref
-        .read(vaultSessionControllerProvider.notifier)
-        .restoreFromDownloadedFile(
+        .read(restoreVaultControllerProvider)
+        .restore(
           file: _downloadedFile!,
           masterPassword: _passwordController.text,
         );

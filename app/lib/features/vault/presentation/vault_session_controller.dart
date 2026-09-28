@@ -4,15 +4,12 @@
 import 'dart:async';
 
 import 'package:lockspire/features/clipboard/presentation/providers/clipboard_guard_provider.dart';
-import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
-import 'package:lockspire/features/sync/presentation/providers/sync_state_port_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../application/change_master_password_use_case.dart';
 import '../application/save_vault_use_case.dart';
 import '../application/unlocked_vault_result.dart';
 import '../domain/entities/vault.dart';
-import '../domain/ports/vault_storage_port.dart';
 import '../domain/vault_event.dart';
 import '../domain/vault_file_codec.dart';
 import 'providers/biometric_auth_port_provider.dart';
@@ -49,7 +46,6 @@ part 'vault_session_controller.g.dart';
 class VaultSessionController extends _$VaultSessionController {
   @override
   Future<VaultSessionState> build() async {
-
     final storage = await ref.watch(vaultStoragePortProvider.future);
     final exists = await storage.exists();
     return exists ? const VaultSessionLocked() : const VaultSessionNoVault();
@@ -184,51 +180,20 @@ class VaultSessionController extends _$VaultSessionController {
     await ref.read(replaceBiometricKeyUseCaseProvider).call(result.key);
   }
 
-  /// Restaura una bóveda descargada de un proveedor de sync en un
-  /// dispositivo sin bóveda local todavía (ver `RestoreVaultScreen`) —
-  /// alternativa a [createVault] para el caso "ya tengo una bóveda en la
-  /// nube, quiero traerla". Ver el comentario de [createVault]: mismo
-  /// motivo para no tocar `state` mientras corre.
-  ///
-  /// Si desbloquea bien, [file] pasa a ser la bóveda local **y** el
-  /// ancestro/hash de sync quedan sembrados con ese mismo archivo — no es
-  /// opcional: sin esto, la primera sync real después de restaurar vería
-  /// un cambio local falso (nada cambió, se acaba de traer tal cual) y
-  /// dispararía un conflicto espurio en vez de `SyncUpToDate`. No hace
-  /// falta disparar sync acá — sería redundante.
-  Future<void> restoreFromDownloadedFile({
-    required VaultFile file,
-    required String masterPassword,
-  }) async {
-    final attempt = ref.read(vaultAuthAttemptProvider.notifier);
-    attempt.state = const AsyncLoading();
-    try {
-      final storage = await ref.read(vaultStoragePortProvider.future);
-      final unlocked = await (await ref.read(
-        unlockVaultUseCaseProvider.future,
-      )).unlockFile(file: file, masterPassword: masterPassword);
-
-      await storage.write(file);
-      final ancestorStorage = await ref.read(
-        syncAncestorStoragePortProvider.future,
-      );
-      await ancestorStorage.write(file);
-      final syncState = ref.read(syncStatePortProvider);
-      await syncState.saveLastSyncedHash(unlocked.fileHash);
-
-      state = AsyncData(
-        VaultSessionUnlocked(
-          vault: unlocked.vault,
-          key: unlocked.key,
-          header: unlocked.header,
-          fileHash: unlocked.fileHash,
-        ),
-      );
-      attempt.state = const AsyncData(null);
-      await _recordPasswordUnlock();
-    } catch (error, stackTrace) {
-      attempt.state = AsyncError(error, stackTrace);
-    }
+  /// Abre la sesión con una bóveda restaurada desde la nube y ya descifrada
+  /// (`RestoreVaultController`, en `sync`, hallazgo A3). Cuenta como ingreso
+  /// de la contraseña maestra (ADR 0017).
+  Future<void> openRestoredSession(UnlockedVaultResult restored) async {
+    state = AsyncData(
+      VaultSessionUnlocked(
+        vault: restored.vault,
+        key: restored.key,
+        header: restored.header,
+        fileHash: restored.fileHash,
+      ),
+    );
+    await _recordPasswordUnlock();
+    _emit(VaultEvent.unlocked);
   }
 
   /// Registra un desbloqueo con la contraseña maestra (ADR 0017) y reinicia

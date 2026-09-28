@@ -11,12 +11,14 @@ import 'active_sync_port_provider.dart';
 import 'sync_ancestor_storage_port_provider.dart';
 import 'sync_state_port_provider.dart';
 
-part 'master_password_change_replica_port_provider.g.dart';
+part 'sync_master_password_change_replica_provider.g.dart';
 
-/// Composition root de [MasterPasswordChangeReplicaPort] (ADR 0018). Se
-/// reconstruye solo cuando cambia el proveedor de sync activo.
+/// Implementación de [MasterPasswordChangeReplicaPort] sobre la sync (ADR
+/// 0018). La app la conecta al puerto de `vault` en
+/// `lib/app_composition.dart` (hallazgo A3). Se reconstruye cuando cambia
+/// el proveedor de sync activo.
 @Riverpod(keepAlive: true)
-Future<MasterPasswordChangeReplicaPort> masterPasswordChangeReplicaPort(
+Future<MasterPasswordChangeReplicaPort> syncMasterPasswordChangeReplica(
   Ref ref,
 ) async {
   return SyncMasterPasswordChangeReplica(

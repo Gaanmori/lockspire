@@ -9,10 +9,13 @@ import '../../application/master_password_policy.dart';
 import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
-import 'restore_vault_screen.dart';
 
 class CreateVaultScreen extends ConsumerStatefulWidget {
-  const CreateVaultScreen({super.key});
+  /// Pantalla para restaurar una bóveda desde la nube. La inyecta la app
+  /// (vive en `sync`, hallazgo A3); sin ella no se ofrece la opción.
+  final WidgetBuilder? restoreVaultBuilder;
+
+  const CreateVaultScreen({super.key, this.restoreVaultBuilder});
 
   @override
   ConsumerState<CreateVaultScreen> createState() => _CreateVaultScreenState();
@@ -146,17 +149,17 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                           child: const Text('Crear bóveda'),
                         ),
                       ),
-                      const SizedBox(height: LockspireSpacing.md),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const RestoreVaultScreen(),
+                      if (widget.restoreVaultBuilder case final restore?) ...[
+                        const SizedBox(height: LockspireSpacing.md),
+                        TextButton(
+                          onPressed: () => Navigator.of(
+                            context,
+                          ).push(MaterialPageRoute(builder: restore)),
+                          child: const Text(
+                            '¿Ya tenés una bóveda? Restaurarla desde la nube',
                           ),
                         ),
-                        child: const Text(
-                          '¿Ya tenés una bóveda? Restaurarla desde la nube',
-                        ),
-                      ),
+                      ],
                     ],
                   ],
                 ),

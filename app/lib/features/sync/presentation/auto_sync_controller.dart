@@ -20,9 +20,10 @@ part 'auto_sync_controller.g.dart';
 @Riverpod(keepAlive: true)
 AutoSyncController autoSyncController(Ref ref) {
   final controller = AutoSyncController._(ref);
-  final subscription = ref.read(vaultEventsProvider).events.listen(
-    controller._onVaultEvent,
-  );
+  final subscription = ref
+      .read(vaultEventsProvider)
+      .events
+      .listen(controller._onVaultEvent);
   ref.onDispose(() {
     subscription.cancel();
     controller._cancelPending();
