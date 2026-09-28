@@ -87,7 +87,8 @@ class AutofillActivity : FlutterFragmentActivity() {
                         @Suppress("UNCHECKED_CAST")
                         val items = call.argument<List<Map<String, Any?>>>("items") ?: emptyList()
                         val ttl = (call.argument<Number>("ttlMillis") ?: 0).toLong()
-                        AutofillSession.start(this, items, ttl)
+                        val browsers = call.argument<List<String>>("trustedBrowsers") ?: emptyList()
+                        AutofillSession.start(this, items, browsers, ttl)
                         result.success(null)
                     }
                     "submitCreate" -> {

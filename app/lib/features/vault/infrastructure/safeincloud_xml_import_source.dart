@@ -8,6 +8,7 @@ import 'package:xml/xml.dart';
 import '../domain/entities/entry_fields.dart';
 import '../domain/entities/vault_entry.dart';
 import '../domain/ports/vault_import_source.dart';
+import 'interchange/entry_mapping.dart' show normalizeFieldName;
 
 /// Prefijo de las líneas que imports anteriores a ADR 0025 dejaban en
 /// `notes` para los campos sin mapeo. Ya no se generan; se conserva para
@@ -157,7 +158,7 @@ class _CardImport {
       case 'cc-csc':
         return EntryFields.cardCvv;
     }
-    final n = _normalize(name);
+    final n = normalizeFieldName(name);
     if (fieldType == 'pin' && n == 'pin') return EntryFields.cardPin;
     if (fieldType == 'expiry') return EntryFields.cardExpiry;
     if (n == 'titular' || n == 'holder') return EntryFields.cardHolder;
@@ -168,7 +169,7 @@ class _CardImport {
   }
 
   static String? _documentKey(String fieldType, String name) {
-    final n = _normalize(name);
+    final n = normalizeFieldName(name);
     if (n.contains('nacimiento') || n.contains('birth')) {
       return EntryFields.docBirthDate;
     }
@@ -187,8 +188,12 @@ class _CardImport {
     return null;
   }
 
-  static bool _isNotesName(String name) =>
-      const {'nota', 'notas', 'notes', 'note'}.contains(_normalize(name));
+  static bool _isNotesName(String name) => const {
+    'nota',
+    'notas',
+    'notes',
+    'note',
+  }.contains(normalizeFieldName(name));
 
   String _uniqueCustomKey(String prefix, String name, String fieldType) {
     final base = name.isEmpty ? _typeLabel(fieldType) : name;
@@ -243,18 +248,5 @@ class _CardImport {
     }
     records.sort((a, b) => b.replacedAt.compareTo(a.replacedAt));
     return records.take(maxFieldHistoryPerField).toList();
-  }
-
-  static String _normalize(String name) {
-    const accents = {
-      'á': 'a',
-      'é': 'e',
-      'í': 'i',
-      'ó': 'o',
-      'ú': 'u',
-      'ñ': 'n',
-    };
-    final lower = name.toLowerCase().trim();
-    return lower.split('').map((c) => accents[c] ?? c).join();
   }
 }

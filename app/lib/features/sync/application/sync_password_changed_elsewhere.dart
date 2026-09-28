@@ -26,12 +26,12 @@ class SyncPasswordChangedElsewhere implements PasswordChangedElsewherePort {
   final SyncStatePort syncState;
   final CryptoPort crypto;
 
-  /// Si [checkRemote] puede ir a la nube. `false` cuando hacerlo mostraría
-  /// una ventana al usuario: Google Drive en Android siempre muestra
-  /// "Iniciando sesión" para dar acceso, y verlo en cada pantalla de
-  /// bloqueo (también al rellenar en otra app) confunde. Sin la consulta,
-  /// el aviso llega igual por la marca que deja la sync.
-  final bool remoteCheckAllowed;
+  /// La nube para [checkRemote], que corre con la pantalla de bloqueo a
+  /// la vista: tiene que armarse **sin mostrar ninguna ventana** (Google
+  /// Drive en Android usa solo la API de autorización). `null` = no se
+  /// puede sin ventana, y no se consulta: el aviso llega igual por la marca
+  /// que deja la sync. Por defecto, [loadRemote].
+  final Future<SyncPort?> Function()? loadRemoteForCheck;
 
   const SyncPasswordChangedElsewhere({
     required this.localStorage,
@@ -39,7 +39,7 @@ class SyncPasswordChangedElsewhere implements PasswordChangedElsewherePort {
     required this.loadRemote,
     required this.syncState,
     required this.crypto,
-    this.remoteCheckAllowed = true,
+    this.loadRemoteForCheck,
   });
 
   @override
@@ -51,9 +51,8 @@ class SyncPasswordChangedElsewhere implements PasswordChangedElsewherePort {
   /// pudo publicarla, la nube sigue igual que en la última sync y tampoco.
   @override
   Future<bool> checkRemote() async {
-    if (!remoteCheckAllowed) return isPending();
     try {
-      final remote = await loadRemote();
+      final remote = await (loadRemoteForCheck ?? loadRemote)();
       if (remote == null) return await isPending();
       if (!await localStorage.exists() || !await remote.remoteVaultExists()) {
         return await isPending();

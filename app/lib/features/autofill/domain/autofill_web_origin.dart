@@ -70,8 +70,10 @@ List<VaultEntry> sortEntriesForOrigin({
   return [...matched, ...rest];
 }
 
-/// Nombres legibles de navegadores comunes, solo para mostrar quién pide
-/// ("en Chrome"). No se usa para decidir nada de seguridad.
+/// Nombres legibles de navegadores comunes, para mostrar quién pide ("en
+/// Chrome"). También es la lista de navegadores a los que la sesión de
+/// autofill (ADR 0026) ofrece cuentas directas por dominio web:
+/// [trustedBrowserPackages].
 const _knownBrowsers = {
   'com.android.chrome': 'Chrome',
   'com.chrome.beta': 'Chrome Beta',
@@ -98,3 +100,8 @@ String describeRequestingApp(String packageName) {
 /// Solo las contraseñas se ofrecen para rellenar un login: tarjetas y
 /// documentos (ADR 0025) no tienen usuario ni contraseña.
 bool _isLogin(VaultEntry e) => !e.deleted && e.type == VaultEntryType.password;
+
+/// Paquetes que informan con honestidad el dominio de la página: solo ellos
+/// reciben cuentas directas por dominio web en la sesión de autofill (ADR
+/// 0026). Cualquier otra app puede declarar un dominio falso.
+Iterable<String> get trustedBrowserPackages => _knownBrowsers.keys;

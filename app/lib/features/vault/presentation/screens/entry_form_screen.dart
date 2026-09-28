@@ -17,27 +17,11 @@ import '../providers/word_list_port_provider.dart';
 import '../vault_entries_controller.dart';
 import '../widgets/auth_card.dart';
 import '../widgets/entry_form_fields.dart';
+import '../widgets/entry_type_sections.dart';
 import '../widgets/field_history_section.dart';
 import '../widgets/password_generator_panel.dart';
 import '../widgets/password_strength_indicator.dart';
-
-/// Nombres e íconos de cada tipo de entrada (ADR 0025).
-extension VaultEntryTypeLabel on VaultEntryType {
-  String get label => switch (this) {
-    VaultEntryType.card => 'tarjeta',
-    VaultEntryType.document => 'documento',
-    VaultEntryType.note => 'nota',
-    VaultEntryType.passkey => 'passkey',
-    VaultEntryType.password => 'contraseña',
-  };
-
-  IconData get icon => switch (this) {
-    VaultEntryType.card => Icons.credit_card,
-    VaultEntryType.document => Icons.badge_outlined,
-    VaultEntryType.note => Icons.sticky_note_2_outlined,
-    _ => Icons.key_outlined,
-  };
-}
+import '../widgets/entry_type_label.dart';
 
 /// Formulario único de crear/editar una entrada — sin vista de detalle de
 /// solo lectura separada (ver docs/STATE.md — Fase 5). [entry] nulo =
@@ -351,71 +335,6 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     ),
   ];
 
-  List<Widget> _cardSection() => [
-    SecretField(
-      controller: _fixed[EntryFields.cardNumber]!,
-      label: 'Número de tarjeta',
-      keyboardType: TextInputType.number,
-      onCopy: _copyToClipboard,
-    ),
-    _gap(),
-    CopyableField(
-      controller: _fixed[EntryFields.cardHolder]!,
-      label: 'Titular',
-      onCopy: _copyToClipboard,
-    ),
-    _gap(),
-    CopyableField(
-      controller: _fixed[EntryFields.cardExpiry]!,
-      label: 'Vence',
-      hint: 'MM/AA',
-      keyboardType: TextInputType.datetime,
-      onCopy: _copyToClipboard,
-    ),
-    _gap(),
-    SecretField(
-      controller: _fixed[EntryFields.cardCvv]!,
-      label: 'CVV',
-      keyboardType: TextInputType.number,
-      onCopy: _copyToClipboard,
-    ),
-    _gap(),
-    SecretField(
-      controller: _fixed[EntryFields.cardPin]!,
-      label: 'PIN',
-      keyboardType: TextInputType.number,
-      onCopy: _copyToClipboard,
-    ),
-  ];
-
-  List<Widget> _documentSection() => [
-    CopyableField(
-      controller: _fixed[EntryFields.docNumber]!,
-      label: 'Número',
-      onCopy: _copyToClipboard,
-    ),
-    _gap(),
-    CopyableField(
-      controller: _fixed[EntryFields.docName]!,
-      label: 'Nombre',
-      onCopy: _copyToClipboard,
-    ),
-    for (final (key, label) in const [
-      (EntryFields.docBirthDate, 'Fecha de nacimiento'),
-      (EntryFields.docIssued, 'Expedido'),
-      (EntryFields.docExpiry, 'Vence'),
-    ]) ...[
-      _gap(),
-      CopyableField(
-        controller: _fixed[key]!,
-        label: label,
-        hint: 'DD/MM/AAAA',
-        keyboardType: TextInputType.datetime,
-        onCopy: _copyToClipboard,
-      ),
-    ],
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -455,8 +374,18 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                     ),
                     _gap(),
                     ...switch (_type) {
-                      VaultEntryType.card => _cardSection(),
-                      VaultEntryType.document => _documentSection(),
+                      VaultEntryType.card => [
+                        CardFieldsSection(
+                          fields: _fixed,
+                          onCopy: _copyToClipboard,
+                        ),
+                      ],
+                      VaultEntryType.document => [
+                        DocumentFieldsSection(
+                          fields: _fixed,
+                          onCopy: _copyToClipboard,
+                        ),
+                      ],
                       _ => _passwordSection(),
                     },
                     _sectionTitle('Sitios web'),

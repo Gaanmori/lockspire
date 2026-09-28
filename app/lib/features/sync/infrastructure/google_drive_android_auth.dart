@@ -58,28 +58,11 @@ class GoogleDriveAndroidAuth {
   /// autenticaba siempre, y como cada operación arma la conexión con un
   /// token fresco, la hoja aparecía en cada sync.
   Future<GoogleDriveConnection?> reconnectSilently({String? email}) async {
-    await _ensureInitialized();
     if (email != null && email.isNotEmpty) {
-      final tokens = await GoogleSignInPlatform.instance
-          .clientAuthorizationTokensForScopes(
-            ClientAuthorizationTokensForScopesParameters(
-              request: AuthorizationRequestDetails(
-                scopes: _scopes,
-                userId: null,
-                email: email,
-                promptIfUnauthorized: false,
-              ),
-            ),
-          );
-      if (tokens != null) {
-        return GoogleDriveConnection(
-          email: email,
-          httpClient: GoogleSignInClientAuthorization(
-            accessToken: tokens.accessToken,
-          ).authClient(scopes: _scopes),
-        );
-      }
+      final silent = await authorizeWithoutUi(email: email);
+      if (silent != null) return silent;
     }
+    await _ensureInitialized();
     final account = await GoogleSignIn.instance
         .attemptLightweightAuthentication();
     if (account == null) return null;
@@ -89,6 +72,34 @@ class GoogleDriveAndroidAuth {
     return GoogleDriveConnection(
       email: account.email,
       httpClient: authorization.authClient(scopes: _scopes),
+    );
+  }
+
+  /// Solo la API de autorización, **nunca** la hoja de autenticación: el
+  /// token si el permiso de Drive para [email] sigue dado, o `null`. Es lo
+  /// que usa la consulta previa al desbloqueo (ADR 0024), donde no puede
+  /// aparecer ninguna ventana encima de la pantalla de bloqueo.
+  Future<GoogleDriveConnection?> authorizeWithoutUi({
+    required String email,
+  }) async {
+    await _ensureInitialized();
+    final tokens = await GoogleSignInPlatform.instance
+        .clientAuthorizationTokensForScopes(
+          ClientAuthorizationTokensForScopesParameters(
+            request: AuthorizationRequestDetails(
+              scopes: _scopes,
+              userId: null,
+              email: email,
+              promptIfUnauthorized: false,
+            ),
+          ),
+        );
+    if (tokens == null) return null;
+    return GoogleDriveConnection(
+      email: email,
+      httpClient: GoogleSignInClientAuthorization(
+        accessToken: tokens.accessToken,
+      ).authClient(scopes: _scopes),
     );
   }
 

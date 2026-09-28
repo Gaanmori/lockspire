@@ -124,12 +124,13 @@ Map<String, String> customFieldMap(Iterable<CustomField> fields) {
   Map<String, String> labels,
 ) {
   final byLabel = {
-    for (final MapEntry(:key, :value) in labels.entries) _norm(value): key,
+    for (final MapEntry(:key, :value) in labels.entries)
+      normalizeFieldName(value): key,
   };
   final fixed = <String, String>{};
   final rest = <CustomField>[];
   for (final field in custom) {
-    final key = byLabel[_norm(field.name)];
+    final key = byLabel[normalizeFieldName(field.name)];
     if (key != null && !fixed.containsKey(key) && field.value.isNotEmpty) {
       fixed[key] = field.value;
     } else {
@@ -156,8 +157,11 @@ Map<String, String> customFieldMap(Iterable<CustomField> fields) {
 String formatCardExpiry(int month, int year) =>
     '${month.toString().padLeft(2, '0')}/${(year % 100).toString().padLeft(2, '0')}';
 
-String _norm(String s) {
-  const accents = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u'};
+/// Nombre de campo comparable: minúsculas, sin espacios en los extremos y
+/// sin tildes ni eñe. Lo usan todos los importadores para reconocer
+/// "Número", "numero" o "NÚMERO" como el mismo campo.
+String normalizeFieldName(String s) {
+  const accents = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n'};
   return s.trim().toLowerCase().split('').map((c) => accents[c] ?? c).join();
 }
 

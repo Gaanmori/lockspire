@@ -10,15 +10,15 @@ import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
 
 import '../../application/sync_vault_use_case.dart';
 import '../../domain/ports/active_sync_provider_port.dart';
-import '../../domain/ports/google_drive_account_port.dart';
-import '../../domain/ports/one_drive_account_port.dart';
 import '../../domain/ports/sync_credentials_port.dart';
 import '../../domain/webdav_url_policy.dart';
 import '../providers/current_active_sync_provider_provider.dart';
 import '../providers/current_google_drive_account_provider.dart';
 import '../providers/current_one_drive_account_provider.dart';
 import '../providers/current_sync_credentials_provider.dart';
+import '../sync_accounts_controller.dart';
 import '../sync_controller.dart';
+import '../widgets/cloud_account_section.dart';
 
 class SyncSettingsScreen extends ConsumerStatefulWidget {
   const SyncSettingsScreen({super.key});
@@ -67,7 +67,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
         : _passwordController.text;
 
     await ref
-        .read(syncControllerProvider.notifier)
+        .read(syncAccountsControllerProvider)
         .saveCredentials(
           WebDavCredentials(
             serverUrl: _serverController.text,
@@ -80,16 +80,16 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
 
   Future<void> _connectGoogleDrive() => _connect(
     SyncProviderId.googleDrive,
-    ref.read(syncControllerProvider.notifier).connectGoogleDrive,
+    ref.read(syncAccountsControllerProvider).connectGoogleDrive,
   );
 
   Future<void> _disconnectGoogleDrive() async {
-    await ref.read(syncControllerProvider.notifier).disconnectGoogleDrive();
+    await ref.read(syncAccountsControllerProvider).disconnectGoogleDrive();
   }
 
   Future<void> _connectOneDrive() => _connect(
     SyncProviderId.oneDrive,
-    ref.read(syncControllerProvider.notifier).connectOneDrive,
+    ref.read(syncAccountsControllerProvider).connectOneDrive,
   );
 
   /// Un fallo al conectar se muestra: antes quedaba como excepción sin
@@ -151,7 +151,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
   }
 
   Future<void> _disconnectOneDrive() async {
-    await ref.read(syncControllerProvider.notifier).disconnectOneDrive();
+    await ref.read(syncAccountsControllerProvider).disconnectOneDrive();
   }
 
   Future<void> _syncNow() async {
@@ -292,96 +292,6 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
     );
   }
 
-  Widget _buildGoogleDriveSection(
-    AsyncValue<GoogleDriveAccount?> accountAsync,
-  ) {
-    return accountAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) =>
-          Text('Ocurrió un error: $error', textAlign: TextAlign.center),
-      data: (account) {
-        if (account == null) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Sin cuenta conectada. Lockspire solo accede a su propia '
-                'carpeta oculta de datos en su Drive: no ve el resto de '
-                'sus archivos.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: LockspireSpacing.lg),
-              FilledButton(
-                onPressed: _connectGoogleDrive,
-                child: const Text('Conectar con Google'),
-              ),
-            ],
-          );
-        }
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Conectado como ${account.email}',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: LockspireSpacing.lg),
-            OutlinedButton(
-              onPressed: _disconnectGoogleDrive,
-              child: const Text('Desconectar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildOneDriveSection(AsyncValue<OneDriveAccount?> accountAsync) {
-    return accountAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) =>
-          Text('Ocurrió un error: $error', textAlign: TextAlign.center),
-      data: (account) {
-        if (account == null) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Sin cuenta conectada. Lockspire solo accede a su propia '
-                'carpeta especial de app en su OneDrive: no ve el resto de '
-                'sus archivos.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: LockspireSpacing.lg),
-              FilledButton(
-                onPressed: _connectOneDrive,
-                child: const Text('Conectar con OneDrive'),
-              ),
-            ],
-          );
-        }
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Conectado como ${account.email}',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: LockspireSpacing.lg),
-            OutlinedButton(
-              onPressed: _disconnectOneDrive,
-              child: const Text('Desconectar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final credentialsAsync = ref.watch(currentSyncCredentialsProvider);
@@ -414,9 +324,27 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                 Center(child: _buildProviderPicker()),
                 const SizedBox(height: LockspireSpacing.lg),
                 if (_selectedProvider == SyncProviderId.googleDrive)
-                  _buildGoogleDriveSection(googleAccountAsync)
+                  CloudAccountSection(
+                    account: googleAccountAsync.whenData((a) => a?.email),
+                    scopeNote:
+                        'Lockspire solo accede a su propia carpeta '
+                        'oculta de datos en su Drive: no ve el resto de '
+                        'sus archivos.',
+                    connectLabel: 'Conectar con Google',
+                    onConnect: _connectGoogleDrive,
+                    onDisconnect: _disconnectGoogleDrive,
+                  )
                 else if (_selectedProvider == SyncProviderId.oneDrive)
-                  _buildOneDriveSection(oneDriveAccountAsync)
+                  CloudAccountSection(
+                    account: oneDriveAccountAsync.whenData((a) => a?.email),
+                    scopeNote:
+                        'Lockspire solo accede a su propia carpeta '
+                        'especial de app en su OneDrive: no ve el resto '
+                        'de sus archivos.',
+                    connectLabel: 'Conectar con OneDrive',
+                    onConnect: _connectOneDrive,
+                    onDisconnect: _disconnectOneDrive,
+                  )
                 else
                   credentialsAsync.when(
                     loading: () =>

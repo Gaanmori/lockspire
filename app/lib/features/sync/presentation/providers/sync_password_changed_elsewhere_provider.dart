@@ -10,7 +10,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/ports/active_sync_provider_port.dart';
 
 import '../../application/sync_password_changed_elsewhere.dart';
+import '../../infrastructure/google_drive_sync_adapter.dart';
 import 'active_sync_port_provider.dart';
+import 'google_drive_account_port_provider.dart';
+import 'google_drive_android_auth_provider.dart';
 import 'current_active_sync_provider_provider.dart';
 import 'sync_ancestor_storage_port_provider.dart';
 import 'sync_state_port_provider.dart';
@@ -30,9 +33,22 @@ Future<PasswordChangedElsewherePort> syncPasswordChangedElsewhere(
     loadRemote: () => freshActiveSyncPort(ref),
     syncState: ref.watch(syncStatePortProvider),
     crypto: await ref.watch(cryptoPortProvider.future),
-    remoteCheckAllowed:
-        !(ref.watch(platformCapabilitiesProvider).isAndroid &&
-            await ref.watch(currentActiveSyncProviderProvider.future) ==
-                SyncProviderId.googleDrive),
+    loadRemoteForCheck: () async {
+      final googleOnAndroid =
+          ref.read(platformCapabilitiesProvider).isAndroid &&
+          await ref.read(currentActiveSyncProviderProvider.future) ==
+              SyncProviderId.googleDrive;
+      if (!googleOnAndroid) return freshActiveSyncPort(ref);
+      final account = await ref
+          .read(googleDriveAccountPortProvider)
+          .googleDriveAccount();
+      if (account == null) return null;
+      final connection = await ref
+          .read(googleDriveAndroidAuthProvider)
+          .authorizeWithoutUi(email: account.email);
+      return connection == null
+          ? null
+          : GoogleDriveSyncAdapter(connection.httpClient);
+    },
   );
 }

@@ -56,7 +56,9 @@ class _AutofillGate extends ConsumerWidget {
       ),
       data: (state) => switch (state) {
         VaultSessionUnlocked(:final vault) => AutofillScreen(vault: vault),
-        VaultSessionLocked() => const UnlockVaultScreen(),
+        VaultSessionLocked() => const UnlockVaultScreen(
+          checkCloudForPasswordChange: false,
+        ),
         // No debería pasar en la práctica (autofill solo tiene sentido con
         // una bóveda ya creada) — se cubre igual para no crashear.
         VaultSessionNoVault() => const _NoVaultView(),

@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sync con la nube (WebDAV, Google Drive, OneDrive). Estaba solo en los
+         manifiestos de debug y profile (plantilla de Flutter): el build
+         release no podía sincronizar (revisión 2026-09-28). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- allowBackup="false" (revisión 2026-09-25, hallazgo S10): la bóveda
          (cifrada) y las preferencias no entran en la copia automática de
          Android. La copia de la bóveda es la sync, con cifrado propio; una

@@ -67,4 +67,8 @@ dependencies {
     // Sugerencias de autofill en la barra del teclado (ADR 0026):
     // InlineSuggestionUi, la plantilla estándar que usan los teclados.
     implementation("androidx.autofill:autofill:1.1.0")
+
+    // Tests JVM del código nativo sin Android (AutofillMatcher, revisión
+    // 2026-09-28, T1).
+    testImplementation("junit:junit:4.13.2")
 }

@@ -17,7 +17,12 @@ import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
 
 class UnlockVaultScreen extends ConsumerStatefulWidget {
-  const UnlockVaultScreen({super.key});
+  /// Mirar la nube por si la contraseña cambió en otro dispositivo (ADR
+  /// 0024). El autocompletado lo apaga: rellenar no necesita la nube, y
+  /// descargar la bóveda en cada relleno solo gasta datos y tiempo.
+  final bool checkCloudForPasswordChange;
+
+  const UnlockVaultScreen({super.key, this.checkCloudForPasswordChange = true});
 
   @override
   ConsumerState<UnlockVaultScreen> createState() => _UnlockVaultScreenState();
@@ -73,7 +78,8 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
     }
     if (!mounted) return;
     await _checkBiometricAvailability();
-    if (port == null || !await port.checkRemote() || !mounted) return;
+    if (port == null || !widget.checkCloudForPasswordChange) return;
+    if (!await port.checkRemote() || !mounted) return;
     _promptWhenResumed?.dispose();
     _promptWhenResumed = null;
     setState(() {

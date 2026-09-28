@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/sync/application/sync_master_password_change_replica.dart';
 import 'package:lockspire/features/sync/application/sync_password_changed_elsewhere.dart';
 import 'package:lockspire/features/sync/application/sync_vault_use_case.dart';
+import 'package:lockspire/features/sync/domain/ports/sync_port.dart';
 import 'package:lockspire/features/vault/application/change_master_password_use_case.dart';
 import 'package:lockspire/features/vault/application/create_vault_use_case.dart';
 import 'package:lockspire/features/vault/application/password_changed_elsewhere_port.dart';
@@ -158,6 +159,30 @@ void main() {
       remote.remoteFile = oldPasswordCopy;
       expect(await b.port.checkRemote(), isFalse);
       expect(await b.port.isPending(), isFalse);
+    });
+
+    test('antes de desbloquear solo usa la conexión sin ventana; si no la '
+        'hay, no consulta ni cae a la normal', () async {
+      final (:a, :b) = await passwordChangedOnA();
+      var normalUsed = false;
+      SyncPasswordChangedElsewhere port(SyncPort? silent) =>
+          SyncPasswordChangedElsewhere(
+            localStorage: b.local,
+            ancestorStorage: b.ancestor,
+            loadRemote: () async {
+              normalUsed = true;
+              return remote;
+            },
+            loadRemoteForCheck: () async => silent,
+            syncState: b.syncState,
+            crypto: crypto,
+          );
+
+      expect(await port(null).checkRemote(), isFalse);
+      expect(normalUsed, isFalse);
+
+      expect(await port(remote).checkRemote(), isTrue);
+      expect(normalUsed, isFalse);
     });
 
     test('sin red devuelve lo ya sabido y no lanza', () async {

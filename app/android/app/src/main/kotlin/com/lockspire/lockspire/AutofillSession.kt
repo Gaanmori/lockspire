@@ -18,23 +18,20 @@ import android.os.SystemClock
  */
 object AutofillSession {
 
-    data class Site(val host: String, val httpsOnly: Boolean)
-
-    data class Account(
-        val title: String,
-        val username: String,
-        val password: String,
-        val sites: List<Site>,
-        val apps: List<String>,
-    )
-
-    @Volatile private var accounts: List<Account> = emptyList()
+    @Volatile private var accounts: List<AutofillAccount> = emptyList()
+    @Volatile private var trustedBrowsers: Set<String> = emptySet()
     @Volatile private var expiresAt: Long = 0L
     private var screenOffReceiver: BroadcastReceiver? = null
 
     @Synchronized
-    fun start(context: Context, items: List<Map<String, Any?>>, ttlMillis: Long) {
-        accounts = items.mapNotNull(::parseAccount)
+    fun start(
+        context: Context,
+        items: List<Map<String, Any?>>,
+        browsers: List<String>,
+        ttlMillis: Long,
+    ) {
+        accounts = items.mapNotNull(AutofillMatcher::parseAccount)
+        trustedBrowsers = browsers.toSet()
         expiresAt = SystemClock.elapsedRealtime() + ttlMillis
         registerScreenOff(context.applicationContext)
     }
@@ -42,6 +39,7 @@ object AutofillSession {
     @Synchronized
     fun clear(context: Context? = null) {
         accounts = emptyList()
+        trustedBrowsers = emptySet()
         expiresAt = 0L
         val receiver = screenOffReceiver ?: return
         screenOffReceiver = null
@@ -52,47 +50,18 @@ object AutofillSession {
         }
     }
 
-    /**
-     * Cuentas para una página web ([webDomain] no nulo, reglas de ADR
-     * 0013/0020) o, si no hay página, para la app [packageName] exacta.
-     */
+    /** Ver [AutofillMatcher.match]; vacío si la sesión venció. */
     fun matching(
         context: Context,
         packageName: String,
         webDomain: String?,
         webScheme: String?,
-    ): List<Account> {
+    ): List<AutofillAccount> {
         if (SystemClock.elapsedRealtime() >= expiresAt) {
             if (accounts.isNotEmpty()) clear(context)
             return emptyList()
         }
-        val current = accounts
-        if (!webDomain.isNullOrBlank()) {
-            val host = webDomain.lowercase().trimEnd('.')
-            val isHttps = webScheme == null || webScheme.equals("https", ignoreCase = true)
-            return current.filter { account ->
-                account.sites.any { site ->
-                    (!site.httpsOnly || isHttps) &&
-                        (host == site.host || host.endsWith(".${site.host}"))
-                }
-            }
-        }
-        if (packageName.isBlank()) return emptyList()
-        return current.filter { packageName in it.apps }
-    }
-
-    private fun parseAccount(raw: Map<String, Any?>): Account? {
-        val password = raw["password"] as? String ?: return null
-        val hosts = (raw["hosts"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-        val httpsOnly = (raw["httpsOnly"] as? List<*>)?.filterIsInstance<Boolean>() ?: emptyList()
-        if (hosts.size != httpsOnly.size) return null
-        return Account(
-            title = raw["title"] as? String ?: "",
-            username = raw["username"] as? String ?: "",
-            password = password,
-            sites = hosts.zip(httpsOnly) { host, https -> Site(host, https) },
-            apps = (raw["apps"] as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
-        )
+        return AutofillMatcher.match(accounts, trustedBrowsers, packageName, webDomain, webScheme)
     }
 
     private fun registerScreenOff(appContext: Context) {

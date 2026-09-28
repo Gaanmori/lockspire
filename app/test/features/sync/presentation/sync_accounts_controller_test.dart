@@ -8,7 +8,7 @@ import 'package:lockspire/features/sync/domain/ports/sync_credentials_port.dart'
 import 'package:lockspire/features/sync/presentation/providers/active_sync_provider_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/is_sync_configured_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_credentials_port_provider.dart';
-import 'package:lockspire/features/sync/presentation/sync_controller.dart';
+import 'package:lockspire/features/sync/presentation/sync_accounts_controller.dart';
 
 class _FakeSyncCredentialsPort implements SyncCredentialsPort {
   WebDavCredentials? _stored;
@@ -40,7 +40,7 @@ class _FakeActiveSyncProviderPort implements ActiveSyncProviderPort {
 
 void main() {
   group(
-    'SyncController.saveCredentials — invalidación de providers dependientes',
+    'SyncAccountsController.saveCredentials — invalidación de providers dependientes',
     () {
       test('isSyncConfiguredProvider pasa a true después de guardar '
           'credenciales, sin que el llamador tenga que invalidarlo a mano '
@@ -61,7 +61,7 @@ void main() {
         expect(await container.read(isSyncConfiguredProvider.future), isFalse);
 
         await container
-            .read(syncControllerProvider.notifier)
+            .read(syncAccountsControllerProvider)
             .saveCredentials(
               const WebDavCredentials(
                 serverUrl: 'https://example.test',
