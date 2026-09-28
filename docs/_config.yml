@@ -1,0 +1,10 @@
+# GitHub Pages (ADR 0028): solo se publica la política de privacidad.
+# El resto de docs/ es documentación interna del proyecto y se lee en el
+# repositorio, no en el sitio.
+title: Lockspire
+exclude:
+  - adr
+  - design
+  - reviews
+  - STATE.md
+  - THREAT_MODEL.md
