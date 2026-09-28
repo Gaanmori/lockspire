@@ -685,7 +685,7 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome Web Store y Edge Add-ons. **F-Droid fuera por ahora.** Costo total: US$30 (Play US$25, Chrome US$5).
 
 1. [ ] **Google Play:** crear la cuenta (usuario) y arrancar la prueba cerrada de 12 probadores × 14 días cuanto antes.
-2. [x] **Pantalla "Acerca de"** (`features/about`: versión, AGPLv3, código fuente, política, licencias de terceros) y **política de privacidad** (`docs/privacy-policy.md`, ES + EN, con la declaración de uso limitado de Google). Falta **publicarla con GitHub Pages** (usuario: Settings → Pages → rama `main`, carpeta `/docs`); la app enlaza a `https://gaanmori.github.io/lockspire/privacy-policy`.
+2. [x] **Pantalla "Acerca de"** (`features/about`: versión, AGPLv3, código fuente, política, licencias de terceros) y **política de privacidad** (`docs/privacy-policy.md`, ES + EN, con la declaración de uso limitado de Google). **Publicada (2026-09-28):** el repositorio ya es público y GitHub Pages sirve desde `main:/docs` solo la política (`docs/_config.yml` excluye el resto). Dirección: `https://gaanmori.github.io/lockspire/privacy-policy`, verificada con HTTP 200.
 3. [ ] **Android release:** clave de firma propia (hoy release firma con la de depuración), build release probado en el Redmi (S5, R8 con libsodium y el autofill), targetSdk vigente.
 4. [ ] **Google Cloud a producción:** verificar la pantalla de consentimiento (nombre, logo, dominio, política); quizá revisión del permiso `drive.appdata`.
 5. [ ] **Microsoft Store:** MSIX y comprobar que Chrome/Edge encuentran el native host con la app instalada desde la tienda.
