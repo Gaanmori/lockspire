@@ -58,7 +58,7 @@ class _ChangeMasterPasswordScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Contraseña maestra cambiada. Tus otros dispositivos te la '
+            'Contraseña maestra cambiada. Sus otros dispositivos se la '
             'pedirán la próxima vez que sincronicen.',
           ),
         ),
@@ -72,7 +72,7 @@ class _ChangeMasterPasswordScreenState
       setState(
         () => _error =
             'La bóveda cambió mientras se guardaba. La nube ya tiene la '
-            'contraseña nueva: sincronizá y, cuando te la pida, ingresala.',
+            'contraseña nueva: sincronice y, cuando se la pida, ingrésela.',
       );
     } catch (error) {
       setState(
@@ -120,7 +120,7 @@ class _ChangeMasterPasswordScreenState
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Si tenés sincronización, primero se sincroniza y la '
+                    'Si tiene sincronización, primero se sincroniza y la '
                     'bóveda nueva se sube a la nube: hace falta conexión. '
                     'Las copias viejas que alguien ya tenga siguen abriéndose '
                     'con la contraseña anterior.',
@@ -132,7 +132,7 @@ class _ChangeMasterPasswordScreenState
                     autofocus: true,
                     errorText: _currentPasswordError,
                     validator: (value) => (value == null || value.isEmpty)
-                        ? 'Ingresá tu contraseña actual'
+                        ? 'Ingrese su contraseña actual'
                         : null,
                   ),
                   const SizedBox(height: LockspireSpacing.md),

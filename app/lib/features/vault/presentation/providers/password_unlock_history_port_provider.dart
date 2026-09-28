@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import 'package:lockspire/shared/secure_storage_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/ports/password_unlock_history_port.dart';
@@ -11,4 +12,4 @@ part 'password_unlock_history_port_provider.g.dart';
 /// Composition root del registro de desbloqueos con contraseña (ADR 0017).
 @Riverpod(keepAlive: true)
 PasswordUnlockHistoryPort passwordUnlockHistoryPort(Ref ref) =>
-    const SecureStoragePasswordUnlockHistoryAdapter();
+    SecureStoragePasswordUnlockHistoryAdapter(ref.watch(secureStorageProvider));

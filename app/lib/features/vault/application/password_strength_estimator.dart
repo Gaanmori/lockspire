@@ -39,12 +39,12 @@ const _otherSize = 100;
 const _weakThresholdBits = 35;
 const _strongThresholdBits = 70;
 
-// Cantidad de palabras asumida por wordlist de `memorable_wordlists.dart`
+// Cantidad de palabras asumida por wordlist de `assets/wordlists/`
 // — usada solo para estimar la entropía real de un patrón
 // `Palabra1<dígito><símbolo>Palabra2...` (ver `_memorablePatternRegex`
 // abajo), no importada directamente desde ahí para no acoplar este
 // archivo puro a esas listas concretas. Se usa el tamaño de la más
-// chica de las dos (`spanishWordList`, 3050 — `englishWordList` tiene
+// chica de las dos (la lista en español, 3050 — la inglesa tiene
 // 4438) como supuesto conservador: no sabemos qué idioma generó una
 // contraseña dada solo mirando el string, así que asumir la lista más
 // grande sobreestimaría la entropía real en el peor caso. Si el tamaño
@@ -70,8 +70,8 @@ const _separatorChars = r'!@#$%^&*()\-_=+\[\]{}';
 // por cantidad de palabras en vez de por clase de caracteres — ver el
 // comentario en [estimatePasswordStrength] sobre por qué importa la
 // diferencia.
-// `[a-zñ]` en vez de `[a-z]` — `spanishWordList` permite la ñ (ver el
-// doc comment de `memorable_wordlists.dart`), así que una contraseña
+// `[a-zñ]` en vez de `[a-z]` — la lista en español permite la ñ (ver el
+// doc comment de `assets/wordlists/`), así que una contraseña
 // memorable en español real puede traerla en cualquier palabra.
 final _memorablePatternRegex = RegExp(
   '^[A-Z][a-zñ]*[0-9]+(?:[$_separatorChars][A-Z][a-zñ]*[0-9]*)*\$',

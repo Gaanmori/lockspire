@@ -127,10 +127,10 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
         title: const Text('¿Reemplazar la copia de la nube?'),
         content: const Text(
           'La nube tiene una versión más vieja que la de este dispositivo. '
-          'Si restauraste una copia antigua a propósito, podés reemplazarla '
-          'con la de este dispositivo: no perdés nada que tengas aquí.\n\n'
-          'Si no fuiste vos, alguien pudo haber accedido a tu cuenta de la '
-          'nube: cambiá esa contraseña antes de seguir.',
+          'Si restauró una copia antigua a propósito, puede reemplazarla '
+          'con la de este dispositivo: no pierde nada que tenga aquí.\n\n'
+          'Si no fue usted, alguien pudo haber accedido a su cuenta de la '
+          'nube: cambie esa contraseña antes de seguir.',
         ),
         actions: [
           TextButton(
@@ -156,7 +156,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
     SyncMerged(:final autoResolvedCount, :final fieldConflictsResolved) =>
       fieldConflictsResolved > 0
           ? 'Se fusionaron los cambios — $fieldConflictsResolved campos se '
-                'resolvieron automáticamente (podés ver el valor anterior '
+                'resolvieron automáticamente (puede ver el valor anterior '
                 'en el historial de esa entrada).'
           : autoResolvedCount > 0
           ? 'Se fusionaron los cambios: $autoResolvedCount entradas '
@@ -201,15 +201,15 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Ingresá la URL del servidor';
+                return 'Ingrese la URL del servidor';
               }
               return switch (checkWebDavUrl(value)) {
                 null => null,
                 WebDavUrlProblem.insecure =>
-                  'Usá https://: con http:// tu usuario y contraseña del '
+                  'Use https://: con http:// su usuario y contraseña del '
                       'servidor viajarían sin cifrar.',
                 WebDavUrlProblem.invalid =>
-                  'Ingresá una URL completa, p. ej. https://servidor/dav',
+                  'Ingrese una URL completa, p. ej. https://servidor/dav',
               };
             },
           ),
@@ -218,7 +218,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
             controller: _usernameController,
             decoration: const InputDecoration(labelText: 'Usuario'),
             validator: (value) =>
-                (value == null || value.isEmpty) ? 'Ingresá el usuario' : null,
+                (value == null || value.isEmpty) ? 'Ingrese el usuario' : null,
           ),
           const SizedBox(height: LockspireSpacing.md),
           TextFormField(
@@ -232,7 +232,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
             ),
             validator: (value) {
               if (credentials == null && (value == null || value.isEmpty)) {
-                return 'Ingresá la contraseña';
+                return 'Ingrese la contraseña';
               }
               return null;
             },
@@ -259,8 +259,8 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
             children: [
               const Text(
                 'Sin cuenta conectada. Lockspire solo accede a su propia '
-                'carpeta oculta de datos en tu Drive — no ve el resto de '
-                'tus archivos.',
+                'carpeta oculta de datos en su Drive: no ve el resto de '
+                'sus archivos.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: LockspireSpacing.lg),
@@ -303,8 +303,8 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
             children: [
               const Text(
                 'Sin cuenta conectada. Lockspire solo accede a su propia '
-                'carpeta especial de app en tu OneDrive — no ve el resto de '
-                'tus archivos.',
+                'carpeta especial de app en su OneDrive: no ve el resto de '
+                'sus archivos.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: LockspireSpacing.lg),

@@ -78,7 +78,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
       if (syncPort == null) {
         setState(() {
           _step = _RestoreStep.configureProvider;
-          _searchError = 'Configurá un proveedor de sync primero.';
+          _searchError = 'Configure un proveedor de sync primero.';
         });
         return;
       }
@@ -161,8 +161,8 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
       icon: Icons.cloud_sync_outlined,
       title: 'Restaurar bóveda existente',
       subtitle:
-          'Conectá el mismo proveedor de sync que ya usás en tu otro '
-          'dispositivo — vamos a bajar tu bóveda desde ahí.',
+          'Conecte el mismo proveedor de sync que ya usa en su otro '
+          'dispositivo: vamos a bajar su bóveda desde ahí.',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -198,7 +198,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
   Widget _buildSearchingStep() {
     return const AuthCard(
       icon: Icons.cloud_sync_outlined,
-      title: 'Buscando tu bóveda…',
+      title: 'Buscando su bóveda…',
       subtitle: 'Revisando el proveedor de sync configurado.',
       child: Center(child: CircularProgressIndicator()),
     );
@@ -211,7 +211,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
       subtitle:
           'El proveedor está conectado, pero no encontramos ninguna '
           'bóveda subida. Si el otro dispositivo todavía no sincronizó, '
-          'probá desde ahí primero.',
+          'pruebe desde ahí primero.',
       child: SizedBox(
         width: double.infinity,
         child: OutlinedButton(
@@ -231,8 +231,8 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
       key: _formKey,
       child: AuthCard(
         icon: Icons.lock_outline,
-        title: 'Encontramos tu bóveda',
-        subtitle: 'Ingresá tu contraseña maestra para desbloquearla.',
+        title: 'Encontramos su bóveda',
+        subtitle: 'Ingrese su contraseña maestra para desbloquearla.',
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -251,7 +251,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
                 ),
               ),
               validator: (value) => (value == null || value.isEmpty)
-                  ? 'Ingresá tu contraseña maestra'
+                  ? 'Ingrese su contraseña maestra'
                   : null,
               onFieldSubmitted: (_) => isLoading ? null : _submitPassword(),
             ),

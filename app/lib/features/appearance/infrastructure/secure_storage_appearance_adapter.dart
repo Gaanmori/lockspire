@@ -15,9 +15,7 @@ const _modeKey = 'appearance.mode';
 class SecureStorageAppearanceAdapter implements AppearancePreferencesPort {
   final FlutterSecureStorage _storage;
 
-  const SecureStorageAppearanceAdapter([
-    this._storage = const FlutterSecureStorage(),
-  ]);
+  const SecureStorageAppearanceAdapter(this._storage);
 
   @override
   Future<AppearancePreference> load() async {

@@ -12,8 +12,8 @@ import 'package:window_manager/window_manager.dart';
 import '../../../clipboard/presentation/providers/clipboard_guard_provider.dart';
 import '../../../vault/presentation/vault_session_controller.dart';
 import '../../../vault/presentation/vault_session_state.dart';
-import '../../infrastructure/tray_hint_store.dart';
 import '../providers/is_desktop_shell_provider.dart';
+import '../providers/tray_hint_store_provider.dart';
 import '../providers/os_session_events_port_provider.dart';
 import '../window_actions.dart';
 
@@ -41,7 +41,6 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
     with WindowListener, TrayListener {
   late final bool _enabled = ref.read(isDesktopShellProvider);
   StreamSubscription<void>? _osLockSubscription;
-  final _trayHintStore = const TrayHintStore();
   bool _quitting = false;
 
   @override
@@ -127,7 +126,7 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
 
   Future<void> _hideToTray() async {
     if (_quitting) return;
-    if (!await _trayHintStore.wasShown() && mounted) {
+    if (!await ref.read(trayHintStoreProvider).wasShown() && mounted) {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
@@ -135,9 +134,9 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
           content: const Text(
             'Al cerrar la ventana, Lockspire queda en la bandeja del sistema '
             'para que la extensión del navegador pueda autocompletar. La '
-            'bóveda se bloquea sola tras el tiempo sin uso que elijas en '
+            'bóveda se bloquea sola tras el tiempo sin uso que elija en '
             'Seguridad, al bloquear la sesión o al suspender el equipo.\n\n'
-            'Para cerrarlo del todo, usá "Salir" en el icono de la bandeja.',
+            'Para cerrarlo del todo, use "Salir" en el icono de la bandeja.',
           ),
           actions: [
             FilledButton(
@@ -147,7 +146,7 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
           ],
         ),
       );
-      await _trayHintStore.markShown();
+      await ref.read(trayHintStoreProvider).markShown();
     }
     await windowManager.hide();
   }

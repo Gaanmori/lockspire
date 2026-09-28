@@ -27,7 +27,7 @@ class PasswordChangedElsewhereBanner extends ConsumerWidget {
     return MaterialBanner(
       leading: const Icon(Icons.key_outlined),
       content: const Text(
-        'La contraseña maestra se cambió en otro dispositivo. Ingresá la '
+        'La contraseña maestra se cambió en otro dispositivo. Ingrese la '
         'nueva para seguir sincronizando.',
       ),
       actions: [
@@ -92,8 +92,8 @@ class _AdoptRemotePasswordDialogState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'Ingresá la contraseña que pusiste en el otro dispositivo. Los '
-            'cambios que hiciste aquí se conservan.',
+            'Ingrese la contraseña que puso en el otro dispositivo. Los '
+            'cambios que hizo aquí se conservan.',
           ),
           const SizedBox(height: LockspireSpacing.md),
           TextField(

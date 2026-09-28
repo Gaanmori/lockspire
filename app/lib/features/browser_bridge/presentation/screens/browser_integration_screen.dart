@@ -63,7 +63,7 @@ class _BrowserIntegrationScreenState
     if (registered.isEmpty) {
       throw StateError('No se encontró ningún navegador compatible.');
     }
-  }, 'Listo. Reiniciá el navegador si ya estaba abierto.');
+  }, 'Listo. Reinicie el navegador si ya estaba abierto.');
 
   Future<void> _unregister() => _run(
     () => ref.read(nativeMessagingRegistrationPortProvider).unregister(),
@@ -73,7 +73,7 @@ class _BrowserIntegrationScreenState
   Future<void> _registerSystemWide() => _run(
     () =>
         ref.read(nativeMessagingRegistrationPortProvider).registerSystemWide(),
-    'Listo para todo el equipo. Reiniciá el navegador si ya estaba abierto.',
+    'Listo para todo el equipo. Reinicie el navegador si ya estaba abierto.',
   );
 
   Future<void> _unregisterSystemWide() => _run(
@@ -101,11 +101,11 @@ class _BrowserIntegrationScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Con la extensión de Lockspire para Chrome o Edge podés '
+                    'Con la extensión de Lockspire para Chrome o Edge puede '
                     'rellenar usuario y contraseña en los sitios web. La '
                     'extensión le pide las credenciales a esta app; la '
                     'bóveda nunca sale de acá y, si está bloqueada, la '
-                    'extensión te pide que la desbloquees primero.',
+                    'extensión le pide que la desbloquee primero.',
                   ),
                   const SizedBox(height: LockspireSpacing.lg),
                   _BridgeStatusTile(status: bridge),
@@ -161,11 +161,11 @@ class _BrowserIntegrationScreenState
                       const SizedBox(height: LockspireSpacing.sm),
                       const Text(
                         'Si la extensión sigue diciendo que no está '
-                        'conectada, tu organización puede estar bloqueando '
+                        'conectada, su organización puede estar bloqueando '
                         'las conexiones por usuario (política '
                         '"NativeMessagingUserLevelHosts" de Chrome, visible '
-                        'en chrome://policy). En ese caso, registrá '
-                        'Lockspire para todo el equipo: Windows te va a '
+                        'en chrome://policy). En ese caso, registre '
+                        'Lockspire para todo el equipo: Windows le va a '
                         'pedir permisos de administrador.',
                       ),
                       ListTile(
@@ -212,9 +212,9 @@ class _BrowserIntegrationScreenState
                   const SizedBox(height: LockspireSpacing.sm),
                   const Text(
                     'Mientras no esté publicada en la Chrome Web Store: '
-                    'abrí chrome://extensions (o edge://extensions), activá '
-                    '"Modo de desarrollador", elegí "Cargar descomprimida" y '
-                    'seleccioná la carpeta extension/dist del proyecto.',
+                    'abra chrome://extensions (o edge://extensions), active '
+                    '"Modo de desarrollador", elija "Cargar descomprimida" y '
+                    'seleccione la carpeta extension/dist del proyecto.',
                   ),
                 ],
               );

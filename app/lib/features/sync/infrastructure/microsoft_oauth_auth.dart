@@ -102,10 +102,10 @@ const _loginTimeout = Duration(minutes: 5);
 /// muestra en la app.
 const _successPage =
     '<!doctype html><meta charset="utf-8"><title>Lockspire</title>'
-    '<p>Listo, ya podés volver a Lockspire.</p>';
+    '<p>Listo, ya puede volver a Lockspire.</p>';
 const _errorPage =
     '<!doctype html><meta charset="utf-8"><title>Lockspire</title>'
-    '<p>No se pudo conectar. Volvé a Lockspire para ver el detalle.</p>';
+    '<p>No se pudo conectar. Vuelva a Lockspire para ver el detalle.</p>';
 
 Future<void> _respond(HttpRequest request, int status, String? html) async {
   request.response
@@ -171,7 +171,7 @@ class MicrosoftOAuthAuth {
       final code = await _awaitAuthorizationCode(server, state).timeout(
         _loginTimeout,
         onTimeout: () => throw StateError(
-          'Se agotó el tiempo para iniciar sesión en Microsoft. Probá de '
+          'Se agotó el tiempo para iniciar sesión en Microsoft. Pruebe de '
           'nuevo.',
         ),
       );

@@ -97,7 +97,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     } on VaultWriteConflictException catch (e) {
       setState(() {
         _busy = false;
-        _errorMessage = '$e Volvé a intentar importar.';
+        _errorMessage = '$e Vuelva a intentar importar.';
       });
     } catch (e) {
       setState(() {
@@ -114,9 +114,9 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Importación completada'),
         content: Text(
-          'Se importaron $count entradas. Por tu seguridad: el archivo de '
-          'exportación que elegiste no está cifrado — borralo del lugar '
-          'donde lo guardaste. Lockspire no puede borrarlo por vos.',
+          'Se importaron $count entradas. Por su seguridad: el archivo de '
+          'exportación que eligió no está cifrado. Bórrelo del lugar '
+          'donde lo guardó: Lockspire no puede borrarlo por usted.',
         ),
         actions: [
           FilledButton(
@@ -159,7 +159,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         ),
         const SizedBox(height: LockspireSpacing.md),
         Text(
-          'Elegí el archivo XML exportado desde SafeInCloud. Se lee '
+          'Elija el archivo XML exportado desde SafeInCloud. Se lee '
           'directo en memoria, sin guardar ninguna copia.',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium,

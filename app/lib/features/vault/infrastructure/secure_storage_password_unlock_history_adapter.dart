@@ -13,9 +13,7 @@ class SecureStoragePasswordUnlockHistoryAdapter
     implements PasswordUnlockHistoryPort {
   final FlutterSecureStorage _storage;
 
-  const SecureStoragePasswordUnlockHistoryAdapter([
-    this._storage = const FlutterSecureStorage(),
-  ]);
+  const SecureStoragePasswordUnlockHistoryAdapter(this._storage);
 
   @override
   Future<DateTime?> lastPasswordUnlock() async {

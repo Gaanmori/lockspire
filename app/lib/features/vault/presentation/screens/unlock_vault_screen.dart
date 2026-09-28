@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lockspire/shared/platform_capabilities.dart';
 
 import '../../../../design/lockspire_spacing.dart';
 import '../providers/biometric_auth_port_provider.dart';
@@ -103,16 +102,16 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
               child: AuthCard(
                 icon: Icons.lock_outline,
                 title: '¡Hola de nuevo!',
-                subtitle: 'Ingresá tu contraseña para entrar a tu bóveda',
+                subtitle: 'Ingrese su contraseña para entrar a su bóveda',
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_passwordRequiredByReminder) ...[
                       Text(
-                        'Por seguridad, cada tanto Lockspire te pide la '
-                        'contraseña maestra aunque uses '
-                        '${Platform.isWindows ? 'Windows Hello' : 'la huella'}, '
-                        'para que no se te olvide. Después vuelve a '
+                        'Por seguridad, cada tanto Lockspire le pide la '
+                        'contraseña maestra aunque use '
+                        '${ref.watch(platformCapabilitiesProvider).biometricMethodName}, '
+                        'para que no se le olvide. Después vuelve a '
                         'funcionar como siempre.',
                         style: Theme.of(context).textTheme.bodySmall,
                         textAlign: TextAlign.center,
@@ -135,7 +134,7 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Ingresá tu contraseña maestra';
+                          return 'Ingrese su contraseña maestra';
                         }
                         return null;
                       },
@@ -193,7 +192,7 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                           onPressed: _submitWithBiometrics,
                           icon: const Icon(Icons.fingerprint),
                           label: Text(
-                            'Usar ${Platform.isWindows ? 'Windows Hello' : 'la huella'}',
+                            'Usar ${ref.watch(platformCapabilitiesProvider).biometricMethodName}',
                           ),
                         ),
                       ),

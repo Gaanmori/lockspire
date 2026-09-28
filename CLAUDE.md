@@ -22,5 +22,5 @@ Lockspire es un gestor de contraseñas y Passkeys open source, local-first, mult
 
 - Gestión de estado: Riverpod (con code generation).
 - Cada proveedor de sync (Drive/OneDrive/Dropbox/WebDAV) es un adaptador independiente de `SyncPort` en `features/sync/infrastructure` — añadir uno nuevo no debe tocar dominio ni casos de uso.
-- Código nativo de autofill (Kotlin/Swift) vive en `features/autofill/infrastructure` de cada plataforma, separado del resto del motor Dart.
+- Código nativo (Kotlin, Swift, C++) vive en la ubicación estándar de cada plataforma (`android/app/src/main/kotlin/...`, `windows/runner/`…), según el ADR 0021. Es delgado: no tiene lógica de negocio ni toca la bóveda, y cada canal tiene su adaptador Dart en `features/<feature>/infrastructure`, detrás de un puerto.
 - Escritura del archivo de bóveda siempre atómica (temporal + fsync + rename), nunca sobrescritura en sitio.

@@ -58,7 +58,7 @@ class LinkRequestListener extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Comprobá que la dirección sea la real: si es un sitio '
+              'Compruebe que la dirección sea la real: si es un sitio '
               'falso que imita al original, le estarías dando esta '
               'contraseña.',
             ),
@@ -103,7 +103,7 @@ class LinkRequestListener extends ConsumerWidget {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            '"${entry.title}" vinculada a $newHost. Volvé a abrir la '
+            '"${entry.title}" vinculada a $newHost. Vuelva a abrir la '
             'extensión para rellenar.',
           ),
         ),

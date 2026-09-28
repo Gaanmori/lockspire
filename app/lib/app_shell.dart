@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'shared/platform_capabilities.dart';
 import 'features/appearance/presentation/screens/appearance_screen.dart';
 import 'features/browser_bridge/presentation/screens/browser_integration_screen.dart';
 import 'features/home/presentation/home_destination.dart';
@@ -28,8 +27,6 @@ class AppShell extends ConsumerWidget {
   final Vault vault;
 
   const AppShell({super.key, required this.vault});
-
-  static final _isDesktop = Platform.isWindows || Platform.isLinux;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -74,10 +71,10 @@ class AppShell extends ConsumerWidget {
               SettingsItem(
                 icon: Icons.upload_file_outlined,
                 title: 'Importar desde SafeInCloud',
-                subtitle: 'Traer tus contraseñas desde un archivo XML',
+                subtitle: 'Traer sus contraseñas desde un archivo XML',
                 builder: (_) => const ImportScreen(),
               ),
-              if (_isDesktop)
+              if (ref.watch(platformCapabilitiesProvider).isDesktop)
                 SettingsItem(
                   icon: Icons.extension_outlined,
                   title: 'Navegador',

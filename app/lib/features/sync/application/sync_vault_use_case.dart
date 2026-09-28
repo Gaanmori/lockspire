@@ -88,7 +88,7 @@ class RemoteVaultRejectedException implements Exception {
           'modificada o usa otra contraseña). No se cambió nada en este '
           'dispositivo.',
     RemoteVaultRejection.passwordChanged =>
-      'La contraseña maestra se cambió en otro dispositivo. Ingresá la '
+      'La contraseña maestra se cambió en otro dispositivo. Ingrese la '
           'contraseña nueva para seguir sincronizando.',
     RemoteVaultRejection.rollback =>
       'La nube tiene una versión más vieja que la que este dispositivo ya '

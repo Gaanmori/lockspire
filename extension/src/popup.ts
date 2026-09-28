@@ -49,7 +49,7 @@ function problemMessage(response: Response): string | null {
         (response.detail ? `\n\n(Chrome: ${response.detail})` : '')
       );
     case 'APP_NOT_RUNNING':
-      return 'Abrí Lockspire en este equipo para usar la extensión.';
+      return 'Abra Lockspire en este equipo para usar la extensión.';
     default:
       return 'Algo salió mal al hablar con Lockspire.';
   }
@@ -75,7 +75,7 @@ async function main(): Promise<void> {
   generatorEl.hidden = false;
 
   if (ping.type === 'PONG' && ping.locked) {
-    setStatus('Tu bóveda está bloqueada.');
+    setStatus('Su bóveda está bloqueada.');
     showAction('Desbloquear en Lockspire', () => void showApp());
     return;
   }
@@ -90,7 +90,7 @@ async function main(): Promise<void> {
 async function listCredentials(tabId: number, origin: string): Promise<void> {
   const response = await send({ type: 'GET_CREDENTIALS_FOR_ORIGIN', origin });
   if (response.type === 'UNLOCK_REQUIRED') {
-    setStatus('Tu bóveda está bloqueada.');
+    setStatus('Su bóveda está bloqueada.');
     showAction('Desbloquear en Lockspire', () => void showApp());
     return;
   }
@@ -108,7 +108,7 @@ async function listCredentials(tabId: number, origin: string): Promise<void> {
     return;
   }
 
-  setStatus('Elegí una credencial para rellenar:');
+  setStatus('Elija una credencial para rellenar:');
   entriesEl.replaceChildren(
     ...response.entries.map((entry) =>
       entryItem(entry, () => void fill(entry, tabId, origin)),
@@ -120,11 +120,11 @@ async function listCredentials(tabId: number, origin: string): Promise<void> {
 async function openPicker(origin: string): Promise<void> {
   entriesEl.hidden = true;
   chooseOther.hidden = true;
-  setStatus('Cargando tus entradas…');
+  setStatus('Cargando sus entradas…');
 
   const response = await send({ type: 'LIST_CREDENTIALS' });
   if (response.type === 'UNLOCK_REQUIRED') {
-    setStatus('Tu bóveda está bloqueada.');
+    setStatus('Su bóveda está bloqueada.');
     showAction('Desbloquear en Lockspire', () => void showApp());
     return;
   }
@@ -133,7 +133,7 @@ async function openPicker(origin: string): Promise<void> {
     return;
   }
   if (response.entries.length === 0) {
-    setStatus('Tu bóveda no tiene entradas todavía.');
+    setStatus('Su bóveda no tiene entradas todavía.');
     return;
   }
 
@@ -168,7 +168,7 @@ async function requestLink(entry: CredentialSummary, origin: string): Promise<vo
   }
   setStatus(
     response.type === 'UNLOCK_REQUIRED'
-      ? 'La bóveda se bloqueó. Desbloqueala e intentá de nuevo.'
+      ? 'La bóveda se bloqueó. Desbloquéela e intente de nuevo.'
       : 'No se pudo pedir el vínculo.',
     true,
   );
@@ -200,7 +200,7 @@ async function fill(entry: CredentialSummary, tabId: number, origin: string): Pr
   if (secret.type !== 'CREDENTIAL_SECRET') {
     setStatus(
       secret.type === 'UNLOCK_REQUIRED'
-        ? 'La bóveda se bloqueó. Desbloqueala e intentá de nuevo.'
+        ? 'La bóveda se bloqueó. Desbloquéela e intente de nuevo.'
         : 'No se pudo obtener la credencial.',
       true,
     );
@@ -220,7 +220,7 @@ async function fill(entry: CredentialSummary, tabId: number, origin: string): Pr
   setStatus(
     result?.reason === 'origin-changed'
       ? 'La página cambió de sitio; no se rellenó nada.'
-      : 'No encontré un campo de contraseña en esta página.',
+      : 'No se encontró un campo de contraseña en esta página.',
     true,
   );
 }

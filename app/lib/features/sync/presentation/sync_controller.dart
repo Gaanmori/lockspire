@@ -195,7 +195,7 @@ class SyncController extends _$SyncController {
     final syncPort = await ref.read(activeSyncPortProvider.future);
     if (syncPort == null) {
       throw StateError(
-        'Configurá un proveedor de sync primero (WebDAV o Google Drive)',
+        'Configure un proveedor de sync primero (WebDAV, Google Drive u OneDrive)',
       );
     }
     return syncPort;

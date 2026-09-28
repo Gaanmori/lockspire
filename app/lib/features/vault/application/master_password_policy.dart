@@ -30,10 +30,10 @@ MasterPasswordProblem? checkNewMasterPassword(String password) {
 String describeMasterPasswordProblem(MasterPasswordProblem problem) =>
     switch (problem) {
       MasterPasswordProblem.tooShort =>
-        'Usá al menos $masterPasswordMinLength caracteres',
+        'Use al menos $masterPasswordMinLength caracteres',
       MasterPasswordProblem.tooRepetitive =>
         'Tiene demasiados caracteres repetidos',
       MasterPasswordProblem.tooWeak =>
-        'Es demasiado fácil de adivinar: sumá palabras, mayúsculas, '
+        'Es demasiado fácil de adivinar: sume palabras, mayúsculas, '
             'números o símbolos',
     };

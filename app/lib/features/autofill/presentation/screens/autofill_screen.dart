@@ -208,8 +208,8 @@ class _GetCredentialViewState extends State<_GetCredentialView> {
         content: Text(
           '"${entry.title}" es de $entrySite, pero la página que la pide es '
           '$pageHost.\n\n'
-          'Si no esperabas este sitio, puede ser una página falsa que intenta '
-          'robar tu contraseña (phishing).',
+          'Si no esperaba este sitio, puede ser una página falsa que intenta '
+          'robar su contraseña (phishing).',
         ),
         actions: [
           FilledButton(
@@ -235,7 +235,7 @@ class _GetCredentialViewState extends State<_GetCredentialView> {
             '"${entry.title}" no tiene un sitio guardado, así que Lockspire '
             'no puede comprobar que ${Uri.parse(origin).host} sea el '
             'correcto.\n\n'
-            'Si lo recordás, la próxima vez se va a rellenar sola, y solo en '
+            'Si lo recuerda, la próxima vez se va a rellenar sola, y solo en '
             'este sitio.',
           ),
           actions: [
@@ -297,7 +297,7 @@ class _GetCredentialViewState extends State<_GetCredentialView> {
                     padding: const EdgeInsets.all(LockspireSpacing.lg),
                     child: Text(
                       query.isEmpty
-                          ? 'Todavía no guardaste ninguna contraseña en Lockspire.'
+                          ? 'Todavía no ha guardado ninguna contraseña en Lockspire.'
                           : 'No se encontraron resultados.',
                       textAlign: TextAlign.center,
                     ),

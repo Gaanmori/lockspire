@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'dart:io' show Platform;
-
+import 'package:lockspire/shared/platform_capabilities.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'lock_on_background_provider.g.dart';
@@ -17,4 +16,5 @@ part 'lock_on_background_provider.g.dart';
 ///
 /// Sobreescribible en tests.
 @Riverpod(keepAlive: true)
-bool lockOnBackground(Ref ref) => !(Platform.isWindows || Platform.isLinux);
+bool lockOnBackground(Ref ref) =>
+    !ref.watch(platformCapabilitiesProvider).isDesktop;

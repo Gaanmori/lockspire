@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lockspire/shared/platform_capabilities.dart';
 
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
@@ -64,7 +63,7 @@ class AppearanceScreen extends ConsumerWidget {
               const SizedBox(height: LockspireSpacing.xs),
               Text(
                 preference.mode == AppearanceMode.system
-                    ? 'Cambia sola entre claro y oscuro según tu sistema.'
+                    ? 'Cambia sola entre claro y oscuro según su sistema.'
                     : ' ',
                 style: textTheme.bodySmall,
               ),
@@ -74,7 +73,13 @@ class AppearanceScreen extends ConsumerWidget {
               for (final family in ThemeFamilyId.values) ...[
                 _FamilyCard(
                   title: _titleFor(family),
-                  subtitle: _subtitleFor(family, systemArgb),
+                  subtitle: _subtitleFor(
+                    family,
+                    systemArgb,
+                    isAndroid: ref
+                        .watch(platformCapabilitiesProvider)
+                        .isAndroid,
+                  ),
                   palettes: palettesFor(family, systemArgb),
                   selected: preference.family == family,
                   onTap: () => controller.setFamily(family),
@@ -98,12 +103,16 @@ String _titleFor(ThemeFamilyId family) => switch (family) {
     LockspireThemeFamily.values.byName(family.name).displayName,
 };
 
-String? _subtitleFor(ThemeFamilyId family, int? systemArgb) => switch (family) {
+String? _subtitleFor(
+  ThemeFamilyId family,
+  int? systemArgb, {
+  required bool isAndroid,
+}) => switch (family) {
   ThemeFamilyId.sistema when systemArgb == null =>
     'No disponible en este equipo: se usa Lineage.',
   ThemeFamilyId.sistema =>
-    Platform.isAndroid
-        ? 'Material You: colores de tu fondo de pantalla.'
+    isAndroid
+        ? 'Material You: colores de su fondo de pantalla.'
         : 'Color de acento del sistema.',
   _ => null,
 };

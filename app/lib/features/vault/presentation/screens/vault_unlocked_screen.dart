@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lockspire/shared/platform_capabilities.dart';
 
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
@@ -71,14 +70,16 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
     if (await port.wasOnboardingDismissed()) return;
     if (!mounted) return;
 
-    final methodName = Platform.isWindows ? 'Windows Hello' : 'la huella';
+    final methodName = ref
+        .read(platformCapabilitiesProvider)
+        .biometricMethodName;
     final activar = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text('¿Activar desbloqueo con $methodName?'),
         content: Text(
           'En vez de escribir la contraseña maestra cada vez, vas a poder '
-          'desbloquear la bóveda con $methodName. Podés cambiarlo después '
+          'desbloquear la bóveda con $methodName. Puede cambiarlo después '
           'desde "Seguridad".',
         ),
         actions: [
@@ -284,14 +285,14 @@ class _EmptyState extends StatelessWidget {
             Text(
               hasQuery
                   ? 'No se encontraron resultados'
-                  : 'Todavía no guardaste ninguna contraseña',
+                  : 'Todavía no ha guardado ninguna contraseña',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             if (!hasQuery) ...[
               const SizedBox(height: LockspireSpacing.xs),
               Text(
-                'Tocá el botón "+" para agregar la primera',
+                'Toque el botón "+" para agregar la primera',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),

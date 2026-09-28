@@ -13,9 +13,7 @@ const _key = 'session.auto_lock_timeout';
 class SecureStorageAutoLockAdapter implements AutoLockPreferencesPort {
   final FlutterSecureStorage _storage;
 
-  const SecureStorageAutoLockAdapter([
-    this._storage = const FlutterSecureStorage(),
-  ]);
+  const SecureStorageAutoLockAdapter(this._storage);
 
   @override
   Future<AutoLockTimeout> load() async {

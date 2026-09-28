@@ -59,10 +59,10 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
               key: _formKey,
               child: AuthCard(
                 icon: Icons.gpp_good_outlined,
-                title: 'Creá tu bóveda',
+                title: 'Cree su bóveda',
                 subtitle:
-                    'Elegí una contraseña maestra. Nunca se envía ni se '
-                    'guarda — si la olvidás, no hay forma de recuperarla.',
+                    'Elija una contraseña maestra. Nunca se envía ni se '
+                    'guarda: si la olvida, no hay forma de recuperarla.',
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -83,7 +83,7 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Ingresá una contraseña';
+                          return 'Ingrese una contraseña';
                         }
                         final problem = checkNewMasterPassword(value);
                         return problem == null
@@ -156,7 +156,7 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                             context,
                           ).push(MaterialPageRoute(builder: restore)),
                           child: const Text(
-                            '¿Ya tenés una bóveda? Restaurarla desde la nube',
+                            '¿Ya tiene una bóveda? Restaurarla desde la nube',
                           ),
                         ),
                       ],

@@ -47,7 +47,7 @@ class MainActivity : FlutterFragmentActivity() {
                             result.error(
                                 "NOT_FOUND",
                                 "Este teléfono no tiene una pantalla de sistema para esto. " +
-                                    "Buscá \"Servicio de autocompletado\" en los Ajustes.",
+                                    "Busque \"Servicio de autocompletado\" en los Ajustes.",
                                 null,
                             )
                         }

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lockspire/shared/platform_capabilities.dart';
 
 import '../../../../design/lockspire_spacing.dart';
 import '../../domain/auto_lock_timeout.dart';
@@ -19,11 +18,9 @@ import 'change_master_password_screen.dart';
 
 const _settingsChannel = MethodChannel('com.lockspire.lockspire/settings');
 
-/// Nombre del método biométrico según la plataforma — usado en los
-/// textos de esta pantalla (ver docs/adr/0010-desbloqueo-biometrico.md,
-/// alcance Android + Windows únicamente).
-String get _biometricMethodName =>
-    Platform.isWindows ? 'Windows Hello' : 'la huella';
+/// Nombre del método biométrico de esta plataforma (hallazgo C2).
+String _biometricMethodName(WidgetRef ref) =>
+    ref.watch(platformCapabilitiesProvider).biometricMethodName;
 
 /// Activar/desactivar el desbloqueo biométrico (ver `BiometricAuthPort`)
 /// — accesible desde `vault_unlocked_screen.dart`. Sin `Riverpod`
@@ -112,7 +109,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       leading: const Icon(Icons.password),
                       title: const Text('Cambiar contraseña maestra'),
                       subtitle: const Text(
-                        'Hacelo si creés que alguien pudo conocerla.',
+                        'Hágalo si cree que alguien pudo conocerla.',
                       ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: _openChangeMasterPassword,
@@ -125,10 +122,12 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                     const SizedBox(height: LockspireSpacing.md),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text('Desbloquear con $_biometricMethodName'),
+                      title: Text(
+                        'Desbloquear con ${_biometricMethodName(ref)}',
+                      ),
                       subtitle: Text(
                         available
-                            ? 'Usá $_biometricMethodName en vez de escribir la '
+                            ? 'Use ${_biometricMethodName(ref)} en vez de escribir la '
                                   'contraseña maestra cada vez.'
                             : _unavailableReason(availability),
                       ),
@@ -143,7 +142,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       const SizedBox(height: LockspireSpacing.md),
                       const _MasterPasswordReminderSection(),
                     ],
-                    if (Platform.isAndroid) ...[
+                    if (ref.watch(platformCapabilitiesProvider).isAndroid) ...[
                       const SizedBox(height: LockspireSpacing.lg),
                       const Divider(),
                       const SizedBox(height: LockspireSpacing.md),
@@ -153,7 +152,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       ),
                       const SizedBox(height: LockspireSpacing.sm),
                       const Text(
-                        'Activá Lockspire como servicio de autocompletado '
+                        'Active Lockspire como servicio de autocompletado '
                         'para que aparezca como opción al iniciar sesión en '
                         'otras apps — incluye logins dentro de un navegador '
                         'embebido (ej. WebView).',
@@ -184,17 +183,17 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     if (mounted) _refresh();
   }
 
-  String _unavailableReason(BiometricAvailability availability) =>
-      switch (availability) {
-        BiometricAvailability.noHardware =>
-          'Este dispositivo no tiene $_biometricMethodName configurado.',
-        BiometricAvailability.notEnrolled =>
-          'Configurá $_biometricMethodName en los ajustes del sistema para '
-              'poder activarlo acá.',
-        BiometricAvailability.available => '',
-        BiometricAvailability.unavailable =>
-          'No disponible en este dispositivo.',
-      };
+  String _unavailableReason(
+    BiometricAvailability availability,
+  ) => switch (availability) {
+    BiometricAvailability.noHardware =>
+      'Este dispositivo no tiene ${_biometricMethodName(ref)} configurado.',
+    BiometricAvailability.notEnrolled =>
+      'Configure ${_biometricMethodName(ref)} en los ajustes del sistema para '
+          'poder activarlo acá.',
+    BiometricAvailability.available => '',
+    BiometricAvailability.unavailable => 'No disponible en este dispositivo.',
+  };
 }
 
 /// Cada cuánto se exige la contraseña maestra aunque se use biometría (ADR
@@ -235,9 +234,9 @@ class _MasterPasswordReminderSection extends ConsumerWidget {
         ),
         const SizedBox(height: LockspireSpacing.xs),
         Text(
-          'Aunque uses $_biometricMethodName, pasado este tiempo Lockspire '
-          'te pide la contraseña una vez, para que no se te olvide. Si la '
-          'olvidás, la bóveda no se puede recuperar.',
+          'Aunque use ${_biometricMethodName(ref)}, pasado este tiempo Lockspire '
+          'le pide la contraseña una vez, para que no se le olvide. Si la '
+          'olvida, la bóveda no se puede recuperar.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
@@ -268,8 +267,8 @@ class _AutoLockSection extends ConsumerWidget {
         Text('Bloqueo automático', style: textTheme.titleMedium),
         const SizedBox(height: LockspireSpacing.sm),
         Text(
-          'La bóveda se bloquea sola cuando pasa este tiempo sin que uses '
-          'Lockspire. ${Platform.isAndroid ? 'También se bloquea al salir de la app.' : 'También se bloquea al bloquear la sesión o suspender el equipo.'}',
+          'La bóveda se bloquea sola cuando pasa este tiempo sin que use '
+          'Lockspire. ${ref.watch(platformCapabilitiesProvider).isAndroid ? 'También se bloquea al salir de la app.' : 'También se bloquea al bloquear la sesión o suspender el equipo.'}',
         ),
         const SizedBox(height: LockspireSpacing.md),
         SegmentedButton<AutoLockTimeout>(
@@ -288,8 +287,8 @@ class _AutoLockSection extends ConsumerWidget {
         const SizedBox(height: LockspireSpacing.xs),
         Text(
           current == AutoLockTimeout.fifteenMinutes
-              ? 'Más cómodo, pero la bóveda queda abierta más tiempo si te '
-                    'alejás del equipo.'
+              ? 'Más cómodo, pero la bóveda queda abierta más tiempo si se '
+                    'aleja del equipo.'
               : ' ',
           style: textTheme.bodySmall,
         ),

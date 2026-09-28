@@ -78,7 +78,7 @@ class _NoVaultView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'Todavía no creaste una bóveda en Lockspire.',
+                'Todavía no ha creado una bóveda en Lockspire.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: LockspireSpacing.lg),

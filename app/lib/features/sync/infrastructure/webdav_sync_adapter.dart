@@ -35,7 +35,7 @@ class WebdavSyncAdapter implements SyncPort {
         return url;
       case WebDavUrlProblem.insecure:
         throw StateError(
-          'El servidor WebDAV usa http:// sin cifrar. Cambiá la URL a '
+          'El servidor WebDAV usa http:// sin cifrar. Cambie la URL a '
           'https:// en Sincronización.',
         );
       case WebDavUrlProblem.invalid:

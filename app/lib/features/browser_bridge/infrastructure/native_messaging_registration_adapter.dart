@@ -106,7 +106,7 @@ class NativeMessagingRegistrationAdapter
     if (!File(_hostBinaryPath).existsSync()) {
       throw StateError(
         'No se encontró el native host en $_hostBinaryPath. '
-        'Compílalo e instálalo junto a la app (ver native-host/README.md).',
+        'Compílelo e instálelo junto a la app (ver native-host/README.md).',
       );
     }
     final registered = <SupportedBrowser>{};
@@ -173,7 +173,7 @@ class NativeMessagingRegistrationAdapter
     if (!File(_hostBinaryPath).existsSync()) {
       throw StateError(
         'No se encontró el native host en $_hostBinaryPath. '
-        'Compílalo e instálalo junto a la app (ver native-host/README.md).',
+        'Compílelo e instálelo junto a la app (ver native-host/README.md).',
       );
     }
     await _runElevated(_systemWideScript(install: true));

@@ -449,6 +449,18 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
         - **Restaurar:** `RestoreVaultFromRemoteUseCase` y `RestoreVaultController` en `sync`. `RestoreVaultScreen` se movió a `sync/presentation/screens` y se inyecta como `restoreVaultBuilder` en `VaultGateScreen` → `CreateVaultScreen` desde `main.dart`. La sesión solo expone `openRestoredSession`.
         - **Cambio de contraseña:** `vault` define `masterPasswordChangeReplicaPortProvider` con `LocalOnlyMasterPasswordChangeReplica` por defecto. `lib/app_composition.dart` (`appOverrides()`, usado por `main.dart`) lo conecta con `syncMasterPasswordChangeReplicaProvider`. `test/app_composition_test.dart` falla si esa conexión se pierde.
       - App 274 tests. **Bloque 1 completo.** Siguiente: bloque 2 (A6, A7, A8-ADR, C1–C4 con la UI en "usted"), después el tema estilo Pixel y el MVP.
+    - **Refactor, bloque 2 completo (2026-09-28):**
+      - **A7:** `lib/shared/secure_storage_provider.dart` es el único lugar que crea `FlutterSecureStorage`. Todos los adaptadores lo reciben inyectado: apariencia, auto-lock, recordatorio, historial de desbloqueo, biometría, sync y bandeja (`trayHintStoreProvider`).
+      - **A6:** `SecureStorageSyncSettingsAdapter` (5 puertos) se dividió en 5 adaptadores, uno por puerto, con **las mismas claves** de almacenamiento, así no se pierde nada guardado.
+      - **A8:** ADR 0021, el código nativo en la ubicación estándar de cada plataforma, delgado y con adaptador Dart por canal. `CLAUDE.md` actualizado.
+      - **C2:** `lib/shared/platform_capabilities.dart` (`isDesktop`, `isAndroid`, `biometricMethodName`). Las pantallas ya no usan `Platform.isX`. `isDesktopShellProvider` y `lockOnBackgroundProvider` se derivan de él. Solo `DesktopShell` conserva `Platform.isWindows` para el formato del ícono de la bandeja.
+      - **C1:** `EntryFormScreen` pasó de 615 a 364 líneas. Nuevos:
+        - `PasswordGenerationSettings` en `application`: regla pura, mismas claves `password_gen_*`, +5 tests.
+        - `PasswordGeneratorPanel`, `PasswordStrengthIndicator` y `FieldHistorySection` en `widgets/`.
+      - **C3:** las listas de palabras (7.550 líneas de Dart) pasaron a `assets/wordlists/es.txt` y `en.txt`, detrás de `WordListPort` y `AssetWordListAdapter`. Procedencia y licencias en `assets/wordlists/README.md`. El generador carga la lista de forma asíncrona.
+      - **C4:** toda la interfaz está en español neutro con **"usted"**: app, popup de la extensión, página de OAuth y mensaje nativo de Android. `test/ui_register_test.dart` falla si vuelve a aparecer voseo o tuteo en los literales de `lib/`.
+      - App 281 tests, extensión 9. **Todos los hallazgos de la revisión 2026-09-25 están cerrados**, salvo S13, documentado sin cambios.
+      - Siguiente: el tema estilo Google Pixel (pedido del usuario) y después el MVP (Linux + F-Droid, ver arriba).
     - Siguen pendientes las pruebas manuales de S2 y S6 en el Redmi.
     - **Tema renombrado a Lineage (2026-09-27)**, basado en el tema por defecto de LineageOS, con los colores verificados en su código fuente (ver `docs/design/README.md`). El ícono pasa a `#167C80`. A2 y A1 verificados a mano por el usuario en Windows: CRUD de entradas y auto-bloqueo funcionan.
     - **Pedido del usuario para después del refactor:** un tema estilo **Google Pixel**. Material You de Pixel: tonos y superficies del stock de Android y tipografía estilo Google Sans o equivalente libre.

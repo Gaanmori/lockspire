@@ -13,9 +13,7 @@ class SecureStorageMasterPasswordReminderAdapter
     implements MasterPasswordReminderSettingsPort {
   final FlutterSecureStorage _storage;
 
-  const SecureStorageMasterPasswordReminderAdapter([
-    this._storage = const FlutterSecureStorage(),
-  ]);
+  const SecureStorageMasterPasswordReminderAdapter(this._storage);
 
   @override
   Future<MasterPasswordReminder> load() async {

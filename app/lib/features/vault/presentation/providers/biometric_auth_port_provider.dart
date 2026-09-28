@@ -3,7 +3,7 @@
 
 import 'dart:io' show Platform;
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:lockspire/shared/secure_storage_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/ports/biometric_auth_port.dart';
@@ -21,10 +21,14 @@ part 'biometric_auth_port_provider.g.dart';
 @Riverpod(keepAlive: true)
 BiometricAuthPort biometricAuthPort(Ref ref) {
   if (Platform.isAndroid) {
-    return AndroidBiometricAuthAdapter(storage: const FlutterSecureStorage());
+    return AndroidBiometricAuthAdapter(
+      storage: ref.watch(secureStorageProvider),
+    );
   }
   if (Platform.isWindows) {
-    return WindowsBiometricAuthAdapter(storage: const FlutterSecureStorage());
+    return WindowsBiometricAuthAdapter(
+      storage: ref.watch(secureStorageProvider),
+    );
   }
   return const UnavailableBiometricAuthAdapter();
 }

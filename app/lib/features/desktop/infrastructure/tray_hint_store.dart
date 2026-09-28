@@ -12,7 +12,7 @@ const _key = 'desktop.tray_hint_shown';
 class TrayHintStore {
   final FlutterSecureStorage _storage;
 
-  const TrayHintStore([this._storage = const FlutterSecureStorage()]);
+  const TrayHintStore(this._storage);
 
   Future<bool> wasShown() async => (await _storage.read(key: _key)) == 'true';
 
