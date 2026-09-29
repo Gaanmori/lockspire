@@ -11,7 +11,12 @@ import 'package:lockspire/app_composition.dart';
 import 'package:lockspire/features/about/presentation/providers/about_providers.dart';
 import 'package:lockspire/features/appearance/presentation/launcher_icon_sync.dart';
 import 'package:lockspire/features/appearance/presentation/providers/system_accent_color_provider.dart';
+import 'package:lockspire/features/autofill/domain/ports/autofill_host_port.dart';
+import 'package:lockspire/features/autofill/presentation/autofill_app.dart';
+import 'package:lockspire/features/autofill/presentation/providers/autofill_host_port_provider.dart';
 import 'package:lockspire/features/autofill/presentation/providers/system_autofill_settings_port_provider.dart';
+import 'package:lockspire/features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
+import 'package:lockspire/features/browser_bridge/presentation/providers/native_messaging_registration_port_provider.dart';
 import 'package:lockspire/features/clipboard/presentation/providers/clipboard_guard_provider.dart';
 import 'package:lockspire/features/desktop/presentation/providers/desktop_ports_providers.dart';
 import 'package:lockspire/features/desktop/presentation/providers/is_desktop_shell_provider.dart';
@@ -24,6 +29,7 @@ import 'package:lockspire/features/vault/presentation/providers/biometric_auth_p
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/file_transfer_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/installed_app_icon_provider.dart';
+import 'package:lockspire/features/vault/presentation/providers/site_icons_providers.dart';
 import 'package:lockspire/features/vault/presentation/providers/master_password_reminder_settings_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/password_unlock_history_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
@@ -33,8 +39,11 @@ import 'package:lockspire/shared/platform_capabilities.dart';
 
 import 'fakes/fake_about_ports.dart';
 import 'fakes/fake_android_ports.dart';
+import 'fakes/fake_autofill_host.dart';
 import 'fakes/fake_desktop_ports.dart';
 import 'fakes/fake_file_transfer.dart';
+import 'fakes/fake_native_messaging.dart';
+import 'fakes/fake_site_icons.dart';
 import 'fakes/fake_system_accent.dart';
 import 'fakes/fake_secure_clipboard.dart';
 import 'fakes/sync_fakes.dart';
@@ -114,6 +123,21 @@ class TestApp {
   final autofillSettings = FakeAutofillSettings();
   final launcherIcon = FakeLauncherIcon();
   final appIcons = FakeInstalledAppIcons();
+
+  /// Extensión del navegador (ADR 0013): registro del native host en memoria
+  /// y el canal ya escuchando.
+  final nativeMessaging = FakeNativeMessaging();
+
+  /// La actividad de autocompletado de Android, para [pumpAutofill].
+  final autofillHost = FakeAutofillHost();
+
+  /// Íconos de sitios (ADR 0029, 0030): los sitios y DuckDuckGo en memoria.
+  final siteIcons = FakeSiteIconFetcher();
+  final siteIconsFallback = FakeSiteIconFetcher();
+
+  /// El contenedor del último arranque, para simular lo que llega de afuera
+  /// (p. ej. un pedido de la extensión).
+  late ProviderContainer container;
   final PlatformCapabilities platform;
   final List<Override> extraOverrides;
   final Map<String, String> secureStorage = {};
@@ -174,6 +198,13 @@ class TestApp {
     systemAutofillSettingsPortProvider.overrideWithValue(autofillSettings),
     launcherIconPortProvider.overrideWithValue(launcherIcon),
     installedAppIconPortProvider.overrideWithValue(appIcons),
+    nativeMessagingRegistrationPortProvider.overrideWithValue(nativeMessaging),
+    autofillHostPortProvider.overrideWithValue(autofillHost),
+    siteIconFetcherPortProvider.overrideWithValue(siteIcons),
+    siteIconFallbackFetcherPortProvider.overrideWithValue(siteIconsFallback),
+    browserBridgeProvider.overrideWith(
+      (ref) async => BrowserBridgeStatus.running,
+    ),
     platformCapabilitiesProvider.overrideWithValue(platform),
     if (cloud case final cloud?)
       syncPortForProvider(
@@ -189,6 +220,29 @@ class TestApp {
     Locale systemLocale = const Locale('es', 'CO'),
     Size? size,
     double? pixelRatio,
+  }) => _pump(
+    tester,
+    const MyApp(),
+    isAutofill: false,
+    systemLocale: systemLocale,
+    size: size,
+    pixelRatio: pixelRatio,
+  );
+
+  /// Monta la pantalla de autocompletado de Android (ADR 0011), como cuando
+  /// el sistema abre Lockspire para rellenar o guardar [request].
+  Future<void> pumpAutofill(WidgetTester tester, AutofillRequest request) {
+    autofillHost.nextRequest = request;
+    return _pump(tester, const AutofillApp(), isAutofill: true);
+  }
+
+  Future<void> _pump(
+    WidgetTester tester,
+    Widget app, {
+    required bool isAutofill,
+    Locale systemLocale = const Locale('es', 'CO'),
+    Size? size,
+    double? pixelRatio,
   }) async {
     FlutterSecureStorage.setMockInitialValues(secureStorage);
     _clearAssetCache();
@@ -201,17 +255,13 @@ class TestApp {
 
     // El mismo arranque que main(): tema, tiempo de bloqueo y servicios en
     // segundo plano (bloqueo automático, sync, íconos, lanzador).
-    final container = ProviderContainer(overrides: overrides);
-    await startApp(container, isAutofill: false);
+    container = ProviderContainer(overrides: overrides);
+    await startApp(container, isAutofill: isAutofill);
 
     await tester.pumpWidget(
       // Key nueva en cada arranque: si no, Flutter reusa el scope anterior y
       // "volver a abrir la app" no reinicia nada.
-      _OwnedContainerScope(
-        key: UniqueKey(),
-        container: container,
-        child: const MyApp(),
-      ),
+      _OwnedContainerScope(key: UniqueKey(), container: container, child: app),
     );
     await tester.pumpAndSettle();
   }

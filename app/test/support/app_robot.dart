@@ -146,11 +146,13 @@ class AppRobot {
     required String title,
     String? username,
     String? password,
+    String? url,
   }) async {
     await startNewPassword();
     await type('Título', title);
     if (username != null) await type('Usuario', username);
     if (password != null) await type('Contraseña', password);
+    if (url != null) await type('Sitio web', url);
     await save();
   }
 
@@ -184,6 +186,16 @@ class AppRobot {
     await type('Contraseña', password);
     await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
     await settle();
+  }
+
+  /// En el primer arranque: restaurar la bóveda desde WebDAV.
+  Future<void> restoreFromWebdav(String masterPassword) async {
+    await tapText('¿Ya tiene una bóveda? Restaurarla desde la nube');
+    await tapText('Configurar proveedor de sync');
+    // Al guardar vuelve sola a Restaurar y busca la bóveda.
+    await configureWebdav();
+    await type('Contraseña maestra', masterPassword);
+    await tapButton('Restaurar bóveda');
   }
 
   Future<void> syncNow() async {

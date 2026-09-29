@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import 'dart:io';
+
 import 'package:lockspire/features/sync/domain/ports/sync_port.dart';
 import 'package:lockspire/features/sync/domain/ports/sync_state_port.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
@@ -14,11 +16,22 @@ class FakeSyncPort implements SyncPort {
   /// confirmar que un debounce colapsó varios disparos en una sola sync.
   int uploadVaultCalls = 0;
 
+  /// Sin conexión: toda operación falla como falla la red.
+  bool offline = false;
+
+  void _checkOnline() {
+    if (offline) throw const SocketException('Sin conexión (test)');
+  }
+
   @override
-  Future<bool> remoteVaultExists() async => remoteFile != null;
+  Future<bool> remoteVaultExists() async {
+    _checkOnline();
+    return remoteFile != null;
+  }
 
   @override
   Future<VaultFile> downloadVault() async {
+    _checkOnline();
     final file = remoteFile;
     if (file == null) {
       throw StateError('No hay bóveda remota');
@@ -28,6 +41,7 @@ class FakeSyncPort implements SyncPort {
 
   @override
   Future<void> uploadVault(VaultFile file) async {
+    _checkOnline();
     uploadVaultCalls++;
     remoteFile = file;
   }

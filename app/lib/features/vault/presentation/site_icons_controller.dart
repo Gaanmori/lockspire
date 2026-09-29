@@ -54,7 +54,7 @@ class SiteIconsController {
     if (_running) return;
     _running = true;
     try {
-      if (await _ref.read(siteIconsEnabledProvider.future) != true) return;
+      if (await _enabled() != true) return;
       final session = _ref.read(vaultSessionControllerProvider).value;
       if (session is! VaultSessionUnlocked) return;
       // 1. Directo de cada sitio.
@@ -63,7 +63,7 @@ class SiteIconsController {
       ).call(hostsMissingIcons(session.vault));
       // 2. Si está activado, DuckDuckGo para los que el sitio no ofrece
       //    (ADR 0030): recibe solo esos dominios.
-      if (await _ref.read(siteIconsFallbackEnabledProvider.future)) {
+      if (await _fallbackEnabled()) {
         found.addAll(
           await FetchSiteIconsUseCase(
             fetcher: _ref.read(siteIconFallbackFetcherPortProvider),
@@ -83,6 +83,19 @@ class SiteIconsController {
       _running = false;
     }
   }
+
+  // El valor actual de cada preferencia; se espera la carga solo si todavía
+  // no terminó. `.future` no sirve después de cargar: sigue devolviendo lo
+  // que se leyó al arrancar, no lo que el usuario acaba de elegir, y activar
+  // los íconos no buscaba nada hasta el siguiente guardado (encontrado por
+  // un test de flujo, 2026-09-29).
+  Future<bool> _enabled() async =>
+      _ref.read(siteIconsEnabledProvider).value ??
+      await _ref.read(siteIconsEnabledProvider.future);
+
+  Future<bool> _fallbackEnabled() async =>
+      _ref.read(siteIconsFallbackEnabledProvider).value ??
+      await _ref.read(siteIconsFallbackEnabledProvider.future);
 
   /// "Volver a buscar": olvida los sitios marcados sin ícono.
   Future<void> retryMissing() async {
