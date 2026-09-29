@@ -172,9 +172,9 @@ PasswordStrengthEstimate estimatePasswordStrength(String password) {
 
     // Cada trozo puede traer dígitos pegados al final — el primero
     // siempre trae al menos 1 (obligatorio, ya contado aparte como
-    // `digitBits`); cualquier dígito de más ahí, o cualquier dígito en
-    // los trozos siguientes, es relleno real de `generateMemorablePassword`
-    // (ver el generador) y suma entropía propia, no es cosmético.
+    // `digitBits`). Los demás dígitos (el de cada palabra siguiente, que
+    // el generador agrega desde 2026-09-29, y el relleno final) son
+    // dígitos al azar y suman entropía propia, no son cosméticos.
     var paddingDigitCount = 0;
     for (var i = 0; i < chunks.length; i++) {
       final trailingDigits = _trailingDigitsRegex.stringMatch(chunks[i]) ?? '';

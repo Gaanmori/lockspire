@@ -56,6 +56,23 @@ void main() {
       );
     });
 
+    test('cada palabra lleva al menos un dígito (más entropía por '
+        'caracter, pedido del usuario)', () {
+      for (final targetLength in [16, 20, 25, 30, 40]) {
+        final password = generateMemorablePassword(
+          wordList: wordList,
+          targetLength: targetLength,
+        );
+        for (final part in password.split(separatorClass)) {
+          expect(
+            part,
+            matches(RegExp(r'^[A-Z][a-z]+[0-9]+$')),
+            reason: password,
+          );
+        }
+      }
+    });
+
     test('cada palabra generada (sin los dígitos de relleno) pertenece a '
         'wordList', () {
       final password = generateMemorablePassword(

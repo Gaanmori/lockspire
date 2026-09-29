@@ -41,11 +41,10 @@ const _maxMemorableWords = 8;
 const _maxAttemptsPerWord = 10;
 
 /// Genera una contraseña "fácil de recordar" con el patrón
-/// `Palabra1<dígito><símbolo>Palabra2<símbolo>Palabra3<símbolo>...` (ej.
-/// `Passed5#Forest&Sir`), tomando palabras de [wordList] con
+/// `Palabra1<dígito><símbolo>Palabra2<dígito><símbolo>Palabra3<dígito>...`
+/// (ej. `Passed5#Forest2&Sir7`), tomando palabras de [wordList] con
 /// `Random.secure()` (mismo criterio de seguridad que [generatePassword]).
-/// El dígito solo se agrega a la primera palabra, igual que el ejemplo
-/// que dio el usuario originalmente.
+/// Cada palabra lleva su propio dígito al azar.
 ///
 /// **El separador entre palabras es un símbolo elegido al azar por cada
 /// hueco** (de [_symbols], el mismo set que usa [generatePassword] —
@@ -83,14 +82,18 @@ String generateMemorablePassword({
   String pickWord() => capitalize(wordList[random.nextInt(wordList.length)]);
   String pickSeparator() => _symbols[random.nextInt(_symbols.length)];
 
-  final digit = random.nextInt(10);
-  final words = ['${pickWord()}$digit'];
+  // Cada palabra lleva su dígito al azar (2026-09-29, pedido del usuario):
+  // un dígito suma ~3,3 bits por un solo caracter, más densidad que una
+  // palabra (~2 bits por caracter), sin dejar de ser fácil de recordar.
+  String pickWordWithDigit() => '${pickWord()}${random.nextInt(10)}';
+
+  final words = [pickWordWithDigit()];
   var length = words[0].length;
 
   while (words.length < _maxMemorableWords) {
     String? fittingWord;
     for (var attempt = 0; attempt < _maxAttemptsPerWord; attempt++) {
-      final candidate = pickWord();
+      final candidate = pickWordWithDigit();
       if (length + 1 + candidate.length <= targetLength) {
         fittingWord = candidate;
         break;

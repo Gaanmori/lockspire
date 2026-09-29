@@ -316,7 +316,9 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     PasswordGeneratorPanel(
       settings: _generation,
       onChanged: (settings) {
-        _generation = settings;
+        // setState: sin él la contraseña se regeneraba con el largo nuevo,
+        // pero el slider y el "N caracteres" seguían mostrando el viejo.
+        setState(() => _generation = settings);
         unawaited(_regeneratePassword());
       },
     ),

@@ -696,6 +696,8 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - **Errores con código:** `AppProblem(AppProblemCode)` en `lib/shared/domain/app_problem.dart` reemplaza los `StateError` y `FormatException` con texto en español. La presentación los traduce con `localizeError`. Tiempo de descifrado, método biométrico, formato de exportación y navegador salen como datos (`localized_values.dart`).
   - **Extensión:** sigue el idioma de la app (campo `lang` en `PONG`) y tiene `_locales` para la tienda.
   - **Generador "fácil de recordar":** siempre en inglés, a pedido del usuario. Se eliminaron `assets/wordlists/es.txt` y su licencia GFDL.
+  - **Generador "fácil de recordar", un dígito en cada palabra** (`Passed5#Forest2&Sir7`), a pedido del usuario. A 20 caracteres pasa de unos 46 a unos 53 bits, y sigue siendo "Regular": las palabras aportan unos 2 bits por caracter. Con unos 31 caracteres (4 palabras) llega a "Segura". El medidor ya contaba esos dígitos.
+  - **Bug arreglado:** el slider de longitud del generador regeneraba la contraseña con el largo nuevo, pero no se movía ni actualizaba "N caracteres" (faltaba `setState` en `entry_form_screen.dart`). Encontrado por el usuario.
   - **Registro "usted":** se corrigieron textos que no lo cumplían ("Verificate", "la tuya", "Actualiza", "le estarías", "Confirmá/volvé" y "tus credenciales" en la extensión) y concordancias de género ("Nueva documento", "Contraseña copiado").
   - **Tests nuevos:** `test/l10n_test.dart` (mismas claves y parámetros en cada idioma) y `extension/test/i18n.test.ts`. `ui_register_test` detecta más formas.
 - **Pendiente:**
