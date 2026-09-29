@@ -8,7 +8,7 @@ Lockspire es un gestor de contraseñas y Passkeys open source, local-first, mult
 2. **Criptografía:** libsodium vía bindings nativos (no reimplementaciones puras en Dart) para Argon2id y XChaCha20-Poly1305. Parámetros de Argon2id agresivos por defecto (memoria ≥256 MiB, iteraciones ≥3-4).
 3. **Arquitectura:** Clean Architecture organizada como Hexagonal (Puertos y Adaptadores), por features, dentro de `app/lib/features/<feature>/{domain,application,infrastructure,presentation}`. El dominio nunca importa nada de `infrastructure/` ni `presentation/`. Los adaptadores nunca contienen lógica de negocio.
 4. **Fuera de alcance:** autocompletado dentro de apps de escritorio de Windows que no sean el navegador (mecanismo "auto-type"). No trabajar en esto salvo petición explícita del usuario.
-5. **Licencia:** AGPLv3. Todo archivo de código nuevo debería llevar la cabecera de licencia correspondiente.
+5. **Licencia:** AGPLv3. Todo archivo de código nuevo lleva la cabecera `// SPDX-License-Identifier: AGPL-3.0-or-later` y `// Copyright (C) 2026 Gabriel Ángel Montoya Rico` (titular de los derechos desde el 2026-09-29).
 
 ## Flujo de trabajo esperado en cada sesión
 

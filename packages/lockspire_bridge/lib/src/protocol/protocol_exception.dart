@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Mensaje mal formado o que no cumple el esquema del protocolo. Nunca se
 /// procesa un mensaje que haya lanzado esto (ADR 0013).

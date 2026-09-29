@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 #ifndef RUNNER_SECURE_CLIPBOARD_H_
 #define RUNNER_SECURE_CLIPBOARD_H_

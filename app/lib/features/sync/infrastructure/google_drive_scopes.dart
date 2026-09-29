@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Scope no sensible — acceso solo a la carpeta oculta de datos de la app
 /// (`appDataFolder`), invisible en el Drive normal del usuario. Ver

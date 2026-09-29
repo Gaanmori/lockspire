@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,6 +69,17 @@ class AppearanceScreen extends ConsumerWidget {
               ),
               const SizedBox(height: LockspireSpacing.lg),
               Text('Tema', style: textTheme.titleMedium),
+              if (ref.watch(platformCapabilitiesProvider).isAndroid) ...[
+                const SizedBox(height: LockspireSpacing.xs),
+                // ADR 0031: el ícono del lanzador sigue al tema.
+                Text(
+                  'El ícono de Lockspire en el teléfono también cambia al '
+                  'tema elegido, en unos segundos. Algunos lanzadores quitan '
+                  'el acceso directo de la pantalla de inicio al cambiarlo: '
+                  'vuelva a agregarlo desde la lista de apps.',
+                  style: textTheme.bodySmall,
+                ),
+              ],
               const SizedBox(height: LockspireSpacing.sm),
               for (final family in ThemeFamilyId.values) ...[
                 _FamilyCard(

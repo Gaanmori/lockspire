@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Cuándo se desbloqueó por última vez **con la contraseña maestra** en
 /// este dispositivo (ADR 0017). Separado del ajuste de días: se escribe en

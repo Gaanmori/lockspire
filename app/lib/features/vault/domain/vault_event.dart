@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Lo que pasa en la sesión de la bóveda y puede interesarle a otras
 /// features. `vault` los publica sin saber quién escucha: así `sync` reacciona

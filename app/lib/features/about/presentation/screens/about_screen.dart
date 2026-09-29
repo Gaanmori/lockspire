@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -11,6 +11,9 @@ import '../../../../design/lockspire_spacing.dart';
 const _sourceUrl = 'https://github.com/Gaanmori/lockspire';
 const _licenseUrl = 'https://www.gnu.org/licenses/agpl-3.0.html';
 const _privacyUrl = 'https://gaanmori.github.io/lockspire/privacy-policy';
+const _authorName = 'Gabriel Ángel Montoya Rico';
+const _authorLinkedIn = 'https://www.linkedin.com/in/gabrielmontoyarico/';
+const _authorGitHub = 'https://github.com/Gaanmori';
 
 /// Versión, licencia y código fuente (ADR 0028). La AGPLv3 pide ofrecer el
 /// código fuente a quien usa el programa; esta pantalla lo enlaza.
@@ -71,6 +74,55 @@ class AboutScreen extends StatelessWidget {
               ),
               const SizedBox(height: LockspireSpacing.lg),
               Card(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    LockspireSpacing.md,
+                    LockspireSpacing.md,
+                    LockspireSpacing.md,
+                    LockspireSpacing.xs,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Desarrollado por',
+                        style: textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        _authorName,
+                        style: textTheme.titleMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: LockspireSpacing.xs),
+                      Text(
+                        'Ingeniero de sistemas y desarrollador backend, con '
+                        'formación en desarrollo de software seguro (CSSLP, '
+                        'OWASP Top 10).',
+                        style: textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => _open(context, _authorLinkedIn),
+                            icon: const Icon(Icons.work_outline),
+                            label: const Text('LinkedIn'),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => _open(context, _authorGitHub),
+                            icon: const Icon(Icons.code),
+                            label: const Text('GitHub'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: LockspireSpacing.md),
+              Card(
                 child: Column(
                   children: [
                     ListTile(
@@ -106,7 +158,7 @@ class AboutScreen extends StatelessWidget {
                         context: context,
                         applicationName: 'Lockspire',
                         applicationLegalese:
-                            'Copyright (C) 2026 Lockspire. Distribuido bajo '
+                            'Copyright (C) 2026 $_authorName. Distribuido bajo '
                             'la GNU AGPL v3 o posterior.',
                       ),
                     ),

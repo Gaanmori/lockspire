@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +14,8 @@ import '../providers/auto_lock_timeout_setting_provider.dart';
 import '../providers/biometric_auth_port_provider.dart';
 import '../providers/master_password_reminder_setting_provider.dart';
 import '../biometric_unlock_controller.dart';
+import '../providers/site_icons_providers.dart';
+import '../site_icons_controller.dart';
 import 'change_master_password_screen.dart';
 
 const _settingsChannel = MethodChannel('com.lockspire.lockspire/settings');
@@ -142,6 +144,10 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       const SizedBox(height: LockspireSpacing.md),
                       const _MasterPasswordReminderSection(),
                     ],
+                    const SizedBox(height: LockspireSpacing.lg),
+                    const Divider(),
+                    const SizedBox(height: LockspireSpacing.md),
+                    const _SiteIconsSection(),
                     if (ref.watch(platformCapabilitiesProvider).isAndroid) ...[
                       const SizedBox(height: LockspireSpacing.lg),
                       const Divider(),
@@ -292,6 +298,58 @@ class _AutoLockSection extends ConsumerWidget {
               : ' ',
           style: textTheme.bodySmall,
         ),
+      ],
+    );
+  }
+}
+
+/// Íconos de los sitios (ADR 0029): opcional porque descargarlos le avisa a
+/// cada sitio de una visita desde esta conexión.
+class _SiteIconsSection extends ConsumerWidget {
+  const _SiteIconsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref.watch(siteIconsEnabledProvider).value ?? false;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Íconos de los sitios'),
+          subtitle: const Text(
+            'Descarga el ícono de cada sitio guardado directamente del '
+            'sitio, sin servicios de terceros, y lo guarda cifrado en su '
+            'bóveda. Cada sitio ve una visita desde su conexión. Sin '
+            'activarlo, se muestra la inicial.',
+          ),
+          value: enabled,
+          onChanged: (value) =>
+              ref.read(siteIconsEnabledProvider.notifier).set(value),
+        ),
+        if (enabled)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Completar los que falten con DuckDuckGo'),
+            subtitle: const Text(
+              'Para los sitios que no ofrecen ícono, se lo pide a '
+              'DuckDuckGo. DuckDuckGo recibe solo esos dominios, nunca sus '
+              'usuarios ni contraseñas.',
+            ),
+            value: ref.watch(siteIconsFallbackEnabledProvider).value ?? false,
+            onChanged: (value) =>
+                ref.read(siteIconsFallbackEnabledProvider.notifier).set(value),
+          ),
+        if (enabled)
+          TextButton.icon(
+            onPressed: () async {
+              final controller = ref.read(siteIconsControllerProvider);
+              await controller.retryMissing();
+              await controller.refresh();
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Volver a buscar los que faltan'),
+          ),
       ],
     );
   }

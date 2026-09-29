@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 // Bindings FFI mínimos a Win32 para el named pipe de ADR 0013. Se escriben
 // a mano (en vez de depender de package:win32) para que la superficie sea

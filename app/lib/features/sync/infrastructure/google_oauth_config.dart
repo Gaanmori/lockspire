@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Config de los clientes OAuth de Google Cloud Console usados por Fase 8.
 /// Se inyectan en tiempo de compilación:

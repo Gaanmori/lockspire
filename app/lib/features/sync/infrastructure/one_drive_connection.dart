@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Resultado de una autenticación exitosa contra Microsoft (interactiva o
 /// vía refresh token), ver `microsoft_oauth_auth.dart`.

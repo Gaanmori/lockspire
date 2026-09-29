@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Parámetros de Argon2id usados para derivar la clave de una bóveda.
 /// Ver docs/adr/0002-motor-criptografico.md para los valores mínimos

@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
+
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../domain/entities/entry_fields.dart';
 import '../../domain/entities/vault_entry.dart';
-import 'entry_type_label.dart';
+import 'entry_avatar.dart';
 
 /// Segunda línea de la fila: el usuario, o en una tarjeta los últimos 4
 /// dígitos (nunca el número completo) y en un documento el nombre.
@@ -46,19 +48,21 @@ class EntryTile extends StatelessWidget {
   /// `null` fuera del modo selección.
   final bool? selected;
 
+  /// Ícono del sitio de la entrada, si hay (ADR 0029).
+  final Uint8List? siteIcon;
+
   const EntryTile({
     super.key,
     required this.entry,
     required this.onTap,
     required this.onLongPress,
     this.selected,
+    this.siteIcon,
   });
 
   @override
   Widget build(BuildContext context) {
     final subtitle = entrySubtitle(entry);
-    final initial = entry.title.isNotEmpty ? entry.title[0].toUpperCase() : '?';
-    final isLogin = entry.type == VaultEntryType.password;
 
     return Material(
       color: context.palette.bgSurface,
@@ -74,28 +78,7 @@ class EntryTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: context.palette.bgSurfaceSubtle,
-                  shape: BoxShape.circle,
-                ),
-                child: isLogin
-                    ? Text(
-                        initial,
-                        style: TextStyle(
-                          color: context.palette.accentDefault,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      )
-                    : Icon(
-                        entry.type.icon,
-                        size: 20,
-                        color: context.palette.accentDefault,
-                      ),
-              ),
+              EntryAvatar(entry: entry, siteIcon: siteIcon),
               const SizedBox(width: LockspireSpacing.smMd),
               Expanded(
                 child: Column(

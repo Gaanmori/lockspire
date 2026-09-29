@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 // Protocolo v1 con la app (ADR 0013), lado extensión. La app y el native
 // host validan las peticiones; aquí se validan las respuestas antes de

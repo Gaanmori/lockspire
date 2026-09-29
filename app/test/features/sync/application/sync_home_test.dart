@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/sync/application/move_vault_to_provider_use_case.dart';

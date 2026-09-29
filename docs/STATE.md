@@ -41,7 +41,7 @@ Fase 2 y Fase 3 (auto-lock, ADR 0008) completas y verificadas de punta a punta e
   - Decisión de diseño surgida durante la implementación (no estaba en el plan original): el `nonce` se excluye del AAD del header — se conoce recién al cifrar (lo devuelve `CryptoPort.encrypt`), así que incluirlo en el AAD creaba una dependencia circular con "calcular el AAD antes de cifrar". Alterar el nonce ya rompe el descifrado por sí solo, no necesita autenticarse aparte.
   - `lib/features/vault/presentation/`: solo un `README.md` marcando qué falta (providers Riverpod, pantallas) — deliberadamente sin implementación todavía.
   - Tests en `app/test/features/vault/application/` con fakes en memoria (`FakeCryptoPort`, `FakeVaultStoragePort`), incluye un test que verifica que manipular el header (AAD) rompe la autenticación.
-  - Cabecera SPDX (`// SPDX-License-Identifier: AGPL-3.0-or-later` + `// Copyright (C) 2026 Lockspire`) aplicada a todos los archivos `.dart` nuevos y a los dos preexistentes (`main.dart`, `widget_test.dart`).
+  - Cabecera SPDX (`// SPDX-License-Identifier: AGPL-3.0-or-later` + `// Copyright (C) 2026 Gabriel Ángel Montoya Rico`) aplicada a todos los archivos `.dart` nuevos y a los dos preexistentes (`main.dart`, `widget_test.dart`).
   - `main.dart` envuelto en `ProviderScope` (composition root de Riverpod), UI de demo sin tocar.
 - **Fase 2 (cont.) — adaptadores reales de infraestructura de `vault`:**
   - **`docs/adr/0007-paralelismo-argon2id-libsodium.md` (nuevo ADR):** la API pública de libsodium (`crypto_pwhash`, la única que exponen los bindings de Dart) fija el paralelismo de Argon2id en 1 hilo por diseño — no depende de la librería Dart elegida. Se acepta la limitación (igual que Bitwarden) y se compensa subiendo memoria de 256→512 MiB. `defaultArgon2Params.parallelism` se fija literalmente en `1` (no un valor aspiracional "acorde a núcleos" del ADR 0002) para que el valor que viaja en el header persistido (AAD) nunca pueda divergir del que realmente se usó — evita un bug de pérdida de datos irreversible, no solo un problema de seguridad. `SodiumCryptoAdapter.deriveKey()` valida esto y lanza si recibe otro valor.
@@ -687,6 +687,24 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Arreglo:** `freshActiveSyncPort` y `freshSyncPortFor` (en `active_sync_port_provider.dart`) invalidan y arman el puerto de nuevo antes de cada operación: sync, adoptar contraseña, consulta previa al desbloqueo, mudanza, restaurar, y la réplica del cambio de contraseña (envoltorio `_FreshRemoteReplica`).
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
+
+### Autor y copyright (2026-09-29)
+
+- **"Acerca de"** tiene una tarjeta del autor: nombre, una línea profesional (desarrollo seguro: CSSLP, OWASP Top 10) y enlaces a LinkedIn y GitHub. Datos tomados del perfil de LinkedIn que compartió el usuario. **A propósito, sin** teléfono, correo, empleadores ni ciudad.
+- **Copyright:** en las cabeceras de los 337 archivos de código pasa de "Lockspire" a "Gabriel Ángel Montoya Rico", y el aviso de licencias de terceros también. `LICENSE` (texto oficial de la AGPL) no se toca. `CLAUDE.md` fija la cabecera para los archivos nuevos.
+
+### Íconos de entradas y del lanzador (2026-09-29)
+
+- **ADR 0029, íconos de sitios y apps.** Opcional, en Seguridad.
+  - Se descargan directo de cada sitio (`HttpSiteIconFetcher`: solo `https`, sin IPs ni red local, límites de tiempo y tamaño, 48 px).
+  - Se guardan cifrados en `Vault.siteIcons` y se sincronizan; el merge une ambos lados.
+  - En Android, si no hay ícono de sitio, el de la app instalada (canal `app_icons`, `<queries>` del lanzador).
+  - Letra mejorada.
+  - **Verificado por el usuario en Windows:** varios sitios con ícono.
+- **ADR 0030, respaldo opcional con DuckDuckGo** para los sitios sin ícono propio. DuckDuckGo recibe solo esos dominios. Marcadores: `''` = el sitio no tiene, `'-'` = nadie tiene.
+- **ADR 0031, ícono del lanzador de Android según el tema.** Un `activity-alias` por tema (íconos generados por `tools/generate_icons.py`) y `LauncherIcon.kt`, que deja activo solo el del tema. Algunos lanzadores quitan el acceso directo al cambiarlo (aviso en Apariencia). **Pendiente de probar en el Redmi.**
+- Tests: `site_icons_test.dart` (14). Suite: 360.
+- **Traducción (español/inglés) en curso:** ya están `flutter_localizations`, `intl`, `l10n.yaml` y `lib/l10n/app_{es,en}.arb` (solo `appTitle`). Falta todo lo demás (ver ADR 0032 cuando se escriba).
 
 ### Revisión de diseño + ícono según el tema (2026-09-29)
 

@@ -31,11 +31,64 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+        </activity>
+        <!-- Ícono del lanzador según el tema (ADR 0031): un alias por tema y
+             solo uno activo (LauncherIcon.kt). Lineage viene activo. -->
+        <activity-alias
+            android:name=".LauncherLineage"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_launcher"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherPixel"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_launcher_pixel"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherUbuntu"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_launcher_ubuntu"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherMint"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_launcher_mint"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherWindows"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_launcher_windows"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
         <!-- Vuelta del login de OneDrive (ADR 0022): la abre el navegador con
              com.lockspire.lockspire://oauth2redirect. Sin interfaz; entrega
              la URI a Dart y trae la app al frente. -->
@@ -121,6 +174,12 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Íconos de las apps instaladas junto a sus entradas (ADR 0029):
+             solo apps con ícono en el lanzador, sin QUERY_ALL_PACKAGES. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN"/>
+            <category android:name="android.intent.category.LAUNCHER"/>
         </intent>
         <!-- "Acerca de" abre el código fuente, la licencia y la política de
              privacidad en el navegador (url_launcher, Android 11+). -->

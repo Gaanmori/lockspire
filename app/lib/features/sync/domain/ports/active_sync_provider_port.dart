@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Proveedores de sync soportados. Uno solo puede estar activo a la vez —
 /// no hay caso de uso para tener credenciales de dos proveedores en

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Generado por tools/generate_icons.py. -->
 <resources>
-    <!-- Teal de la marca: #167C80, el de LineageOS (tema Lineage). -->
     <color name="ic_launcher_background">#167C80</color>
+    <color name="ic_launcher_background_pixel">#445E91</color>
+    <color name="ic_launcher_background_ubuntu">#E95420</color>
+    <color name="ic_launcher_background_mint">#35A854</color>
+    <color name="ic_launcher_background_windows">#005FB8</color>
 </resources>

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import '../../vault/domain/entities/entry_fields.dart';
 import '../../vault/domain/entities/vault_entry.dart';

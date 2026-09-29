@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import '../domain/master_password_reminder.dart';
 import '../domain/ports/master_password_reminder_settings_port.dart';

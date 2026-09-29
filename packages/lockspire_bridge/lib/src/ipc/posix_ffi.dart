@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 // Bindings FFI mínimos a libc (Linux). `dart:io` no permite fijar permisos
 // de archivos ni leer el uid propio.

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2026 Lockspire
+# Copyright (C) 2026 Gabriel Ángel Montoya Rico
 """Genera todos los íconos de Lockspire a partir de una sola geometría.
 
 Ícono "Candado aguja" (concepto A, 2026-09-27): un candado cuyo arco
@@ -25,6 +25,23 @@ BRAND = (0x16, 0x7C, 0x80, 255)  # fondo: #167C80, teal de LineageOS
 KEYHOLE = (0x32, 0x4B, 0x4C, 255)  # cerradura: #324B4C (accentHover)
 GLYPH = (0xF6, 0xFA, 0xFA, 255)  # candado: #F6FAFA (bgPage de Lineage)
 CLEAR = (0, 0, 0, 0)
+
+
+def _hex(h):
+    return (int(h[1:3], 16), int(h[3:5], 16), int(h[5:7], 16), 255)
+
+
+# Ícono por tema (ADR 0029/0031): fondo = acento, candado = fondo de página
+# y cerradura = acento oscuro de la versión clara de cada tema. Mantener en
+# sincronía con LockspireIconColors (app/lib/design/lockspire_icon.dart) y
+# ICON_COLORS (extension/src/icon.ts).
+THEMES = {
+    'lineage': (BRAND, GLYPH, KEYHOLE),
+    'pixel': (_hex('#445E91'), _hex('#F9F9FF'), _hex('#3E5480')),
+    'ubuntu': (_hex('#E95420'), _hex('#FAFAFA'), _hex('#C7461A')),
+    'mint': (_hex('#35A854'), _hex('#F8F8F9'), _hex('#2C8C46')),
+    'windows': (_hex('#005FB8'), _hex('#F3F3F3'), _hex('#1A6FC0')),
+}
 SUPERSAMPLE = 4
 
 # Geometría en un lienzo de 180x180 (igual que el SVG maestro).
@@ -61,7 +78,8 @@ def _shackle_points(steps=400):
             + quad((90, 30), (122, 52), (122, 76)) + line((122, 76), (122, 100)))
 
 
-def render(size, *, background='rounded', glyph_height=None, monochrome=False):
+def render(size, *, background='rounded', glyph_height=None, monochrome=False,
+           colors=None):
     """Un PNG RGBA de size x size.
 
     background: 'rounded' (cuadrado redondeado), 'square' (a sangre, para
@@ -71,14 +89,15 @@ def render(size, *, background='rounded', glyph_height=None, monochrome=False):
     monochrome: candado blanco con la cerradura calada (ícono temático de
     Android 13+).
     """
+    brand, glyph_color, keyhole = colors or THEMES['lineage']
     n = size * SUPERSAMPLE
     img = Image.new('RGBA', (n, n), CLEAR)
     draw = ImageDraw.Draw(img)
 
     if background == 'rounded':
-        draw.rounded_rectangle([0, 0, n - 1, n - 1], radius=CORNER * n / CANVAS, fill=BRAND)
+        draw.rounded_rectangle([0, 0, n - 1, n - 1], radius=CORNER * n / CANVAS, fill=brand)
     elif background == 'square':
-        draw.rectangle([0, 0, n - 1, n - 1], fill=BRAND)
+        draw.rectangle([0, 0, n - 1, n - 1], fill=brand)
 
     if glyph_height is None:
         k = n / CANVAS
@@ -91,7 +110,7 @@ def render(size, *, background='rounded', glyph_height=None, monochrome=False):
     def pt(x, y):
         return (ox + x * k, oy + y * k)
 
-    glyph = (255, 255, 255, 255) if monochrome else GLYPH
+    glyph = (255, 255, 255, 255) if monochrome else glyph_color
     radius = SHACKLE_WIDTH / 2 * k
     for x, y in _shackle_points():
         cx, cy = pt(x, y)
@@ -101,7 +120,7 @@ def render(size, *, background='rounded', glyph_height=None, monochrome=False):
     x1, y1 = pt(BODY[2], BODY[3])
     draw.rounded_rectangle([x0, y0, x1, y1], radius=BODY_RADIUS * k, fill=glyph)
 
-    hole = CLEAR if monochrome else KEYHOLE
+    hole = CLEAR if monochrome else keyhole
     cx, cy = pt(KEYHOLE_CIRCLE[0], KEYHOLE_CIRCLE[1])
     r = KEYHOLE_CIRCLE[2] * k
     draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=hole)
@@ -143,6 +162,40 @@ def main():
              folder / 'ic_launcher_foreground.png')
         save(render(adaptive, background=None, glyph_height=0.56, monochrome=True),
              folder / 'ic_launcher_monochrome.png')
+        # Un ícono por tema para el lanzador (ADR 0031): los activa la app
+        # con un activity-alias por tema. Lineage es el ic_launcher de base.
+        for name, colors in THEMES.items():
+            if name == 'lineage':
+                continue
+            save(render(legacy, colors=colors), folder / f'ic_launcher_{name}.png')
+            save(render(adaptive, background=None, glyph_height=0.56, colors=colors),
+                 folder / f'ic_launcher_foreground_{name}.png')
+
+    anydpi = res / 'mipmap-anydpi-v26'
+    colors_xml = ['<?xml version="1.0" encoding="utf-8"?>',
+                  '<!-- Generado por tools/generate_icons.py. -->',
+                  '<resources>',
+                  '    <color name="ic_launcher_background">#167C80</color>']
+    for name, (bg, _, _) in THEMES.items():
+        if name == 'lineage':
+            continue
+        colors_xml.append(
+            f'    <color name="ic_launcher_background_{name}">'
+            f'#{bg[0]:02X}{bg[1]:02X}{bg[2]:02X}</color>')
+        xml = '\n'.join([
+            '<?xml version="1.0" encoding="utf-8"?>',
+            f'<!-- Ícono del tema {name} (ADR 0031). Generado por tools/generate_icons.py. -->',
+            '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">',
+            f'    <background android:drawable="@color/ic_launcher_background_{name}" />',
+            f'    <foreground android:drawable="@mipmap/ic_launcher_foreground_{name}" />',
+            '    <monochrome android:drawable="@mipmap/ic_launcher_monochrome" />',
+            '</adaptive-icon>',
+        ]) + '\n'
+        (anydpi / f'ic_launcher_{name}.xml').write_text(xml, encoding='utf-8')
+        print(f'  {(anydpi / f"ic_launcher_{name}.xml").relative_to(ROOT)}')
+    colors_xml.append('</resources>')
+    (res / 'values/ic_launcher_background.xml').write_text(
+        '\n'.join(colors_xml) + '\n', encoding='utf-8')
 
     print('Windows')
     save_ico(APP / 'windows/runner/resources/app_icon.ico', [16, 24, 32, 48, 64, 128, 256])

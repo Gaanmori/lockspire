@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Protocolo y transporte IPC entre la app Lockspire y su native messaging
 /// host (ADR 0005, ADR 0013).

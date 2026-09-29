@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'dart:io' show Platform, exit;
+import 'features/appearance/presentation/providers/app_locale_provider.dart';
+import 'l10n/l10n.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +14,7 @@ import 'app_shell.dart';
 import 'design/lockspire_icon.dart';
 import 'features/appearance/presentation/providers/app_icon_colors_provider.dart';
 import 'features/appearance/presentation/appearance_controller.dart';
+import 'features/appearance/presentation/launcher_icon_sync.dart';
 import 'features/appearance/presentation/providers/app_themes_provider.dart';
 import 'features/appearance/presentation/providers/system_accent_color_provider.dart';
 import 'features/autofill/presentation/autofill_app.dart';
@@ -23,6 +26,7 @@ import 'features/sync/presentation/auto_sync_controller.dart';
 import 'features/sync/presentation/screens/restore_vault_screen.dart';
 import 'features/vault/presentation/auto_lock_controller.dart';
 import 'features/vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
+import 'features/vault/presentation/site_icons_controller.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
 import 'features/vault/presentation/vault_session_controller.dart';
 import 'features/vault/presentation/vault_session_state.dart';
@@ -58,7 +62,13 @@ Future<void> main() async {
   // conectar Google Drive ahí muestra la ventana "Iniciando sesión" encima
   // de la app que pide (ADR 0026). Lo guardado desde ahí se sube en la
   // próxima sync de la app.
-  if (!isAutofill) container.read(autoSyncControllerProvider);
+  if (!isAutofill) {
+    container.read(autoSyncControllerProvider);
+    // Íconos de los sitios, si están activados (ADR 0029).
+    container.read(siteIconsControllerProvider);
+    // Ícono del lanzador de Android según el tema (ADR 0031).
+    container.read(launcherIconSyncProvider);
+  }
   if (Platform.isWindows || Platform.isLinux) {
     // DesktopShell (ADR 0012) usa window_manager, que exige inicializarse
     // antes de runApp().
@@ -125,6 +135,11 @@ class MyApp extends ConsumerWidget {
       child: MaterialApp(
         navigatorKey: navigatorKey,
         title: 'Lockspire',
+        locale: ref.watch(appLocaleProvider),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localeListResolutionCallback: (locales, _) =>
+            resolveSystemLocale(locales),
         theme: themes.light,
         darkTheme: themes.dark,
         themeMode: themes.mode,

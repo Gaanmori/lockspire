@@ -23,6 +23,8 @@ class MainActivity : FlutterFragmentActivity() {
         super.configureFlutterEngine(flutterEngine)
         registerSecureClipboardChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         registerOAuthRedirectChannel(flutterEngine.dartExecutor.binaryMessenger)
+        registerAppIconsChannel(this, flutterEngine.dartExecutor.binaryMessenger)
+        registerLauncherIconChannel(this, flutterEngine.dartExecutor.binaryMessenger)
         // Autofill nativo (ADR 0011) — abre la pantalla de Config donde
         // el usuario activa Lockspire como servicio de autocompletado;
         // Android no deja que una app se auto-registre.

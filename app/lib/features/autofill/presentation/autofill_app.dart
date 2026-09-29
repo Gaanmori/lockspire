@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter/material.dart';
+import '../../appearance/presentation/providers/app_locale_provider.dart';
+import '../../../l10n/l10n.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,6 +31,11 @@ class AutofillApp extends ConsumerWidget {
       colors: ref.watch(appIconColorsProvider),
       child: MaterialApp(
         title: 'Lockspire',
+        locale: ref.watch(appLocaleProvider),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localeListResolutionCallback: (locales, _) =>
+            resolveSystemLocale(locales),
         theme: themes.light,
         darkTheme: themes.dark,
         themeMode: themes.mode,

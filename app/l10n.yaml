@@ -1,0 +1,8 @@
+# Traducciones (ADR 0030). El español es la plantilla: cada texto nuevo se
+# agrega primero en app_es.arb y después en app_en.arb.
+arb-dir: lib/l10n
+template-arb-file: app_es.arb
+output-localization-file: app_localizations.dart
+output-dir: lib/l10n/generated
+nullable-getter: false
+untranslated-messages-file: build/untranslated_messages.txt

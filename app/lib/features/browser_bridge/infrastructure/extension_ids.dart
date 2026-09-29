@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Nombre del native host (`name` del manifest; lo usa la extensión en
 /// `chrome.runtime.sendNativeMessage`).

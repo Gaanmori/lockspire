@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -22,6 +22,9 @@ class AppearanceController extends _$AppearanceController {
 
   Future<void> setMode(AppearanceMode mode) =>
       _update(_current.copyWith(mode: mode));
+
+  Future<void> setLanguage(AppLanguage language) =>
+      _update(_current.copyWith(language: language));
 
   AppearancePreference get _current =>
       state.value ?? AppearancePreference.defaults;

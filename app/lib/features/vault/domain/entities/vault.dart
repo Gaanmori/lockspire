@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'dart:convert';
 import 'dart:typed_data';
@@ -24,18 +24,26 @@ class Vault {
   /// que todavía no se sincronizaron (o anteriores a ese ADR).
   final String? syncHome;
 
+  /// Íconos de los sitios guardados (ADR 0029): host → PNG de 48 px en
+  /// base64, o `''` si ese sitio no tiene ícono (para no volver a buscarlo).
+  /// Uno por sitio aunque varias entradas lo usen. Cifrado con la bóveda y
+  /// sincronizado: cada sitio se consulta una sola vez en total.
+  final Map<String, String> siteIcons;
+
   const Vault({
     required this.vaultId,
     required this.schemaVersion,
     this.folders = const [],
     this.entries = const [],
     this.syncHome,
+    this.siteIcons = const {},
   });
 
   Vault copyWith({
     List<VaultFolder>? folders,
     List<VaultEntry>? entries,
     String? syncHome,
+    Map<String, String>? siteIcons,
   }) {
     return Vault(
       vaultId: vaultId,
@@ -43,8 +51,21 @@ class Vault {
       folders: folders ?? this.folders,
       entries: entries ?? this.entries,
       syncHome: syncHome ?? this.syncHome,
+      siteIcons: siteIcons ?? this.siteIcons,
     );
   }
+
+  /// Agrega o reemplaza íconos de sitios (ADR 0029).
+  Vault withSiteIcons(Map<String, String> icons) =>
+      copyWith(siteIcons: {...siteIcons, ...icons});
+
+  /// Olvida los sitios sin ícono (`''` y `'-'`), para volver a buscarlos.
+  Vault withoutMissingSiteIcons() => copyWith(
+    siteIcons: {
+      for (final MapEntry(:key, :value) in siteIcons.entries)
+        if (value.length > 1) key: value,
+    },
+  );
 
   /// Operaciones sobre las entradas (revisión 2026-09-25, hallazgo A2):
   /// la regla de negocio vive en el dominio, no en el controller. Son puras
@@ -95,6 +116,7 @@ class Vault {
     'folders': folders.map((f) => f.toJson()).toList(),
     'entries': entries.map((e) => e.toJson()).toList(),
     'sync_home': ?syncHome,
+    if (siteIcons.isNotEmpty) 'site_icons': siteIcons,
   };
 
   factory Vault.fromJson(Map<String, dynamic> json) {
@@ -108,6 +130,9 @@ class Vault {
           .map((e) => VaultEntry.fromJson(e as Map<String, dynamic>))
           .toList(),
       syncHome: json['sync_home'] as String?,
+      siteIcons: Map<String, String>.from(
+        json['site_icons'] as Map? ?? const {},
+      ),
     );
   }
 

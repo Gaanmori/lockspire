@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Tiempos de bloqueo por inactividad que puede elegir el usuario (ADR
 /// 0016). Solo estos tres: un valor libre permitiría dejar la bóveda

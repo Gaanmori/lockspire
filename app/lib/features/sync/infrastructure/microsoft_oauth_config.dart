@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// Config del Azure App Registration usado por el proveedor de sync
 /// OneDrive (ver `microsoft_oauth_auth.dart`). Se inyecta en tiempo de

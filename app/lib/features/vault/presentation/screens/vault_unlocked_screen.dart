@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
+
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +11,7 @@ import 'package:lockspire/shared/platform_capabilities.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../domain/entities/vault.dart';
 import '../../domain/entities/entry_fields.dart';
+import '../../domain/site_icons.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../../domain/ports/biometric_auth_port.dart';
 import '../providers/biometric_auth_port_provider.dart';
@@ -41,6 +45,23 @@ class VaultUnlockedScreen extends ConsumerStatefulWidget {
 class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
   final _searchController = TextEditingController();
   String _query = '';
+
+  /// Íconos de sitios decodificados una vez por cada bóveda nueva, no en
+  /// cada build (ADR 0029).
+  Map<String, String>? _iconsSource;
+  Map<String, Uint8List> _iconsCache = const {};
+
+  Map<String, Uint8List> get _decodedIcons {
+    final source = widget.vault.siteIcons;
+    if (!identical(source, _iconsSource)) {
+      _iconsSource = source;
+      _iconsCache = {
+        for (final MapEntry(:key, :value) in source.entries)
+          if (isSiteIcon(value)) key: base64Decode(value),
+      };
+    }
+    return _iconsCache;
+  }
 
   /// Ids seleccionados; `null` = no se está seleccionando.
   Set<String>? _selected;
@@ -296,6 +317,10 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
                       final entry = entries[index];
                       return EntryTile(
                         entry: entry,
+                        siteIcon: switch (iconHostOf(entry)) {
+                          final host? => _decodedIcons[host],
+                          null => null,
+                        },
                         selected: _selecting
                             ? selected.contains(entry.id)
                             : null,

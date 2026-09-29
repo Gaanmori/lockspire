@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:lockspire/features/vault/domain/entities/vault.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
@@ -128,6 +128,14 @@ MergeAnalysis mergeVaults({
       entries: merged,
       // ADR 0023: si la nube cambió la nube de la bóveda (una mudanza hecha
       // en otro dispositivo), gana la nube; si no, se queda la local.
+      // Íconos de sitios (ADR 0029): unión; un ícono encontrado le gana a
+      // "sin ícono" del otro lado.
+      siteIcons: {
+        ...remote.siteIcons,
+        for (final MapEntry(:key, :value) in local.siteIcons.entries)
+          if (value.length > 1 || (remote.siteIcons[key] ?? '').length <= 1)
+            key: value,
+      },
       syncHome: remote.syncHome != ancestor?.syncHome
           ? remote.syncHome ?? local.syncHome
           : local.syncHome,

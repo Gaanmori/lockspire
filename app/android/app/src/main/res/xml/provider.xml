@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
-<!-- Copyright (C) 2026 Lockspire -->
+<!-- Copyright (C) 2026 Gabriel Ángel Montoya Rico -->
 
 <!-- Solo TYPE_PASSWORD_CREDENTIAL en esta pasada — passkeys quedan
      explícitamente fuera de alcance, ver docs/adr/0011-autofill-android-credential-provider.md -->

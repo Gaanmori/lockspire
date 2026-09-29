@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Lockspire
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 /// CSV (RFC 4180) para importar y exportar (ADR 0027): comillas dobles,
 /// `""` como comilla escapada, saltos de línea dentro de un campo entre
 /// comillas, `\r\n` o `\n`, y BOM inicial opcional.
 List<List<String>> parseCsv(String input) {
-  final text = input.startsWith('﻿') ? input.substring(1) : input;
+  const bom = 0xFEFF;
+  final text = input.isNotEmpty && input.codeUnitAt(0) == bom
+      ? input.substring(1)
+      : input;
   final rows = <List<String>>[];
   var row = <String>[];
   final field = StringBuffer();
