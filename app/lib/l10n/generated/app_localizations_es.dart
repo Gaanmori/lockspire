@@ -1520,4 +1520,127 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get trayStillOpenBody =>
       'Al cerrar la ventana, Lockspire queda en la bandeja del sistema para que la extensión del navegador pueda autocompletar. La bóveda se bloquea sola tras el tiempo sin uso que elija en Seguridad, al bloquear la sesión o al suspender el equipo.\n\nPara cerrarlo del todo, use \"Salir\" en el icono de la bandeja.';
+
+  @override
+  String aboutOpenFailed(Object url) {
+    return 'No se pudo abrir $url';
+  }
+
+  @override
+  String aboutVersion(Object version, Object build) {
+    return 'Versión $version ($build)';
+  }
+
+  @override
+  String get aboutTagline =>
+      'Gestor de contraseñas libre y local. Su bóveda se cifra en su dispositivo y solo se sincroniza con la nube que usted elija. Sin publicidad, sin analíticas y sin servidores propios.';
+
+  @override
+  String get aboutDevelopedBy => 'Desarrollado por';
+
+  @override
+  String get aboutAuthorLine =>
+      'Ingeniero de sistemas y desarrollador backend, con formación en desarrollo de software seguro (CSSLP, OWASP Top 10).';
+
+  @override
+  String get aboutSourceCode => 'Código fuente';
+
+  @override
+  String get aboutLicense => 'Licencia';
+
+  @override
+  String get aboutLicenseName =>
+      'GNU Affero General Public License v3 o posterior';
+
+  @override
+  String get aboutPrivacyPolicy => 'Política de privacidad';
+
+  @override
+  String get aboutThirdParty => 'Licencias de terceros';
+
+  @override
+  String get aboutThirdPartyHint =>
+      'Componentes de código abierto que usa Lockspire';
+
+  @override
+  String aboutLegalese(Object author) {
+    return 'Copyright (C) 2026 $author. Distribuido bajo la GNU AGPL v3 o posterior.';
+  }
+
+  @override
+  String get autofillWrongSiteTitle => '¿Es el sitio correcto?';
+
+  @override
+  String autofillWrongSiteBody(
+    Object title,
+    Object entrySite,
+    Object pageHost,
+  ) {
+    return '\"$title\" es de $entrySite, pero la página que la pide es $pageHost.\n\nSi no esperaba este sitio, puede ser una página falsa que intenta robar su contraseña (phishing).';
+  }
+
+  @override
+  String get autofillFillAnyway => 'Rellenar igual';
+
+  @override
+  String get autofillNoSiteTitle => 'Esta entrada no tiene sitio';
+
+  @override
+  String autofillNoSiteBody(Object title, Object host) {
+    return '\"$title\" no tiene un sitio guardado, así que Lockspire no puede comprobar que $host sea el correcto.\n\nSi lo recuerda, la próxima vez se va a rellenar sola, y solo en este sitio.';
+  }
+
+  @override
+  String get autofillJustOnce => 'Solo esta vez';
+
+  @override
+  String get autofillFillAndRemember => 'Rellenar y recordar';
+
+  @override
+  String get autofillSearchHint => 'Buscar por título';
+
+  @override
+  String get autofillEmpty =>
+      'Todavía no ha guardado ninguna contraseña en Lockspire.';
+
+  @override
+  String get autofillNoResults => 'No se encontraron resultados.';
+
+  @override
+  String get autofillMatchesSite => 'Coincide con el sitio';
+
+  @override
+  String get autofillSavePrompt => '¿Guardar esta credencial en Lockspire?';
+
+  @override
+  String get autofillNoThanks => 'No, gracias';
+
+  @override
+  String get autofillBadRequest =>
+      'No se pudo entender el pedido de autocompletado.';
+
+  @override
+  String get autofillNoVault => 'Todavía no ha creado una bóveda en Lockspire.';
+
+  @override
+  String get commonClose => 'Cerrar';
+
+  @override
+  String get autofillAndroidApp => 'App de Android';
+
+  @override
+  String get autofillUnknownApp => 'App desconocida';
+
+  @override
+  String autofillInBrowser(Object browser) {
+    return 'en $browser';
+  }
+
+  @override
+  String get autofillInUnknownApp => 'en una app desconocida';
+
+  @override
+  String autofillInsideApp(Object package) {
+    return 'dentro de la app $package';
+  }
 }

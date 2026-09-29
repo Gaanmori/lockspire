@@ -9,6 +9,7 @@ import '../../../vault/domain/entities/entry_fields.dart';
 import '../../../vault/domain/entities/vault_entry.dart';
 import '../../domain/autofill_web_origin.dart';
 import '../../domain/match_entries_for_package.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Elegir qué cuenta rellenar (ADR 0011/0020): lista ordenada por
 /// coincidencia con la app o el sitio, y avisos de sitio distinto o sin
@@ -79,21 +80,18 @@ class GetCredentialViewState extends State<GetCredentialView> {
           Icons.warning_amber_rounded,
           color: Theme.of(context).colorScheme.error,
         ),
-        title: const Text('¿Es el sitio correcto?'),
+        title: Text(context.l10n.autofillWrongSiteTitle),
         content: Text(
-          '"${entry.title}" es de $entrySite, pero la página que la pide es '
-          '$pageHost.\n\n'
-          'Si no esperaba este sitio, puede ser una página falsa que intenta '
-          'robar su contraseña (phishing).',
+          context.l10n.autofillWrongSiteBody(entry.title, entrySite, pageHost),
         ),
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Rellenar igual'),
+            child: Text(context.l10n.autofillFillAnyway),
           ),
         ],
       ),
@@ -105,28 +103,27 @@ class GetCredentialViewState extends State<GetCredentialView> {
       showDialog<_NoSiteChoice>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Esta entrada no tiene sitio'),
+          title: Text(context.l10n.autofillNoSiteTitle),
           content: Text(
-            '"${entry.title}" no tiene un sitio guardado, así que Lockspire '
-            'no puede comprobar que ${Uri.parse(origin).host} sea el '
-            'correcto.\n\n'
-            'Si lo recuerda, la próxima vez se va a rellenar sola, y solo en '
-            'este sitio.',
+            context.l10n.autofillNoSiteBody(
+              entry.title,
+              Uri.parse(origin).host,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(_NoSiteChoice.cancel),
-              child: const Text('Cancelar'),
+              child: Text(context.l10n.commonCancel),
             ),
             TextButton(
               onPressed: () =>
                   Navigator.of(context).pop(_NoSiteChoice.fillOnce),
-              child: const Text('Solo esta vez'),
+              child: Text(context.l10n.autofillJustOnce),
             ),
             FilledButton(
               onPressed: () =>
                   Navigator.of(context).pop(_NoSiteChoice.linkAndFill),
-              child: const Text('Rellenar y recordar'),
+              child: Text(context.l10n.autofillFillAndRemember),
             ),
           ],
         ),
@@ -158,8 +155,8 @@ class GetCredentialViewState extends State<GetCredentialView> {
           ),
           child: TextField(
             controller: _searchController,
-            decoration: const InputDecoration(
-              hintText: 'Buscar por título',
+            decoration: InputDecoration(
+              hintText: context.l10n.autofillSearchHint,
               prefixIcon: Icon(Icons.search),
             ),
             onChanged: (value) => setState(() => _query = value),
@@ -172,8 +169,8 @@ class GetCredentialViewState extends State<GetCredentialView> {
                     padding: const EdgeInsets.all(LockspireSpacing.lg),
                     child: Text(
                       query.isEmpty
-                          ? 'Todavía no ha guardado ninguna contraseña en Lockspire.'
-                          : 'No se encontraron resultados.',
+                          ? context.l10n.autofillEmpty
+                          : context.l10n.autofillNoResults,
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -223,7 +220,8 @@ class GetCredentialViewState extends State<GetCredentialView> {
                                     Icon(
                                       Icons.verified_outlined,
                                       size: 18,
-                                      semanticLabel: 'Coincide con el sitio',
+                                      semanticLabel:
+                                          context.l10n.autofillMatchesSite,
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.primary,
@@ -287,7 +285,9 @@ class RequesterHeader extends StatelessWidget {
                 Text(
                   origin != null
                       ? Uri.parse(origin).host
-                      : (packageName.isEmpty ? context.l10n.autofillUnknownApp : packageName),
+                      : (packageName.isEmpty
+                            ? context.l10n.autofillUnknownApp
+                            : packageName),
                   style: theme.textTheme.titleMedium,
                 ),
                 Text(

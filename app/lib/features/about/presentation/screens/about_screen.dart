@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../design/lockspire_icon.dart';
 import '../../../../design/lockspire_spacing.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 const _sourceUrl = 'https://github.com/Gaanmori/lockspire';
 const _licenseUrl = 'https://www.gnu.org/licenses/agpl-3.0.html';
@@ -26,9 +27,9 @@ class AboutScreen extends StatelessWidget {
       mode: LaunchMode.externalApplication,
     );
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('No se pudo abrir $url')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.aboutOpenFailed(url))),
+      );
     }
   }
 
@@ -36,7 +37,7 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Acerca de')),
+      appBar: AppBar(title: Text(context.l10n.aboutTitle)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
@@ -57,7 +58,10 @@ class AboutScreen extends StatelessWidget {
                   return Text(
                     info == null
                         ? ''
-                        : 'Versión ${info.version} (${info.buildNumber})',
+                        : context.l10n.aboutVersion(
+                            info.version,
+                            info.buildNumber,
+                          ),
                     style: textTheme.bodySmall,
                     textAlign: TextAlign.center,
                   );
@@ -65,10 +69,7 @@ class AboutScreen extends StatelessWidget {
               ),
               const SizedBox(height: LockspireSpacing.md),
               Text(
-                'Gestor de contraseñas libre y local. Su bóveda se cifra en su '
-                'dispositivo y solo se sincroniza con la nube que usted '
-                'elija. Sin publicidad, sin analíticas y sin servidores '
-                'propios.',
+                context.l10n.aboutTagline,
                 style: textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -85,7 +86,7 @@ class AboutScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Desarrollado por',
+                        context.l10n.aboutDevelopedBy,
                         style: textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),
@@ -96,9 +97,7 @@ class AboutScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: LockspireSpacing.xs),
                       Text(
-                        'Ingeniero de sistemas y desarrollador backend, con '
-                        'formación en desarrollo de software seguro (CSSLP, '
-                        'OWASP Top 10).',
+                        context.l10n.aboutAuthorLine,
                         style: textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),
@@ -127,39 +126,35 @@ class AboutScreen extends StatelessWidget {
                   children: [
                     ListTile(
                       leading: const Icon(Icons.code),
-                      title: const Text('Código fuente'),
+                      title: Text(context.l10n.aboutSourceCode),
                       subtitle: const Text('github.com/Gaanmori/lockspire'),
                       trailing: const Icon(Icons.open_in_new),
                       onTap: () => _open(context, _sourceUrl),
                     ),
                     ListTile(
                       leading: const Icon(Icons.gavel_outlined),
-                      title: const Text('Licencia'),
-                      subtitle: const Text(
-                        'GNU Affero General Public License v3 o posterior',
-                      ),
+                      title: Text(context.l10n.aboutLicense),
+                      subtitle: Text(context.l10n.aboutLicenseName),
                       trailing: const Icon(Icons.open_in_new),
                       onTap: () => _open(context, _licenseUrl),
                     ),
                     ListTile(
                       leading: const Icon(Icons.privacy_tip_outlined),
-                      title: const Text('Política de privacidad'),
+                      title: Text(context.l10n.aboutPrivacyPolicy),
                       trailing: const Icon(Icons.open_in_new),
                       onTap: () => _open(context, _privacyUrl),
                     ),
                     ListTile(
                       leading: const Icon(Icons.library_books_outlined),
-                      title: const Text('Licencias de terceros'),
-                      subtitle: const Text(
-                        'Componentes de código abierto que usa Lockspire',
-                      ),
+                      title: Text(context.l10n.aboutThirdParty),
+                      subtitle: Text(context.l10n.aboutThirdPartyHint),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => showLicensePage(
                         context: context,
                         applicationName: 'Lockspire',
-                        applicationLegalese:
-                            'Copyright (C) 2026 $_authorName. Distribuido bajo '
-                            'la GNU AGPL v3 o posterior.',
+                        applicationLegalese: context.l10n.aboutLegalese(
+                          _authorName,
+                        ),
                       ),
                     ),
                   ],

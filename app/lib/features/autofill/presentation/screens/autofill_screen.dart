@@ -15,6 +15,7 @@ import '../../domain/autofill_session.dart';
 import '../../domain/autofill_web_origin.dart';
 import '../widgets/get_credential_view.dart';
 import '../widgets/create_credential_view.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 const _channel = MethodChannel('com.lockspire.lockspire/autofill');
 
@@ -147,7 +148,7 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(LockspireSpacing.lg),
                   child: Text(
-                    'No se pudo entender el pedido de autocompletado.',
+                    context.l10n.autofillBadRequest,
                     textAlign: TextAlign.center,
                   ),
                 ),

@@ -2335,6 +2335,204 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Al cerrar la ventana, Lockspire queda en la bandeja del sistema para que la extensión del navegador pueda autocompletar. La bóveda se bloquea sola tras el tiempo sin uso que elija en Seguridad, al bloquear la sesión o al suspender el equipo.\n\nPara cerrarlo del todo, use \"Salir\" en el icono de la bandeja.'**
   String get trayStillOpenBody;
+
+  /// No description provided for @aboutOpenFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir {url}'**
+  String aboutOpenFailed(Object url);
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In es, this message translates to:
+  /// **'Versión {version} ({build})'**
+  String aboutVersion(Object version, Object build);
+
+  /// No description provided for @aboutTagline.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestor de contraseñas libre y local. Su bóveda se cifra en su dispositivo y solo se sincroniza con la nube que usted elija. Sin publicidad, sin analíticas y sin servidores propios.'**
+  String get aboutTagline;
+
+  /// No description provided for @aboutDevelopedBy.
+  ///
+  /// In es, this message translates to:
+  /// **'Desarrollado por'**
+  String get aboutDevelopedBy;
+
+  /// No description provided for @aboutAuthorLine.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingeniero de sistemas y desarrollador backend, con formación en desarrollo de software seguro (CSSLP, OWASP Top 10).'**
+  String get aboutAuthorLine;
+
+  /// No description provided for @aboutSourceCode.
+  ///
+  /// In es, this message translates to:
+  /// **'Código fuente'**
+  String get aboutSourceCode;
+
+  /// No description provided for @aboutLicense.
+  ///
+  /// In es, this message translates to:
+  /// **'Licencia'**
+  String get aboutLicense;
+
+  /// No description provided for @aboutLicenseName.
+  ///
+  /// In es, this message translates to:
+  /// **'GNU Affero General Public License v3 o posterior'**
+  String get aboutLicenseName;
+
+  /// No description provided for @aboutPrivacyPolicy.
+  ///
+  /// In es, this message translates to:
+  /// **'Política de privacidad'**
+  String get aboutPrivacyPolicy;
+
+  /// No description provided for @aboutThirdParty.
+  ///
+  /// In es, this message translates to:
+  /// **'Licencias de terceros'**
+  String get aboutThirdParty;
+
+  /// No description provided for @aboutThirdPartyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Componentes de código abierto que usa Lockspire'**
+  String get aboutThirdPartyHint;
+
+  /// No description provided for @aboutLegalese.
+  ///
+  /// In es, this message translates to:
+  /// **'Copyright (C) 2026 {author}. Distribuido bajo la GNU AGPL v3 o posterior.'**
+  String aboutLegalese(Object author);
+
+  /// No description provided for @autofillWrongSiteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Es el sitio correcto?'**
+  String get autofillWrongSiteTitle;
+
+  /// No description provided for @autofillWrongSiteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'\"{title}\" es de {entrySite}, pero la página que la pide es {pageHost}.\n\nSi no esperaba este sitio, puede ser una página falsa que intenta robar su contraseña (phishing).'**
+  String autofillWrongSiteBody(Object title, Object entrySite, Object pageHost);
+
+  /// No description provided for @autofillFillAnyway.
+  ///
+  /// In es, this message translates to:
+  /// **'Rellenar igual'**
+  String get autofillFillAnyway;
+
+  /// No description provided for @autofillNoSiteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta entrada no tiene sitio'**
+  String get autofillNoSiteTitle;
+
+  /// No description provided for @autofillNoSiteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'\"{title}\" no tiene un sitio guardado, así que Lockspire no puede comprobar que {host} sea el correcto.\n\nSi lo recuerda, la próxima vez se va a rellenar sola, y solo en este sitio.'**
+  String autofillNoSiteBody(Object title, Object host);
+
+  /// No description provided for @autofillJustOnce.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo esta vez'**
+  String get autofillJustOnce;
+
+  /// No description provided for @autofillFillAndRemember.
+  ///
+  /// In es, this message translates to:
+  /// **'Rellenar y recordar'**
+  String get autofillFillAndRemember;
+
+  /// No description provided for @autofillSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar por título'**
+  String get autofillSearchHint;
+
+  /// No description provided for @autofillEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Todavía no ha guardado ninguna contraseña en Lockspire.'**
+  String get autofillEmpty;
+
+  /// No description provided for @autofillNoResults.
+  ///
+  /// In es, this message translates to:
+  /// **'No se encontraron resultados.'**
+  String get autofillNoResults;
+
+  /// No description provided for @autofillMatchesSite.
+  ///
+  /// In es, this message translates to:
+  /// **'Coincide con el sitio'**
+  String get autofillMatchesSite;
+
+  /// No description provided for @autofillSavePrompt.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Guardar esta credencial en Lockspire?'**
+  String get autofillSavePrompt;
+
+  /// No description provided for @autofillNoThanks.
+  ///
+  /// In es, this message translates to:
+  /// **'No, gracias'**
+  String get autofillNoThanks;
+
+  /// No description provided for @autofillBadRequest.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo entender el pedido de autocompletado.'**
+  String get autofillBadRequest;
+
+  /// No description provided for @autofillNoVault.
+  ///
+  /// In es, this message translates to:
+  /// **'Todavía no ha creado una bóveda en Lockspire.'**
+  String get autofillNoVault;
+
+  /// No description provided for @commonClose.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar'**
+  String get commonClose;
+
+  /// No description provided for @autofillAndroidApp.
+  ///
+  /// In es, this message translates to:
+  /// **'App de Android'**
+  String get autofillAndroidApp;
+
+  /// No description provided for @autofillUnknownApp.
+  ///
+  /// In es, this message translates to:
+  /// **'App desconocida'**
+  String get autofillUnknownApp;
+
+  /// No description provided for @autofillInBrowser.
+  ///
+  /// In es, this message translates to:
+  /// **'en {browser}'**
+  String autofillInBrowser(Object browser);
+
+  /// No description provided for @autofillInUnknownApp.
+  ///
+  /// In es, this message translates to:
+  /// **'en una app desconocida'**
+  String get autofillInUnknownApp;
+
+  /// No description provided for @autofillInsideApp.
+  ///
+  /// In es, this message translates to:
+  /// **'dentro de la app {package}'**
+  String autofillInsideApp(Object package);
 }
 
 class _AppLocalizationsDelegate

@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import '../../../../design/lockspire_spacing.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Guardar en la bóveda una cuenta que se acaba de usar en otra app
 /// (ADR 0011): nunca se guarda sola, el usuario confirma.
@@ -39,7 +40,7 @@ class CreateCredentialView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '¿Guardar esta credencial en Lockspire?',
+              context.l10n.autofillSavePrompt,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
             ),
@@ -60,7 +61,7 @@ class CreateCredentialView extends StatelessWidget {
                   username: username,
                   password: password,
                 ),
-                child: const Text('Guardar'),
+                child: Text(context.l10n.commonSave),
               ),
             ),
             const SizedBox(height: LockspireSpacing.sm),
@@ -68,7 +69,7 @@ class CreateCredentialView extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: onDismiss,
-                child: const Text('No, gracias'),
+                child: Text(context.l10n.autofillNoThanks),
               ),
             ),
           ],

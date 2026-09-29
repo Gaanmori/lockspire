@@ -1506,4 +1506,127 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get trayStillOpenBody =>
       'When you close the window, Lockspire stays in the system tray so the browser extension can autofill. The vault locks itself after the idle time you choose in Security, when you lock your session or when the computer goes to sleep.\n\nTo close it completely, use \"Quit\" on the tray icon.';
+
+  @override
+  String aboutOpenFailed(Object url) {
+    return 'Could not open $url';
+  }
+
+  @override
+  String aboutVersion(Object version, Object build) {
+    return 'Version $version ($build)';
+  }
+
+  @override
+  String get aboutTagline =>
+      'A free, local password manager. Your vault is encrypted on your device and only syncs with the cloud you choose. No ads, no analytics and no servers of our own.';
+
+  @override
+  String get aboutDevelopedBy => 'Developed by';
+
+  @override
+  String get aboutAuthorLine =>
+      'Systems engineer and backend developer, trained in secure software development (CSSLP, OWASP Top 10).';
+
+  @override
+  String get aboutSourceCode => 'Source code';
+
+  @override
+  String get aboutLicense => 'License';
+
+  @override
+  String get aboutLicenseName =>
+      'GNU Affero General Public License v3 or later';
+
+  @override
+  String get aboutPrivacyPolicy => 'Privacy policy';
+
+  @override
+  String get aboutThirdParty => 'Third-party licenses';
+
+  @override
+  String get aboutThirdPartyHint => 'Open source components Lockspire uses';
+
+  @override
+  String aboutLegalese(Object author) {
+    return 'Copyright (C) 2026 $author. Distributed under the GNU AGPL v3 or later.';
+  }
+
+  @override
+  String get autofillWrongSiteTitle => 'Is this the right site?';
+
+  @override
+  String autofillWrongSiteBody(
+    Object title,
+    Object entrySite,
+    Object pageHost,
+  ) {
+    return '\"$title\" belongs to $entrySite, but the page asking for it is $pageHost.\n\nIf you weren\'t expecting this site, it may be a fake page trying to steal your password (phishing).';
+  }
+
+  @override
+  String get autofillFillAnyway => 'Fill anyway';
+
+  @override
+  String get autofillNoSiteTitle => 'This entry has no site';
+
+  @override
+  String autofillNoSiteBody(Object title, Object host) {
+    return '\"$title\" has no saved site, so Lockspire can\'t check that $host is the right one.\n\nIf you remember it, next time it will fill in by itself, and only on this site.';
+  }
+
+  @override
+  String get autofillJustOnce => 'Just this once';
+
+  @override
+  String get autofillFillAndRemember => 'Fill and remember';
+
+  @override
+  String get autofillSearchHint => 'Search by title';
+
+  @override
+  String get autofillEmpty =>
+      'You haven\'t saved any passwords in Lockspire yet.';
+
+  @override
+  String get autofillNoResults => 'No results found.';
+
+  @override
+  String get autofillMatchesSite => 'Matches the site';
+
+  @override
+  String get autofillSavePrompt => 'Save this credential in Lockspire?';
+
+  @override
+  String get autofillNoThanks => 'No, thanks';
+
+  @override
+  String get autofillBadRequest =>
+      'The autofill request could not be understood.';
+
+  @override
+  String get autofillNoVault =>
+      'You haven\'t created a vault in Lockspire yet.';
+
+  @override
+  String get commonClose => 'Close';
+
+  @override
+  String get autofillAndroidApp => 'Android app';
+
+  @override
+  String get autofillUnknownApp => 'Unknown app';
+
+  @override
+  String autofillInBrowser(Object browser) {
+    return 'in $browser';
+  }
+
+  @override
+  String get autofillInUnknownApp => 'in an unknown app';
+
+  @override
+  String autofillInsideApp(Object package) {
+    return 'inside the app $package';
+  }
 }

@@ -15,6 +15,7 @@ import '../../vault/presentation/screens/unlock_vault_screen.dart';
 import '../../vault/presentation/vault_session_controller.dart';
 import '../../vault/presentation/vault_session_state.dart';
 import 'screens/autofill_screen.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 
 /// Raíz de la app cuando `AutofillActivity` (ADR 0011) la lanza — activada
 /// por `main.dart` cuando la ruta inicial es `/autofill` (ver
@@ -60,7 +61,9 @@ class _AutofillGate extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(LockspireSpacing.lg),
             child: Text(
-              'Ocurrió un error: $error',
+              context.l10n.commonErrorDetail(
+                localizeError(context.l10n, error),
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -91,16 +94,13 @@ class _NoVaultView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Todavía no ha creado una bóveda en Lockspire.',
-                textAlign: TextAlign.center,
-              ),
+              Text(context.l10n.autofillNoVault, textAlign: TextAlign.center),
               const SizedBox(height: LockspireSpacing.lg),
               FilledButton(
                 onPressed: () => const MethodChannel(
                   'com.lockspire.lockspire/autofill',
                 ).invokeMethod('cancel'),
-                child: const Text('Cerrar'),
+                child: Text(context.l10n.commonClose),
               ),
             ],
           ),
