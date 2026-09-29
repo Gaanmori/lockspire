@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
-import 'dart:ui';
-
 import 'package:flutter/widgets.dart';
 
 import 'generated/app_localizations.dart';

@@ -17,12 +17,14 @@ import '../biometric_unlock_controller.dart';
 import '../providers/site_icons_providers.dart';
 import '../site_icons_controller.dart';
 import 'change_master_password_screen.dart';
+import 'package:lockspire/l10n/localized_values.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 const _settingsChannel = MethodChannel('com.lockspire.lockspire/settings');
 
 /// Nombre del método biométrico de esta plataforma (hallazgo C2).
-String _biometricMethodName(WidgetRef ref) =>
-    ref.watch(platformCapabilitiesProvider).biometricMethodName;
+String _biometricMethodName(BuildContext context, WidgetRef ref) => context.l10n
+    .biometricName(ref.watch(platformCapabilitiesProvider).biometricMethod);
 
 /// Activar/desactivar el desbloqueo biométrico (ver `BiometricAuthPort`)
 /// — accesible desde `vault_unlocked_screen.dart`. Sin `Riverpod`
@@ -67,7 +69,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.message ?? 'No se pudo abrir la configuración.'),
+          content: Text(e.message ?? context.l10n.securityOpenSettingsFailed),
         ),
       );
     }
@@ -89,7 +91,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Seguridad')),
+      appBar: AppBar(title: Text(context.l10n.securityTitle)),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(LockspireSpacing.lg),
@@ -109,10 +111,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.password),
-                      title: const Text('Cambiar contraseña maestra'),
-                      subtitle: const Text(
-                        'Hágalo si cree que alguien pudo conocerla.',
-                      ),
+                      title: Text(context.l10n.changePwTitle),
+                      subtitle: Text(context.l10n.securityChangePwHint),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: _openChangeMasterPassword,
                     ),
@@ -125,12 +125,15 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        'Desbloquear con ${_biometricMethodName(ref)}',
+                        context.l10n.securityUnlockWith(
+                          _biometricMethodName(context, ref),
+                        ),
                       ),
                       subtitle: Text(
                         available
-                            ? 'Use ${_biometricMethodName(ref)} en vez de escribir la '
-                                  'contraseña maestra cada vez.'
+                            ? context.l10n.securityUnlockWithHint(
+                                _biometricMethodName(context, ref),
+                              )
                             : _unavailableReason(availability),
                       ),
                       value: enabled,
@@ -153,20 +156,15 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       const Divider(),
                       const SizedBox(height: LockspireSpacing.md),
                       Text(
-                        'Autocompletado',
+                        context.l10n.securityAutofill,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: LockspireSpacing.sm),
-                      const Text(
-                        'Active Lockspire como servicio de autocompletado '
-                        'para que aparezca como opción al iniciar sesión en '
-                        'otras apps — incluye logins dentro de un navegador '
-                        'embebido (ej. WebView).',
-                      ),
+                      Text(context.l10n.securityAutofillHint),
                       const SizedBox(height: LockspireSpacing.md),
                       OutlinedButton(
                         onPressed: _openAutofillServiceSettings,
-                        child: const Text('Activar como autocompletado'),
+                        child: Text(context.l10n.securityAutofillButton),
                       ),
                     ],
                   ],
@@ -189,17 +187,20 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     if (mounted) _refresh();
   }
 
-  String _unavailableReason(
-    BiometricAvailability availability,
-  ) => switch (availability) {
-    BiometricAvailability.noHardware =>
-      'Este dispositivo no tiene ${_biometricMethodName(ref)} configurado.',
-    BiometricAvailability.notEnrolled =>
-      'Configure ${_biometricMethodName(ref)} en los ajustes del sistema para '
-          'poder activarlo acá.',
-    BiometricAvailability.available => '',
-    BiometricAvailability.unavailable => 'No disponible en este dispositivo.',
-  };
+  String _unavailableReason(BiometricAvailability availability) =>
+      switch (availability) {
+        BiometricAvailability.noHardware =>
+          context.l10n.securityBiometricNotSetUp(
+            _biometricMethodName(context, ref),
+          ),
+        BiometricAvailability.notEnrolled =>
+          context.l10n.securityBiometricSetUpHint(
+            _biometricMethodName(context, ref),
+          ),
+        BiometricAvailability.available => '',
+        BiometricAvailability.unavailable =>
+          context.l10n.securityBiometricUnavailable,
+      };
 }
 
 /// Cada cuánto se exige la contraseña maestra aunque se use biometría (ADR
@@ -207,11 +208,14 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
 class _MasterPasswordReminderSection extends ConsumerWidget {
   const _MasterPasswordReminderSection();
 
-  static String _label(MasterPasswordReminder reminder) => switch (reminder) {
-    MasterPasswordReminder.sevenDays => '7 días',
-    MasterPasswordReminder.fourteenDays => '14 días',
-    MasterPasswordReminder.thirtyDays => '30 días',
-  };
+  static String _label(
+    AppLocalizations l10n,
+    MasterPasswordReminder reminder,
+  ) => l10n.commonDays(switch (reminder) {
+    MasterPasswordReminder.sevenDays => 7,
+    MasterPasswordReminder.fourteenDays => 14,
+    MasterPasswordReminder.thirtyDays => 30,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -223,7 +227,7 @@ class _MasterPasswordReminderSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pedir la contraseña maestra cada',
+          context.l10n.securityReminderTitle,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: LockspireSpacing.sm),
@@ -231,7 +235,10 @@ class _MasterPasswordReminderSection extends ConsumerWidget {
           showSelectedIcon: false,
           segments: [
             for (final reminder in MasterPasswordReminder.values)
-              ButtonSegment(value: reminder, label: Text(_label(reminder))),
+              ButtonSegment(
+                value: reminder,
+                label: Text(_label(context.l10n, reminder)),
+              ),
           ],
           selected: {current},
           onSelectionChanged: (selection) => ref
@@ -240,9 +247,7 @@ class _MasterPasswordReminderSection extends ConsumerWidget {
         ),
         const SizedBox(height: LockspireSpacing.xs),
         Text(
-          'Aunque use ${_biometricMethodName(ref)}, pasado este tiempo Lockspire '
-          'le pide la contraseña una vez, para que no se le olvide. Si la '
-          'olvida, la bóveda no se puede recuperar.',
+          context.l10n.securityReminderHint(_biometricMethodName(context, ref)),
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
@@ -254,11 +259,12 @@ class _MasterPasswordReminderSection extends ConsumerWidget {
 class _AutoLockSection extends ConsumerWidget {
   const _AutoLockSection();
 
-  static String _label(AutoLockTimeout timeout) => switch (timeout) {
-    AutoLockTimeout.oneMinute => '1 min',
-    AutoLockTimeout.fiveMinutes => '5 min',
-    AutoLockTimeout.fifteenMinutes => '15 min',
-  };
+  static String _label(AppLocalizations l10n, AutoLockTimeout timeout) =>
+      l10n.commonMinutesShort(switch (timeout) {
+        AutoLockTimeout.oneMinute => 1,
+        AutoLockTimeout.fiveMinutes => 5,
+        AutoLockTimeout.fifteenMinutes => 15,
+      });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -270,18 +276,22 @@ class _AutoLockSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Bloqueo automático', style: textTheme.titleMedium),
+        Text(context.l10n.securityAutoLock, style: textTheme.titleMedium),
         const SizedBox(height: LockspireSpacing.sm),
         Text(
-          'La bóveda se bloquea sola cuando pasa este tiempo sin que use '
-          'Lockspire. ${ref.watch(platformCapabilitiesProvider).isAndroid ? 'También se bloquea al salir de la app.' : 'También se bloquea al bloquear la sesión o suspender el equipo.'}',
+          ref.watch(platformCapabilitiesProvider).isAndroid
+              ? context.l10n.securityAutoLockHintAndroid
+              : context.l10n.securityAutoLockHintDesktop,
         ),
         const SizedBox(height: LockspireSpacing.md),
         SegmentedButton<AutoLockTimeout>(
           showSelectedIcon: false,
           segments: [
             for (final timeout in AutoLockTimeout.values)
-              ButtonSegment(value: timeout, label: Text(_label(timeout))),
+              ButtonSegment(
+                value: timeout,
+                label: Text(_label(context.l10n, timeout)),
+              ),
           ],
           selected: {current},
           // VaultSessionController escucha el cambio y reprograma el
@@ -293,8 +303,7 @@ class _AutoLockSection extends ConsumerWidget {
         const SizedBox(height: LockspireSpacing.xs),
         Text(
           current == AutoLockTimeout.fifteenMinutes
-              ? 'Más cómodo, pero la bóveda queda abierta más tiempo si se '
-                    'aleja del equipo.'
+              ? context.l10n.securityAutoLock15Warning
               : ' ',
           style: textTheme.bodySmall,
         ),
@@ -316,13 +325,8 @@ class _SiteIconsSection extends ConsumerWidget {
       children: [
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Íconos de los sitios'),
-          subtitle: const Text(
-            'Descarga el ícono de cada sitio guardado directamente del '
-            'sitio, sin servicios de terceros, y lo guarda cifrado en su '
-            'bóveda. Cada sitio ve una visita desde su conexión. Sin '
-            'activarlo, se muestra la inicial.',
-          ),
+          title: Text(context.l10n.securitySiteIcons),
+          subtitle: Text(context.l10n.securitySiteIconsHint),
           value: enabled,
           onChanged: (value) =>
               ref.read(siteIconsEnabledProvider.notifier).set(value),
@@ -330,12 +334,8 @@ class _SiteIconsSection extends ConsumerWidget {
         if (enabled)
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Completar los que falten con DuckDuckGo'),
-            subtitle: const Text(
-              'Para los sitios que no ofrecen ícono, se lo pide a '
-              'DuckDuckGo. DuckDuckGo recibe solo esos dominios, nunca sus '
-              'usuarios ni contraseñas.',
-            ),
+            title: Text(context.l10n.securitySiteIconsFallback),
+            subtitle: Text(context.l10n.securitySiteIconsFallbackHint),
             value: ref.watch(siteIconsFallbackEnabledProvider).value ?? false,
             onChanged: (value) =>
                 ref.read(siteIconsFallbackEnabledProvider.notifier).set(value),
@@ -348,7 +348,7 @@ class _SiteIconsSection extends ConsumerWidget {
               await controller.refresh();
             },
             icon: const Icon(Icons.refresh),
-            label: const Text('Volver a buscar los que faltan'),
+            label: Text(context.l10n.securitySiteIconsRetry),
           ),
       ],
     );

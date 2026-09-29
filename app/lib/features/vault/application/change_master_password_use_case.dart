@@ -18,7 +18,7 @@ class IncorrectMasterPasswordException implements Exception {
   const IncorrectMasterPasswordException();
 
   @override
-  String toString() => 'La contraseña actual no es correcta.';
+  String toString() => 'IncorrectMasterPasswordException';
 }
 
 /// La contraseña nueva no cumple la política (ADR 0018).
@@ -28,7 +28,7 @@ class WeakMasterPasswordException implements Exception {
   const WeakMasterPasswordException(this.problem);
 
   @override
-  String toString() => describeMasterPasswordProblem(problem);
+  String toString() => 'WeakMasterPasswordException(${problem.name})';
 }
 
 /// Cambia la contraseña maestra: salt nuevo, clave nueva y la bóveda

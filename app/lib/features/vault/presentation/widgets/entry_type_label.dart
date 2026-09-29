@@ -4,16 +4,9 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/vault_entry.dart';
 
-/// Nombres e íconos de cada tipo de entrada (ADR 0025).
+/// Ícono de cada tipo de entrada (ADR 0025). Los nombres están en los
+/// textos traducidos (ADR 0032).
 extension VaultEntryTypeLabel on VaultEntryType {
-  String get label => switch (this) {
-    VaultEntryType.card => 'tarjeta',
-    VaultEntryType.document => 'documento',
-    VaultEntryType.note => 'nota',
-    VaultEntryType.passkey => 'passkey',
-    VaultEntryType.password => 'contraseña',
-  };
-
   IconData get icon => switch (this) {
     VaultEntryType.card => Icons.credit_card,
     VaultEntryType.document => Icons.badge_outlined,

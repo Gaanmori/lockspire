@@ -13,6 +13,8 @@ import '../providers/active_sync_port_provider.dart';
 import '../providers/is_sync_configured_provider.dart';
 import '../restore_vault_controller.dart';
 import 'sync_settings_screen.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 
 enum _RestoreStep {
   configureProvider,
@@ -82,7 +84,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
       if (syncPort == null) {
         setState(() {
           _step = _RestoreStep.configureProvider;
-          _searchError = 'Configure un proveedor de sync primero.';
+          _searchError = context.l10n.restoreNoProvider;
         });
         return;
       }
@@ -103,7 +105,9 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
       if (!mounted) return;
       setState(() {
         _step = _RestoreStep.configureProvider;
-        _searchError = 'No se pudo buscar la bóveda remota: $error';
+        _searchError = context.l10n.restoreSearchFailed(
+          localizeError(context.l10n, error),
+        );
       });
     }
   }
@@ -141,7 +145,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Restaurar bóveda existente')),
+      appBar: AppBar(title: Text(context.l10n.restoreTitle)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
@@ -163,17 +167,15 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
     final configuredAsync = ref.watch(isSyncConfiguredProvider);
     return AuthCard(
       icon: Icons.cloud_sync_outlined,
-      title: 'Restaurar bóveda existente',
-      subtitle:
-          'Conecte el mismo proveedor de sync que ya usa en su otro '
-          'dispositivo: vamos a bajar su bóveda desde ahí.',
+      title: context.l10n.restoreTitle,
+      subtitle: context.l10n.restoreIntro,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           OutlinedButton(
             onPressed: _openSyncSettings,
-            child: const Text('Configurar proveedor de sync'),
+            child: Text(context.l10n.restoreSetUpProvider),
           ),
           const SizedBox(height: LockspireSpacing.md),
           if (_searchError != null)
@@ -187,11 +189,15 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
             ),
           configuredAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) =>
-                Text('Ocurrió un error: $error', textAlign: TextAlign.center),
+            error: (error, _) => Text(
+              context.l10n.commonErrorDetail(
+                localizeError(context.l10n, error),
+              ),
+              textAlign: TextAlign.center,
+            ),
             data: (configured) => FilledButton(
               onPressed: configured ? _searchRemoteVault : null,
-              child: const Text('Buscar mi bóveda'),
+              child: Text(context.l10n.restoreFindVault),
             ),
           ),
         ],
@@ -200,10 +206,10 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
   }
 
   Widget _buildSearchingStep() {
-    return const AuthCard(
+    return AuthCard(
       icon: Icons.cloud_sync_outlined,
-      title: 'Buscando su bóveda…',
-      subtitle: 'Revisando el proveedor de sync configurado.',
+      title: context.l10n.restoreSearching,
+      subtitle: context.l10n.restoreSearchingDetail,
       child: Center(child: CircularProgressIndicator()),
     );
   }
@@ -211,17 +217,14 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
   Widget _buildNoRemoteVaultStep() {
     return AuthCard(
       icon: Icons.cloud_off_outlined,
-      title: 'No hay ninguna bóveda ahí todavía',
-      subtitle:
-          'El proveedor está conectado, pero no encontramos ninguna '
-          'bóveda subida. Si el otro dispositivo todavía no sincronizó, '
-          'pruebe desde ahí primero.',
+      title: context.l10n.restoreNotFoundTitle,
+      subtitle: context.l10n.restoreNotFoundBody,
       child: SizedBox(
         width: double.infinity,
         child: OutlinedButton(
           onPressed: () =>
               setState(() => _step = _RestoreStep.configureProvider),
-          child: const Text('Volver'),
+          child: Text(context.l10n.commonBack),
         ),
       ),
     );
@@ -235,8 +238,8 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
       key: _formKey,
       child: AuthCard(
         icon: Icons.lock_outline,
-        title: 'Encontramos su bóveda',
-        subtitle: 'Ingrese su contraseña maestra para desbloquearla.',
+        title: context.l10n.restoreFoundTitle,
+        subtitle: context.l10n.restoreFoundBody,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -246,7 +249,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
               autofocus: true,
               enabled: !isLoading,
               decoration: InputDecoration(
-                labelText: 'Contraseña maestra',
+                labelText: context.l10n.commonMasterPassword,
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscure ? Icons.visibility : Icons.visibility_off,
@@ -255,7 +258,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
                 ),
               ),
               validator: (value) => (value == null || value.isEmpty)
-                  ? 'Ingrese su contraseña maestra'
+                  ? context.l10n.commonMasterPasswordRequired
                   : null,
               onFieldSubmitted: (_) => isLoading ? null : _submitPassword(),
             ),
@@ -272,7 +275,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
               Padding(
                 padding: const EdgeInsets.only(bottom: LockspireSpacing.md),
                 child: Text(
-                  'Contraseña incorrecta',
+                  context.l10n.commonWrongPassword,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                   textAlign: TextAlign.center,
                 ),
@@ -282,7 +285,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _submitPassword,
-                  child: const Text('Restaurar bóveda'),
+                  child: Text(context.l10n.restoreConfirm),
                 ),
               ),
           ],

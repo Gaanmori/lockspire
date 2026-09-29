@@ -74,7 +74,7 @@ class PasswordGenerationSettings {
   };
 
   /// Genera una contraseña. En modo "fácil de recordar" usa [wordList]
-  /// (el idioma lo elige quien llama).
+  /// (la lista en inglés, ver `WordListPort`).
   String generate({required List<String> wordList}) => switch (mode) {
     PasswordGenerationMode.random => generatePassword(length: length),
     PasswordGenerationMode.memorable => generateMemorablePassword(

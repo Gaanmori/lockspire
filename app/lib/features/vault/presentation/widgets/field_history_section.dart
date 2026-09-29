@@ -7,6 +7,7 @@ import '../../../../design/lockspire_spacing.dart';
 import '../../application/password_generation_settings.dart';
 import '../../domain/entities/entry_fields.dart';
 import '../../domain/entities/vault_entry.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Muestra los valores que un merge automático de Nivel 2 descartó por
 /// esta entrada (ADR 0009) — solo lectura, sin botón de restaurar (no se
@@ -19,30 +20,30 @@ class FieldHistorySection extends StatelessWidget {
 
   const FieldHistorySection({super.key, required this.entry});
 
-  static String _displayName(String key) {
-    if (key == titleFieldKey) return 'Título';
+  static String _displayName(AppLocalizations l10n, String key) {
+    if (key == titleFieldKey) return l10n.fieldTitle;
     final custom = CustomField.fromEntry(key, '');
     if (custom != null) return custom.name;
     final urlIndex = repeatedIndex(EntryFields.url, key);
-    if (urlIndex != null) return 'Sitio web ${urlIndex + 1}';
+    if (urlIndex != null) return l10n.fieldWebsiteN(urlIndex + 1);
     final appIndex = repeatedIndex(EntryFields.app, key);
-    if (appIndex != null) return 'App ${appIndex + 1}';
+    if (appIndex != null) return l10n.fieldAppN(appIndex + 1);
     return switch (key) {
-      EntryFields.username => 'Usuario',
-      EntryFields.password => 'Contraseña',
-      EntryFields.notes => 'Notas',
-      EntryFields.cardNumber => 'Número de tarjeta',
-      EntryFields.cardHolder => 'Titular',
-      EntryFields.cardExpiry => 'Vence',
-      EntryFields.cardCvv => 'CVV',
-      EntryFields.cardPin => 'PIN',
-      EntryFields.docNumber => 'Número',
-      EntryFields.docName => 'Nombre',
-      EntryFields.docBirthDate => 'Fecha de nacimiento',
-      EntryFields.docIssued => 'Expedido',
-      EntryFields.docExpiry => 'Vence',
-      PasswordGenerationSettings.modeFieldKey => 'Modo de generación',
-      PasswordGenerationSettings.lengthFieldKey => 'Parámetro de generación',
+      EntryFields.username => l10n.fieldUsername,
+      EntryFields.password => l10n.fieldPassword,
+      EntryFields.notes => l10n.fieldNotes,
+      EntryFields.cardNumber => l10n.fieldCardNumber,
+      EntryFields.cardHolder => l10n.fieldCardHolder,
+      EntryFields.cardExpiry => l10n.fieldExpiry,
+      EntryFields.cardCvv => l10n.fieldCvv,
+      EntryFields.cardPin => l10n.fieldPin,
+      EntryFields.docNumber => l10n.fieldDocNumber,
+      EntryFields.docName => l10n.fieldDocName,
+      EntryFields.docBirthDate => l10n.fieldBirthDate,
+      EntryFields.docIssued => l10n.fieldIssued,
+      EntryFields.docExpiry => l10n.fieldExpiry,
+      PasswordGenerationSettings.modeFieldKey => l10n.fieldGenerationMode,
+      PasswordGenerationSettings.lengthFieldKey => l10n.fieldGenerationParam,
       _ => key,
     };
   }
@@ -60,11 +61,8 @@ class FieldHistorySection extends StatelessWidget {
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         tilePadding: EdgeInsets.zero,
-        title: const Text('Valores anteriores'),
-        subtitle: const Text(
-          'Lo que tenían antes estos campos: importado de SafeInCloud o de '
-          'un cambio en otro dispositivo que se resolvió solo.',
-        ),
+        title: Text(context.l10n.historyTitle),
+        subtitle: Text(context.l10n.historyHint),
         children: [
           for (final field in entry.fieldHistory.entries)
             Padding(
@@ -73,7 +71,7 @@ class FieldHistorySection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _displayName(field.key),
+                    _displayName(context.l10n, field.key),
                     style: Theme.of(context).textTheme.labelMedium,
                   ),
                   for (final record in field.value)

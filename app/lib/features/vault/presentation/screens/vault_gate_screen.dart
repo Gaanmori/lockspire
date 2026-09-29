@@ -10,6 +10,8 @@ import '../vault_session_controller.dart';
 import '../vault_session_state.dart';
 import 'create_vault_screen.dart';
 import 'unlock_vault_screen.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 
 /// Punto de entrada de la feature `vault`: decide qué pantalla mostrar
 /// según el estado inicial de la sesión (¿existe una bóveda? ¿está
@@ -44,12 +46,17 @@ class VaultGateScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Ocurrió un error: $error', textAlign: TextAlign.center),
+                Text(
+                  context.l10n.commonErrorDetail(
+                    localizeError(context.l10n, error),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: LockspireSpacing.md),
                 FilledButton(
                   onPressed: () =>
                       ref.invalidate(vaultSessionControllerProvider),
-                  child: const Text('Reintentar'),
+                  child: Text(context.l10n.commonRetry),
                 ),
               ],
             ),

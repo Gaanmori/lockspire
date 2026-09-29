@@ -16,6 +16,7 @@ import 'package:lockspire/features/vault/presentation/screens/import_screen.dart
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
 
 import '../application/fakes.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 const _password = 'contraseña de prueba larga';
 
@@ -71,7 +72,12 @@ Future<void> _pump(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: MaterialApp(home: screen),
+      child: MaterialApp(
+        locale: const Locale('es'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: screen,
+      ),
     ),
   );
   await tester.pumpAndSettle();

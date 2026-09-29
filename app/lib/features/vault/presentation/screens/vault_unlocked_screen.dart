@@ -21,6 +21,8 @@ import '../vault_session_controller.dart';
 import 'entry_form_screen.dart';
 import '../widgets/entry_type_label.dart';
 import '../widgets/entry_tile.dart';
+import 'package:lockspire/l10n/localized_values.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Lista de entradas de la bóveda desbloqueada, con búsqueda y acceso a
 /// crear/editar (ver `EntryFormScreen`).
@@ -80,15 +82,12 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(n == 1 ? '¿Eliminar 1 entrada?' : '¿Eliminar $n entradas?'),
-        content: const Text(
-          'Se eliminan de la bóveda en este dispositivo y en los demás al '
-          'sincronizar.',
-        ),
+        title: Text(context.l10n.deleteEntriesTitle(n)),
+        content: Text(context.l10n.deleteEntriesBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -96,7 +95,7 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
               foregroundColor: Theme.of(dialogContext).colorScheme.onError,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Eliminar'),
+            child: Text(context.l10n.commonDelete),
           ),
         ],
       ),
@@ -105,13 +104,9 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
     await ref.read(vaultEntriesControllerProvider).deleteEntries(ids);
     if (!mounted) return;
     setState(() => _selected = null);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          n == 1 ? 'Se eliminó 1 entrada' : 'Se eliminaron $n entradas',
-        ),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.deleteEntriesDone(n))));
   }
 
   @override
@@ -145,26 +140,22 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
     if (await port.wasOnboardingDismissed()) return;
     if (!mounted) return;
 
-    final methodName = ref
-        .read(platformCapabilitiesProvider)
-        .biometricMethodName;
+    final methodName = context.l10n.biometricName(
+      ref.read(platformCapabilitiesProvider).biometricMethod,
+    );
     final activar = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('¿Activar desbloqueo con $methodName?'),
-        content: Text(
-          'En vez de escribir la contraseña maestra cada vez, podrá '
-          'desbloquear la bóveda con $methodName. Puede cambiarlo después '
-          'desde "Seguridad".',
-        ),
+        title: Text(context.l10n.biometricOptInTitle(methodName)),
+        content: Text(context.l10n.biometricOptInBody(methodName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Ahora no'),
+            child: Text(context.l10n.commonNotNow),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Activar'),
+            child: Text(context.l10n.commonTurnOn),
           ),
         ],
       ),
@@ -205,10 +196,10 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            for (final (type, label) in const [
-              (VaultEntryType.password, 'Contraseña'),
-              (VaultEntryType.card, 'Tarjeta'),
-              (VaultEntryType.document, 'Documento'),
+            for (final (type, label) in [
+              (VaultEntryType.password, context.l10n.entryTypePassword),
+              (VaultEntryType.card, context.l10n.entryTypeCard),
+              (VaultEntryType.document, context.l10n.entryTypeDocument),
             ])
               ListTile(
                 leading: Icon(type.icon),
@@ -238,16 +229,16 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
           ? AppBar(
               leading: IconButton(
                 icon: const Icon(Icons.close),
-                tooltip: 'Cancelar selección',
+                tooltip: context.l10n.selectionCancel,
                 onPressed: () => setState(() => _selected = null),
               ),
-              title: Text('${selected.length} seleccionadas'),
+              title: Text(context.l10n.selectionCount(selected.length)),
               actions: [
                 IconButton(
                   icon: Icon(allSelected ? Icons.deselect : Icons.select_all),
                   tooltip: allSelected
-                      ? 'Quitar selección'
-                      : 'Seleccionar todo',
+                      ? context.l10n.selectionClear
+                      : context.l10n.selectionAll,
                   onPressed: () => setState(
                     () => _selected = allSelected
                         ? <String>{}
@@ -256,7 +247,7 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
-                  tooltip: 'Eliminar seleccionadas',
+                  tooltip: context.l10n.selectionDelete,
                   onPressed: selected.isEmpty ? null : _deleteSelected,
                 ),
               ],
@@ -269,13 +260,13 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
                 if (entries.isNotEmpty)
                   IconButton(
                     icon: const Icon(Icons.checklist),
-                    tooltip: 'Seleccionar',
+                    tooltip: context.l10n.selectionStart,
                     onPressed: () => setState(() => _selected = <String>{}),
                   ),
                 if (widget.showLockAction)
                   IconButton(
                     icon: const Icon(Icons.lock),
-                    tooltip: 'Bloquear',
+                    tooltip: context.l10n.commonLock,
                     onPressed: () => ref
                         .read(vaultSessionControllerProvider.notifier)
                         .lock(),
@@ -293,8 +284,8 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
             ),
             child: TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Buscar por título, usuario o sitio',
+              decoration: InputDecoration(
+                hintText: context.l10n.vaultSearchHint,
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: (value) => setState(() => _query = value),
@@ -341,7 +332,7 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
       floatingActionButton: _selecting
           ? null
           : FloatingActionButton(
-              tooltip: 'Agregar',
+              tooltip: context.l10n.commonAdd,
               onPressed: _addEntry,
               child: const Icon(Icons.add),
             ),

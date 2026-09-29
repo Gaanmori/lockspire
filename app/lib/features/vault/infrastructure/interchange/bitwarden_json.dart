@@ -8,6 +8,7 @@ import '../../domain/entities/vault_entry.dart';
 import '../../domain/ports/vault_exporter.dart';
 import '../../domain/ports/vault_import_source.dart';
 import 'entry_mapping.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 // Tipos de ítem y de campo del formato de Bitwarden.
 const _login = 1;
@@ -26,20 +27,17 @@ class BitwardenJsonImportSource implements VaultImportSource {
     try {
       json = jsonDecode(content);
     } on FormatException {
-      throw const FormatException('El archivo no es un JSON válido.');
+      throw const AppProblem(AppProblemCode.importInvalidJson);
     }
     if (json is! Map) {
-      throw const FormatException('No es un export JSON de Bitwarden.');
+      throw const AppProblem(AppProblemCode.importNotBitwardenJson);
     }
     if (json['encrypted'] == true) {
-      throw const FormatException(
-        'Este JSON de Bitwarden está cifrado. Expórtelo de nuevo eligiendo '
-        '"JSON" (sin cifrar) para poder importarlo.',
-      );
+      throw const AppProblem(AppProblemCode.importBitwardenEncrypted);
     }
     final items = json['items'];
     if (items is! List) {
-      throw const FormatException('No es un export JSON de Bitwarden.');
+      throw const AppProblem(AppProblemCode.importNotBitwardenJson);
     }
     return [
       for (final item in items)
@@ -186,12 +184,7 @@ class BitwardenJsonImportSource implements VaultImportSource {
 
 class BitwardenJsonExporter implements VaultExporter {
   @override
-  String get label => 'JSON de Bitwarden';
-
-  @override
-  String get description =>
-      'Sin cifrar. Incluye tarjetas y documentos. Lo leen Bitwarden y otros '
-      'gestores que importan desde Bitwarden.';
+  ExportFormat get format => ExportFormat.bitwardenJson;
 
   @override
   String get fileExtension => 'json';

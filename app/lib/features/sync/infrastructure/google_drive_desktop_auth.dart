@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'google_drive_connection.dart';
 import 'google_drive_scopes.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// Autenticación contra Google Drive en escritorio (Windows y Linux).
 ///
@@ -74,7 +75,10 @@ class GoogleDriveDesktopAuth {
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final email = body['email'] as String?;
     if (email == null) {
-      throw StateError('No se pudo leer el email de la cuenta de Google');
+      throw const AppProblem(
+        AppProblemCode.accountEmailUnreadable,
+        detail: 'Google',
+      );
     }
     return email;
   }

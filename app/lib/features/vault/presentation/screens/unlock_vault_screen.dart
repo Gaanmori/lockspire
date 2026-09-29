@@ -15,6 +15,9 @@ import '../providers/password_changed_elsewhere_port_provider.dart';
 import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
+import 'package:lockspire/l10n/localized_values.dart';
 
 class UnlockVaultScreen extends ConsumerStatefulWidget {
   /// Mirar la nube por si la contraseña cambió en otro dispositivo (ADR
@@ -162,14 +165,15 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
 
   String _errorText(Object? error) => switch (error) {
     PreviousPasswordRequiredException() =>
-      'Este dispositivo tiene cambios que aún no se sincronizaron. Para '
-          'conservarlos, ingrese también la contraseña anterior.',
+      context.l10n.unlockPreviousPasswordNeeded,
     IncorrectPreviousPasswordException() =>
-      'La contraseña anterior no es correcta',
+      context.l10n.unlockPreviousPasswordWrong,
     IncorrectMasterPasswordException() when _askNewPassword =>
-      'No es la contraseña nueva',
-    _ when _askNewPassword => 'No se pudo completar: $error',
-    _ => 'Contraseña incorrecta',
+      context.l10n.pwChangedNotNew,
+    _ when _askNewPassword => context.l10n.commonCouldNotComplete(
+      localizeError(context.l10n, error ?? ''),
+    ),
+    _ => context.l10n.commonWrongPassword,
   };
 
   Future<void> _submitWithBiometrics() async {
@@ -197,28 +201,33 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
               child: AuthCard(
                 icon: Icons.lock_outline,
                 brand: true,
-                title: '¡Hola de nuevo!',
-                subtitle: 'Ingrese su contraseña para entrar a su bóveda',
+                title: context.l10n.unlockWelcomeBack,
+                subtitle: context.l10n.unlockPrompt,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_askNewPassword) ...[
                       Text(
-                        'La contraseña maestra se cambió en otro '
-                        'dispositivo. Ingrese la nueva para entrar. Hasta '
-                        'entonces no se puede usar '
-                        '${ref.watch(platformCapabilitiesProvider).biometricMethodName}.',
+                        context.l10n.unlockPasswordChangedElsewhere(
+                          context.l10n.biometricName(
+                            ref
+                                .watch(platformCapabilitiesProvider)
+                                .biometricMethod,
+                          ),
+                        ),
                         style: Theme.of(context).textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: LockspireSpacing.md),
                     ] else if (_passwordRequiredByReminder) ...[
                       Text(
-                        'Por seguridad, cada tanto Lockspire le pide la '
-                        'contraseña maestra aunque use '
-                        '${ref.watch(platformCapabilitiesProvider).biometricMethodName}, '
-                        'para que no se le olvide. Después vuelve a '
-                        'funcionar como siempre.',
+                        context.l10n.unlockPeriodicReminder(
+                          context.l10n.biometricName(
+                            ref
+                                .watch(platformCapabilitiesProvider)
+                                .biometricMethod,
+                          ),
+                        ),
                         style: Theme.of(context).textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),
@@ -231,8 +240,8 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                       enabled: !isLoading,
                       decoration: InputDecoration(
                         labelText: _askNewPassword
-                            ? 'Contraseña maestra nueva'
-                            : 'Contraseña maestra',
+                            ? context.l10n.pwChangedDialogTitle
+                            : context.l10n.commonMasterPassword,
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscure ? Icons.visibility : Icons.visibility_off,
@@ -242,7 +251,7 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Ingrese su contraseña maestra';
+                          return context.l10n.commonMasterPasswordRequired;
                         }
                         return null;
                       },
@@ -254,11 +263,11 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                         controller: _previousPasswordController,
                         obscureText: _obscure,
                         enabled: !isLoading,
-                        decoration: const InputDecoration(
-                          labelText: 'Contraseña anterior',
+                        decoration: InputDecoration(
+                          labelText: context.l10n.unlockPreviousPassword,
                         ),
                         validator: (value) => value == null || value.isEmpty
-                            ? 'Ingrese la contraseña anterior'
+                            ? context.l10n.unlockPreviousPasswordRequired
                             : null,
                         onFieldSubmitted: (_) => isLoading ? null : _submit(),
                       ),
@@ -278,9 +287,8 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                               child: LinearProgressIndicator(),
                             ),
                             const SizedBox(height: LockspireSpacing.smMd),
-                            const Text(
-                              'Desbloqueando… esto puede tardar unos segundos '
-                              '(derivación de clave Argon2id)',
+                            Text(
+                              context.l10n.unlockUnlocking,
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -304,7 +312,7 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: _submit,
-                          child: const Text('Desbloquear'),
+                          child: Text(context.l10n.unlockButton),
                         ),
                       ),
                     if (!isLoading && _changedElsewhere) ...[
@@ -318,8 +326,8 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                         }),
                         child: Text(
                           _usePreviousInstead
-                              ? 'Ingresar la contraseña nueva'
-                              : 'No tengo la contraseña nueva',
+                              ? context.l10n.unlockEnterNewPassword
+                              : context.l10n.unlockNoNewPassword,
                         ),
                       ),
                     ],
@@ -333,7 +341,13 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
                           onPressed: _submitWithBiometrics,
                           icon: const Icon(Icons.fingerprint),
                           label: Text(
-                            'Usar ${ref.watch(platformCapabilitiesProvider).biometricMethodName}',
+                            context.l10n.unlockUseBiometric(
+                              context.l10n.biometricName(
+                                ref
+                                    .watch(platformCapabilitiesProvider)
+                                    .biometricMethod,
+                              ),
+                            ),
                           ),
                         ),
                       ),

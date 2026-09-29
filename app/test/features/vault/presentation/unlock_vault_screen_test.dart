@@ -15,6 +15,7 @@ import 'package:lockspire/features/vault/presentation/providers/vault_storage_po
 import 'package:lockspire/features/vault/presentation/screens/unlock_vault_screen.dart';
 
 import '../application/fakes.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Pantalla de desbloqueo con biometría activa y un último desbloqueo con
 /// contraseña en [lastPasswordUnlock].
@@ -39,7 +40,12 @@ Future<void> _pump(WidgetTester tester, DateTime? lastPasswordUnlock) async {
           (ref) async => FakeVaultStoragePort(),
         ),
       ],
-      child: const MaterialApp(home: UnlockVaultScreen()),
+      child: const MaterialApp(
+        locale: Locale('es'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: UnlockVaultScreen(),
+      ),
     ),
   );
   // Deja resolver las lecturas asíncronas de los puertos y el intento

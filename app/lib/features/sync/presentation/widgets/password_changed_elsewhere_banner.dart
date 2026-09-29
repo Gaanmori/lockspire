@@ -9,6 +9,8 @@ import 'package:lockspire/features/vault/application/change_master_password_use_
 
 import '../../application/sync_vault_use_case.dart';
 import '../sync_controller.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 
 /// Aviso visible en toda la app cuando la última sync se rechazó porque la
 /// contraseña maestra se cambió en otro dispositivo (ADR 0018). Sin ese
@@ -27,17 +29,14 @@ class PasswordChangedElsewhereBanner extends ConsumerWidget {
     return MaterialBanner(
       forceActionsBelow: true,
       leading: const Icon(Icons.key_outlined),
-      content: const Text(
-        'La contraseña maestra se cambió en otro dispositivo. Ingrese la '
-        'nueva para seguir sincronizando.',
-      ),
+      content: Text(context.l10n.pwChangedBanner),
       actions: [
         TextButton(
           onPressed: () => showDialog<void>(
             context: context,
             builder: (_) => const _AdoptRemotePasswordDialog(),
           ),
-          child: const Text('Ingresar contraseña nueva'),
+          child: Text(context.l10n.pwChangedEnterNew),
         ),
       ],
     );
@@ -76,9 +75,13 @@ class _AdoptRemotePasswordDialogState
           .adoptRemoteMasterPassword(_controller.text);
       if (mounted) Navigator.of(context).pop();
     } on IncorrectMasterPasswordException {
-      setState(() => _error = 'No es la contraseña nueva');
+      setState(() => _error = context.l10n.pwChangedNotNew);
     } catch (error) {
-      setState(() => _error = 'No se pudo completar: $error');
+      setState(
+        () => _error = context.l10n.commonCouldNotComplete(
+          localizeError(context.l10n, error),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -87,15 +90,12 @@ class _AdoptRemotePasswordDialogState
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Contraseña maestra nueva'),
+      title: Text(context.l10n.pwChangedDialogTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Ingrese la contraseña que puso en el otro dispositivo. Los '
-            'cambios que hizo aquí se conservan.',
-          ),
+          Text(context.l10n.pwChangedDialogBody),
           const SizedBox(height: LockspireSpacing.md),
           TextField(
             controller: _controller,
@@ -103,7 +103,7 @@ class _AdoptRemotePasswordDialogState
             autofocus: true,
             enabled: !_busy,
             decoration: InputDecoration(
-              labelText: 'Contraseña nueva',
+              labelText: context.l10n.pwChangedNewPassword,
               errorText: _error,
             ),
             onSubmitted: (_) => _submit(),
@@ -113,7 +113,7 @@ class _AdoptRemotePasswordDialogState
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(context.l10n.commonCancel),
         ),
         FilledButton(
           onPressed: _busy ? null : _submit,
@@ -123,7 +123,7 @@ class _AdoptRemotePasswordDialogState
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Continuar'),
+              : Text(context.l10n.commonContinue),
         ),
       ],
     );

@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'oauth_app_redirect.dart';
 import 'one_drive_connection.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 const _authorizeEndpoint =
     'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
@@ -78,9 +79,7 @@ OAuthCallbackOutcome evaluateOAuthCallback(Uri uri, String expectedState) {
   final code = params['code'];
   if (code != null && code.isNotEmpty) return OAuthCallbackCode(code);
   return OAuthCallbackError(
-    params['error_description'] ??
-        params['error'] ??
-        'No se recibió el código de autorización',
+    params['error_description'] ?? params['error'] ?? '',
   );
 }
 
@@ -98,10 +97,13 @@ Future<String> waitForOAuthCode(
       case OAuthCallbackCode(:final code):
         return code;
       case OAuthCallbackError(:final message):
-        throw StateError(message);
+        throw AppProblem(
+          AppProblemCode.oauthNoCode,
+          detail: message.isEmpty ? null : message,
+        );
     }
   }
-  throw StateError('Se cerró la espera del inicio de sesión');
+  throw const AppProblem(AppProblemCode.oauthLoginClosed);
 }
 
 bool _constantTimeEquals(String a, String b) {
@@ -203,14 +205,14 @@ class MicrosoftOAuthAuth {
         mode: LaunchMode.externalApplication,
       );
       if (!launched) {
-        throw StateError('No se pudo abrir el navegador del sistema');
+        throw const AppProblem(AppProblemCode.oauthBrowserFailed);
       }
 
       final code = await codeFuture.timeout(
         _loginTimeout,
-        onTimeout: () => throw StateError(
-          'Se agotó el tiempo para iniciar sesión en Microsoft. Pruebe de '
-          'nuevo.',
+        onTimeout: () => throw const AppProblem(
+          AppProblemCode.oauthTimedOut,
+          detail: 'Microsoft',
         ),
       );
 
@@ -248,7 +250,7 @@ class MicrosoftOAuthAuth {
           throw StateError(message);
       }
     }
-    throw StateError('El servidor local se cerró antes de recibir el login');
+    throw const AppProblem(AppProblemCode.oauthLoginClosed);
   }
 
   /// Reconexión sin interacción, a partir del refresh token guardado —
@@ -273,9 +275,9 @@ class MicrosoftOAuthAuth {
     );
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
-      throw StateError(
-        'No se pudo renovar la sesión de OneDrive: '
-        '${body['error_description'] ?? body['error']}',
+      throw AppProblem(
+        AppProblemCode.oauthRefreshFailed,
+        detail: '${body['error_description'] ?? body['error']}',
       );
     }
     return OneDriveConnection(
@@ -304,9 +306,9 @@ class MicrosoftOAuthAuth {
     );
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
-      throw StateError(
-        'No se pudo obtener el token de OneDrive: '
-        '${body['error_description'] ?? body['error']}',
+      throw AppProblem(
+        AppProblemCode.oauthTokenFailed,
+        detail: '${body['error_description'] ?? body['error']}',
       );
     }
     return body;
@@ -320,7 +322,10 @@ class MicrosoftOAuthAuth {
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final email = (body['mail'] ?? body['userPrincipalName']) as String?;
     if (email == null) {
-      throw StateError('No se pudo leer el email de la cuenta de Microsoft');
+      throw const AppProblem(
+        AppProblemCode.accountEmailUnreadable,
+        detail: 'Microsoft',
+      );
     }
     return email;
   }

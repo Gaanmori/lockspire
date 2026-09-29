@@ -12,7 +12,6 @@ import '../../application/password_generation_settings.dart';
 import '../../application/save_vault_use_case.dart';
 import '../../domain/entities/entry_fields.dart';
 import '../../domain/entities/vault_entry.dart';
-import '../../domain/ports/word_list_port.dart';
 import '../providers/word_list_port_provider.dart';
 import '../vault_entries_controller.dart';
 import '../widgets/entry_form_fields.dart';
@@ -20,7 +19,8 @@ import '../widgets/entry_type_sections.dart';
 import '../widgets/field_history_section.dart';
 import '../widgets/password_generator_panel.dart';
 import '../widgets/password_strength_indicator.dart';
-import '../widgets/entry_type_label.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 
 /// Formulario único de crear/editar una entrada — sin vista de detalle de
 /// solo lectura separada (ver docs/STATE.md — Fase 5). [entry] nulo =
@@ -193,15 +193,18 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _errorMessage =
-              '${e.toString()} Revise los datos e intente guardar de nuevo.';
+          _errorMessage = context.l10n.entryConflict(
+            localizeError(context.l10n, e),
+          );
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _saving = false;
-          _errorMessage = 'No se pudo guardar: $e';
+          _errorMessage = context.l10n.entrySaveFailed(
+            localizeError(context.l10n, e),
+          );
         });
       }
     }
@@ -211,16 +214,16 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('¿Eliminar esta entrada?'),
-        content: Text('Se eliminará "${widget.entry!.title}" de la bóveda.'),
+        title: Text(context.l10n.entryDeleteTitle),
+        content: Text(context.l10n.entryDeleteBody(widget.entry!.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Eliminar'),
+            child: Text(context.l10n.commonDelete),
           ),
         ],
       ),
@@ -234,25 +237,12 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   }
 
   /// Regenera la contraseña con [_generation] (ver
-  /// `PasswordGenerationSettings`). En modo "fácil de recordar" se toman
-  /// palabras de la wordlist del idioma real del sistema operativo
-  /// (español si es `es`, inglés para cualquier otro idioma — decisión
-  /// confirmada con el usuario, sin selector manual en la UI).
-  ///
-  /// **Se usa `PlatformDispatcher.instance.locale`, no
-  /// `Localizations.localeOf(context)`**: la app no declara
-  /// `supportedLocales`, así que la resolución de Flutter caía en silencio
-  /// a `en_US` (bug real encontrado por el usuario con Windows en `es-CO`).
+  /// `PasswordGenerationSettings`). En modo "fácil de recordar" las palabras
+  /// salen siempre de la lista en inglés, sea cual sea el idioma de la app
+  /// (ADR 0032): la española daba frases más débiles y el usuario pidió
+  /// dejar solo la inglesa.
   Future<void> _regeneratePassword() async {
-    final languageCode =
-        WidgetsBinding.instance.platformDispatcher.locale.languageCode;
-    final wordList = await ref
-        .read(wordListPortProvider)
-        .load(
-          languageCode == 'es'
-              ? WordListLanguage.spanish
-              : WordListLanguage.english,
-        );
+    final wordList = await ref.read(wordListPortProvider).load();
     if (!mounted) return;
     _passwordController.text = _generation.generate(wordList: wordList);
     _passwordObscure.value = false;
@@ -269,8 +259,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '$label copiado — se borra en ${guard.clearAfter.inSeconds} s '
-            'o al bloquear',
+            context.l10n.entryCopied(label, guard.clearAfter.inSeconds),
           ),
         ),
       );
@@ -289,12 +278,9 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     if (draft != null && mounted) setState(() => _custom.add(draft));
   }
 
-  String get _appBarTitle {
-    if (_isEditing) return 'Editar ${_type.label}';
-    return _type == VaultEntryType.document
-        ? 'Nuevo documento'
-        : 'Nueva ${_type.label}';
-  }
+  String get _appBarTitle => _isEditing
+      ? context.l10n.entryEditTitle(_type.name)
+      : context.l10n.entryNewTitle(_type.name);
 
   Widget _gap() => const SizedBox(height: LockspireSpacing.md);
 
@@ -309,19 +295,19 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   List<Widget> _passwordSection() => [
     CopyableField(
       controller: _fixed[EntryFields.username]!,
-      label: 'Usuario',
+      label: context.l10n.fieldUsername,
       onCopy: _copyToClipboard,
     ),
     _gap(),
     SecretField(
       controller: _passwordController,
-      label: 'Contraseña',
+      label: context.l10n.fieldPassword,
       obscure: _passwordObscure,
       onCopy: _copyToClipboard,
       extraActions: [
         IconButton(
           icon: const Icon(Icons.casino_outlined),
-          tooltip: 'Generar contraseña',
+          tooltip: context.l10n.entryGeneratePassword,
           onPressed: () => unawaited(_regeneratePassword()),
         ),
       ],
@@ -355,7 +341,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
           if (_isEditing)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: 'Eliminar',
+              tooltip: context.l10n.commonDelete,
               onPressed: _saving ? null : _delete,
             ),
         ],
@@ -378,9 +364,11 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                   TextFormField(
                     controller: _titleController,
                     autofocus: !_isEditing,
-                    decoration: const InputDecoration(labelText: 'Título'),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.fieldTitle,
+                    ),
                     validator: (value) => (value == null || value.isEmpty)
-                        ? 'Ingrese un título'
+                        ? context.l10n.entryTitleRequired
                         : null,
                   ),
                   _gap(),
@@ -402,11 +390,11 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                   // Cada sección aparece cuando tiene algo; vacías, se
                   // agregan desde la fila de botones de abajo.
                   if (_urls.isNotEmpty) ...[
-                    _sectionTitle('Sitios web'),
+                    _sectionTitle(context.l10n.entryWebsites),
                     RepeatedFieldList(
                       controllers: _urls,
-                      label: 'Sitio web',
-                      addLabel: 'Agregar sitio web',
+                      label: context.l10n.fieldWebsite,
+                      addLabel: context.l10n.entryAddWebsite,
                       hint: 'https://ejemplo.com/login',
                       icon: Icons.language,
                       keyboardType: TextInputType.url,
@@ -417,11 +405,11 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                     ),
                   ],
                   if (_apps.isNotEmpty) ...[
-                    _sectionTitle('Apps Android'),
+                    _sectionTitle(context.l10n.entryAndroidApps),
                     RepeatedFieldList(
                       controllers: _apps,
-                      label: 'App (paquete)',
-                      addLabel: 'Agregar app',
+                      label: context.l10n.entryAppPackage,
+                      addLabel: context.l10n.entryAddApp,
                       hint: 'com.ejemplo.app',
                       icon: Icons.android,
                       onCopy: _copyToClipboard,
@@ -431,7 +419,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                     ),
                   ],
                   if (_custom.isNotEmpty) ...[
-                    _sectionTitle('Otros campos'),
+                    _sectionTitle(context.l10n.entryOtherFields),
                     CustomFieldsEditor(
                       drafts: _custom,
                       onCopy: _copyToClipboard,
@@ -449,19 +437,19 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                           TextButton.icon(
                             onPressed: _addUrl,
                             icon: const Icon(Icons.add),
-                            label: const Text('Sitio web'),
+                            label: Text(context.l10n.fieldWebsite),
                           ),
                         if (_apps.isEmpty)
                           TextButton.icon(
                             onPressed: _addApp,
                             icon: const Icon(Icons.add),
-                            label: const Text('App Android'),
+                            label: Text(context.l10n.entryAndroidApp),
                           ),
                         if (_custom.isEmpty)
                           TextButton.icon(
                             onPressed: _addCustom,
                             icon: const Icon(Icons.add),
-                            label: const Text('Campo'),
+                            label: Text(context.l10n.entryField),
                           ),
                       ],
                     ),
@@ -469,7 +457,9 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                   _gap(),
                   TextFormField(
                     controller: _notesController,
-                    decoration: const InputDecoration(labelText: 'Notas'),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.fieldNotes,
+                    ),
                     minLines: 3,
                     maxLines: 8,
                   ),
@@ -500,11 +490,11 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Guardar'),
+                        : Text(context.l10n.commonSave),
                   ),
                   const SizedBox(height: LockspireSpacing.sm),
                   Text(
-                    'Se guarda cifrada junto con el resto de su bóveda.',
+                    context.l10n.entrySavedEncrypted,
                     style: Theme.of(context).textTheme.bodySmall,
                     textAlign: TextAlign.center,
                   ),

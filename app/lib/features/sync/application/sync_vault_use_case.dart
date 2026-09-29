@@ -12,6 +12,7 @@ import 'package:lockspire/features/vault/domain/entities/vault.dart';
 import 'package:lockspire/features/vault/domain/ports/crypto_port.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 import 'package:lockspire/features/vault/domain/vault_file_codec.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// Resultado de una sincronización. Ver
 /// docs/adr/0006-modelo-resolucion-conflictos.md y
@@ -185,7 +186,7 @@ class SyncVaultUseCase {
     final remoteExists = await remote.remoteVaultExists();
 
     if (!localExists && !remoteExists) {
-      throw StateError('No hay bóveda ni local ni remota para sincronizar');
+      throw const AppProblem(AppProblemCode.syncNothingToSync);
     }
 
     if (!remoteExists) {

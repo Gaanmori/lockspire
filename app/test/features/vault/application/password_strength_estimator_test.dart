@@ -11,7 +11,7 @@ void main() {
 
       expect(estimate.level, PasswordStrengthLevel.weak);
       expect(estimate.bits, 0);
-      expect(estimate.crackTimeLabel, 'instantáneo');
+      expect(estimate.crackTime, CrackTime.instant);
     });
 
     test('solo minúsculas y corta -> weak', () {
@@ -95,14 +95,18 @@ void main() {
     });
 
     test('formatea el tiempo en distintas escalas legibles', () {
-      expect(estimatePasswordStrength('a').crackTimeLabel, 'instantáneo');
+      expect(estimatePasswordStrength('a').crackTime, CrackTime.instant);
       expect(
-        estimatePasswordStrength('abcdefgh').crackTimeLabel,
-        anyOf(contains('segundos'), contains('minutos'), contains('horas')),
+        estimatePasswordStrength('abcdefgh').crackTime.unit,
+        isIn([
+          CrackTimeUnit.seconds,
+          CrackTimeUnit.minutes,
+          CrackTimeUnit.hours,
+        ]),
       );
       expect(
-        estimatePasswordStrength('Tr9#kP2\$mZ7!qL4@wX1&Yh6^Bn3').crackTimeLabel,
-        anyOf(contains('siglos'), contains('millones de años')),
+        estimatePasswordStrength('Tr9#kP2\$mZ7!qL4@wX1&Yh6^Bn3').crackTime.unit,
+        isIn([CrackTimeUnit.centuries, CrackTimeUnit.millionsOfYears]),
       );
     });
   });

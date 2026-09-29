@@ -3,14 +3,15 @@
 
 import '../entities/vault_entry.dart';
 
+/// Formatos de exportación sin cifrar.
+enum ExportFormat { bitwardenCsv, bitwardenJson, chromeCsv }
+
 /// Formato de exportación **sin cifrar** a otro gestor (ADR 0027). El
 /// respaldo cifrado no pasa por aquí: es el archivo de la bóveda tal cual.
 abstract class VaultExporter {
-  /// Nombre para mostrar, p. ej. "CSV de Bitwarden".
-  String get label;
-
-  /// Para qué sirve, en una línea.
-  String get description;
+  /// Qué formato es. Nombre y descripción los pone la presentación en el
+  /// idioma de la app (ADR 0032).
+  ExportFormat get format;
 
   String get fileExtension;
   String get mimeType;

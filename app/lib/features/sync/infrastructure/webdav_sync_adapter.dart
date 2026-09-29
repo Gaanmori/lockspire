@@ -8,6 +8,7 @@ import 'package:webdav_client_plus/webdav_client_plus.dart';
 import '../domain/ports/sync_credentials_port.dart';
 import '../domain/ports/sync_port.dart';
 import '../domain/webdav_url_policy.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// Ruta fija del archivo de bóveda en el servidor WebDAV. Sin
 /// configuración de carpetas en esta primera pasada (ver docs/STATE.md).
@@ -34,12 +35,9 @@ class WebdavSyncAdapter implements SyncPort {
       case null:
         return url;
       case WebDavUrlProblem.insecure:
-        throw StateError(
-          'El servidor WebDAV usa http:// sin cifrar. Cambie la URL a '
-          'https:// en Sincronización.',
-        );
+        throw const AppProblem(AppProblemCode.webdavInsecureUrl);
       case WebDavUrlProblem.invalid:
-        throw StateError('La URL del servidor WebDAV no es válida.');
+        throw const AppProblem(AppProblemCode.webdavInvalidUrl);
     }
   }
 

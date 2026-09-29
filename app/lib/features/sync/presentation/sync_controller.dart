@@ -15,6 +15,7 @@ import 'sync_accounts_controller.dart';
 import 'providers/current_active_sync_provider_provider.dart';
 import 'providers/sync_ancestor_storage_port_provider.dart';
 import 'providers/sync_state_port_provider.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 part 'sync_controller.g.dart';
 
@@ -98,9 +99,7 @@ class SyncController extends _$SyncController {
   VaultSessionUnlocked _requireUnlockedSession() {
     final session = ref.read(vaultSessionControllerProvider).value;
     if (session is! VaultSessionUnlocked) {
-      throw StateError(
-        'La bóveda tiene que estar desbloqueada para sincronizar',
-      );
+      throw const AppProblem(AppProblemCode.vaultLocked);
     }
     return session;
   }
@@ -108,9 +107,7 @@ class SyncController extends _$SyncController {
   Future<SyncPort> _requireSyncPort() async {
     final syncPort = await freshActiveSyncPort(ref);
     if (syncPort == null) {
-      throw StateError(
-        'Configure un proveedor de sync primero (WebDAV, Google Drive u OneDrive)',
-      );
+      throw const AppProblem(AppProblemCode.syncNotConfigured);
     }
     return syncPort;
   }

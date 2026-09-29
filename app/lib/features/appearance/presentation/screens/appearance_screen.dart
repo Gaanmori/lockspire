@@ -12,8 +12,9 @@ import '../../domain/appearance_preference.dart';
 import '../appearance_controller.dart';
 import '../appearance_theme.dart';
 import '../providers/system_accent_color_provider.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
-/// Elegir familia de colores (Lineage, Pixel, Ubuntu, Linux Mint, Windows 11) y modo (según el
+/// Elegir idioma (ADR 0032), familia de colores (Lineage, Pixel, Ubuntu, Linux Mint, Windows 11) y modo (según el
 /// sistema, claro u oscuro). El cambio se aplica al instante.
 class AppearanceScreen extends ConsumerWidget {
   const AppearanceScreen({super.key});
@@ -28,32 +29,61 @@ class AppearanceScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Apariencia')),
+      appBar: AppBar(title: Text(context.l10n.appearanceTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(LockspireSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Modo', style: textTheme.titleMedium),
+              Text(
+                context.l10n.appearanceLanguage,
+                style: textTheme.titleMedium,
+              ),
+              const SizedBox(height: LockspireSpacing.sm),
+              SegmentedButton<AppLanguage>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: AppLanguage.system,
+                    icon: const Icon(Icons.language_outlined),
+                    label: Text(context.l10n.appearanceModeSystem),
+                  ),
+                  // Los idiomas se muestran en su propio idioma, para que se
+                  // encuentren aunque la app esté en otro.
+                  const ButtonSegment(
+                    value: AppLanguage.es,
+                    label: Text('Español'),
+                  ),
+                  const ButtonSegment(
+                    value: AppLanguage.en,
+                    label: Text('English'),
+                  ),
+                ],
+                selected: {preference.language},
+                onSelectionChanged: (selection) =>
+                    controller.setLanguage(selection.first),
+              ),
+              const SizedBox(height: LockspireSpacing.lg),
+              Text(context.l10n.appearanceMode, style: textTheme.titleMedium),
               const SizedBox(height: LockspireSpacing.sm),
               SegmentedButton<AppearanceMode>(
                 showSelectedIcon: false,
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: AppearanceMode.system,
                     icon: Icon(Icons.brightness_auto_outlined),
-                    label: Text('Sistema'),
+                    label: Text(context.l10n.appearanceModeSystem),
                   ),
                   ButtonSegment(
                     value: AppearanceMode.light,
                     icon: Icon(Icons.light_mode_outlined),
-                    label: Text('Claro'),
+                    label: Text(context.l10n.appearanceModeLight),
                   ),
                   ButtonSegment(
                     value: AppearanceMode.dark,
                     icon: Icon(Icons.dark_mode_outlined),
-                    label: Text('Oscuro'),
+                    label: Text(context.l10n.appearanceModeDark),
                   ),
                 ],
                 selected: {preference.mode},
@@ -63,28 +93,26 @@ class AppearanceScreen extends ConsumerWidget {
               const SizedBox(height: LockspireSpacing.xs),
               Text(
                 preference.mode == AppearanceMode.system
-                    ? 'Cambia sola entre claro y oscuro según su sistema.'
+                    ? context.l10n.appearanceModeSystemHint
                     : ' ',
                 style: textTheme.bodySmall,
               ),
               const SizedBox(height: LockspireSpacing.lg),
-              Text('Tema', style: textTheme.titleMedium),
+              Text(context.l10n.appearanceTheme, style: textTheme.titleMedium),
               if (ref.watch(platformCapabilitiesProvider).isAndroid) ...[
                 const SizedBox(height: LockspireSpacing.xs),
                 // ADR 0031: el ícono del lanzador sigue al tema.
                 Text(
-                  'El ícono de Lockspire en el teléfono también cambia al '
-                  'tema elegido, en unos segundos. Algunos lanzadores quitan '
-                  'el acceso directo de la pantalla de inicio al cambiarlo: '
-                  'vuelva a agregarlo desde la lista de apps.',
+                  context.l10n.appearanceLauncherIconNote,
                   style: textTheme.bodySmall,
                 ),
               ],
               const SizedBox(height: LockspireSpacing.sm),
               for (final family in ThemeFamilyId.values) ...[
                 _FamilyCard(
-                  title: _titleFor(family),
+                  title: _titleFor(context.l10n, family),
                   subtitle: _subtitleFor(
+                    context.l10n,
                     family,
                     systemArgb,
                     isAndroid: ref
@@ -105,27 +133,26 @@ class AppearanceScreen extends ConsumerWidget {
   }
 }
 
-String _titleFor(ThemeFamilyId family) => switch (family) {
-  ThemeFamilyId.sistema => 'Colores del sistema',
-  ThemeFamilyId.lineage ||
-  ThemeFamilyId.pixel ||
-  ThemeFamilyId.ubuntu ||
-  ThemeFamilyId.mint ||
-  ThemeFamilyId.windows =>
-    LockspireThemeFamily.values.byName(family.name).displayName,
-};
+String _titleFor(AppLocalizations l10n, ThemeFamilyId family) =>
+    switch (family) {
+      ThemeFamilyId.sistema => l10n.themeSystemColors,
+      ThemeFamilyId.lineage ||
+      ThemeFamilyId.pixel ||
+      ThemeFamilyId.ubuntu ||
+      ThemeFamilyId.mint ||
+      ThemeFamilyId.windows =>
+        LockspireThemeFamily.values.byName(family.name).displayName,
+    };
 
 String? _subtitleFor(
+  AppLocalizations l10n,
   ThemeFamilyId family,
   int? systemArgb, {
   required bool isAndroid,
 }) => switch (family) {
-  ThemeFamilyId.sistema when systemArgb == null =>
-    'No disponible en este equipo: se usa Lineage.',
+  ThemeFamilyId.sistema when systemArgb == null => l10n.themeSystemUnavailable,
   ThemeFamilyId.sistema =>
-    isAndroid
-        ? 'Material You: colores de su fondo de pantalla.'
-        : 'Color de acento del sistema.',
+    isAndroid ? l10n.themeSystemAndroid : l10n.themeSystemDesktop,
   _ => null,
 };
 
@@ -150,7 +177,7 @@ class _FamilyCard extends StatelessWidget {
     return Semantics(
       selected: selected,
       button: true,
-      label: 'Tema $title',
+      label: context.l10n.appearanceThemeSemantics(title),
       child: Material(
         color: palette.bgSurface,
         borderRadius: BorderRadius.circular(LockspireRadius.md),
@@ -171,11 +198,17 @@ class _FamilyCard extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: _Preview(palette: palettes.light, label: 'Claro'),
+                  child: _Preview(
+                    palette: palettes.light,
+                    label: context.l10n.appearanceModeLight,
+                  ),
                 ),
                 const SizedBox(width: LockspireSpacing.sm),
                 Expanded(
-                  child: _Preview(palette: palettes.dark, label: 'Oscuro'),
+                  child: _Preview(
+                    palette: palettes.dark,
+                    label: context.l10n.appearanceModeDark,
+                  ),
                 ),
                 const SizedBox(width: LockspireSpacing.smMd),
                 SizedBox(
@@ -202,7 +235,7 @@ class _FamilyCard extends StatelessWidget {
                             ),
                             const SizedBox(width: LockspireSpacing.xs),
                             Text(
-                              'En uso',
+                              context.l10n.appearanceInUse,
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],

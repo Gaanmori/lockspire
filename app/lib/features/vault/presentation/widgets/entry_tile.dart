@@ -9,6 +9,7 @@ import '../../../../design/lockspire_spacing.dart';
 import '../../domain/entities/entry_fields.dart';
 import '../../domain/entities/vault_entry.dart';
 import 'entry_avatar.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Segunda línea de la fila: el usuario, o en una tarjeta los últimos 4
 /// dígitos (nunca el número completo) y en un documento el nombre.
@@ -131,16 +132,14 @@ class VaultEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: LockspireSpacing.md),
             Text(
-              hasQuery
-                  ? 'No se encontraron resultados'
-                  : 'Todavía no ha guardado ninguna contraseña',
+              hasQuery ? context.l10n.vaultNoResults : context.l10n.vaultEmpty,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             if (!hasQuery) ...[
               const SizedBox(height: LockspireSpacing.xs),
               Text(
-                'Toque el botón "+" para agregar la primera',
+                context.l10n.vaultEmptyHint,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),

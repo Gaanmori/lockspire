@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'unlocked_vault_result.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// La contraseña maestra se cambió en otro dispositivo y este todavía no la
 /// adoptó (ADR 0024). `vault` no conoce la sync: define el puerto y `sync`
@@ -63,5 +64,5 @@ class NoPasswordChangedElsewhere implements PasswordChangedElsewherePort {
   Future<UnlockedVaultResult> unlockWithNewPassword({
     required String newPassword,
     String? previousPassword,
-  }) => throw StateError('No hay sync configurada.');
+  }) => throw const AppProblem(AppProblemCode.syncNotConfigured);
 }

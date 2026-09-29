@@ -13,6 +13,7 @@ import 'package:lockspire/features/vault/domain/vault_file_codec.dart';
 
 import 'adopt_remote_master_password_use_case.dart';
 import 'sync_vault_use_case.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// [PasswordChangedElsewherePort] sobre la sync (ADR 0024).
 class SyncPasswordChangedElsewhere implements PasswordChangedElsewherePort {
@@ -82,7 +83,7 @@ class SyncPasswordChangedElsewhere implements PasswordChangedElsewherePort {
   }) async {
     final remote = await loadRemote();
     if (remote == null) {
-      throw StateError('Conecte la nube de su bóveda en Sincronización.');
+      throw const AppProblem(AppProblemCode.syncConnectVaultCloud);
     }
     final local = await localStorage.read();
     final previousKey = previousPassword == null

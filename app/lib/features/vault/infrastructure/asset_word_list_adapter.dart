@@ -5,24 +5,19 @@ import 'package:flutter/services.dart';
 
 import '../domain/ports/word_list_port.dart';
 
-/// [WordListPort] sobre `assets/wordlists/*.txt` (una palabra por línea).
-/// Cada lista se carga una sola vez.
+/// [WordListPort] sobre `assets/wordlists/en.txt` (una palabra por línea).
+/// Se carga una sola vez.
 class AssetWordListAdapter implements WordListPort {
   final AssetBundle _bundle;
-  final _cache = <WordListLanguage, Future<List<String>>>{};
+  Future<List<String>>? _cache;
 
   AssetWordListAdapter([AssetBundle? bundle]) : _bundle = bundle ?? rootBundle;
 
   @override
-  Future<List<String>> load(WordListLanguage language) =>
-      _cache.putIfAbsent(language, () async {
-        final file = switch (language) {
-          WordListLanguage.spanish => 'assets/wordlists/es.txt',
-          WordListLanguage.english => 'assets/wordlists/en.txt',
-        };
-        final text = await _bundle.loadString(file);
-        return List.unmodifiable(
-          text.split('\n').map((w) => w.trim()).where((w) => w.isNotEmpty),
-        );
-      });
+  Future<List<String>> load() => _cache ??= () async {
+    final text = await _bundle.loadString('assets/wordlists/en.txt');
+    return List<String>.unmodifiable(
+      text.split('\n').map((w) => w.trim()).where((w) => w.isNotEmpty),
+    );
+  }();
 }

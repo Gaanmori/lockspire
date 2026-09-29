@@ -7,6 +7,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'platform_capabilities.g.dart';
 
+/// Cómo se llama el desbloqueo biométrico en esta plataforma. El nombre
+/// para mostrar lo pone la presentación en el idioma de la app (ADR 0032).
+enum BiometricMethod { windowsHello, fingerprint }
+
 /// Lo que la interfaz necesita saber de la plataforma, en un solo lugar
 /// (revisión 2026-09-25, hallazgo C2). Las pantallas lo leen de
 /// [platformCapabilitiesProvider] en vez de consultar `Platform.isX`, así
@@ -22,18 +26,20 @@ class PlatformCapabilities {
   final bool isAndroid;
 
   /// Cómo se llama el desbloqueo biométrico en esta plataforma (ADR 0010).
-  final String biometricMethodName;
+  final BiometricMethod biometricMethod;
 
   const PlatformCapabilities({
     required this.isDesktop,
     required this.isAndroid,
-    required this.biometricMethodName,
+    required this.biometricMethod,
   });
 
   factory PlatformCapabilities.current() => PlatformCapabilities(
     isDesktop: Platform.isWindows || Platform.isLinux,
     isAndroid: Platform.isAndroid,
-    biometricMethodName: Platform.isWindows ? 'Windows Hello' : 'la huella',
+    biometricMethod: Platform.isWindows
+        ? BiometricMethod.windowsHello
+        : BiometricMethod.fingerprint,
   );
 }
 

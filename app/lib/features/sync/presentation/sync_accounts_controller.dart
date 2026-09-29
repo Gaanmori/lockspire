@@ -29,6 +29,7 @@ import 'providers/one_drive_account_port_provider.dart';
 import 'providers/sync_ancestor_storage_port_provider.dart';
 import 'providers/sync_credentials_port_provider.dart';
 import 'providers/sync_state_port_provider.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 part 'sync_accounts_controller.g.dart';
 
@@ -118,11 +119,14 @@ class SyncAccountsController {
   }) async {
     final session = _ref.read(vaultSessionControllerProvider).value;
     if (session is! VaultSessionUnlocked) {
-      throw StateError('La bóveda tiene que estar desbloqueada para mudarla');
+      throw const AppProblem(AppProblemCode.vaultLocked);
     }
     final toPort = await freshSyncPortFor(_ref, to);
     if (toPort == null) {
-      throw StateError('No se pudo conectar con ${syncProviderName(to)}.');
+      throw AppProblem(
+        AppProblemCode.syncConnectFailed,
+        detail: syncProviderName(to),
+      );
     }
     final fromPort = from == null ? null : await freshSyncPortFor(_ref, from);
     await MoveVaultToProviderUseCase(

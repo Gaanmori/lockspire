@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../application/password_generation_settings.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Panel del generador: modo (desplegable) y longitud (slider), el mismo
 /// rango en los dos modos. El dado del campo contraseña siempre genera; acá
@@ -41,14 +42,14 @@ class PasswordGeneratorPanel extends StatelessWidget {
                 child: DropdownButton<PasswordGenerationMode>(
                   value: settings.mode,
                   style: Theme.of(context).textTheme.bodyMedium,
-                  items: const [
+                  items: [
                     DropdownMenuItem(
                       value: PasswordGenerationMode.random,
-                      child: Text('Aleatoria'),
+                      child: Text(context.l10n.generatorRandom),
                     ),
                     DropdownMenuItem(
                       value: PasswordGenerationMode.memorable,
-                      child: Text('Fácil de recordar'),
+                      child: Text(context.l10n.generatorMemorable),
                     ),
                   ],
                   onChanged: (mode) {
@@ -75,7 +76,7 @@ class PasswordGeneratorPanel extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: LockspireSpacing.xs),
             child: Text(
-              '${settings.length} caracteres',
+              context.l10n.generatorLength(settings.length),
               textAlign: TextAlign.right,
               style: Theme.of(context).textTheme.bodySmall,
             ),

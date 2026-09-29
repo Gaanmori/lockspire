@@ -1,4 +1,738 @@
 {
   "@@locale": "es",
-  "appTitle": "Lockspire"
+  "appTitle": "Lockspire",
+  "appearanceTitle": "Apariencia",
+  "appearanceMode": "Modo",
+  "appearanceModeSystem": "Sistema",
+  "appearanceModeLight": "Claro",
+  "appearanceModeDark": "Oscuro",
+  "appearanceModeSystemHint": "Cambia sola entre claro y oscuro según su sistema.",
+  "appearanceTheme": "Tema",
+  "appearanceLauncherIconNote": "El ícono de Lockspire en el teléfono también cambia al tema elegido, en unos segundos. Algunos lanzadores quitan el acceso directo de la pantalla de inicio al cambiarlo: vuelva a agregarlo desde la lista de apps.",
+  "themeSystemColors": "Colores del sistema",
+  "themeSystemUnavailable": "No disponible en este equipo: se usa Lineage.",
+  "themeSystemAndroid": "Material You: colores de su fondo de pantalla.",
+  "themeSystemDesktop": "Color de acento del sistema.",
+  "appearanceThemeSemantics": "Tema {title}",
+  "@appearanceThemeSemantics": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      }
+    }
+  },
+  "appearanceInUse": "En uso",
+  "appearanceLanguage": "Idioma",
+  "syncConnectFailed": "No se pudo conectar con {provider}: {error}",
+  "@syncConnectFailed": {
+    "placeholders": {
+      "provider": {
+        "type": "Object"
+      },
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "syncMoveTitle": "¿Mudar la bóveda a {target}?",
+  "@syncMoveTitle": {
+    "placeholders": {
+      "target": {
+        "type": "Object"
+      }
+    }
+  },
+  "syncMoveBody": "Su bóveda se sincroniza con {home}. Si continúa, pasa a sincronizarse con {target} y se deja un aviso en {home}.\n\nSus otros dispositivos van a recibir ese aviso la próxima vez que sincronicen, y tendrán que conectar {target} para seguir. No se pierde nada: lo que esté en {target} se fusiona con esta bóveda.",
+  "@syncMoveBody": {
+    "placeholders": {
+      "home": {
+        "type": "Object"
+      },
+      "target": {
+        "type": "Object"
+      }
+    }
+  },
+  "commonCancel": "Cancelar",
+  "syncMoveConfirm": "Mudar",
+  "syncReplaceRemoteTitle": "¿Reemplazar la copia de la nube?",
+  "syncReplaceRemoteBody": "La nube tiene una versión más vieja que la de este dispositivo. Si restauró una copia antigua a propósito, puede reemplazarla con la de este dispositivo: no pierde nada que tenga aquí.\n\nSi no fue usted, alguien pudo haber accedido a su cuenta de la nube: cambie esa contraseña antes de seguir.",
+  "syncReplaceConfirm": "Reemplazar",
+  "syncResultUploaded": "Se subió la bóveda al servidor.",
+  "syncResultDownloaded": "Se bajó la bóveda del servidor.",
+  "syncResultUpToDate": "Ya estaba al día — nada que hacer.",
+  "syncResultMergedFields": "Se fusionaron los cambios: {fieldConflictsResolved, plural, =1{1 campo se resolvió automáticamente} other{{fieldConflictsResolved} campos se resolvieron automáticamente}} (puede ver el valor anterior en el historial de esa entrada).",
+  "@syncResultMergedFields": {
+    "placeholders": {
+      "fieldConflictsResolved": {
+        "type": "int"
+      }
+    }
+  },
+  "syncResultMergedEntries": "Se fusionaron los cambios: {autoResolvedCount, plural, =1{1 entrada resuelta automáticamente} other{{autoResolvedCount} entradas resueltas automáticamente}}.",
+  "@syncResultMergedEntries": {
+    "placeholders": {
+      "autoResolvedCount": {
+        "type": "int"
+      }
+    }
+  },
+  "syncResultMerged": "Se fusionaron los cambios.",
+  "syncResultMoved": "Su bóveda se mudó a {provider}. Conéctela arriba para seguir sincronizando.",
+  "@syncResultMoved": {
+    "placeholders": {
+      "provider": {
+        "type": "Object"
+      }
+    }
+  },
+  "syncWebdavUrl": "URL del servidor WebDAV",
+  "syncWebdavUrlRequired": "Ingrese la URL del servidor",
+  "syncWebdavHttpsRequired": "Use https://: con http:// su usuario y contraseña del servidor viajarían sin cifrar.",
+  "syncWebdavUrlInvalid": "Ingrese una URL completa, p. ej. https://servidor/dav",
+  "syncWebdavUser": "Usuario",
+  "syncWebdavUserRequired": "Ingrese el usuario",
+  "syncWebdavPassword": "Contraseña",
+  "syncWebdavPasswordUnchanged": "(sin cambios si se deja vacío)",
+  "syncWebdavPasswordRequired": "Ingrese la contraseña",
+  "commonSave": "Guardar",
+  "syncTitle": "Sincronización",
+  "syncGoogleScopeNote": "Lockspire solo accede a su propia carpeta oculta de datos en su Drive: no ve el resto de sus archivos.",
+  "syncConnectGoogle": "Conectar con Google",
+  "syncOneDriveScopeNote": "Lockspire solo accede a su propia carpeta especial de app en su OneDrive: no ve el resto de sus archivos.",
+  "syncConnectOneDrive": "Conectar con OneDrive",
+  "commonErrorDetail": "Ocurrió un error: {error}",
+  "@commonErrorDetail": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "syncNow": "Sincronizar ahora",
+  "syncFailed": "No se pudo sincronizar: {error}",
+  "@syncFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "syncUploadLocal": "Subir la versión de este dispositivo",
+  "restoreNoProvider": "Configure un proveedor de sync primero.",
+  "restoreSearchFailed": "No se pudo buscar la bóveda remota: {error}",
+  "@restoreSearchFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "restoreTitle": "Restaurar bóveda existente",
+  "restoreIntro": "Conecte el mismo proveedor de sync que ya usa en su otro dispositivo: vamos a bajar su bóveda desde ahí.",
+  "restoreSetUpProvider": "Configurar proveedor de sync",
+  "restoreFindVault": "Buscar mi bóveda",
+  "restoreSearching": "Buscando su bóveda…",
+  "restoreSearchingDetail": "Revisando el proveedor de sync configurado.",
+  "restoreNotFoundTitle": "No hay ninguna bóveda ahí todavía",
+  "restoreNotFoundBody": "El proveedor está conectado, pero no encontramos ninguna bóveda subida. Si el otro dispositivo todavía no sincronizó, pruebe desde ahí primero.",
+  "commonBack": "Volver",
+  "restoreFoundTitle": "Encontramos su bóveda",
+  "restoreFoundBody": "Ingrese su contraseña maestra para desbloquearla.",
+  "commonMasterPassword": "Contraseña maestra",
+  "commonMasterPasswordRequired": "Ingrese su contraseña maestra",
+  "commonWrongPassword": "Contraseña incorrecta",
+  "restoreConfirm": "Restaurar bóveda",
+  "cloudNotConnected": "Sin cuenta conectada. {scopeNote}",
+  "@cloudNotConnected": {
+    "placeholders": {
+      "scopeNote": {
+        "type": "Object"
+      }
+    }
+  },
+  "cloudConnectedAs": "Conectado como {email}",
+  "@cloudConnectedAs": {
+    "placeholders": {
+      "email": {
+        "type": "Object"
+      }
+    }
+  },
+  "cloudDisconnect": "Desconectar",
+  "pwChangedBanner": "La contraseña maestra se cambió en otro dispositivo. Ingrese la nueva para seguir sincronizando.",
+  "pwChangedEnterNew": "Ingresar contraseña nueva",
+  "pwChangedNotNew": "No es la contraseña nueva",
+  "commonCouldNotComplete": "No se pudo completar: {error}",
+  "@commonCouldNotComplete": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "pwChangedDialogTitle": "Contraseña maestra nueva",
+  "pwChangedDialogBody": "Ingrese la contraseña que puso en el otro dispositivo. Los cambios que hizo aquí se conservan.",
+  "pwChangedNewPassword": "Contraseña nueva",
+  "commonContinue": "Continuar",
+  "syncHomeMovedBanner": "Su bóveda se mudó a {provider}. Conecte {provider} en este dispositivo para seguir sincronizando.",
+  "@syncHomeMovedBanner": {
+    "placeholders": {
+      "provider": {
+        "type": "Object"
+      }
+    }
+  },
+  "syncHomeGoToSync": "Ir a Sincronización",
+  "errorSyncHomeMismatch": "Su bóveda se sincroniza con {home}, pero este dispositivo está conectado a {active}. Conecte {home} en Sincronización para seguir.",
+  "@errorSyncHomeMismatch": {
+    "placeholders": {
+      "home": {
+        "type": "Object"
+      },
+      "active": {
+        "type": "Object"
+      }
+    }
+  },
+  "errorRemoteDifferentVault": "La nube tiene una bóveda distinta a la suya. No se cambió nada en este dispositivo.",
+  "errorRemoteNotAuthentic": "La bóveda de la nube no se pudo verificar (está dañada, fue modificada o usa otra contraseña). No se cambió nada en este dispositivo.",
+  "errorRemotePasswordChanged": "La contraseña maestra se cambió en otro dispositivo. Ingrese la contraseña nueva para seguir sincronizando.",
+  "errorRemoteRollback": "La nube tiene una versión más vieja que la que este dispositivo ya sincronizó: puede ser una copia antigua restaurada o una manipulación. No se cambió nada en este dispositivo.",
+  "errorIncorrectCurrentPassword": "La contraseña actual no es correcta.",
+  "errorPreviousPasswordRequired": "Este dispositivo tiene cambios sin sincronizar. Ingrese también la contraseña anterior para conservarlos.",
+  "errorIncorrectPreviousPassword": "La contraseña anterior no es correcta.",
+  "errorUnknownImportFormat": "Formato no reconocido: .{extension}. Use un XML de SafeInCloud, un CSV, un JSON de Bitwarden o un respaldo .lockspire.",
+  "@errorUnknownImportFormat": {
+    "placeholders": {
+      "extension": {
+        "type": "Object"
+      }
+    }
+  },
+  "errorVaultWriteConflict": "La bóveda cambió en disco desde que se abrió y no se sobrescribió. Vuelva a abrirla antes de guardar de nuevo.",
+  "errorIncorrectBackupPassword": "La contraseña no abre este respaldo. Es la contraseña maestra que tenía la bóveda cuando se hizo.",
+  "errorUnsupportedVaultFormat": "Esta bóveda se creó con una versión más nueva de Lockspire (formato {version}). Actualice la app para abrirla.",
+  "@errorUnsupportedVaultFormat": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "errorUnsafeKdfParams": "El archivo de bóveda pide parámetros de cifrado fuera de lo normal. Puede estar dañado o haber sido modificado; no se abrió.",
+  "masterPasswordTooShort": "Use al menos {count} caracteres",
+  "@masterPasswordTooShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "masterPasswordTooRepetitive": "Tiene demasiados caracteres repetidos",
+  "masterPasswordTooWeak": "Es demasiado fácil de adivinar: sume palabras, mayúsculas, números o símbolos",
+  "errorVaultLocked": "La bóveda tiene que estar desbloqueada.",
+  "errorNotAVaultFile": "No es un archivo de bóveda de Lockspire válido.",
+  "errorSyncNotConfigured": "Configure un proveedor de sync primero (WebDAV, Google Drive u OneDrive).",
+  "errorSyncNothingToSync": "No hay bóveda ni en este dispositivo ni en la nube.",
+  "errorSyncConnectFailed": "No se pudo conectar con {provider}.",
+  "@errorSyncConnectFailed": {
+    "placeholders": {
+      "provider": {
+        "type": "Object"
+      }
+    }
+  },
+  "errorSyncConnectVaultCloud": "Conecte la nube de su bóveda en Sincronización.",
+  "errorRemoteVaultMissing": "No hay bóveda en {provider} todavía.",
+  "@errorRemoteVaultMissing": {
+    "placeholders": {
+      "provider": {
+        "type": "Object"
+      }
+    }
+  },
+  "errorRemoteUploadFailed": "No se pudo subir la bóveda a {provider}.",
+  "@errorRemoteUploadFailed": {
+    "placeholders": {
+      "provider": {
+        "type": "Object"
+      }
+    }
+  },
+  "errorWebdavInsecureUrl": "El servidor WebDAV usa http:// sin cifrar. Cambie la URL a https:// en Sincronización.",
+  "errorWebdavInvalidUrl": "La URL del servidor WebDAV no es válida.",
+  "errorAccountEmailUnreadable": "No se pudo leer el email de la cuenta de {provider}.",
+  "@errorAccountEmailUnreadable": {
+    "placeholders": {
+      "provider": {
+        "type": "Object"
+      }
+    }
+  },
+  "errorOauthBrowserFailed": "No se pudo abrir el navegador del sistema.",
+  "errorOauthTimedOut": "Se agotó el tiempo para iniciar sesión en {provider}. Pruebe de nuevo.",
+  "@errorOauthTimedOut": {
+    "placeholders": {
+      "provider": {
+        "type": "Object"
+      }
+    }
+  },
+  "errorOauthNoCode": "No se recibió el código de autorización.",
+  "errorOauthLoginClosed": "Se cerró la espera del inicio de sesión.",
+  "errorOauthTokenFailed": "No se pudo obtener el acceso a OneDrive: {detail}",
+  "@errorOauthTokenFailed": {
+    "placeholders": {
+      "detail": {
+        "type": "Object"
+      }
+    }
+  },
+  "errorOauthRefreshFailed": "No se pudo renovar la sesión de OneDrive: {detail}",
+  "@errorOauthRefreshFailed": {
+    "placeholders": {
+      "detail": {
+        "type": "Object"
+      }
+    }
+  },
+  "errorNativeHostMissing": "No se encontró el componente de conexión con el navegador en {path}. Reinstale Lockspire.",
+  "@errorNativeHostMissing": {
+    "placeholders": {
+      "path": {
+        "type": "Object"
+      }
+    }
+  },
+  "errorNativeHostElevationCancelled": "No se completó el registro para todo el equipo (¿se canceló el permiso de administrador?).",
+  "errorNativeHostWindowsOnly": "Solo disponible en Windows por ahora.",
+  "errorNoSupportedBrowser": "No se encontró ningún navegador compatible.",
+  "errorImportInvalidJson": "El archivo no es un JSON válido.",
+  "errorImportNotBitwardenJson": "No es un export JSON de Bitwarden.",
+  "errorImportBitwardenEncrypted": "Este JSON de Bitwarden está cifrado. Expórtelo de nuevo eligiendo \"JSON\" (sin cifrar) para poder importarlo.",
+  "errorImportCsvUnclosedQuote": "El CSV tiene comillas sin cerrar.",
+  "errorImportCsvEmpty": "El CSV está vacío.",
+  "errorImportCsvNoPasswordColumn": "No se encontró una columna de contraseña. Exporte desde su gestor en CSV (Bitwarden, Chrome, Firefox o KeePassXC).",
+  "biometricWindowsHello": "Windows Hello",
+  "biometricFingerprint": "la huella",
+  "crackTimeInstant": "instantáneo",
+  "crackTimeSeconds": "{count, plural, =1{1 segundo} other{{count} segundos}}",
+  "@crackTimeSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "crackTimeMinutes": "{count, plural, =1{1 minuto} other{{count} minutos}}",
+  "@crackTimeMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "crackTimeHours": "{count, plural, =1{1 hora} other{{count} horas}}",
+  "@crackTimeHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "crackTimeDays": "{count, plural, =1{1 día} other{{count} días}}",
+  "@crackTimeDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "crackTimeMonths": "{count, plural, =1{1 mes} other{{count} meses}}",
+  "@crackTimeMonths": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "crackTimeYears": "{count, plural, =1{1 año} other{{count} años}}",
+  "@crackTimeYears": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "crackTimeCenturies": "{count, plural, =1{1 siglo} other{{count} siglos}}",
+  "@crackTimeCenturies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "crackTimeMillionsOfYears": "millones de años",
+  "unlockPreviousPasswordNeeded": "Este dispositivo tiene cambios que aún no se sincronizaron. Para conservarlos, ingrese también la contraseña anterior.",
+  "unlockPreviousPasswordWrong": "La contraseña anterior no es correcta",
+  "unlockWelcomeBack": "¡Hola de nuevo!",
+  "unlockPrompt": "Ingrese su contraseña para entrar a su bóveda",
+  "unlockPasswordChangedElsewhere": "La contraseña maestra se cambió en otro dispositivo. Ingrese la nueva para entrar. Hasta entonces no se puede usar {method}.",
+  "@unlockPasswordChangedElsewhere": {
+    "placeholders": {
+      "method": {
+        "type": "Object"
+      }
+    }
+  },
+  "unlockPeriodicReminder": "Por seguridad, cada tanto Lockspire le pide la contraseña maestra aunque use {method}, para que no se le olvide. Después vuelve a funcionar como siempre.",
+  "@unlockPeriodicReminder": {
+    "placeholders": {
+      "method": {
+        "type": "Object"
+      }
+    }
+  },
+  "unlockPreviousPassword": "Contraseña anterior",
+  "unlockPreviousPasswordRequired": "Ingrese la contraseña anterior",
+  "unlockUnlocking": "Desbloqueando… esto puede tardar unos segundos (derivación de clave Argon2id)",
+  "unlockButton": "Desbloquear",
+  "unlockEnterNewPassword": "Ingresar la contraseña nueva",
+  "unlockNoNewPassword": "No tengo la contraseña nueva",
+  "unlockUseBiometric": "Usar {method}",
+  "@unlockUseBiometric": {
+    "placeholders": {
+      "method": {
+        "type": "Object"
+      }
+    }
+  },
+  "createVaultTitle": "Crear bóveda",
+  "createVaultHeading": "Cree su bóveda",
+  "createVaultIntro": "Elija una contraseña maestra. Nunca se envía ni se guarda: si la olvida, no hay forma de recuperarla.",
+  "createVaultMinLength": "Mínimo {count} caracteres",
+  "@createVaultMinLength": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createVaultPasswordRequired": "Ingrese una contraseña",
+  "createVaultConfirm": "Confirmar contraseña",
+  "createVaultMismatch": "No coincide con la contraseña anterior",
+  "createVaultCreating": "Creando bóveda… esto puede tardar unos segundos (derivación de clave Argon2id)",
+  "createVaultFailed": "No se pudo crear la bóveda: {error}",
+  "@createVaultFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "createVaultRestoreLink": "¿Ya tiene una bóveda? Restaurarla desde la nube",
+  "changePwDone": "Contraseña maestra cambiada. Sus otros dispositivos se la pedirán la próxima vez que sincronicen.",
+  "changePwCurrentWrong": "La contraseña actual no es correcta",
+  "changePwConflict": "La bóveda cambió mientras se guardaba. La nube ya tiene la contraseña nueva: sincronice y, cuando se la pida, ingrésela.",
+  "changePwFailed": "No se pudo cambiar la contraseña, así que sigue siendo la misma. {error}",
+  "@changePwFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "changePwTitle": "Cambiar contraseña maestra",
+  "changePwIntro": "Si tiene sincronización, primero se sincroniza y la bóveda nueva se sube a la nube: hace falta conexión. Las copias viejas que alguien ya tenga siguen abriéndose con la contraseña anterior.",
+  "changePwCurrent": "Contraseña actual",
+  "changePwCurrentRequired": "Ingrese su contraseña actual",
+  "changePwNewHelper": "Mínimo {count} caracteres, difícil de adivinar",
+  "@changePwNewHelper": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "changePwMustDiffer": "Tiene que ser distinta de la actual",
+  "changePwConfirmNew": "Confirmar contraseña nueva",
+  "changePwMismatch": "No coincide con la contraseña nueva",
+  "changePwShowPasswords": "Mostrar contraseñas",
+  "changePwButton": "Cambiar contraseña",
+  "commonRetry": "Reintentar",
+  "strengthWeak": "Débil",
+  "strengthFair": "Regular",
+  "strengthStrong": "Segura",
+  "strengthLabel": "{level} — tiempo estimado para descifrarla: {time}",
+  "@strengthLabel": {
+    "placeholders": {
+      "level": {
+        "type": "Object"
+      },
+      "time": {
+        "type": "Object"
+      }
+    }
+  },
+  "deleteEntriesBody": "Se eliminan de la bóveda en este dispositivo y en los demás al sincronizar.",
+  "commonDelete": "Eliminar",
+  "biometricOptInTitle": "¿Activar desbloqueo con {methodName}?",
+  "@biometricOptInTitle": {
+    "placeholders": {
+      "methodName": {
+        "type": "Object"
+      }
+    }
+  },
+  "biometricOptInBody": "En vez de escribir la contraseña maestra cada vez, podrá desbloquear la bóveda con {methodName}. Puede cambiarlo después desde \"Seguridad\".",
+  "@biometricOptInBody": {
+    "placeholders": {
+      "methodName": {
+        "type": "Object"
+      }
+    }
+  },
+  "commonNotNow": "Ahora no",
+  "commonTurnOn": "Activar",
+  "entryTypePassword": "Contraseña",
+  "entryTypeCard": "Tarjeta",
+  "entryTypeDocument": "Documento",
+  "selectionCancel": "Cancelar selección",
+  "selectionCount": "{count, plural, =1{1 seleccionada} other{{count} seleccionadas}}",
+  "@selectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectionClear": "Quitar selección",
+  "selectionAll": "Seleccionar todo",
+  "selectionDelete": "Eliminar seleccionadas",
+  "selectionStart": "Seleccionar",
+  "commonLock": "Bloquear",
+  "vaultSearchHint": "Buscar por título, usuario o sitio",
+  "commonAdd": "Agregar",
+  "securityOpenSettingsFailed": "No se pudo abrir la configuración.",
+  "securityTitle": "Seguridad",
+  "securityChangePwHint": "Hágalo si cree que alguien pudo conocerla.",
+  "securityUnlockWith": "Desbloquear con {method}",
+  "@securityUnlockWith": {
+    "placeholders": {
+      "method": {
+        "type": "Object"
+      }
+    }
+  },
+  "securityUnlockWithHint": "Use {method} en vez de escribir la contraseña maestra cada vez.",
+  "@securityUnlockWithHint": {
+    "placeholders": {
+      "method": {
+        "type": "Object"
+      }
+    }
+  },
+  "securityAutofill": "Autocompletado",
+  "securityAutofillHint": "Active Lockspire como servicio de autocompletado para que aparezca como opción al iniciar sesión en otras apps — incluye logins dentro de un navegador embebido (ej. WebView).",
+  "securityAutofillButton": "Activar como autocompletado",
+  "securityBiometricNotSetUp": "Este dispositivo no tiene {method} configurado.",
+  "@securityBiometricNotSetUp": {
+    "placeholders": {
+      "method": {
+        "type": "Object"
+      }
+    }
+  },
+  "securityBiometricSetUpHint": "Configure {method} en los ajustes del sistema para poder activarlo aquí.",
+  "@securityBiometricSetUpHint": {
+    "placeholders": {
+      "method": {
+        "type": "Object"
+      }
+    }
+  },
+  "securityBiometricUnavailable": "No disponible en este dispositivo.",
+  "securityReminderTitle": "Pedir la contraseña maestra cada",
+  "securityReminderHint": "Aunque use {method}, pasado este tiempo Lockspire le pide la contraseña una vez, para que no se le olvide. Si la olvida, la bóveda no se puede recuperar.",
+  "@securityReminderHint": {
+    "placeholders": {
+      "method": {
+        "type": "Object"
+      }
+    }
+  },
+  "securityAutoLock": "Bloqueo automático",
+  "securityAutoLock15Warning": "Más cómodo, pero la bóveda queda abierta más tiempo si se aleja del equipo.",
+  "securitySiteIcons": "Íconos de los sitios",
+  "securitySiteIconsHint": "Descarga el ícono de cada sitio guardado directamente del sitio, sin servicios de terceros, y lo guarda cifrado en su bóveda. Cada sitio ve una visita desde su conexión. Sin activarlo, se muestra la inicial.",
+  "securitySiteIconsFallback": "Completar los que falten con DuckDuckGo",
+  "securitySiteIconsFallbackHint": "Para los sitios que no ofrecen ícono, se lo pide a DuckDuckGo. DuckDuckGo recibe solo esos dominios, nunca sus usuarios ni contraseñas.",
+  "securitySiteIconsRetry": "Volver a buscar los que faltan",
+  "vaultNoResults": "No se encontraron resultados",
+  "vaultEmpty": "Todavía no ha guardado ninguna contraseña",
+  "vaultEmptyHint": "Toque el botón \"+\" para agregar la primera",
+  "generatorRandom": "Aleatoria",
+  "generatorMemorable": "Fácil de recordar",
+  "generatorLength": "{count} caracteres",
+  "@generatorLength": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteEntriesTitle": "{count, plural, =1{¿Eliminar 1 entrada?} other{¿Eliminar {count} entradas?}}",
+  "@deleteEntriesTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteEntriesDone": "{count, plural, =1{Se eliminó 1 entrada} other{Se eliminaron {count} entradas}}",
+  "@deleteEntriesDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonDays": "{count, plural, =1{1 día} other{{count} días}}",
+  "@commonDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonMinutesShort": "{count} min",
+  "@commonMinutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "securityAutoLockHintAndroid": "La bóveda se bloquea sola cuando pasa este tiempo sin que use Lockspire. También se bloquea al salir de la app.",
+  "securityAutoLockHintDesktop": "La bóveda se bloquea sola cuando pasa este tiempo sin que use Lockspire. También se bloquea al bloquear la sesión o suspender el equipo.",
+  "entryConflict": "{error} Revise los datos e intente guardar de nuevo.",
+  "@entryConflict": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "entrySaveFailed": "No se pudo guardar: {error}",
+  "@entrySaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "entryDeleteTitle": "¿Eliminar esta entrada?",
+  "entryDeleteBody": "Se eliminará \"{title}\" de la bóveda.",
+  "@entryDeleteBody": {
+    "placeholders": {
+      "title": {
+        "type": "Object"
+      }
+    }
+  },
+  "entryCopied": "Copiado: {label}. Se borra en {seconds} s o al bloquear",
+  "@entryCopied": {
+    "placeholders": {
+      "label": {
+        "type": "Object"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "fieldUsername": "Usuario",
+  "fieldPassword": "Contraseña",
+  "entryGeneratePassword": "Generar contraseña",
+  "fieldTitle": "Título",
+  "entryTitleRequired": "Ingrese un título",
+  "entryWebsites": "Sitios web",
+  "fieldWebsite": "Sitio web",
+  "entryAddWebsite": "Agregar sitio web",
+  "entryAndroidApps": "Apps Android",
+  "entryAppPackage": "App (paquete)",
+  "entryAddApp": "Agregar app",
+  "entryOtherFields": "Otros campos",
+  "entryAndroidApp": "App Android",
+  "entryField": "Campo",
+  "fieldNotes": "Notas",
+  "entrySavedEncrypted": "Se guarda cifrada junto con el resto de su bóveda.",
+  "fieldCopy": "Copiar {field}",
+  "@fieldCopy": {
+    "placeholders": {
+      "field": {
+        "type": "Object"
+      }
+    }
+  },
+  "commonShow": "Mostrar",
+  "commonHide": "Ocultar",
+  "commonRemove": "Quitar",
+  "customFieldRemove": "Quitar campo",
+  "customFieldAdd": "Agregar campo",
+  "customFieldNameRequired": "Ingrese un nombre",
+  "customFieldNameTaken": "Ya hay un campo con ese nombre",
+  "customFieldNew": "Nuevo campo",
+  "customFieldName": "Nombre del campo",
+  "customFieldNameHint": "Por ejemplo: Pregunta secreta",
+  "customFieldHidden": "Ocultar el valor",
+  "customFieldHiddenHint": "Para claves, PIN y otros datos sensibles",
+  "fieldCardNumber": "Número de tarjeta",
+  "fieldCardHolder": "Titular",
+  "fieldExpiry": "Vence",
+  "fieldCardExpiryHint": "MM/AA",
+  "fieldCvv": "CVV",
+  "fieldPin": "PIN",
+  "fieldDocNumber": "Número",
+  "fieldDocName": "Nombre",
+  "fieldBirthDate": "Fecha de nacimiento",
+  "fieldIssued": "Expedido",
+  "fieldDateHint": "DD/MM/AAAA",
+  "fieldWebsiteN": "Sitio web {n}",
+  "@fieldWebsiteN": {
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      }
+    }
+  },
+  "fieldAppN": "App {n}",
+  "@fieldAppN": {
+    "placeholders": {
+      "n": {
+        "type": "Object"
+      }
+    }
+  },
+  "fieldGenerationMode": "Modo de generación",
+  "fieldGenerationParam": "Parámetro de generación",
+  "historyTitle": "Valores anteriores",
+  "historyHint": "Lo que tenían antes estos campos: importado de SafeInCloud o de un cambio en otro dispositivo que se resolvió solo.",
+  "entryNewTitle": "{type, select, card{Nueva tarjeta} document{Nuevo documento} note{Nueva nota} passkey{Nueva passkey} other{Nueva contraseña}}",
+  "@entryNewTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "entryEditTitle": "{type, select, card{Editar tarjeta} document{Editar documento} note{Editar nota} passkey{Editar passkey} other{Editar contraseña}}",
+  "@entryEditTitle": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  }
 }

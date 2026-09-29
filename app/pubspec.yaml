@@ -114,7 +114,6 @@ flutter:
     # Windows, .png en Linux. Copias de los iconos de la app.
     - assets/tray/
     # Listas de palabras del generador (hallazgo C3, ver su README.md).
-    - assets/wordlists/es.txt
     - assets/wordlists/en.txt
 
   # To add assets to your application, add an assets section, like this:

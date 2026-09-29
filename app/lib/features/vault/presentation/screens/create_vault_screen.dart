@@ -9,6 +9,8 @@ import '../../application/master_password_policy.dart';
 import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 
 class CreateVaultScreen extends ConsumerStatefulWidget {
   /// Pantalla para restaurar una bóveda desde la nube. La inyecta la app
@@ -49,7 +51,7 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
     final isLoading = attempt.isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear bóveda')),
+      appBar: AppBar(title: Text(context.l10n.createVaultTitle)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
@@ -60,10 +62,8 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
               child: AuthCard(
                 icon: Icons.gpp_good_outlined,
                 brand: true,
-                title: 'Cree su bóveda',
-                subtitle:
-                    'Elija una contraseña maestra. Nunca se envía ni se '
-                    'guarda: si la olvida, no hay forma de recuperarla.',
+                title: context.l10n.createVaultHeading,
+                subtitle: context.l10n.createVaultIntro,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -72,9 +72,10 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                       obscureText: _obscure,
                       autofocus: true,
                       decoration: InputDecoration(
-                        labelText: 'Contraseña maestra',
-                        helperText:
-                            'Mínimo $masterPasswordMinLength caracteres',
+                        labelText: context.l10n.commonMasterPassword,
+                        helperText: context.l10n.createVaultMinLength(
+                          masterPasswordMinLength,
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscure ? Icons.visibility : Icons.visibility_off,
@@ -84,24 +85,27 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Ingrese una contraseña';
+                          return context.l10n.createVaultPasswordRequired;
                         }
                         final problem = checkNewMasterPassword(value);
                         return problem == null
                             ? null
-                            : describeMasterPasswordProblem(problem);
+                            : localizeMasterPasswordProblem(
+                                context.l10n,
+                                problem,
+                              );
                       },
                     ),
                     const SizedBox(height: LockspireSpacing.md),
                     TextFormField(
                       controller: _confirmController,
                       obscureText: _obscure,
-                      decoration: const InputDecoration(
-                        labelText: 'Confirmar contraseña',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.createVaultConfirm,
                       ),
                       validator: (value) {
                         if (value != _passwordController.text) {
-                          return 'No coincide con la contraseña anterior';
+                          return context.l10n.createVaultMismatch;
                         }
                         return null;
                       },
@@ -121,9 +125,8 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                               child: LinearProgressIndicator(),
                             ),
                             const SizedBox(height: LockspireSpacing.smMd),
-                            const Text(
-                              'Creando bóveda… esto puede tardar unos '
-                              'segundos (derivación de clave Argon2id)',
+                            Text(
+                              context.l10n.createVaultCreating,
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -135,7 +138,9 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                           bottom: LockspireSpacing.md,
                         ),
                         child: Text(
-                          'No se pudo crear la bóveda: ${attempt.error}',
+                          context.l10n.createVaultFailed(
+                            localizeError(context.l10n, attempt.error!),
+                          ),
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
                           ),
@@ -147,7 +152,7 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: _submit,
-                          child: const Text('Crear bóveda'),
+                          child: Text(context.l10n.createVaultTitle),
                         ),
                       ),
                       if (widget.restoreVaultBuilder case final restore?) ...[
@@ -156,9 +161,7 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
                           onPressed: () => Navigator.of(
                             context,
                           ).push(MaterialPageRoute(builder: restore)),
-                          child: const Text(
-                            '¿Ya tiene una bóveda? Restaurarla desde la nube',
-                          ),
+                          child: Text(context.l10n.createVaultRestoreLink),
                         ),
                       ],
                     ],

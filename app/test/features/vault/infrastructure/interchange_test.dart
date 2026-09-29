@@ -4,6 +4,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 import 'package:lockspire/features/vault/application/create_vault_use_case.dart';
 import 'package:lockspire/features/vault/application/vault_transfer_use_cases.dart';
 import 'package:lockspire/features/vault/domain/entities/entry_fields.dart';
@@ -93,7 +94,16 @@ void main() {
     });
 
     test('comillas sin cerrar es un error, no datos a medias', () {
-      expect(() => parseCsv('a,"b\n'), throwsFormatException);
+      expect(
+        () => parseCsv('a,"b\n'),
+        throwsA(
+          isA<AppProblem>().having(
+            (e) => e.code,
+            'code',
+            AppProblemCode.importCsvUnclosedQuote,
+          ),
+        ),
+      );
     });
   });
 
@@ -126,10 +136,10 @@ void main() {
           '{"encrypted": true, "items": []}',
         ),
         throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
-            'message',
-            contains('sin cifrar'),
+          isA<AppProblem>().having(
+            (e) => e.code,
+            'code',
+            AppProblemCode.importBitwardenEncrypted,
           ),
         ),
       );
@@ -239,7 +249,7 @@ void main() {
     test('sin columna de contraseña no es un CSV de contraseñas', () {
       expect(
         () => CsvImportSource().parse('a,b\n1,2\n'),
-        throwsFormatException,
+        throwsA(isA<AppProblem>()),
       );
     });
   });
@@ -322,7 +332,7 @@ void main() {
         ReadEncryptedBackupUseCase(
           crypto: FakeCryptoPort(),
         ).call(bytes: utf8.encode('no soy una bóveda'), password: 'x'),
-        throwsFormatException,
+        throwsA(isA<AppProblem>()),
       );
     });
   });

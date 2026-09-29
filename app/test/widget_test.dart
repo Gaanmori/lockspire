@@ -3,6 +3,7 @@
 
 import 'dart:io';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/desktop/presentation/providers/is_desktop_shell_provider.dart';
@@ -16,6 +17,10 @@ void main() {
       final vaultPath =
           '${Directory.systemTemp.path}${Platform.pathSeparator}'
           'lockspire_widget_test_${DateTime.now().microsecondsSinceEpoch}.vault';
+
+      // Sistema en español: la app lo sigue (ADR 0032).
+      tester.platformDispatcher.localesTestValue = const [Locale('es', 'CO')];
+      addTearDown(tester.platformDispatcher.clearLocalesTestValue);
 
       await tester.pumpWidget(
         ProviderScope(

@@ -8,6 +8,7 @@ import '../../../../design/lockspire_spacing.dart';
 import '../../domain/ports/native_messaging_registration_port.dart';
 import '../providers/browser_bridge_provider.dart';
 import '../providers/native_messaging_registration_port_provider.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// Conectar Lockspire con la extensión de Chrome/Edge (ADR 0013). El
 /// registro del native host en el navegador es opt-in: solo ocurre al
@@ -61,7 +62,7 @@ class _BrowserIntegrationScreenState
         .read(nativeMessagingRegistrationPortProvider)
         .register();
     if (registered.isEmpty) {
-      throw StateError('No se encontró ningún navegador compatible.');
+      throw const AppProblem(AppProblemCode.noSupportedBrowser);
     }
   }, 'Listo. Reinicie el navegador si ya estaba abierto.');
 

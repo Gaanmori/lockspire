@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/autofill/presentation/screens/autofill_screen.dart';
 import 'package:lockspire/features/vault/domain/entities/vault.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 const _channel = MethodChannel('com.lockspire.lockspire/autofill');
 
@@ -52,6 +53,10 @@ Future<List<MethodCall>> _pumpGet(
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
+        locale: const Locale('es'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+
         home: AutofillScreen(
           vault: Vault(vaultId: 'v', schemaVersion: 1, entries: entries),
         ),

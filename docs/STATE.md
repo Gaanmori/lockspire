@@ -702,7 +702,9 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - Letra mejorada.
   - **Verificado por el usuario en Windows:** varios sitios con ícono.
 - **ADR 0030, respaldo opcional con DuckDuckGo** para los sitios sin ícono propio. DuckDuckGo recibe solo esos dominios. Marcadores: `''` = el sitio no tiene, `'-'` = nadie tiene.
-- **ADR 0031, ícono del lanzador de Android según el tema.** Un `activity-alias` por tema (íconos generados por `tools/generate_icons.py`) y `LauncherIcon.kt`, que deja activo solo el del tema. Algunos lanzadores quitan el acceso directo al cambiarlo (aviso en Apariencia). **Pendiente de probar en el Redmi.**
+- **ADR 0031, ícono del lanzador de Android según el tema.** Un `activity-alias` por tema (íconos generados por `tools/generate_icons.py`) y `LauncherIcon.kt`, que deja activo solo el del tema. Algunos lanzadores quitan el acceso directo al cambiarlo (aviso en Apariencia). Probado en el Redmi (Android 16, HyperOS 3): el lanzador sigue al tema.
+  - **Limitación conocida:** el diálogo de huella del sistema muestra siempre el ícono general de la app (el teal de Lineage). Se comprobó el 2026-09-29 poniendo otro ícono a `MainActivity`, y el diálogo lo ignoró. Cambiar su logo exige `SET_BIOMETRIC_DIALOG_ADVANCED`, reservado a apps del sistema. No hay arreglo posible desde la app.
+- **Cierre al arrancar en frío en release (arreglado 2026-09-29).** R8, en modo completo, quitaba el constructor de `WorkDatabase_Impl` de WorkManager (`NoSuchMethodException`), y la app se cerraba al iniciar desde cero. Se agregó `android/app/proguard-rules.pro`, que conserva `<init>()` de toda `RoomDatabase`, conectado en `build.gradle.kts`.
 - Tests: `site_icons_test.dart` (14). Suite: 360.
 - **Traducción (español/inglés) en curso:** ya están `flutter_localizations`, `intl`, `l10n.yaml` y `lib/l10n/app_{es,en}.arb` (solo `appTitle`). Falta todo lo demás (ver ADR 0032 cuando se escriba).
 

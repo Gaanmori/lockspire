@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 import 'package:lockspire/features/vault/application/master_password_policy.dart';
 
 void main() {
@@ -37,9 +39,12 @@ void main() {
       expect(checkNewMasterPassword('Tr3s-Tigres!Trigo'), isNull);
     });
 
-    test('cada problema tiene un mensaje', () {
-      for (final problem in MasterPasswordProblem.values) {
-        expect(describeMasterPasswordProblem(problem), isNotEmpty);
+    test('cada problema tiene un mensaje en cada idioma', () {
+      for (final locale in AppLocalizations.supportedLocales) {
+        final l10n = lookupAppLocalizations(locale);
+        for (final problem in MasterPasswordProblem.values) {
+          expect(localizeMasterPasswordProblem(l10n, problem), isNotEmpty);
+        }
       }
     });
   });

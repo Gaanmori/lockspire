@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../../vault/domain/ports/vault_storage_port.dart';
 import '../../vault/domain/vault_file_codec.dart';
 import '../domain/ports/sync_port.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// Nombre fijo del archivo de bóveda dentro de la carpeta especial de app
 /// de OneDrive (`special/approot`) — mismo criterio que
@@ -57,7 +58,10 @@ class OneDriveSyncAdapter implements SyncPort {
       headers: _authHeader,
     );
     if (response.statusCode != 200) {
-      throw StateError('No hay bóveda en OneDrive todavía');
+      throw const AppProblem(
+        AppProblemCode.remoteVaultMissing,
+        detail: 'OneDrive',
+      );
     }
     return VaultFileCodec.decode(response.bodyBytes);
   }
@@ -71,8 +75,9 @@ class OneDriveSyncAdapter implements SyncPort {
       body: bytes,
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw StateError(
-        'No se pudo subir la bóveda a OneDrive (${response.statusCode})',
+      throw AppProblem(
+        AppProblemCode.remoteUploadFailed,
+        detail: 'OneDrive (${response.statusCode})',
       );
     }
   }

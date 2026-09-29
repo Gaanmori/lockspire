@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 
 import '../domain/ports/native_messaging_registration_port.dart';
 import 'extension_ids.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// Registra el native host para Chrome/Edge/Chromium (ADR 0013):
 ///
@@ -104,9 +105,9 @@ class NativeMessagingRegistrationAdapter
   @override
   Future<Set<SupportedBrowser>> register() async {
     if (!File(_hostBinaryPath).existsSync()) {
-      throw StateError(
-        'No se encontró el native host en $_hostBinaryPath. '
-        'Compílelo e instálelo junto a la app (ver native-host/README.md).',
+      throw AppProblem(
+        AppProblemCode.nativeHostMissing,
+        detail: _hostBinaryPath,
       );
     }
     final registered = <SupportedBrowser>{};
@@ -168,12 +169,12 @@ class NativeMessagingRegistrationAdapter
   @override
   Future<void> registerSystemWide() async {
     if (!Platform.isWindows) {
-      throw UnsupportedError('Solo disponible en Windows por ahora');
+      throw const AppProblem(AppProblemCode.nativeHostWindowsOnly);
     }
     if (!File(_hostBinaryPath).existsSync()) {
-      throw StateError(
-        'No se encontró el native host en $_hostBinaryPath. '
-        'Compílelo e instálelo junto a la app (ver native-host/README.md).',
+      throw AppProblem(
+        AppProblemCode.nativeHostMissing,
+        detail: _hostBinaryPath,
       );
     }
     await _runElevated(_systemWideScript(install: true));
@@ -182,7 +183,7 @@ class NativeMessagingRegistrationAdapter
   @override
   Future<void> unregisterSystemWide() async {
     if (!Platform.isWindows) {
-      throw UnsupportedError('Solo disponible en Windows por ahora');
+      throw const AppProblem(AppProblemCode.nativeHostWindowsOnly);
     }
     await _runElevated(_systemWideScript(install: false));
   }
@@ -250,10 +251,7 @@ $manifestJson
       launcher,
     ]);
     if (result.exitCode != 0) {
-      throw StateError(
-        'No se completó el registro para todo el equipo '
-        '(¿se canceló el permiso de administrador?).',
-      );
+      throw const AppProblem(AppProblemCode.nativeHostElevationCancelled);
     }
   }
 

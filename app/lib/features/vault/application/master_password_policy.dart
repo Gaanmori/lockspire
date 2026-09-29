@@ -25,15 +25,3 @@ MasterPasswordProblem? checkNewMasterPassword(String password) {
   }
   return null;
 }
-
-/// Mensaje para mostrar en un formulario.
-String describeMasterPasswordProblem(MasterPasswordProblem problem) =>
-    switch (problem) {
-      MasterPasswordProblem.tooShort =>
-        'Use al menos $masterPasswordMinLength caracteres',
-      MasterPasswordProblem.tooRepetitive =>
-        'Tiene demasiados caracteres repetidos',
-      MasterPasswordProblem.tooWeak =>
-        'Es demasiado fácil de adivinar: sume palabras, mayúsculas, '
-            'números o símbolos',
-    };

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../domain/entities/entry_fields.dart';
 import 'entry_form_fields.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Campos fijos de una tarjeta (ADR 0025): número, CVV y PIN ocultos, con
 /// mostrar y copiar. [fields] son los controladores del formulario por key.
@@ -27,35 +28,35 @@ class CardFieldsSection extends StatelessWidget {
       children: [
         SecretField(
           controller: fields[EntryFields.cardNumber]!,
-          label: 'Número de tarjeta',
+          label: context.l10n.fieldCardNumber,
           keyboardType: TextInputType.number,
           onCopy: onCopy,
         ),
         gap,
         CopyableField(
           controller: fields[EntryFields.cardHolder]!,
-          label: 'Titular',
+          label: context.l10n.fieldCardHolder,
           onCopy: onCopy,
         ),
         gap,
         CopyableField(
           controller: fields[EntryFields.cardExpiry]!,
-          label: 'Vence',
-          hint: 'MM/AA',
+          label: context.l10n.fieldExpiry,
+          hint: context.l10n.fieldCardExpiryHint,
           keyboardType: TextInputType.datetime,
           onCopy: onCopy,
         ),
         gap,
         SecretField(
           controller: fields[EntryFields.cardCvv]!,
-          label: 'CVV',
+          label: context.l10n.fieldCvv,
           keyboardType: TextInputType.number,
           onCopy: onCopy,
         ),
         gap,
         SecretField(
           controller: fields[EntryFields.cardPin]!,
-          label: 'PIN',
+          label: context.l10n.fieldPin,
           keyboardType: TextInputType.number,
           onCopy: onCopy,
         ),
@@ -83,25 +84,25 @@ class DocumentFieldsSection extends StatelessWidget {
       children: [
         CopyableField(
           controller: fields[EntryFields.docNumber]!,
-          label: 'Número',
+          label: context.l10n.fieldDocNumber,
           onCopy: onCopy,
         ),
         gap,
         CopyableField(
           controller: fields[EntryFields.docName]!,
-          label: 'Nombre',
+          label: context.l10n.fieldDocName,
           onCopy: onCopy,
         ),
-        for (final (key, label) in const [
-          (EntryFields.docBirthDate, 'Fecha de nacimiento'),
-          (EntryFields.docIssued, 'Expedido'),
-          (EntryFields.docExpiry, 'Vence'),
+        for (final (key, label) in [
+          (EntryFields.docBirthDate, context.l10n.fieldBirthDate),
+          (EntryFields.docIssued, context.l10n.fieldIssued),
+          (EntryFields.docExpiry, context.l10n.fieldExpiry),
         ]) ...[
           gap,
           CopyableField(
             controller: fields[key]!,
             label: label,
-            hint: 'DD/MM/AAAA',
+            hint: context.l10n.fieldDateHint,
             keyboardType: TextInputType.datetime,
             onCopy: onCopy,
           ),

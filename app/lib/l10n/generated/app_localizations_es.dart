@@ -10,4 +10,1119 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appTitle => 'Lockspire';
+
+  @override
+  String get appearanceTitle => 'Apariencia';
+
+  @override
+  String get appearanceMode => 'Modo';
+
+  @override
+  String get appearanceModeSystem => 'Sistema';
+
+  @override
+  String get appearanceModeLight => 'Claro';
+
+  @override
+  String get appearanceModeDark => 'Oscuro';
+
+  @override
+  String get appearanceModeSystemHint =>
+      'Cambia sola entre claro y oscuro según su sistema.';
+
+  @override
+  String get appearanceTheme => 'Tema';
+
+  @override
+  String get appearanceLauncherIconNote =>
+      'El ícono de Lockspire en el teléfono también cambia al tema elegido, en unos segundos. Algunos lanzadores quitan el acceso directo de la pantalla de inicio al cambiarlo: vuelva a agregarlo desde la lista de apps.';
+
+  @override
+  String get themeSystemColors => 'Colores del sistema';
+
+  @override
+  String get themeSystemUnavailable =>
+      'No disponible en este equipo: se usa Lineage.';
+
+  @override
+  String get themeSystemAndroid =>
+      'Material You: colores de su fondo de pantalla.';
+
+  @override
+  String get themeSystemDesktop => 'Color de acento del sistema.';
+
+  @override
+  String appearanceThemeSemantics(Object title) {
+    return 'Tema $title';
+  }
+
+  @override
+  String get appearanceInUse => 'En uso';
+
+  @override
+  String get appearanceLanguage => 'Idioma';
+
+  @override
+  String syncConnectFailed(Object provider, Object error) {
+    return 'No se pudo conectar con $provider: $error';
+  }
+
+  @override
+  String syncMoveTitle(Object target) {
+    return '¿Mudar la bóveda a $target?';
+  }
+
+  @override
+  String syncMoveBody(Object home, Object target) {
+    return 'Su bóveda se sincroniza con $home. Si continúa, pasa a sincronizarse con $target y se deja un aviso en $home.\n\nSus otros dispositivos van a recibir ese aviso la próxima vez que sincronicen, y tendrán que conectar $target para seguir. No se pierde nada: lo que esté en $target se fusiona con esta bóveda.';
+  }
+
+  @override
+  String get commonCancel => 'Cancelar';
+
+  @override
+  String get syncMoveConfirm => 'Mudar';
+
+  @override
+  String get syncReplaceRemoteTitle => '¿Reemplazar la copia de la nube?';
+
+  @override
+  String get syncReplaceRemoteBody =>
+      'La nube tiene una versión más vieja que la de este dispositivo. Si restauró una copia antigua a propósito, puede reemplazarla con la de este dispositivo: no pierde nada que tenga aquí.\n\nSi no fue usted, alguien pudo haber accedido a su cuenta de la nube: cambie esa contraseña antes de seguir.';
+
+  @override
+  String get syncReplaceConfirm => 'Reemplazar';
+
+  @override
+  String get syncResultUploaded => 'Se subió la bóveda al servidor.';
+
+  @override
+  String get syncResultDownloaded => 'Se bajó la bóveda del servidor.';
+
+  @override
+  String get syncResultUpToDate => 'Ya estaba al día — nada que hacer.';
+
+  @override
+  String syncResultMergedFields(int fieldConflictsResolved) {
+    String _temp0 = intl.Intl.pluralLogic(
+      fieldConflictsResolved,
+      locale: localeName,
+      other: '$fieldConflictsResolved campos se resolvieron automáticamente',
+      one: '1 campo se resolvió automáticamente',
+    );
+    return 'Se fusionaron los cambios: $_temp0 (puede ver el valor anterior en el historial de esa entrada).';
+  }
+
+  @override
+  String syncResultMergedEntries(int autoResolvedCount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      autoResolvedCount,
+      locale: localeName,
+      other: '$autoResolvedCount entradas resueltas automáticamente',
+      one: '1 entrada resuelta automáticamente',
+    );
+    return 'Se fusionaron los cambios: $_temp0.';
+  }
+
+  @override
+  String get syncResultMerged => 'Se fusionaron los cambios.';
+
+  @override
+  String syncResultMoved(Object provider) {
+    return 'Su bóveda se mudó a $provider. Conéctela arriba para seguir sincronizando.';
+  }
+
+  @override
+  String get syncWebdavUrl => 'URL del servidor WebDAV';
+
+  @override
+  String get syncWebdavUrlRequired => 'Ingrese la URL del servidor';
+
+  @override
+  String get syncWebdavHttpsRequired =>
+      'Use https://: con http:// su usuario y contraseña del servidor viajarían sin cifrar.';
+
+  @override
+  String get syncWebdavUrlInvalid =>
+      'Ingrese una URL completa, p. ej. https://servidor/dav';
+
+  @override
+  String get syncWebdavUser => 'Usuario';
+
+  @override
+  String get syncWebdavUserRequired => 'Ingrese el usuario';
+
+  @override
+  String get syncWebdavPassword => 'Contraseña';
+
+  @override
+  String get syncWebdavPasswordUnchanged => '(sin cambios si se deja vacío)';
+
+  @override
+  String get syncWebdavPasswordRequired => 'Ingrese la contraseña';
+
+  @override
+  String get commonSave => 'Guardar';
+
+  @override
+  String get syncTitle => 'Sincronización';
+
+  @override
+  String get syncGoogleScopeNote =>
+      'Lockspire solo accede a su propia carpeta oculta de datos en su Drive: no ve el resto de sus archivos.';
+
+  @override
+  String get syncConnectGoogle => 'Conectar con Google';
+
+  @override
+  String get syncOneDriveScopeNote =>
+      'Lockspire solo accede a su propia carpeta especial de app en su OneDrive: no ve el resto de sus archivos.';
+
+  @override
+  String get syncConnectOneDrive => 'Conectar con OneDrive';
+
+  @override
+  String commonErrorDetail(Object error) {
+    return 'Ocurrió un error: $error';
+  }
+
+  @override
+  String get syncNow => 'Sincronizar ahora';
+
+  @override
+  String syncFailed(Object error) {
+    return 'No se pudo sincronizar: $error';
+  }
+
+  @override
+  String get syncUploadLocal => 'Subir la versión de este dispositivo';
+
+  @override
+  String get restoreNoProvider => 'Configure un proveedor de sync primero.';
+
+  @override
+  String restoreSearchFailed(Object error) {
+    return 'No se pudo buscar la bóveda remota: $error';
+  }
+
+  @override
+  String get restoreTitle => 'Restaurar bóveda existente';
+
+  @override
+  String get restoreIntro =>
+      'Conecte el mismo proveedor de sync que ya usa en su otro dispositivo: vamos a bajar su bóveda desde ahí.';
+
+  @override
+  String get restoreSetUpProvider => 'Configurar proveedor de sync';
+
+  @override
+  String get restoreFindVault => 'Buscar mi bóveda';
+
+  @override
+  String get restoreSearching => 'Buscando su bóveda…';
+
+  @override
+  String get restoreSearchingDetail =>
+      'Revisando el proveedor de sync configurado.';
+
+  @override
+  String get restoreNotFoundTitle => 'No hay ninguna bóveda ahí todavía';
+
+  @override
+  String get restoreNotFoundBody =>
+      'El proveedor está conectado, pero no encontramos ninguna bóveda subida. Si el otro dispositivo todavía no sincronizó, pruebe desde ahí primero.';
+
+  @override
+  String get commonBack => 'Volver';
+
+  @override
+  String get restoreFoundTitle => 'Encontramos su bóveda';
+
+  @override
+  String get restoreFoundBody =>
+      'Ingrese su contraseña maestra para desbloquearla.';
+
+  @override
+  String get commonMasterPassword => 'Contraseña maestra';
+
+  @override
+  String get commonMasterPasswordRequired => 'Ingrese su contraseña maestra';
+
+  @override
+  String get commonWrongPassword => 'Contraseña incorrecta';
+
+  @override
+  String get restoreConfirm => 'Restaurar bóveda';
+
+  @override
+  String cloudNotConnected(Object scopeNote) {
+    return 'Sin cuenta conectada. $scopeNote';
+  }
+
+  @override
+  String cloudConnectedAs(Object email) {
+    return 'Conectado como $email';
+  }
+
+  @override
+  String get cloudDisconnect => 'Desconectar';
+
+  @override
+  String get pwChangedBanner =>
+      'La contraseña maestra se cambió en otro dispositivo. Ingrese la nueva para seguir sincronizando.';
+
+  @override
+  String get pwChangedEnterNew => 'Ingresar contraseña nueva';
+
+  @override
+  String get pwChangedNotNew => 'No es la contraseña nueva';
+
+  @override
+  String commonCouldNotComplete(Object error) {
+    return 'No se pudo completar: $error';
+  }
+
+  @override
+  String get pwChangedDialogTitle => 'Contraseña maestra nueva';
+
+  @override
+  String get pwChangedDialogBody =>
+      'Ingrese la contraseña que puso en el otro dispositivo. Los cambios que hizo aquí se conservan.';
+
+  @override
+  String get pwChangedNewPassword => 'Contraseña nueva';
+
+  @override
+  String get commonContinue => 'Continuar';
+
+  @override
+  String syncHomeMovedBanner(Object provider) {
+    return 'Su bóveda se mudó a $provider. Conecte $provider en este dispositivo para seguir sincronizando.';
+  }
+
+  @override
+  String get syncHomeGoToSync => 'Ir a Sincronización';
+
+  @override
+  String errorSyncHomeMismatch(Object home, Object active) {
+    return 'Su bóveda se sincroniza con $home, pero este dispositivo está conectado a $active. Conecte $home en Sincronización para seguir.';
+  }
+
+  @override
+  String get errorRemoteDifferentVault =>
+      'La nube tiene una bóveda distinta a la suya. No se cambió nada en este dispositivo.';
+
+  @override
+  String get errorRemoteNotAuthentic =>
+      'La bóveda de la nube no se pudo verificar (está dañada, fue modificada o usa otra contraseña). No se cambió nada en este dispositivo.';
+
+  @override
+  String get errorRemotePasswordChanged =>
+      'La contraseña maestra se cambió en otro dispositivo. Ingrese la contraseña nueva para seguir sincronizando.';
+
+  @override
+  String get errorRemoteRollback =>
+      'La nube tiene una versión más vieja que la que este dispositivo ya sincronizó: puede ser una copia antigua restaurada o una manipulación. No se cambió nada en este dispositivo.';
+
+  @override
+  String get errorIncorrectCurrentPassword =>
+      'La contraseña actual no es correcta.';
+
+  @override
+  String get errorPreviousPasswordRequired =>
+      'Este dispositivo tiene cambios sin sincronizar. Ingrese también la contraseña anterior para conservarlos.';
+
+  @override
+  String get errorIncorrectPreviousPassword =>
+      'La contraseña anterior no es correcta.';
+
+  @override
+  String errorUnknownImportFormat(Object extension) {
+    return 'Formato no reconocido: .$extension. Use un XML de SafeInCloud, un CSV, un JSON de Bitwarden o un respaldo .lockspire.';
+  }
+
+  @override
+  String get errorVaultWriteConflict =>
+      'La bóveda cambió en disco desde que se abrió y no se sobrescribió. Vuelva a abrirla antes de guardar de nuevo.';
+
+  @override
+  String get errorIncorrectBackupPassword =>
+      'La contraseña no abre este respaldo. Es la contraseña maestra que tenía la bóveda cuando se hizo.';
+
+  @override
+  String errorUnsupportedVaultFormat(int version) {
+    return 'Esta bóveda se creó con una versión más nueva de Lockspire (formato $version). Actualice la app para abrirla.';
+  }
+
+  @override
+  String get errorUnsafeKdfParams =>
+      'El archivo de bóveda pide parámetros de cifrado fuera de lo normal. Puede estar dañado o haber sido modificado; no se abrió.';
+
+  @override
+  String masterPasswordTooShort(int count) {
+    return 'Use al menos $count caracteres';
+  }
+
+  @override
+  String get masterPasswordTooRepetitive =>
+      'Tiene demasiados caracteres repetidos';
+
+  @override
+  String get masterPasswordTooWeak =>
+      'Es demasiado fácil de adivinar: sume palabras, mayúsculas, números o símbolos';
+
+  @override
+  String get errorVaultLocked => 'La bóveda tiene que estar desbloqueada.';
+
+  @override
+  String get errorNotAVaultFile =>
+      'No es un archivo de bóveda de Lockspire válido.';
+
+  @override
+  String get errorSyncNotConfigured =>
+      'Configure un proveedor de sync primero (WebDAV, Google Drive u OneDrive).';
+
+  @override
+  String get errorSyncNothingToSync =>
+      'No hay bóveda ni en este dispositivo ni en la nube.';
+
+  @override
+  String errorSyncConnectFailed(Object provider) {
+    return 'No se pudo conectar con $provider.';
+  }
+
+  @override
+  String get errorSyncConnectVaultCloud =>
+      'Conecte la nube de su bóveda en Sincronización.';
+
+  @override
+  String errorRemoteVaultMissing(Object provider) {
+    return 'No hay bóveda en $provider todavía.';
+  }
+
+  @override
+  String errorRemoteUploadFailed(Object provider) {
+    return 'No se pudo subir la bóveda a $provider.';
+  }
+
+  @override
+  String get errorWebdavInsecureUrl =>
+      'El servidor WebDAV usa http:// sin cifrar. Cambie la URL a https:// en Sincronización.';
+
+  @override
+  String get errorWebdavInvalidUrl =>
+      'La URL del servidor WebDAV no es válida.';
+
+  @override
+  String errorAccountEmailUnreadable(Object provider) {
+    return 'No se pudo leer el email de la cuenta de $provider.';
+  }
+
+  @override
+  String get errorOauthBrowserFailed =>
+      'No se pudo abrir el navegador del sistema.';
+
+  @override
+  String errorOauthTimedOut(Object provider) {
+    return 'Se agotó el tiempo para iniciar sesión en $provider. Pruebe de nuevo.';
+  }
+
+  @override
+  String get errorOauthNoCode => 'No se recibió el código de autorización.';
+
+  @override
+  String get errorOauthLoginClosed =>
+      'Se cerró la espera del inicio de sesión.';
+
+  @override
+  String errorOauthTokenFailed(Object detail) {
+    return 'No se pudo obtener el acceso a OneDrive: $detail';
+  }
+
+  @override
+  String errorOauthRefreshFailed(Object detail) {
+    return 'No se pudo renovar la sesión de OneDrive: $detail';
+  }
+
+  @override
+  String errorNativeHostMissing(Object path) {
+    return 'No se encontró el componente de conexión con el navegador en $path. Reinstale Lockspire.';
+  }
+
+  @override
+  String get errorNativeHostElevationCancelled =>
+      'No se completó el registro para todo el equipo (¿se canceló el permiso de administrador?).';
+
+  @override
+  String get errorNativeHostWindowsOnly =>
+      'Solo disponible en Windows por ahora.';
+
+  @override
+  String get errorNoSupportedBrowser =>
+      'No se encontró ningún navegador compatible.';
+
+  @override
+  String get errorImportInvalidJson => 'El archivo no es un JSON válido.';
+
+  @override
+  String get errorImportNotBitwardenJson =>
+      'No es un export JSON de Bitwarden.';
+
+  @override
+  String get errorImportBitwardenEncrypted =>
+      'Este JSON de Bitwarden está cifrado. Expórtelo de nuevo eligiendo \"JSON\" (sin cifrar) para poder importarlo.';
+
+  @override
+  String get errorImportCsvUnclosedQuote => 'El CSV tiene comillas sin cerrar.';
+
+  @override
+  String get errorImportCsvEmpty => 'El CSV está vacío.';
+
+  @override
+  String get errorImportCsvNoPasswordColumn =>
+      'No se encontró una columna de contraseña. Exporte desde su gestor en CSV (Bitwarden, Chrome, Firefox o KeePassXC).';
+
+  @override
+  String get biometricWindowsHello => 'Windows Hello';
+
+  @override
+  String get biometricFingerprint => 'la huella';
+
+  @override
+  String get crackTimeInstant => 'instantáneo';
+
+  @override
+  String crackTimeSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count segundos',
+      one: '1 segundo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String crackTimeMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minutos',
+      one: '1 minuto',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String crackTimeHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count horas',
+      one: '1 hora',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String crackTimeDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count días',
+      one: '1 día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String crackTimeMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count meses',
+      one: '1 mes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String crackTimeYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count años',
+      one: '1 año',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String crackTimeCenturies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count siglos',
+      one: '1 siglo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get crackTimeMillionsOfYears => 'millones de años';
+
+  @override
+  String get unlockPreviousPasswordNeeded =>
+      'Este dispositivo tiene cambios que aún no se sincronizaron. Para conservarlos, ingrese también la contraseña anterior.';
+
+  @override
+  String get unlockPreviousPasswordWrong =>
+      'La contraseña anterior no es correcta';
+
+  @override
+  String get unlockWelcomeBack => '¡Hola de nuevo!';
+
+  @override
+  String get unlockPrompt => 'Ingrese su contraseña para entrar a su bóveda';
+
+  @override
+  String unlockPasswordChangedElsewhere(Object method) {
+    return 'La contraseña maestra se cambió en otro dispositivo. Ingrese la nueva para entrar. Hasta entonces no se puede usar $method.';
+  }
+
+  @override
+  String unlockPeriodicReminder(Object method) {
+    return 'Por seguridad, cada tanto Lockspire le pide la contraseña maestra aunque use $method, para que no se le olvide. Después vuelve a funcionar como siempre.';
+  }
+
+  @override
+  String get unlockPreviousPassword => 'Contraseña anterior';
+
+  @override
+  String get unlockPreviousPasswordRequired => 'Ingrese la contraseña anterior';
+
+  @override
+  String get unlockUnlocking =>
+      'Desbloqueando… esto puede tardar unos segundos (derivación de clave Argon2id)';
+
+  @override
+  String get unlockButton => 'Desbloquear';
+
+  @override
+  String get unlockEnterNewPassword => 'Ingresar la contraseña nueva';
+
+  @override
+  String get unlockNoNewPassword => 'No tengo la contraseña nueva';
+
+  @override
+  String unlockUseBiometric(Object method) {
+    return 'Usar $method';
+  }
+
+  @override
+  String get createVaultTitle => 'Crear bóveda';
+
+  @override
+  String get createVaultHeading => 'Cree su bóveda';
+
+  @override
+  String get createVaultIntro =>
+      'Elija una contraseña maestra. Nunca se envía ni se guarda: si la olvida, no hay forma de recuperarla.';
+
+  @override
+  String createVaultMinLength(int count) {
+    return 'Mínimo $count caracteres';
+  }
+
+  @override
+  String get createVaultPasswordRequired => 'Ingrese una contraseña';
+
+  @override
+  String get createVaultConfirm => 'Confirmar contraseña';
+
+  @override
+  String get createVaultMismatch => 'No coincide con la contraseña anterior';
+
+  @override
+  String get createVaultCreating =>
+      'Creando bóveda… esto puede tardar unos segundos (derivación de clave Argon2id)';
+
+  @override
+  String createVaultFailed(Object error) {
+    return 'No se pudo crear la bóveda: $error';
+  }
+
+  @override
+  String get createVaultRestoreLink =>
+      '¿Ya tiene una bóveda? Restaurarla desde la nube';
+
+  @override
+  String get changePwDone =>
+      'Contraseña maestra cambiada. Sus otros dispositivos se la pedirán la próxima vez que sincronicen.';
+
+  @override
+  String get changePwCurrentWrong => 'La contraseña actual no es correcta';
+
+  @override
+  String get changePwConflict =>
+      'La bóveda cambió mientras se guardaba. La nube ya tiene la contraseña nueva: sincronice y, cuando se la pida, ingrésela.';
+
+  @override
+  String changePwFailed(Object error) {
+    return 'No se pudo cambiar la contraseña, así que sigue siendo la misma. $error';
+  }
+
+  @override
+  String get changePwTitle => 'Cambiar contraseña maestra';
+
+  @override
+  String get changePwIntro =>
+      'Si tiene sincronización, primero se sincroniza y la bóveda nueva se sube a la nube: hace falta conexión. Las copias viejas que alguien ya tenga siguen abriéndose con la contraseña anterior.';
+
+  @override
+  String get changePwCurrent => 'Contraseña actual';
+
+  @override
+  String get changePwCurrentRequired => 'Ingrese su contraseña actual';
+
+  @override
+  String changePwNewHelper(int count) {
+    return 'Mínimo $count caracteres, difícil de adivinar';
+  }
+
+  @override
+  String get changePwMustDiffer => 'Tiene que ser distinta de la actual';
+
+  @override
+  String get changePwConfirmNew => 'Confirmar contraseña nueva';
+
+  @override
+  String get changePwMismatch => 'No coincide con la contraseña nueva';
+
+  @override
+  String get changePwShowPasswords => 'Mostrar contraseñas';
+
+  @override
+  String get changePwButton => 'Cambiar contraseña';
+
+  @override
+  String get commonRetry => 'Reintentar';
+
+  @override
+  String get strengthWeak => 'Débil';
+
+  @override
+  String get strengthFair => 'Regular';
+
+  @override
+  String get strengthStrong => 'Segura';
+
+  @override
+  String strengthLabel(Object level, Object time) {
+    return '$level — tiempo estimado para descifrarla: $time';
+  }
+
+  @override
+  String get deleteEntriesBody =>
+      'Se eliminan de la bóveda en este dispositivo y en los demás al sincronizar.';
+
+  @override
+  String get commonDelete => 'Eliminar';
+
+  @override
+  String biometricOptInTitle(Object methodName) {
+    return '¿Activar desbloqueo con $methodName?';
+  }
+
+  @override
+  String biometricOptInBody(Object methodName) {
+    return 'En vez de escribir la contraseña maestra cada vez, podrá desbloquear la bóveda con $methodName. Puede cambiarlo después desde \"Seguridad\".';
+  }
+
+  @override
+  String get commonNotNow => 'Ahora no';
+
+  @override
+  String get commonTurnOn => 'Activar';
+
+  @override
+  String get entryTypePassword => 'Contraseña';
+
+  @override
+  String get entryTypeCard => 'Tarjeta';
+
+  @override
+  String get entryTypeDocument => 'Documento';
+
+  @override
+  String get selectionCancel => 'Cancelar selección';
+
+  @override
+  String selectionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count seleccionadas',
+      one: '1 seleccionada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get selectionClear => 'Quitar selección';
+
+  @override
+  String get selectionAll => 'Seleccionar todo';
+
+  @override
+  String get selectionDelete => 'Eliminar seleccionadas';
+
+  @override
+  String get selectionStart => 'Seleccionar';
+
+  @override
+  String get commonLock => 'Bloquear';
+
+  @override
+  String get vaultSearchHint => 'Buscar por título, usuario o sitio';
+
+  @override
+  String get commonAdd => 'Agregar';
+
+  @override
+  String get securityOpenSettingsFailed => 'No se pudo abrir la configuración.';
+
+  @override
+  String get securityTitle => 'Seguridad';
+
+  @override
+  String get securityChangePwHint =>
+      'Hágalo si cree que alguien pudo conocerla.';
+
+  @override
+  String securityUnlockWith(Object method) {
+    return 'Desbloquear con $method';
+  }
+
+  @override
+  String securityUnlockWithHint(Object method) {
+    return 'Use $method en vez de escribir la contraseña maestra cada vez.';
+  }
+
+  @override
+  String get securityAutofill => 'Autocompletado';
+
+  @override
+  String get securityAutofillHint =>
+      'Active Lockspire como servicio de autocompletado para que aparezca como opción al iniciar sesión en otras apps — incluye logins dentro de un navegador embebido (ej. WebView).';
+
+  @override
+  String get securityAutofillButton => 'Activar como autocompletado';
+
+  @override
+  String securityBiometricNotSetUp(Object method) {
+    return 'Este dispositivo no tiene $method configurado.';
+  }
+
+  @override
+  String securityBiometricSetUpHint(Object method) {
+    return 'Configure $method en los ajustes del sistema para poder activarlo aquí.';
+  }
+
+  @override
+  String get securityBiometricUnavailable =>
+      'No disponible en este dispositivo.';
+
+  @override
+  String get securityReminderTitle => 'Pedir la contraseña maestra cada';
+
+  @override
+  String securityReminderHint(Object method) {
+    return 'Aunque use $method, pasado este tiempo Lockspire le pide la contraseña una vez, para que no se le olvide. Si la olvida, la bóveda no se puede recuperar.';
+  }
+
+  @override
+  String get securityAutoLock => 'Bloqueo automático';
+
+  @override
+  String get securityAutoLock15Warning =>
+      'Más cómodo, pero la bóveda queda abierta más tiempo si se aleja del equipo.';
+
+  @override
+  String get securitySiteIcons => 'Íconos de los sitios';
+
+  @override
+  String get securitySiteIconsHint =>
+      'Descarga el ícono de cada sitio guardado directamente del sitio, sin servicios de terceros, y lo guarda cifrado en su bóveda. Cada sitio ve una visita desde su conexión. Sin activarlo, se muestra la inicial.';
+
+  @override
+  String get securitySiteIconsFallback =>
+      'Completar los que falten con DuckDuckGo';
+
+  @override
+  String get securitySiteIconsFallbackHint =>
+      'Para los sitios que no ofrecen ícono, se lo pide a DuckDuckGo. DuckDuckGo recibe solo esos dominios, nunca sus usuarios ni contraseñas.';
+
+  @override
+  String get securitySiteIconsRetry => 'Volver a buscar los que faltan';
+
+  @override
+  String get vaultNoResults => 'No se encontraron resultados';
+
+  @override
+  String get vaultEmpty => 'Todavía no ha guardado ninguna contraseña';
+
+  @override
+  String get vaultEmptyHint => 'Toque el botón \"+\" para agregar la primera';
+
+  @override
+  String get generatorRandom => 'Aleatoria';
+
+  @override
+  String get generatorMemorable => 'Fácil de recordar';
+
+  @override
+  String generatorLength(int count) {
+    return '$count caracteres';
+  }
+
+  @override
+  String deleteEntriesTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '¿Eliminar $count entradas?',
+      one: '¿Eliminar 1 entrada?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deleteEntriesDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se eliminaron $count entradas',
+      one: 'Se eliminó 1 entrada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String commonDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count días',
+      one: '1 día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String commonMinutesShort(int count) {
+    return '$count min';
+  }
+
+  @override
+  String get securityAutoLockHintAndroid =>
+      'La bóveda se bloquea sola cuando pasa este tiempo sin que use Lockspire. También se bloquea al salir de la app.';
+
+  @override
+  String get securityAutoLockHintDesktop =>
+      'La bóveda se bloquea sola cuando pasa este tiempo sin que use Lockspire. También se bloquea al bloquear la sesión o suspender el equipo.';
+
+  @override
+  String entryConflict(Object error) {
+    return '$error Revise los datos e intente guardar de nuevo.';
+  }
+
+  @override
+  String entrySaveFailed(Object error) {
+    return 'No se pudo guardar: $error';
+  }
+
+  @override
+  String get entryDeleteTitle => '¿Eliminar esta entrada?';
+
+  @override
+  String entryDeleteBody(Object title) {
+    return 'Se eliminará \"$title\" de la bóveda.';
+  }
+
+  @override
+  String entryCopied(Object label, int seconds) {
+    return 'Copiado: $label. Se borra en $seconds s o al bloquear';
+  }
+
+  @override
+  String get fieldUsername => 'Usuario';
+
+  @override
+  String get fieldPassword => 'Contraseña';
+
+  @override
+  String get entryGeneratePassword => 'Generar contraseña';
+
+  @override
+  String get fieldTitle => 'Título';
+
+  @override
+  String get entryTitleRequired => 'Ingrese un título';
+
+  @override
+  String get entryWebsites => 'Sitios web';
+
+  @override
+  String get fieldWebsite => 'Sitio web';
+
+  @override
+  String get entryAddWebsite => 'Agregar sitio web';
+
+  @override
+  String get entryAndroidApps => 'Apps Android';
+
+  @override
+  String get entryAppPackage => 'App (paquete)';
+
+  @override
+  String get entryAddApp => 'Agregar app';
+
+  @override
+  String get entryOtherFields => 'Otros campos';
+
+  @override
+  String get entryAndroidApp => 'App Android';
+
+  @override
+  String get entryField => 'Campo';
+
+  @override
+  String get fieldNotes => 'Notas';
+
+  @override
+  String get entrySavedEncrypted =>
+      'Se guarda cifrada junto con el resto de su bóveda.';
+
+  @override
+  String fieldCopy(Object field) {
+    return 'Copiar $field';
+  }
+
+  @override
+  String get commonShow => 'Mostrar';
+
+  @override
+  String get commonHide => 'Ocultar';
+
+  @override
+  String get commonRemove => 'Quitar';
+
+  @override
+  String get customFieldRemove => 'Quitar campo';
+
+  @override
+  String get customFieldAdd => 'Agregar campo';
+
+  @override
+  String get customFieldNameRequired => 'Ingrese un nombre';
+
+  @override
+  String get customFieldNameTaken => 'Ya hay un campo con ese nombre';
+
+  @override
+  String get customFieldNew => 'Nuevo campo';
+
+  @override
+  String get customFieldName => 'Nombre del campo';
+
+  @override
+  String get customFieldNameHint => 'Por ejemplo: Pregunta secreta';
+
+  @override
+  String get customFieldHidden => 'Ocultar el valor';
+
+  @override
+  String get customFieldHiddenHint =>
+      'Para claves, PIN y otros datos sensibles';
+
+  @override
+  String get fieldCardNumber => 'Número de tarjeta';
+
+  @override
+  String get fieldCardHolder => 'Titular';
+
+  @override
+  String get fieldExpiry => 'Vence';
+
+  @override
+  String get fieldCardExpiryHint => 'MM/AA';
+
+  @override
+  String get fieldCvv => 'CVV';
+
+  @override
+  String get fieldPin => 'PIN';
+
+  @override
+  String get fieldDocNumber => 'Número';
+
+  @override
+  String get fieldDocName => 'Nombre';
+
+  @override
+  String get fieldBirthDate => 'Fecha de nacimiento';
+
+  @override
+  String get fieldIssued => 'Expedido';
+
+  @override
+  String get fieldDateHint => 'DD/MM/AAAA';
+
+  @override
+  String fieldWebsiteN(Object n) {
+    return 'Sitio web $n';
+  }
+
+  @override
+  String fieldAppN(Object n) {
+    return 'App $n';
+  }
+
+  @override
+  String get fieldGenerationMode => 'Modo de generación';
+
+  @override
+  String get fieldGenerationParam => 'Parámetro de generación';
+
+  @override
+  String get historyTitle => 'Valores anteriores';
+
+  @override
+  String get historyHint =>
+      'Lo que tenían antes estos campos: importado de SafeInCloud o de un cambio en otro dispositivo que se resolvió solo.';
+
+  @override
+  String entryNewTitle(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'card': 'Nueva tarjeta',
+      'document': 'Nuevo documento',
+      'note': 'Nueva nota',
+      'passkey': 'Nueva passkey',
+      'other': 'Nueva contraseña',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String entryEditTitle(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'card': 'Editar tarjeta',
+      'document': 'Editar documento',
+      'note': 'Editar nota',
+      'passkey': 'Editar passkey',
+      'other': 'Editar contraseña',
+    });
+    return '$_temp0';
+  }
 }

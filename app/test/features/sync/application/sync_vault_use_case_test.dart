@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 import 'package:lockspire/features/sync/application/sync_vault_use_case.dart';
 import 'package:lockspire/features/vault/domain/entities/vault.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
@@ -393,7 +394,16 @@ void main() {
           header: _testHeader(),
         );
 
-        await expectLater(useCase.call(), throwsA(isA<StateError>()));
+        await expectLater(
+          useCase.call(),
+          throwsA(
+            isA<AppProblem>().having(
+              (e) => e.code,
+              'code',
+              AppProblemCode.syncNothingToSync,
+            ),
+          ),
+        );
       },
     );
   });

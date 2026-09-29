@@ -19,6 +19,8 @@ import '../providers/current_sync_credentials_provider.dart';
 import '../sync_accounts_controller.dart';
 import '../sync_controller.dart';
 import '../widgets/cloud_account_section.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 
 class SyncSettingsScreen extends ConsumerStatefulWidget {
   const SyncSettingsScreen({super.key});
@@ -107,7 +109,10 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo conectar con ${syncProviderName(provider)}: $error',
+            context.l10n.syncConnectFailed(
+              syncProviderName(provider),
+              localizeError(context.l10n, error),
+            ),
           ),
         ),
       );
@@ -125,24 +130,21 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('¿Mudar la bóveda a ${syncProviderName(target)}?'),
+        title: Text(context.l10n.syncMoveTitle(syncProviderName(target))),
         content: Text(
-          'Su bóveda se sincroniza con ${syncProviderName(home)}. Si continúa, '
-          'pasa a sincronizarse con ${syncProviderName(target)} y se deja un '
-          'aviso en ${syncProviderName(home)}.\n\n'
-          'Sus otros dispositivos van a recibir ese aviso la próxima vez que '
-          'sincronicen, y tendrán que conectar ${syncProviderName(target)} '
-          'para seguir. No se pierde nada: lo que esté en '
-          '${syncProviderName(target)} se fusiona con esta bóveda.',
+          context.l10n.syncMoveBody(
+            syncProviderName(home),
+            syncProviderName(target),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Mudar'),
+            child: Text(context.l10n.syncMoveConfirm),
           ),
         ],
       ),
@@ -169,22 +171,16 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Reemplazar la copia de la nube?'),
-        content: const Text(
-          'La nube tiene una versión más vieja que la de este dispositivo. '
-          'Si restauró una copia antigua a propósito, puede reemplazarla '
-          'con la de este dispositivo: no pierde nada que tenga aquí.\n\n'
-          'Si no fue usted, alguien pudo haber accedido a su cuenta de la '
-          'nube: cambie esa contraseña antes de seguir.',
-        ),
+        title: Text(context.l10n.syncReplaceRemoteTitle),
+        content: Text(context.l10n.syncReplaceRemoteBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Reemplazar'),
+            child: Text(context.l10n.syncReplaceConfirm),
           ),
         ],
       ),
@@ -195,21 +191,18 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
   }
 
   String _describeResult(SyncResult result) => switch (result) {
-    SyncUploaded() => 'Se subió la bóveda al servidor.',
-    SyncDownloaded() => 'Se bajó la bóveda del servidor.',
-    SyncUpToDate() => 'Ya estaba al día — nada que hacer.',
+    SyncUploaded() => context.l10n.syncResultUploaded,
+    SyncDownloaded() => context.l10n.syncResultDownloaded,
+    SyncUpToDate() => context.l10n.syncResultUpToDate,
     SyncMerged(:final autoResolvedCount, :final fieldConflictsResolved) =>
       fieldConflictsResolved > 0
-          ? 'Se fusionaron los cambios — $fieldConflictsResolved campos se '
-                'resolvieron automáticamente (puede ver el valor anterior '
-                'en el historial de esa entrada).'
+          ? context.l10n.syncResultMergedFields(fieldConflictsResolved)
           : autoResolvedCount > 0
-          ? 'Se fusionaron los cambios: $autoResolvedCount entradas '
-                'resueltas automáticamente.'
-          : 'Se fusionaron los cambios.',
-    SyncVaultMoved(:final to) =>
-      'Su bóveda se mudó a ${syncProviderName(to)}. Conéctela arriba para '
-          'seguir sincronizando.',
+          ? context.l10n.syncResultMergedEntries(autoResolvedCount)
+          : context.l10n.syncResultMerged,
+    SyncVaultMoved(:final to) => context.l10n.syncResultMoved(
+      syncProviderName(to),
+    ),
   };
 
   Widget _buildProviderPicker() {
@@ -243,50 +236,49 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
         children: [
           TextFormField(
             controller: _serverController,
-            decoration: const InputDecoration(
-              labelText: 'URL del servidor WebDAV',
+            decoration: InputDecoration(
+              labelText: context.l10n.syncWebdavUrl,
               hintText: 'https://mi-servidor.ejemplo/dav',
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Ingrese la URL del servidor';
+                return context.l10n.syncWebdavUrlRequired;
               }
               return switch (checkWebDavUrl(value)) {
                 null => null,
                 WebDavUrlProblem.insecure =>
-                  'Use https://: con http:// su usuario y contraseña del '
-                      'servidor viajarían sin cifrar.',
-                WebDavUrlProblem.invalid =>
-                  'Ingrese una URL completa, p. ej. https://servidor/dav',
+                  context.l10n.syncWebdavHttpsRequired,
+                WebDavUrlProblem.invalid => context.l10n.syncWebdavUrlInvalid,
               };
             },
           ),
           const SizedBox(height: LockspireSpacing.md),
           TextFormField(
             controller: _usernameController,
-            decoration: const InputDecoration(labelText: 'Usuario'),
-            validator: (value) =>
-                (value == null || value.isEmpty) ? 'Ingrese el usuario' : null,
+            decoration: InputDecoration(labelText: context.l10n.syncWebdavUser),
+            validator: (value) => (value == null || value.isEmpty)
+                ? context.l10n.syncWebdavUserRequired
+                : null,
           ),
           const SizedBox(height: LockspireSpacing.md),
           TextFormField(
             controller: _passwordController,
             obscureText: true,
             decoration: InputDecoration(
-              labelText: 'Contraseña',
+              labelText: context.l10n.syncWebdavPassword,
               hintText: credentials != null
-                  ? '(sin cambios si se deja vacío)'
+                  ? context.l10n.syncWebdavPasswordUnchanged
                   : null,
             ),
             validator: (value) {
               if (credentials == null && (value == null || value.isEmpty)) {
-                return 'Ingrese la contraseña';
+                return context.l10n.syncWebdavPasswordRequired;
               }
               return null;
             },
           ),
           const SizedBox(height: LockspireSpacing.lg),
-          FilledButton(onPressed: _save, child: const Text('Guardar')),
+          FilledButton(onPressed: _save, child: Text(context.l10n.commonSave)),
         ],
       ),
     );
@@ -311,7 +303,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
         oneDriveAccountAsync.value != null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sincronización')),
+      appBar: AppBar(title: Text(context.l10n.syncTitle)),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -327,22 +319,16 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                 if (_selectedProvider == SyncProviderId.googleDrive)
                   CloudAccountSection(
                     account: googleAccountAsync.whenData((a) => a?.email),
-                    scopeNote:
-                        'Lockspire solo accede a su propia carpeta '
-                        'oculta de datos en su Drive: no ve el resto de '
-                        'sus archivos.',
-                    connectLabel: 'Conectar con Google',
+                    scopeNote: context.l10n.syncGoogleScopeNote,
+                    connectLabel: context.l10n.syncConnectGoogle,
                     onConnect: _connectGoogleDrive,
                     onDisconnect: _disconnectGoogleDrive,
                   )
                 else if (_selectedProvider == SyncProviderId.oneDrive)
                   CloudAccountSection(
                     account: oneDriveAccountAsync.whenData((a) => a?.email),
-                    scopeNote:
-                        'Lockspire solo accede a su propia carpeta '
-                        'especial de app en su OneDrive: no ve el resto '
-                        'de sus archivos.',
-                    connectLabel: 'Conectar con OneDrive',
+                    scopeNote: context.l10n.syncOneDriveScopeNote,
+                    connectLabel: context.l10n.syncConnectOneDrive,
                     onConnect: _connectOneDrive,
                     onDisconnect: _disconnectOneDrive,
                   )
@@ -351,7 +337,9 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (error, _) => Text(
-                      'Ocurrió un error: $error',
+                      context.l10n.commonErrorDetail(
+                        localizeError(context.l10n, error),
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     data: _buildWebDavForm,
@@ -368,12 +356,14 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Sincronizar ahora'),
+                      : Text(context.l10n.syncNow),
                 ),
                 const SizedBox(height: LockspireSpacing.md),
                 if (syncState.hasError) ...[
                   Text(
-                    'No se pudo sincronizar: ${syncState.error}',
+                    context.l10n.syncFailed(
+                      localizeError(context.l10n, syncState.error!),
+                    ),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                     ),
@@ -383,7 +373,7 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                     const SizedBox(height: LockspireSpacing.md),
                     OutlinedButton(
                       onPressed: _confirmReplaceRemote,
-                      child: const Text('Subir la versión de este dispositivo'),
+                      child: Text(context.l10n.syncUploadLocal),
                     ),
                   ],
                 ] else if (syncState.value != null)

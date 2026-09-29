@@ -6,6 +6,7 @@ import '../../domain/entities/vault_entry.dart';
 import '../../domain/ports/vault_import_source.dart';
 import 'csv_codec.dart';
 import 'entry_mapping.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// De dónde parece venir un CSV, por sus encabezados (ADR 0027).
 enum CsvSource { bitwarden, chrome, firefox, keepass, generic }
@@ -19,14 +20,11 @@ class CsvImportSource implements VaultImportSource {
   @override
   Future<List<VaultEntry>> parse(String content) async {
     final rows = parseCsv(content);
-    if (rows.isEmpty) throw const FormatException('El CSV está vacío.');
+    if (rows.isEmpty) throw const AppProblem(AppProblemCode.importCsvEmpty);
     final header = [for (final h in rows.first) h.trim().toLowerCase()];
     final columns = _Columns(header);
     if (columns.password == null) {
-      throw const FormatException(
-        'No se encontró una columna de contraseña. Exporte desde su gestor '
-        'en CSV (Bitwarden, Chrome, Firefox o KeePassXC).',
-      );
+      throw const AppProblem(AppProblemCode.importCsvNoPasswordColumn);
     }
     detected = columns.source;
 

@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design/lockspire_spacing.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Copia un valor como secreto (ver `ClipboardGuard`). La pantalla que usa
 /// estos campos decide cómo avisar.
@@ -39,7 +40,7 @@ class CopyableField extends StatelessWidget {
         prefixIcon: leading,
         suffixIcon: IconButton(
           icon: const Icon(Icons.copy_outlined),
-          tooltip: 'Copiar ${label.toLowerCase()}',
+          tooltip: context.l10n.fieldCopy(label.toLowerCase()),
           onPressed: () => onCopy(label, controller.text),
         ),
       ),
@@ -103,12 +104,14 @@ class _SecretFieldState extends State<SecretField> {
               ...widget.extraActions,
               IconButton(
                 icon: Icon(obscure ? Icons.visibility : Icons.visibility_off),
-                tooltip: obscure ? 'Mostrar' : 'Ocultar',
+                tooltip: obscure
+                    ? context.l10n.commonShow
+                    : context.l10n.commonHide,
                 onPressed: () => _obscure.value = !obscure,
               ),
               IconButton(
                 icon: const Icon(Icons.copy_outlined),
-                tooltip: 'Copiar ${widget.label.toLowerCase()}',
+                tooltip: context.l10n.fieldCopy(widget.label.toLowerCase()),
                 onPressed: () =>
                     widget.onCopy(widget.label, widget.controller.text),
               ),
@@ -168,7 +171,7 @@ class RepeatedFieldList extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.remove_circle_outline),
-                tooltip: 'Quitar',
+                tooltip: context.l10n.commonRemove,
                 onPressed: () => onRemove(index),
               ),
             ],
@@ -257,7 +260,7 @@ class CustomFieldsEditor extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.remove_circle_outline),
-                tooltip: 'Quitar campo',
+                tooltip: context.l10n.customFieldRemove,
                 onPressed: () => onRemove(index),
               ),
             ],
@@ -269,7 +272,7 @@ class CustomFieldsEditor extends StatelessWidget {
           child: TextButton.icon(
             onPressed: () => _askNew(context),
             icon: const Icon(Icons.add),
-            label: const Text('Agregar campo'),
+            label: Text(context.l10n.customFieldAdd),
           ),
         ),
       ],
@@ -300,11 +303,11 @@ class _NewCustomFieldDialogState extends State<_NewCustomFieldDialog> {
   void _submit() {
     final name = _name.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Ingrese un nombre');
+      setState(() => _error = context.l10n.customFieldNameRequired);
       return;
     }
     if (widget.taken.contains(name)) {
-      setState(() => _error = 'Ya hay un campo con ese nombre');
+      setState(() => _error = context.l10n.customFieldNameTaken);
       return;
     }
     Navigator.of(
@@ -315,7 +318,7 @@ class _NewCustomFieldDialogState extends State<_NewCustomFieldDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Nuevo campo'),
+      title: Text(context.l10n.customFieldNew),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -323,8 +326,8 @@ class _NewCustomFieldDialogState extends State<_NewCustomFieldDialog> {
             controller: _name,
             autofocus: true,
             decoration: InputDecoration(
-              labelText: 'Nombre del campo',
-              hintText: 'Por ejemplo: Pregunta secreta',
+              labelText: context.l10n.customFieldName,
+              hintText: context.l10n.customFieldNameHint,
               errorText: _error,
             ),
             onSubmitted: (_) => _submit(),
@@ -333,17 +336,17 @@ class _NewCustomFieldDialogState extends State<_NewCustomFieldDialog> {
             contentPadding: EdgeInsets.zero,
             value: _hidden,
             onChanged: (value) => setState(() => _hidden = value ?? false),
-            title: const Text('Ocultar el valor'),
-            subtitle: const Text('Para claves, PIN y otros datos sensibles'),
+            title: Text(context.l10n.customFieldHidden),
+            subtitle: Text(context.l10n.customFieldHiddenHint),
           ),
         ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(context.l10n.commonCancel),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Agregar')),
+        FilledButton(onPressed: _submit, child: Text(context.l10n.commonAdd)),
       ],
     );
   }

@@ -9,6 +9,7 @@ import 'package:googleapis_auth/googleapis_auth.dart' show AuthClient;
 import '../../vault/domain/ports/vault_storage_port.dart';
 import '../../vault/domain/vault_file_codec.dart';
 import '../domain/ports/sync_port.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// Nombre fijo del archivo de bóveda dentro de la carpeta oculta
 /// `appDataFolder` — igual criterio que `WebdavSyncAdapter._remotePath`,
@@ -54,7 +55,10 @@ class GoogleDriveSyncAdapter implements SyncPort {
   Future<VaultFile> downloadVault() async {
     final fileId = await _findFileId();
     if (fileId == null) {
-      throw StateError('No hay bóveda en Google Drive todavía');
+      throw const AppProblem(
+        AppProblemCode.remoteVaultMissing,
+        detail: 'Google Drive',
+      );
     }
     final media =
         await _api.files.get(

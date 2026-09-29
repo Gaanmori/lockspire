@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import 'package:lockspire/shared/domain/app_problem.dart';
+
 /// CSV (RFC 4180) para importar y exportar (ADR 0027): comillas dobles,
 /// `""` como comilla escapada, saltos de línea dentro de un campo entre
 /// comillas, `\r\n` o `\n`, y BOM inicial opcional.
@@ -60,7 +62,7 @@ List<List<String>> parseCsv(String input) {
     }
   }
   if (inQuotes) {
-    throw const FormatException('El CSV tiene comillas sin cerrar.');
+    throw const AppProblem(AppProblemCode.importCsvUnclosedQuote);
   }
   if (field.isNotEmpty || row.isNotEmpty) endRow();
   return rows;

@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 import 'package:lockspire/features/sync/infrastructure/microsoft_oauth_auth.dart';
 
 const _state = 'estado-aleatorio-de-este-login';
@@ -103,7 +104,7 @@ void main() {
             ),
             _state,
           ),
-          throwsA(isA<StateError>()),
+          throwsA(isA<AppProblem>().having((e) => e.detail, 'detail', 'No')),
         );
       });
     },

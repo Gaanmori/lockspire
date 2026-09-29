@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 
 import 'ports/vault_storage_port.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 
 /// Excepción lanzada cuando un [VaultFile] no puede leerse con la versión
 /// de formato soportada por esta app — rechazo explícito, nunca
@@ -78,9 +79,7 @@ abstract final class VaultFileCodec {
   /// [UnsafeKdfParamsException] si pide parámetros de Argon2id fuera de
   /// límites. Nunca deja escapar un `RangeError`/`TypeError` crudo.
   static VaultFile decode(Uint8List bytes) {
-    const invalid = FormatException(
-      'No es un archivo de bóveda de Lockspire válido',
-    );
+    const invalid = AppProblem(AppProblemCode.notAVaultFile);
     if (bytes.length < _headerStart) throw invalid;
     final data = ByteData.sublistView(bytes);
 

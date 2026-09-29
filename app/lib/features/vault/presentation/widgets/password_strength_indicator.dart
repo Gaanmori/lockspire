@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../../application/password_strength_estimator.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_values.dart';
 
 /// Barra de fortaleza + tiempo estimado de descifrado (ver
 /// `password_strength_estimator.dart`) — reacciona tanto a una
@@ -23,11 +25,12 @@ class PasswordStrengthIndicator extends StatelessWidget {
         PasswordStrengthLevel.strong => context.palette.accentSecondary,
       };
 
-  String _labelFor(PasswordStrengthLevel level) => switch (level) {
-    PasswordStrengthLevel.weak => 'Débil',
-    PasswordStrengthLevel.fair => 'Regular',
-    PasswordStrengthLevel.strong => 'Segura',
-  };
+  String _labelFor(AppLocalizations l10n, PasswordStrengthLevel level) =>
+      switch (level) {
+        PasswordStrengthLevel.weak => l10n.strengthWeak,
+        PasswordStrengthLevel.fair => l10n.strengthFair,
+        PasswordStrengthLevel.strong => l10n.strengthStrong,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +51,10 @@ class PasswordStrengthIndicator extends StatelessWidget {
         ),
         const SizedBox(height: LockspireSpacing.xs),
         Text(
-          '${_labelFor(estimate.level)} — tiempo estimado para '
-          'descifrarla: ${estimate.crackTimeLabel}',
+          context.l10n.strengthLabel(
+            _labelFor(context.l10n, estimate.level),
+            context.l10n.crackTimeText(estimate.crackTime),
+          ),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
         ),
       ],

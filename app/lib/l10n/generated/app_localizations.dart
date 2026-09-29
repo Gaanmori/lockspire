@@ -103,6 +103,1674 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Lockspire'**
   String get appTitle;
+
+  /// No description provided for @appearanceTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Apariencia'**
+  String get appearanceTitle;
+
+  /// No description provided for @appearanceMode.
+  ///
+  /// In es, this message translates to:
+  /// **'Modo'**
+  String get appearanceMode;
+
+  /// No description provided for @appearanceModeSystem.
+  ///
+  /// In es, this message translates to:
+  /// **'Sistema'**
+  String get appearanceModeSystem;
+
+  /// No description provided for @appearanceModeLight.
+  ///
+  /// In es, this message translates to:
+  /// **'Claro'**
+  String get appearanceModeLight;
+
+  /// No description provided for @appearanceModeDark.
+  ///
+  /// In es, this message translates to:
+  /// **'Oscuro'**
+  String get appearanceModeDark;
+
+  /// No description provided for @appearanceModeSystemHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambia sola entre claro y oscuro según su sistema.'**
+  String get appearanceModeSystemHint;
+
+  /// No description provided for @appearanceTheme.
+  ///
+  /// In es, this message translates to:
+  /// **'Tema'**
+  String get appearanceTheme;
+
+  /// No description provided for @appearanceLauncherIconNote.
+  ///
+  /// In es, this message translates to:
+  /// **'El ícono de Lockspire en el teléfono también cambia al tema elegido, en unos segundos. Algunos lanzadores quitan el acceso directo de la pantalla de inicio al cambiarlo: vuelva a agregarlo desde la lista de apps.'**
+  String get appearanceLauncherIconNote;
+
+  /// No description provided for @themeSystemColors.
+  ///
+  /// In es, this message translates to:
+  /// **'Colores del sistema'**
+  String get themeSystemColors;
+
+  /// No description provided for @themeSystemUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No disponible en este equipo: se usa Lineage.'**
+  String get themeSystemUnavailable;
+
+  /// No description provided for @themeSystemAndroid.
+  ///
+  /// In es, this message translates to:
+  /// **'Material You: colores de su fondo de pantalla.'**
+  String get themeSystemAndroid;
+
+  /// No description provided for @themeSystemDesktop.
+  ///
+  /// In es, this message translates to:
+  /// **'Color de acento del sistema.'**
+  String get themeSystemDesktop;
+
+  /// No description provided for @appearanceThemeSemantics.
+  ///
+  /// In es, this message translates to:
+  /// **'Tema {title}'**
+  String appearanceThemeSemantics(Object title);
+
+  /// No description provided for @appearanceInUse.
+  ///
+  /// In es, this message translates to:
+  /// **'En uso'**
+  String get appearanceInUse;
+
+  /// No description provided for @appearanceLanguage.
+  ///
+  /// In es, this message translates to:
+  /// **'Idioma'**
+  String get appearanceLanguage;
+
+  /// No description provided for @syncConnectFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo conectar con {provider}: {error}'**
+  String syncConnectFailed(Object provider, Object error);
+
+  /// No description provided for @syncMoveTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Mudar la bóveda a {target}?'**
+  String syncMoveTitle(Object target);
+
+  /// No description provided for @syncMoveBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Su bóveda se sincroniza con {home}. Si continúa, pasa a sincronizarse con {target} y se deja un aviso en {home}.\n\nSus otros dispositivos van a recibir ese aviso la próxima vez que sincronicen, y tendrán que conectar {target} para seguir. No se pierde nada: lo que esté en {target} se fusiona con esta bóveda.'**
+  String syncMoveBody(Object home, Object target);
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get commonCancel;
+
+  /// No description provided for @syncMoveConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Mudar'**
+  String get syncMoveConfirm;
+
+  /// No description provided for @syncReplaceRemoteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Reemplazar la copia de la nube?'**
+  String get syncReplaceRemoteTitle;
+
+  /// No description provided for @syncReplaceRemoteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'La nube tiene una versión más vieja que la de este dispositivo. Si restauró una copia antigua a propósito, puede reemplazarla con la de este dispositivo: no pierde nada que tenga aquí.\n\nSi no fue usted, alguien pudo haber accedido a su cuenta de la nube: cambie esa contraseña antes de seguir.'**
+  String get syncReplaceRemoteBody;
+
+  /// No description provided for @syncReplaceConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Reemplazar'**
+  String get syncReplaceConfirm;
+
+  /// No description provided for @syncResultUploaded.
+  ///
+  /// In es, this message translates to:
+  /// **'Se subió la bóveda al servidor.'**
+  String get syncResultUploaded;
+
+  /// No description provided for @syncResultDownloaded.
+  ///
+  /// In es, this message translates to:
+  /// **'Se bajó la bóveda del servidor.'**
+  String get syncResultDownloaded;
+
+  /// No description provided for @syncResultUpToDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya estaba al día — nada que hacer.'**
+  String get syncResultUpToDate;
+
+  /// No description provided for @syncResultMergedFields.
+  ///
+  /// In es, this message translates to:
+  /// **'Se fusionaron los cambios: {fieldConflictsResolved, plural, =1{1 campo se resolvió automáticamente} other{{fieldConflictsResolved} campos se resolvieron automáticamente}} (puede ver el valor anterior en el historial de esa entrada).'**
+  String syncResultMergedFields(int fieldConflictsResolved);
+
+  /// No description provided for @syncResultMergedEntries.
+  ///
+  /// In es, this message translates to:
+  /// **'Se fusionaron los cambios: {autoResolvedCount, plural, =1{1 entrada resuelta automáticamente} other{{autoResolvedCount} entradas resueltas automáticamente}}.'**
+  String syncResultMergedEntries(int autoResolvedCount);
+
+  /// No description provided for @syncResultMerged.
+  ///
+  /// In es, this message translates to:
+  /// **'Se fusionaron los cambios.'**
+  String get syncResultMerged;
+
+  /// No description provided for @syncResultMoved.
+  ///
+  /// In es, this message translates to:
+  /// **'Su bóveda se mudó a {provider}. Conéctela arriba para seguir sincronizando.'**
+  String syncResultMoved(Object provider);
+
+  /// No description provided for @syncWebdavUrl.
+  ///
+  /// In es, this message translates to:
+  /// **'URL del servidor WebDAV'**
+  String get syncWebdavUrl;
+
+  /// No description provided for @syncWebdavUrlRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese la URL del servidor'**
+  String get syncWebdavUrlRequired;
+
+  /// No description provided for @syncWebdavHttpsRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Use https://: con http:// su usuario y contraseña del servidor viajarían sin cifrar.'**
+  String get syncWebdavHttpsRequired;
+
+  /// No description provided for @syncWebdavUrlInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese una URL completa, p. ej. https://servidor/dav'**
+  String get syncWebdavUrlInvalid;
+
+  /// No description provided for @syncWebdavUser.
+  ///
+  /// In es, this message translates to:
+  /// **'Usuario'**
+  String get syncWebdavUser;
+
+  /// No description provided for @syncWebdavUserRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese el usuario'**
+  String get syncWebdavUserRequired;
+
+  /// No description provided for @syncWebdavPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña'**
+  String get syncWebdavPassword;
+
+  /// No description provided for @syncWebdavPasswordUnchanged.
+  ///
+  /// In es, this message translates to:
+  /// **'(sin cambios si se deja vacío)'**
+  String get syncWebdavPasswordUnchanged;
+
+  /// No description provided for @syncWebdavPasswordRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese la contraseña'**
+  String get syncWebdavPasswordRequired;
+
+  /// No description provided for @commonSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get commonSave;
+
+  /// No description provided for @syncTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sincronización'**
+  String get syncTitle;
+
+  /// No description provided for @syncGoogleScopeNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Lockspire solo accede a su propia carpeta oculta de datos en su Drive: no ve el resto de sus archivos.'**
+  String get syncGoogleScopeNote;
+
+  /// No description provided for @syncConnectGoogle.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectar con Google'**
+  String get syncConnectGoogle;
+
+  /// No description provided for @syncOneDriveScopeNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Lockspire solo accede a su propia carpeta especial de app en su OneDrive: no ve el resto de sus archivos.'**
+  String get syncOneDriveScopeNote;
+
+  /// No description provided for @syncConnectOneDrive.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectar con OneDrive'**
+  String get syncConnectOneDrive;
+
+  /// No description provided for @commonErrorDetail.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocurrió un error: {error}'**
+  String commonErrorDetail(Object error);
+
+  /// No description provided for @syncNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Sincronizar ahora'**
+  String get syncNow;
+
+  /// No description provided for @syncFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo sincronizar: {error}'**
+  String syncFailed(Object error);
+
+  /// No description provided for @syncUploadLocal.
+  ///
+  /// In es, this message translates to:
+  /// **'Subir la versión de este dispositivo'**
+  String get syncUploadLocal;
+
+  /// No description provided for @restoreNoProvider.
+  ///
+  /// In es, this message translates to:
+  /// **'Configure un proveedor de sync primero.'**
+  String get restoreNoProvider;
+
+  /// No description provided for @restoreSearchFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo buscar la bóveda remota: {error}'**
+  String restoreSearchFailed(Object error);
+
+  /// No description provided for @restoreTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar bóveda existente'**
+  String get restoreTitle;
+
+  /// No description provided for @restoreIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Conecte el mismo proveedor de sync que ya usa en su otro dispositivo: vamos a bajar su bóveda desde ahí.'**
+  String get restoreIntro;
+
+  /// No description provided for @restoreSetUpProvider.
+  ///
+  /// In es, this message translates to:
+  /// **'Configurar proveedor de sync'**
+  String get restoreSetUpProvider;
+
+  /// No description provided for @restoreFindVault.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar mi bóveda'**
+  String get restoreFindVault;
+
+  /// No description provided for @restoreSearching.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscando su bóveda…'**
+  String get restoreSearching;
+
+  /// No description provided for @restoreSearchingDetail.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisando el proveedor de sync configurado.'**
+  String get restoreSearchingDetail;
+
+  /// No description provided for @restoreNotFoundTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay ninguna bóveda ahí todavía'**
+  String get restoreNotFoundTitle;
+
+  /// No description provided for @restoreNotFoundBody.
+  ///
+  /// In es, this message translates to:
+  /// **'El proveedor está conectado, pero no encontramos ninguna bóveda subida. Si el otro dispositivo todavía no sincronizó, pruebe desde ahí primero.'**
+  String get restoreNotFoundBody;
+
+  /// No description provided for @commonBack.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver'**
+  String get commonBack;
+
+  /// No description provided for @restoreFoundTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Encontramos su bóveda'**
+  String get restoreFoundTitle;
+
+  /// No description provided for @restoreFoundBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese su contraseña maestra para desbloquearla.'**
+  String get restoreFoundBody;
+
+  /// No description provided for @commonMasterPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña maestra'**
+  String get commonMasterPassword;
+
+  /// No description provided for @commonMasterPasswordRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese su contraseña maestra'**
+  String get commonMasterPasswordRequired;
+
+  /// No description provided for @commonWrongPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña incorrecta'**
+  String get commonWrongPassword;
+
+  /// No description provided for @restoreConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar bóveda'**
+  String get restoreConfirm;
+
+  /// No description provided for @cloudNotConnected.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin cuenta conectada. {scopeNote}'**
+  String cloudNotConnected(Object scopeNote);
+
+  /// No description provided for @cloudConnectedAs.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectado como {email}'**
+  String cloudConnectedAs(Object email);
+
+  /// No description provided for @cloudDisconnect.
+  ///
+  /// In es, this message translates to:
+  /// **'Desconectar'**
+  String get cloudDisconnect;
+
+  /// No description provided for @pwChangedBanner.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña maestra se cambió en otro dispositivo. Ingrese la nueva para seguir sincronizando.'**
+  String get pwChangedBanner;
+
+  /// No description provided for @pwChangedEnterNew.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresar contraseña nueva'**
+  String get pwChangedEnterNew;
+
+  /// No description provided for @pwChangedNotNew.
+  ///
+  /// In es, this message translates to:
+  /// **'No es la contraseña nueva'**
+  String get pwChangedNotNew;
+
+  /// No description provided for @commonCouldNotComplete.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo completar: {error}'**
+  String commonCouldNotComplete(Object error);
+
+  /// No description provided for @pwChangedDialogTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña maestra nueva'**
+  String get pwChangedDialogTitle;
+
+  /// No description provided for @pwChangedDialogBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese la contraseña que puso en el otro dispositivo. Los cambios que hizo aquí se conservan.'**
+  String get pwChangedDialogBody;
+
+  /// No description provided for @pwChangedNewPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña nueva'**
+  String get pwChangedNewPassword;
+
+  /// No description provided for @commonContinue.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar'**
+  String get commonContinue;
+
+  /// No description provided for @syncHomeMovedBanner.
+  ///
+  /// In es, this message translates to:
+  /// **'Su bóveda se mudó a {provider}. Conecte {provider} en este dispositivo para seguir sincronizando.'**
+  String syncHomeMovedBanner(Object provider);
+
+  /// No description provided for @syncHomeGoToSync.
+  ///
+  /// In es, this message translates to:
+  /// **'Ir a Sincronización'**
+  String get syncHomeGoToSync;
+
+  /// No description provided for @errorSyncHomeMismatch.
+  ///
+  /// In es, this message translates to:
+  /// **'Su bóveda se sincroniza con {home}, pero este dispositivo está conectado a {active}. Conecte {home} en Sincronización para seguir.'**
+  String errorSyncHomeMismatch(Object home, Object active);
+
+  /// No description provided for @errorRemoteDifferentVault.
+  ///
+  /// In es, this message translates to:
+  /// **'La nube tiene una bóveda distinta a la suya. No se cambió nada en este dispositivo.'**
+  String get errorRemoteDifferentVault;
+
+  /// No description provided for @errorRemoteNotAuthentic.
+  ///
+  /// In es, this message translates to:
+  /// **'La bóveda de la nube no se pudo verificar (está dañada, fue modificada o usa otra contraseña). No se cambió nada en este dispositivo.'**
+  String get errorRemoteNotAuthentic;
+
+  /// No description provided for @errorRemotePasswordChanged.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña maestra se cambió en otro dispositivo. Ingrese la contraseña nueva para seguir sincronizando.'**
+  String get errorRemotePasswordChanged;
+
+  /// No description provided for @errorRemoteRollback.
+  ///
+  /// In es, this message translates to:
+  /// **'La nube tiene una versión más vieja que la que este dispositivo ya sincronizó: puede ser una copia antigua restaurada o una manipulación. No se cambió nada en este dispositivo.'**
+  String get errorRemoteRollback;
+
+  /// No description provided for @errorIncorrectCurrentPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña actual no es correcta.'**
+  String get errorIncorrectCurrentPassword;
+
+  /// No description provided for @errorPreviousPasswordRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Este dispositivo tiene cambios sin sincronizar. Ingrese también la contraseña anterior para conservarlos.'**
+  String get errorPreviousPasswordRequired;
+
+  /// No description provided for @errorIncorrectPreviousPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña anterior no es correcta.'**
+  String get errorIncorrectPreviousPassword;
+
+  /// No description provided for @errorUnknownImportFormat.
+  ///
+  /// In es, this message translates to:
+  /// **'Formato no reconocido: .{extension}. Use un XML de SafeInCloud, un CSV, un JSON de Bitwarden o un respaldo .lockspire.'**
+  String errorUnknownImportFormat(Object extension);
+
+  /// No description provided for @errorVaultWriteConflict.
+  ///
+  /// In es, this message translates to:
+  /// **'La bóveda cambió en disco desde que se abrió y no se sobrescribió. Vuelva a abrirla antes de guardar de nuevo.'**
+  String get errorVaultWriteConflict;
+
+  /// No description provided for @errorIncorrectBackupPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña no abre este respaldo. Es la contraseña maestra que tenía la bóveda cuando se hizo.'**
+  String get errorIncorrectBackupPassword;
+
+  /// No description provided for @errorUnsupportedVaultFormat.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta bóveda se creó con una versión más nueva de Lockspire (formato {version}). Actualice la app para abrirla.'**
+  String errorUnsupportedVaultFormat(int version);
+
+  /// No description provided for @errorUnsafeKdfParams.
+  ///
+  /// In es, this message translates to:
+  /// **'El archivo de bóveda pide parámetros de cifrado fuera de lo normal. Puede estar dañado o haber sido modificado; no se abrió.'**
+  String get errorUnsafeKdfParams;
+
+  /// No description provided for @masterPasswordTooShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Use al menos {count} caracteres'**
+  String masterPasswordTooShort(int count);
+
+  /// No description provided for @masterPasswordTooRepetitive.
+  ///
+  /// In es, this message translates to:
+  /// **'Tiene demasiados caracteres repetidos'**
+  String get masterPasswordTooRepetitive;
+
+  /// No description provided for @masterPasswordTooWeak.
+  ///
+  /// In es, this message translates to:
+  /// **'Es demasiado fácil de adivinar: sume palabras, mayúsculas, números o símbolos'**
+  String get masterPasswordTooWeak;
+
+  /// No description provided for @errorVaultLocked.
+  ///
+  /// In es, this message translates to:
+  /// **'La bóveda tiene que estar desbloqueada.'**
+  String get errorVaultLocked;
+
+  /// No description provided for @errorNotAVaultFile.
+  ///
+  /// In es, this message translates to:
+  /// **'No es un archivo de bóveda de Lockspire válido.'**
+  String get errorNotAVaultFile;
+
+  /// No description provided for @errorSyncNotConfigured.
+  ///
+  /// In es, this message translates to:
+  /// **'Configure un proveedor de sync primero (WebDAV, Google Drive u OneDrive).'**
+  String get errorSyncNotConfigured;
+
+  /// No description provided for @errorSyncNothingToSync.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay bóveda ni en este dispositivo ni en la nube.'**
+  String get errorSyncNothingToSync;
+
+  /// No description provided for @errorSyncConnectFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo conectar con {provider}.'**
+  String errorSyncConnectFailed(Object provider);
+
+  /// No description provided for @errorSyncConnectVaultCloud.
+  ///
+  /// In es, this message translates to:
+  /// **'Conecte la nube de su bóveda en Sincronización.'**
+  String get errorSyncConnectVaultCloud;
+
+  /// No description provided for @errorRemoteVaultMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay bóveda en {provider} todavía.'**
+  String errorRemoteVaultMissing(Object provider);
+
+  /// No description provided for @errorRemoteUploadFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo subir la bóveda a {provider}.'**
+  String errorRemoteUploadFailed(Object provider);
+
+  /// No description provided for @errorWebdavInsecureUrl.
+  ///
+  /// In es, this message translates to:
+  /// **'El servidor WebDAV usa http:// sin cifrar. Cambie la URL a https:// en Sincronización.'**
+  String get errorWebdavInsecureUrl;
+
+  /// No description provided for @errorWebdavInvalidUrl.
+  ///
+  /// In es, this message translates to:
+  /// **'La URL del servidor WebDAV no es válida.'**
+  String get errorWebdavInvalidUrl;
+
+  /// No description provided for @errorAccountEmailUnreadable.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo leer el email de la cuenta de {provider}.'**
+  String errorAccountEmailUnreadable(Object provider);
+
+  /// No description provided for @errorOauthBrowserFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir el navegador del sistema.'**
+  String get errorOauthBrowserFailed;
+
+  /// No description provided for @errorOauthTimedOut.
+  ///
+  /// In es, this message translates to:
+  /// **'Se agotó el tiempo para iniciar sesión en {provider}. Pruebe de nuevo.'**
+  String errorOauthTimedOut(Object provider);
+
+  /// No description provided for @errorOauthNoCode.
+  ///
+  /// In es, this message translates to:
+  /// **'No se recibió el código de autorización.'**
+  String get errorOauthNoCode;
+
+  /// No description provided for @errorOauthLoginClosed.
+  ///
+  /// In es, this message translates to:
+  /// **'Se cerró la espera del inicio de sesión.'**
+  String get errorOauthLoginClosed;
+
+  /// No description provided for @errorOauthTokenFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo obtener el acceso a OneDrive: {detail}'**
+  String errorOauthTokenFailed(Object detail);
+
+  /// No description provided for @errorOauthRefreshFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo renovar la sesión de OneDrive: {detail}'**
+  String errorOauthRefreshFailed(Object detail);
+
+  /// No description provided for @errorNativeHostMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'No se encontró el componente de conexión con el navegador en {path}. Reinstale Lockspire.'**
+  String errorNativeHostMissing(Object path);
+
+  /// No description provided for @errorNativeHostElevationCancelled.
+  ///
+  /// In es, this message translates to:
+  /// **'No se completó el registro para todo el equipo (¿se canceló el permiso de administrador?).'**
+  String get errorNativeHostElevationCancelled;
+
+  /// No description provided for @errorNativeHostWindowsOnly.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo disponible en Windows por ahora.'**
+  String get errorNativeHostWindowsOnly;
+
+  /// No description provided for @errorNoSupportedBrowser.
+  ///
+  /// In es, this message translates to:
+  /// **'No se encontró ningún navegador compatible.'**
+  String get errorNoSupportedBrowser;
+
+  /// No description provided for @errorImportInvalidJson.
+  ///
+  /// In es, this message translates to:
+  /// **'El archivo no es un JSON válido.'**
+  String get errorImportInvalidJson;
+
+  /// No description provided for @errorImportNotBitwardenJson.
+  ///
+  /// In es, this message translates to:
+  /// **'No es un export JSON de Bitwarden.'**
+  String get errorImportNotBitwardenJson;
+
+  /// No description provided for @errorImportBitwardenEncrypted.
+  ///
+  /// In es, this message translates to:
+  /// **'Este JSON de Bitwarden está cifrado. Expórtelo de nuevo eligiendo \"JSON\" (sin cifrar) para poder importarlo.'**
+  String get errorImportBitwardenEncrypted;
+
+  /// No description provided for @errorImportCsvUnclosedQuote.
+  ///
+  /// In es, this message translates to:
+  /// **'El CSV tiene comillas sin cerrar.'**
+  String get errorImportCsvUnclosedQuote;
+
+  /// No description provided for @errorImportCsvEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'El CSV está vacío.'**
+  String get errorImportCsvEmpty;
+
+  /// No description provided for @errorImportCsvNoPasswordColumn.
+  ///
+  /// In es, this message translates to:
+  /// **'No se encontró una columna de contraseña. Exporte desde su gestor en CSV (Bitwarden, Chrome, Firefox o KeePassXC).'**
+  String get errorImportCsvNoPasswordColumn;
+
+  /// No description provided for @biometricWindowsHello.
+  ///
+  /// In es, this message translates to:
+  /// **'Windows Hello'**
+  String get biometricWindowsHello;
+
+  /// No description provided for @biometricFingerprint.
+  ///
+  /// In es, this message translates to:
+  /// **'la huella'**
+  String get biometricFingerprint;
+
+  /// No description provided for @crackTimeInstant.
+  ///
+  /// In es, this message translates to:
+  /// **'instantáneo'**
+  String get crackTimeInstant;
+
+  /// No description provided for @crackTimeSeconds.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 segundo} other{{count} segundos}}'**
+  String crackTimeSeconds(int count);
+
+  /// No description provided for @crackTimeMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 minuto} other{{count} minutos}}'**
+  String crackTimeMinutes(int count);
+
+  /// No description provided for @crackTimeHours.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 hora} other{{count} horas}}'**
+  String crackTimeHours(int count);
+
+  /// No description provided for @crackTimeDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 día} other{{count} días}}'**
+  String crackTimeDays(int count);
+
+  /// No description provided for @crackTimeMonths.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 mes} other{{count} meses}}'**
+  String crackTimeMonths(int count);
+
+  /// No description provided for @crackTimeYears.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 año} other{{count} años}}'**
+  String crackTimeYears(int count);
+
+  /// No description provided for @crackTimeCenturies.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 siglo} other{{count} siglos}}'**
+  String crackTimeCenturies(int count);
+
+  /// No description provided for @crackTimeMillionsOfYears.
+  ///
+  /// In es, this message translates to:
+  /// **'millones de años'**
+  String get crackTimeMillionsOfYears;
+
+  /// No description provided for @unlockPreviousPasswordNeeded.
+  ///
+  /// In es, this message translates to:
+  /// **'Este dispositivo tiene cambios que aún no se sincronizaron. Para conservarlos, ingrese también la contraseña anterior.'**
+  String get unlockPreviousPasswordNeeded;
+
+  /// No description provided for @unlockPreviousPasswordWrong.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña anterior no es correcta'**
+  String get unlockPreviousPasswordWrong;
+
+  /// No description provided for @unlockWelcomeBack.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Hola de nuevo!'**
+  String get unlockWelcomeBack;
+
+  /// No description provided for @unlockPrompt.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese su contraseña para entrar a su bóveda'**
+  String get unlockPrompt;
+
+  /// No description provided for @unlockPasswordChangedElsewhere.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña maestra se cambió en otro dispositivo. Ingrese la nueva para entrar. Hasta entonces no se puede usar {method}.'**
+  String unlockPasswordChangedElsewhere(Object method);
+
+  /// No description provided for @unlockPeriodicReminder.
+  ///
+  /// In es, this message translates to:
+  /// **'Por seguridad, cada tanto Lockspire le pide la contraseña maestra aunque use {method}, para que no se le olvide. Después vuelve a funcionar como siempre.'**
+  String unlockPeriodicReminder(Object method);
+
+  /// No description provided for @unlockPreviousPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña anterior'**
+  String get unlockPreviousPassword;
+
+  /// No description provided for @unlockPreviousPasswordRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese la contraseña anterior'**
+  String get unlockPreviousPasswordRequired;
+
+  /// No description provided for @unlockUnlocking.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloqueando… esto puede tardar unos segundos (derivación de clave Argon2id)'**
+  String get unlockUnlocking;
+
+  /// No description provided for @unlockButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloquear'**
+  String get unlockButton;
+
+  /// No description provided for @unlockEnterNewPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresar la contraseña nueva'**
+  String get unlockEnterNewPassword;
+
+  /// No description provided for @unlockNoNewPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'No tengo la contraseña nueva'**
+  String get unlockNoNewPassword;
+
+  /// No description provided for @unlockUseBiometric.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar {method}'**
+  String unlockUseBiometric(Object method);
+
+  /// No description provided for @createVaultTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear bóveda'**
+  String get createVaultTitle;
+
+  /// No description provided for @createVaultHeading.
+  ///
+  /// In es, this message translates to:
+  /// **'Cree su bóveda'**
+  String get createVaultHeading;
+
+  /// No description provided for @createVaultIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Elija una contraseña maestra. Nunca se envía ni se guarda: si la olvida, no hay forma de recuperarla.'**
+  String get createVaultIntro;
+
+  /// No description provided for @createVaultMinLength.
+  ///
+  /// In es, this message translates to:
+  /// **'Mínimo {count} caracteres'**
+  String createVaultMinLength(int count);
+
+  /// No description provided for @createVaultPasswordRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese una contraseña'**
+  String get createVaultPasswordRequired;
+
+  /// No description provided for @createVaultConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmar contraseña'**
+  String get createVaultConfirm;
+
+  /// No description provided for @createVaultMismatch.
+  ///
+  /// In es, this message translates to:
+  /// **'No coincide con la contraseña anterior'**
+  String get createVaultMismatch;
+
+  /// No description provided for @createVaultCreating.
+  ///
+  /// In es, this message translates to:
+  /// **'Creando bóveda… esto puede tardar unos segundos (derivación de clave Argon2id)'**
+  String get createVaultCreating;
+
+  /// No description provided for @createVaultFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo crear la bóveda: {error}'**
+  String createVaultFailed(Object error);
+
+  /// No description provided for @createVaultRestoreLink.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Ya tiene una bóveda? Restaurarla desde la nube'**
+  String get createVaultRestoreLink;
+
+  /// No description provided for @changePwDone.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña maestra cambiada. Sus otros dispositivos se la pedirán la próxima vez que sincronicen.'**
+  String get changePwDone;
+
+  /// No description provided for @changePwCurrentWrong.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña actual no es correcta'**
+  String get changePwCurrentWrong;
+
+  /// No description provided for @changePwConflict.
+  ///
+  /// In es, this message translates to:
+  /// **'La bóveda cambió mientras se guardaba. La nube ya tiene la contraseña nueva: sincronice y, cuando se la pida, ingrésela.'**
+  String get changePwConflict;
+
+  /// No description provided for @changePwFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cambiar la contraseña, así que sigue siendo la misma. {error}'**
+  String changePwFailed(Object error);
+
+  /// No description provided for @changePwTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar contraseña maestra'**
+  String get changePwTitle;
+
+  /// No description provided for @changePwIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Si tiene sincronización, primero se sincroniza y la bóveda nueva se sube a la nube: hace falta conexión. Las copias viejas que alguien ya tenga siguen abriéndose con la contraseña anterior.'**
+  String get changePwIntro;
+
+  /// No description provided for @changePwCurrent.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña actual'**
+  String get changePwCurrent;
+
+  /// No description provided for @changePwCurrentRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese su contraseña actual'**
+  String get changePwCurrentRequired;
+
+  /// No description provided for @changePwNewHelper.
+  ///
+  /// In es, this message translates to:
+  /// **'Mínimo {count} caracteres, difícil de adivinar'**
+  String changePwNewHelper(int count);
+
+  /// No description provided for @changePwMustDiffer.
+  ///
+  /// In es, this message translates to:
+  /// **'Tiene que ser distinta de la actual'**
+  String get changePwMustDiffer;
+
+  /// No description provided for @changePwConfirmNew.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmar contraseña nueva'**
+  String get changePwConfirmNew;
+
+  /// No description provided for @changePwMismatch.
+  ///
+  /// In es, this message translates to:
+  /// **'No coincide con la contraseña nueva'**
+  String get changePwMismatch;
+
+  /// No description provided for @changePwShowPasswords.
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrar contraseñas'**
+  String get changePwShowPasswords;
+
+  /// No description provided for @changePwButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar contraseña'**
+  String get changePwButton;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get commonRetry;
+
+  /// No description provided for @strengthWeak.
+  ///
+  /// In es, this message translates to:
+  /// **'Débil'**
+  String get strengthWeak;
+
+  /// No description provided for @strengthFair.
+  ///
+  /// In es, this message translates to:
+  /// **'Regular'**
+  String get strengthFair;
+
+  /// No description provided for @strengthStrong.
+  ///
+  /// In es, this message translates to:
+  /// **'Segura'**
+  String get strengthStrong;
+
+  /// No description provided for @strengthLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'{level} — tiempo estimado para descifrarla: {time}'**
+  String strengthLabel(Object level, Object time);
+
+  /// No description provided for @deleteEntriesBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Se eliminan de la bóveda en este dispositivo y en los demás al sincronizar.'**
+  String get deleteEntriesBody;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar'**
+  String get commonDelete;
+
+  /// No description provided for @biometricOptInTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Activar desbloqueo con {methodName}?'**
+  String biometricOptInTitle(Object methodName);
+
+  /// No description provided for @biometricOptInBody.
+  ///
+  /// In es, this message translates to:
+  /// **'En vez de escribir la contraseña maestra cada vez, podrá desbloquear la bóveda con {methodName}. Puede cambiarlo después desde \"Seguridad\".'**
+  String biometricOptInBody(Object methodName);
+
+  /// No description provided for @commonNotNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get commonNotNow;
+
+  /// No description provided for @commonTurnOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar'**
+  String get commonTurnOn;
+
+  /// No description provided for @entryTypePassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña'**
+  String get entryTypePassword;
+
+  /// No description provided for @entryTypeCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjeta'**
+  String get entryTypeCard;
+
+  /// No description provided for @entryTypeDocument.
+  ///
+  /// In es, this message translates to:
+  /// **'Documento'**
+  String get entryTypeDocument;
+
+  /// No description provided for @selectionCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar selección'**
+  String get selectionCancel;
+
+  /// No description provided for @selectionCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 seleccionada} other{{count} seleccionadas}}'**
+  String selectionCount(int count);
+
+  /// No description provided for @selectionClear.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar selección'**
+  String get selectionClear;
+
+  /// No description provided for @selectionAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar todo'**
+  String get selectionAll;
+
+  /// No description provided for @selectionDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar seleccionadas'**
+  String get selectionDelete;
+
+  /// No description provided for @selectionStart.
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar'**
+  String get selectionStart;
+
+  /// No description provided for @commonLock.
+  ///
+  /// In es, this message translates to:
+  /// **'Bloquear'**
+  String get commonLock;
+
+  /// No description provided for @vaultSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar por título, usuario o sitio'**
+  String get vaultSearchHint;
+
+  /// No description provided for @commonAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar'**
+  String get commonAdd;
+
+  /// No description provided for @securityOpenSettingsFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir la configuración.'**
+  String get securityOpenSettingsFailed;
+
+  /// No description provided for @securityTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguridad'**
+  String get securityTitle;
+
+  /// No description provided for @securityChangePwHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Hágalo si cree que alguien pudo conocerla.'**
+  String get securityChangePwHint;
+
+  /// No description provided for @securityUnlockWith.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloquear con {method}'**
+  String securityUnlockWith(Object method);
+
+  /// No description provided for @securityUnlockWithHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Use {method} en vez de escribir la contraseña maestra cada vez.'**
+  String securityUnlockWithHint(Object method);
+
+  /// No description provided for @securityAutofill.
+  ///
+  /// In es, this message translates to:
+  /// **'Autocompletado'**
+  String get securityAutofill;
+
+  /// No description provided for @securityAutofillHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Active Lockspire como servicio de autocompletado para que aparezca como opción al iniciar sesión en otras apps — incluye logins dentro de un navegador embebido (ej. WebView).'**
+  String get securityAutofillHint;
+
+  /// No description provided for @securityAutofillButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar como autocompletado'**
+  String get securityAutofillButton;
+
+  /// No description provided for @securityBiometricNotSetUp.
+  ///
+  /// In es, this message translates to:
+  /// **'Este dispositivo no tiene {method} configurado.'**
+  String securityBiometricNotSetUp(Object method);
+
+  /// No description provided for @securityBiometricSetUpHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Configure {method} en los ajustes del sistema para poder activarlo aquí.'**
+  String securityBiometricSetUpHint(Object method);
+
+  /// No description provided for @securityBiometricUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No disponible en este dispositivo.'**
+  String get securityBiometricUnavailable;
+
+  /// No description provided for @securityReminderTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pedir la contraseña maestra cada'**
+  String get securityReminderTitle;
+
+  /// No description provided for @securityReminderHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Aunque use {method}, pasado este tiempo Lockspire le pide la contraseña una vez, para que no se le olvide. Si la olvida, la bóveda no se puede recuperar.'**
+  String securityReminderHint(Object method);
+
+  /// No description provided for @securityAutoLock.
+  ///
+  /// In es, this message translates to:
+  /// **'Bloqueo automático'**
+  String get securityAutoLock;
+
+  /// No description provided for @securityAutoLock15Warning.
+  ///
+  /// In es, this message translates to:
+  /// **'Más cómodo, pero la bóveda queda abierta más tiempo si se aleja del equipo.'**
+  String get securityAutoLock15Warning;
+
+  /// No description provided for @securitySiteIcons.
+  ///
+  /// In es, this message translates to:
+  /// **'Íconos de los sitios'**
+  String get securitySiteIcons;
+
+  /// No description provided for @securitySiteIconsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Descarga el ícono de cada sitio guardado directamente del sitio, sin servicios de terceros, y lo guarda cifrado en su bóveda. Cada sitio ve una visita desde su conexión. Sin activarlo, se muestra la inicial.'**
+  String get securitySiteIconsHint;
+
+  /// No description provided for @securitySiteIconsFallback.
+  ///
+  /// In es, this message translates to:
+  /// **'Completar los que falten con DuckDuckGo'**
+  String get securitySiteIconsFallback;
+
+  /// No description provided for @securitySiteIconsFallbackHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Para los sitios que no ofrecen ícono, se lo pide a DuckDuckGo. DuckDuckGo recibe solo esos dominios, nunca sus usuarios ni contraseñas.'**
+  String get securitySiteIconsFallbackHint;
+
+  /// No description provided for @securitySiteIconsRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a buscar los que faltan'**
+  String get securitySiteIconsRetry;
+
+  /// No description provided for @vaultNoResults.
+  ///
+  /// In es, this message translates to:
+  /// **'No se encontraron resultados'**
+  String get vaultNoResults;
+
+  /// No description provided for @vaultEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Todavía no ha guardado ninguna contraseña'**
+  String get vaultEmpty;
+
+  /// No description provided for @vaultEmptyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Toque el botón \"+\" para agregar la primera'**
+  String get vaultEmptyHint;
+
+  /// No description provided for @generatorRandom.
+  ///
+  /// In es, this message translates to:
+  /// **'Aleatoria'**
+  String get generatorRandom;
+
+  /// No description provided for @generatorMemorable.
+  ///
+  /// In es, this message translates to:
+  /// **'Fácil de recordar'**
+  String get generatorMemorable;
+
+  /// No description provided for @generatorLength.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} caracteres'**
+  String generatorLength(int count);
+
+  /// No description provided for @deleteEntriesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{¿Eliminar 1 entrada?} other{¿Eliminar {count} entradas?}}'**
+  String deleteEntriesTitle(int count);
+
+  /// No description provided for @deleteEntriesDone.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Se eliminó 1 entrada} other{Se eliminaron {count} entradas}}'**
+  String deleteEntriesDone(int count);
+
+  /// No description provided for @commonDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 día} other{{count} días}}'**
+  String commonDays(int count);
+
+  /// No description provided for @commonMinutesShort.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} min'**
+  String commonMinutesShort(int count);
+
+  /// No description provided for @securityAutoLockHintAndroid.
+  ///
+  /// In es, this message translates to:
+  /// **'La bóveda se bloquea sola cuando pasa este tiempo sin que use Lockspire. También se bloquea al salir de la app.'**
+  String get securityAutoLockHintAndroid;
+
+  /// No description provided for @securityAutoLockHintDesktop.
+  ///
+  /// In es, this message translates to:
+  /// **'La bóveda se bloquea sola cuando pasa este tiempo sin que use Lockspire. También se bloquea al bloquear la sesión o suspender el equipo.'**
+  String get securityAutoLockHintDesktop;
+
+  /// No description provided for @entryConflict.
+  ///
+  /// In es, this message translates to:
+  /// **'{error} Revise los datos e intente guardar de nuevo.'**
+  String entryConflict(Object error);
+
+  /// No description provided for @entrySaveFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar: {error}'**
+  String entrySaveFailed(Object error);
+
+  /// No description provided for @entryDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar esta entrada?'**
+  String get entryDeleteTitle;
+
+  /// No description provided for @entryDeleteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Se eliminará \"{title}\" de la bóveda.'**
+  String entryDeleteBody(Object title);
+
+  /// No description provided for @entryCopied.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiado: {label}. Se borra en {seconds} s o al bloquear'**
+  String entryCopied(Object label, int seconds);
+
+  /// No description provided for @fieldUsername.
+  ///
+  /// In es, this message translates to:
+  /// **'Usuario'**
+  String get fieldUsername;
+
+  /// No description provided for @fieldPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña'**
+  String get fieldPassword;
+
+  /// No description provided for @entryGeneratePassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Generar contraseña'**
+  String get entryGeneratePassword;
+
+  /// No description provided for @fieldTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Título'**
+  String get fieldTitle;
+
+  /// No description provided for @entryTitleRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese un título'**
+  String get entryTitleRequired;
+
+  /// No description provided for @entryWebsites.
+  ///
+  /// In es, this message translates to:
+  /// **'Sitios web'**
+  String get entryWebsites;
+
+  /// No description provided for @fieldWebsite.
+  ///
+  /// In es, this message translates to:
+  /// **'Sitio web'**
+  String get fieldWebsite;
+
+  /// No description provided for @entryAddWebsite.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar sitio web'**
+  String get entryAddWebsite;
+
+  /// No description provided for @entryAndroidApps.
+  ///
+  /// In es, this message translates to:
+  /// **'Apps Android'**
+  String get entryAndroidApps;
+
+  /// No description provided for @entryAppPackage.
+  ///
+  /// In es, this message translates to:
+  /// **'App (paquete)'**
+  String get entryAppPackage;
+
+  /// No description provided for @entryAddApp.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar app'**
+  String get entryAddApp;
+
+  /// No description provided for @entryOtherFields.
+  ///
+  /// In es, this message translates to:
+  /// **'Otros campos'**
+  String get entryOtherFields;
+
+  /// No description provided for @entryAndroidApp.
+  ///
+  /// In es, this message translates to:
+  /// **'App Android'**
+  String get entryAndroidApp;
+
+  /// No description provided for @entryField.
+  ///
+  /// In es, this message translates to:
+  /// **'Campo'**
+  String get entryField;
+
+  /// No description provided for @fieldNotes.
+  ///
+  /// In es, this message translates to:
+  /// **'Notas'**
+  String get fieldNotes;
+
+  /// No description provided for @entrySavedEncrypted.
+  ///
+  /// In es, this message translates to:
+  /// **'Se guarda cifrada junto con el resto de su bóveda.'**
+  String get entrySavedEncrypted;
+
+  /// No description provided for @fieldCopy.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar {field}'**
+  String fieldCopy(Object field);
+
+  /// No description provided for @commonShow.
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrar'**
+  String get commonShow;
+
+  /// No description provided for @commonHide.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocultar'**
+  String get commonHide;
+
+  /// No description provided for @commonRemove.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar'**
+  String get commonRemove;
+
+  /// No description provided for @customFieldRemove.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar campo'**
+  String get customFieldRemove;
+
+  /// No description provided for @customFieldAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar campo'**
+  String get customFieldAdd;
+
+  /// No description provided for @customFieldNameRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese un nombre'**
+  String get customFieldNameRequired;
+
+  /// No description provided for @customFieldNameTaken.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya hay un campo con ese nombre'**
+  String get customFieldNameTaken;
+
+  /// No description provided for @customFieldNew.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo campo'**
+  String get customFieldNew;
+
+  /// No description provided for @customFieldName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del campo'**
+  String get customFieldName;
+
+  /// No description provided for @customFieldNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Por ejemplo: Pregunta secreta'**
+  String get customFieldNameHint;
+
+  /// No description provided for @customFieldHidden.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocultar el valor'**
+  String get customFieldHidden;
+
+  /// No description provided for @customFieldHiddenHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Para claves, PIN y otros datos sensibles'**
+  String get customFieldHiddenHint;
+
+  /// No description provided for @fieldCardNumber.
+  ///
+  /// In es, this message translates to:
+  /// **'Número de tarjeta'**
+  String get fieldCardNumber;
+
+  /// No description provided for @fieldCardHolder.
+  ///
+  /// In es, this message translates to:
+  /// **'Titular'**
+  String get fieldCardHolder;
+
+  /// No description provided for @fieldExpiry.
+  ///
+  /// In es, this message translates to:
+  /// **'Vence'**
+  String get fieldExpiry;
+
+  /// No description provided for @fieldCardExpiryHint.
+  ///
+  /// In es, this message translates to:
+  /// **'MM/AA'**
+  String get fieldCardExpiryHint;
+
+  /// No description provided for @fieldCvv.
+  ///
+  /// In es, this message translates to:
+  /// **'CVV'**
+  String get fieldCvv;
+
+  /// No description provided for @fieldPin.
+  ///
+  /// In es, this message translates to:
+  /// **'PIN'**
+  String get fieldPin;
+
+  /// No description provided for @fieldDocNumber.
+  ///
+  /// In es, this message translates to:
+  /// **'Número'**
+  String get fieldDocNumber;
+
+  /// No description provided for @fieldDocName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre'**
+  String get fieldDocName;
+
+  /// No description provided for @fieldBirthDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha de nacimiento'**
+  String get fieldBirthDate;
+
+  /// No description provided for @fieldIssued.
+  ///
+  /// In es, this message translates to:
+  /// **'Expedido'**
+  String get fieldIssued;
+
+  /// No description provided for @fieldDateHint.
+  ///
+  /// In es, this message translates to:
+  /// **'DD/MM/AAAA'**
+  String get fieldDateHint;
+
+  /// No description provided for @fieldWebsiteN.
+  ///
+  /// In es, this message translates to:
+  /// **'Sitio web {n}'**
+  String fieldWebsiteN(Object n);
+
+  /// No description provided for @fieldAppN.
+  ///
+  /// In es, this message translates to:
+  /// **'App {n}'**
+  String fieldAppN(Object n);
+
+  /// No description provided for @fieldGenerationMode.
+  ///
+  /// In es, this message translates to:
+  /// **'Modo de generación'**
+  String get fieldGenerationMode;
+
+  /// No description provided for @fieldGenerationParam.
+  ///
+  /// In es, this message translates to:
+  /// **'Parámetro de generación'**
+  String get fieldGenerationParam;
+
+  /// No description provided for @historyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Valores anteriores'**
+  String get historyTitle;
+
+  /// No description provided for @historyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que tenían antes estos campos: importado de SafeInCloud o de un cambio en otro dispositivo que se resolvió solo.'**
+  String get historyHint;
+
+  /// No description provided for @entryNewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{type, select, card{Nueva tarjeta} document{Nuevo documento} note{Nueva nota} passkey{Nueva passkey} other{Nueva contraseña}}'**
+  String entryNewTitle(String type);
+
+  /// No description provided for @entryEditTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{type, select, card{Editar tarjeta} document{Editar documento} note{Editar nota} passkey{Editar passkey} other{Editar contraseña}}'**
+  String entryEditTitle(String type);
 }
 
 class _AppLocalizationsDelegate

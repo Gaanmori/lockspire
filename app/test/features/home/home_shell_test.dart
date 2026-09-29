@@ -7,6 +7,7 @@ import 'package:lockspire/features/home/presentation/home_destination.dart';
 import 'package:lockspire/features/home/presentation/navigation_layout.dart';
 import 'package:lockspire/features/home/presentation/screens/settings_screen.dart';
 import 'package:lockspire/features/home/presentation/widgets/home_shell.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Sección de prueba con estado propio (un contador) para comprobar que
 /// cambiar de pestaña no lo pierde.
@@ -55,6 +56,10 @@ Future<void> _pump(
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
+      locale: const Locale('es'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+
       home: HomeShell(destinations: _destinations(), onLock: onLock ?? () {}),
     ),
   );
@@ -98,6 +103,10 @@ void main() {
       tester.view.devicePixelRatio = 1;
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('es'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: HomeShell(
             onLock: () {},
             destinations: [
@@ -145,6 +154,10 @@ void main() {
   testWidgets('Ajustes abre la pantalla de cada opción', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('es'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+
         home: SettingsScreen(
           items: [
             SettingsItem(

@@ -11,12 +11,7 @@ import 'entry_mapping.dart';
 /// documentos como `note`, con sus datos en `fields` (`nombre: valor`).
 class BitwardenCsvExporter implements VaultExporter {
   @override
-  String get label => 'CSV de Bitwarden';
-
-  @override
-  String get description =>
-      'Sin cifrar. Lo aceptan Bitwarden, Proton Pass, 1Password, KeePassXC '
-      'y otros. Tarjetas y documentos van como notas.';
+  ExportFormat get format => ExportFormat.bitwardenCsv;
 
   @override
   String get fileExtension => 'csv';
@@ -87,12 +82,7 @@ class BitwardenCsvExporter implements VaultExporter {
 /// sitio para que cada sitio funcione en el navegador.
 class ChromeCsvExporter implements VaultExporter {
   @override
-  String get label => 'CSV de Chrome';
-
-  @override
-  String get description =>
-      'Sin cifrar. El formato más simple: lo importan Chrome, Edge, Firefox '
-      'y Google Password Manager. Solo contraseñas.';
+  ExportFormat get format => ExportFormat.chromeCsv;
 
   @override
   String get fileExtension => 'csv';

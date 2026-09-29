@@ -13,15 +13,49 @@ class PasswordStrengthEstimate {
   final double bits;
   final PasswordStrengthLevel level;
 
-  /// Tiempo estimado de descifrado, ya formateado en español (ej.
-  /// "3 años", "instantáneo").
-  final String crackTimeLabel;
+  /// Tiempo estimado de descifrado. La presentación lo pone en palabras en
+  /// el idioma de la app (ADR 0032).
+  final CrackTime crackTime;
 
   const PasswordStrengthEstimate({
     required this.bits,
     required this.level,
-    required this.crackTimeLabel,
+    required this.crackTime,
   });
+}
+
+/// Unidad del tiempo de descifrado. [instant] y [millionsOfYears] no
+/// llevan cantidad.
+enum CrackTimeUnit {
+  instant,
+  seconds,
+  minutes,
+  hours,
+  days,
+  months,
+  years,
+  centuries,
+  millionsOfYears,
+}
+
+/// Tiempo de descifrado redondeado: [amount] de [unit].
+class CrackTime {
+  final CrackTimeUnit unit;
+  final int amount;
+
+  const CrackTime(this.unit, [this.amount = 0]);
+
+  static const instant = CrackTime(CrackTimeUnit.instant);
+
+  @override
+  bool operator ==(Object other) =>
+      other is CrackTime && other.unit == unit && other.amount == amount;
+
+  @override
+  int get hashCode => Object.hash(unit, amount);
+
+  @override
+  String toString() => 'CrackTime(${unit.name}, $amount)';
 }
 
 // Mismas 4 clases que usa `password_generator.dart` — se repiten acá
@@ -39,16 +73,15 @@ const _otherSize = 100;
 const _weakThresholdBits = 35;
 const _strongThresholdBits = 70;
 
-// Cantidad de palabras asumida por wordlist de `assets/wordlists/`
-// — usada solo para estimar la entropía real de un patrón
+// Cantidad de palabras asumida para la lista del generador "fácil de
+// recordar" — usada solo para estimar la entropía real de un patrón
 // `Palabra1<dígito><símbolo>Palabra2...` (ver `_memorablePatternRegex`
-// abajo), no importada directamente desde ahí para no acoplar este
-// archivo puro a esas listas concretas. Se usa el tamaño de la más
-// chica de las dos (la lista en español, 3050 — la inglesa tiene
-// 4438) como supuesto conservador: no sabemos qué idioma generó una
-// contraseña dada solo mirando el string, así que asumir la lista más
-// grande sobreestimaría la entropía real en el peor caso. Si el tamaño
-// de las wordlists cambia sustancialmente, actualizar acá también.
+// abajo), no importada desde `assets/wordlists/` para no acoplar este
+// archivo puro a esa lista. Hoy la única lista es la inglesa (4438
+// palabras, ADR 0032), pero se sigue asumiendo 3050, el tamaño de la
+// lista española que existió antes: las contraseñas guardadas que se
+// generaron con ella no se distinguen solo mirando el texto, y subestimar
+// es el lado seguro.
 const _assumedMemorableWordListSize = 3050;
 
 // Mismo set de símbolos que [_symbols] en `password_generator.dart` —
@@ -128,7 +161,7 @@ PasswordStrengthEstimate estimatePasswordStrength(String password) {
     return const PasswordStrengthEstimate(
       bits: 0,
       level: PasswordStrengthLevel.weak,
-      crackTimeLabel: 'instantáneo',
+      crackTime: CrackTime.instant,
     );
   }
 
@@ -160,7 +193,7 @@ PasswordStrengthEstimate estimatePasswordStrength(String password) {
     return PasswordStrengthEstimate(
       bits: bits,
       level: _levelFor(bits),
-      crackTimeLabel: _formatCrackTime(bits),
+      crackTime: _crackTime(bits),
     );
   }
 
@@ -181,7 +214,7 @@ PasswordStrengthEstimate estimatePasswordStrength(String password) {
   return PasswordStrengthEstimate(
     bits: bits,
     level: _levelFor(bits),
-    crackTimeLabel: _formatCrackTime(bits),
+    crackTime: _crackTime(bits),
   );
 }
 
@@ -191,34 +224,36 @@ PasswordStrengthLevel _levelFor(double bits) => bits < _weakThresholdBits
     ? PasswordStrengthLevel.fair
     : PasswordStrengthLevel.strong;
 
-/// Formatea el tiempo estimado de descifrado a partir de [bits] de
-/// entropía — `double` en toda la cuenta (nunca `Duration`, que
-/// desborda con contraseñas largas: 64 caracteres aleatorios ya superan
-/// los 400 bits, muy por fuera de lo que `Duration` puede representar).
-String _formatCrackTime(double bits) {
+/// Tiempo estimado de descifrado a partir de [bits] de entropía —
+/// `double` en toda la cuenta (nunca `Duration`, que desborda con
+/// contraseñas largas: 64 caracteres aleatorios ya superan los 400 bits,
+/// muy por fuera de lo que `Duration` puede representar).
+CrackTime _crackTime(double bits) {
   // Caso promedio: un atacante encuentra la contraseña a mitad de
   // recorrer todo el espacio de búsqueda, no al final.
   final guesses = pow(2, bits - 1);
   final seconds = guesses / _guessesPerSecond;
 
-  if (seconds < 1) return 'instantáneo';
-  if (seconds < 60) return '${seconds.round()} segundos';
+  if (seconds < 1) return CrackTime.instant;
+  if (seconds < 60) return CrackTime(CrackTimeUnit.seconds, seconds.round());
 
   final minutes = seconds / 60;
-  if (minutes < 60) return '${minutes.round()} minutos';
+  if (minutes < 60) return CrackTime(CrackTimeUnit.minutes, minutes.round());
 
   final hours = minutes / 60;
-  if (hours < 24) return '${hours.round()} horas';
+  if (hours < 24) return CrackTime(CrackTimeUnit.hours, hours.round());
 
   final days = hours / 24;
-  if (days < 30) return '${days.round()} días';
+  if (days < 30) return CrackTime(CrackTimeUnit.days, days.round());
 
   final months = days / 30;
-  if (months < 12) return '${months.round()} meses';
+  if (months < 12) return CrackTime(CrackTimeUnit.months, months.round());
 
   final years = days / 365;
-  if (years < 100) return '${years.round()} años';
-  if (years < 1e6) return '${(years / 100).round()} siglos';
+  if (years < 100) return CrackTime(CrackTimeUnit.years, years.round());
+  if (years < 1e6) {
+    return CrackTime(CrackTimeUnit.centuries, (years / 100).round());
+  }
 
-  return 'millones de años';
+  return const CrackTime(CrackTimeUnit.millionsOfYears);
 }

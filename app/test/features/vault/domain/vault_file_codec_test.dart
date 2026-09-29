@@ -4,6 +4,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/shared/domain/app_problem.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 import 'package:lockspire/features/vault/domain/vault_file_codec.dart';
 
@@ -61,7 +62,7 @@ void main() {
       for (final MapEntry(key: name, value: bytes) in cases.entries) {
         expect(
           () => VaultFileCodec.decode(bytes),
-          throwsA(isA<FormatException>()),
+          throwsA(isA<AppProblem>()),
           reason: name,
         );
       }

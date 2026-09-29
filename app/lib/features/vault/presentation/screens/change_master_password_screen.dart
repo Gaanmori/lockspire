@@ -9,6 +9,8 @@ import '../../application/change_master_password_use_case.dart';
 import '../../application/master_password_policy.dart';
 import '../../application/save_vault_use_case.dart';
 import '../vault_session_controller.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 
 /// Cambiar la contraseña maestra (ADR 0018). Pide la actual aunque la
 /// bóveda esté desbloqueada.
@@ -55,30 +57,19 @@ class _ChangeMasterPasswordScreenState
             newPassword: _newController.text,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Contraseña maestra cambiada. Sus otros dispositivos se la '
-            'pedirán la próxima vez que sincronicen.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.changePwDone)));
       Navigator.of(context).pop();
     } on IncorrectMasterPasswordException {
-      setState(
-        () => _currentPasswordError = 'La contraseña actual no es correcta',
-      );
+      setState(() => _currentPasswordError = context.l10n.changePwCurrentWrong);
     } on VaultWriteConflictException {
-      setState(
-        () => _error =
-            'La bóveda cambió mientras se guardaba. La nube ya tiene la '
-            'contraseña nueva: sincronice y, cuando se la pida, ingrésela.',
-      );
+      setState(() => _error = context.l10n.changePwConflict);
     } catch (error) {
       setState(
-        () => _error =
-            'No se pudo cambiar la contraseña, así que sigue siendo la '
-            'misma. $error',
+        () => _error = context.l10n.changePwFailed(
+          localizeError(context.l10n, error),
+        ),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -108,7 +99,7 @@ class _ChangeMasterPasswordScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cambiar contraseña maestra')),
+      appBar: AppBar(title: Text(context.l10n.changePwTitle)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 440),
@@ -119,36 +110,34 @@ class _ChangeMasterPasswordScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Si tiene sincronización, primero se sincroniza y la '
-                    'bóveda nueva se sube a la nube: hace falta conexión. '
-                    'Las copias viejas que alguien ya tenga siguen abriéndose '
-                    'con la contraseña anterior.',
-                  ),
+                  Text(context.l10n.changePwIntro),
                   const SizedBox(height: LockspireSpacing.lg),
                   _passwordField(
                     controller: _currentController,
-                    label: 'Contraseña actual',
+                    label: context.l10n.changePwCurrent,
                     autofocus: true,
                     errorText: _currentPasswordError,
                     validator: (value) => (value == null || value.isEmpty)
-                        ? 'Ingrese su contraseña actual'
+                        ? context.l10n.changePwCurrentRequired
                         : null,
                   ),
                   const SizedBox(height: LockspireSpacing.md),
                   _passwordField(
                     controller: _newController,
-                    label: 'Contraseña nueva',
-                    helperText:
-                        'Mínimo $masterPasswordMinLength caracteres, difícil '
-                        'de adivinar',
+                    label: context.l10n.pwChangedNewPassword,
+                    helperText: context.l10n.changePwNewHelper(
+                      masterPasswordMinLength,
+                    ),
                     validator: (value) {
                       final problem = checkNewMasterPassword(value ?? '');
                       if (problem != null) {
-                        return describeMasterPasswordProblem(problem);
+                        return localizeMasterPasswordProblem(
+                          context.l10n,
+                          problem,
+                        );
                       }
                       if (value == _currentController.text) {
-                        return 'Tiene que ser distinta de la actual';
+                        return context.l10n.changePwMustDiffer;
                       }
                       return null;
                     },
@@ -156,14 +145,14 @@ class _ChangeMasterPasswordScreenState
                   const SizedBox(height: LockspireSpacing.md),
                   _passwordField(
                     controller: _confirmController,
-                    label: 'Confirmar contraseña nueva',
+                    label: context.l10n.changePwConfirmNew,
                     validator: (value) => value != _newController.text
-                        ? 'No coincide con la contraseña nueva'
+                        ? context.l10n.changePwMismatch
                         : null,
                   ),
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Mostrar contraseñas'),
+                    title: Text(context.l10n.changePwShowPasswords),
                     value: !_obscure,
                     onChanged: _busy
                         ? null
@@ -187,7 +176,7 @@ class _ChangeMasterPasswordScreenState
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Cambiar contraseña'),
+                        : Text(context.l10n.changePwButton),
                   ),
                 ],
               ),
