@@ -14,30 +14,25 @@
     </header>
 
     <main>
-      <p id="status" class="status" role="status">Conectando con Lockspire…</p>
+      <p id="status" class="status" role="status" data-i18n="connecting"></p>
       <button id="primary-action" class="primary" hidden></button>
       <ul id="entries" class="entries" hidden></ul>
-      <button id="choose-other" class="link" hidden>Elegir otra entrada de Lockspire…</button>
+      <button id="choose-other" class="link" data-i18n="chooseOther" hidden></button>
 
       <section id="picker" class="picker" hidden>
-        <p class="note">
-          Elija la entrada que usa en este sitio. Lockspire le va a pedir que
-          confirmes el vínculo en su ventana.
-        </p>
-        <input id="filter" type="search" placeholder="Filtrar por título o usuario" autocomplete="off" />
+        <p class="note" data-i18n="pickerNote"></p>
+        <input id="filter" type="search" data-i18n-placeholder="filterPlaceholder" autocomplete="off" />
         <ul id="all-entries" class="entries"></ul>
       </section>
     </main>
 
     <section id="generator" class="generator" hidden>
-      <button id="generate" class="secondary">Generar contraseña</button>
+      <button id="generate" class="secondary" data-i18n="generate"></button>
       <div id="generated-row" class="generated" hidden>
         <code id="generated"></code>
-        <button id="copy" class="secondary">Copiar</button>
+        <button id="copy" class="secondary" data-i18n="copy"></button>
       </div>
-      <p id="generated-note" class="note" hidden>
-        No se guarda sola: cree la entrada en Lockspire.
-      </p>
+      <p id="generated-note" class="note" data-i18n="generatedNote" hidden></p>
     </section>
 
     <script src="popup.js"></script>

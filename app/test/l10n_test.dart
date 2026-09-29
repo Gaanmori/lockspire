@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
@@ -46,7 +47,7 @@ void main() {
       final mismatches = <String>[
         for (final key in keysOf(template))
           if (other[key] is String &&
-              !const SetEquality().equals(
+              !setEquals(
                 paramsOf(template[key] as String),
                 paramsOf(other[key] as String),
               ))
@@ -64,10 +65,4 @@ void main() {
       }
     }
   });
-}
-
-class SetEquality {
-  const SetEquality();
-  bool equals(Set<String> a, Set<String> b) =>
-      a.length == b.length && a.containsAll(b);
 }

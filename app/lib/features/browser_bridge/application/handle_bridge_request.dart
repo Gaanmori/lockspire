@@ -47,13 +47,20 @@ class HandleBridgeRequest {
   /// Tema activo de la app, para que la extensión use el mismo.
   final AppearancePreference Function() currentAppearance;
 
+  /// Idioma efectivo de la app ("es", "en"), para que la extensión use el
+  /// mismo (ADR 0032). `null` si no se conoce.
+  final String? Function() currentLanguage;
+
   const HandleBridgeRequest({
     required this.currentVault,
     required this.showApp,
     required this.generatePassword,
     required this.requestLink,
     this.currentAppearance = _defaultAppearance,
+    this.currentLanguage = _noLanguage,
   });
+
+  static String? _noLanguage() => null;
 
   static AppearancePreference _defaultAppearance() =>
       AppearancePreference.defaults;
@@ -83,6 +90,7 @@ class HandleBridgeRequest {
           locked: currentVault() == null,
           themeFamily: appearance.family.name,
           themeMode: appearance.mode.name,
+          language: currentLanguage(),
         );
 
       case ShowAppRequest():

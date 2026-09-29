@@ -130,6 +130,18 @@ void main() {
     });
   });
 
+  test('PING incluye el idioma de la app para que la extensión lo siga', () {
+    final localized = HandleBridgeRequest(
+      currentVault: () => vault,
+      showApp: () {},
+      generatePassword: (length) => '',
+      requestLink: (_) {},
+      currentLanguage: () => 'en',
+    );
+    expect(localized(const PingRequest('a'))['lang'], 'en');
+    expect(handle(const PingRequest('a')).containsKey('lang'), isFalse);
+  });
+
   test('PING informa si la bóveda está bloqueada', () {
     expect(handle(const PingRequest('a'))['locked'], isFalse);
     vault = null;

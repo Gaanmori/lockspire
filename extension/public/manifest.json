@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Lockspire",
+  "name": "__MSG_extName__",
   "version": "0.1.0",
-  "description": "Rellena tus credenciales de Lockspire en los sitios web. Necesita la app de escritorio de Lockspire.",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp+CBHLsamaFU+Mp1GUVOyXIieChXgLRvWoE15jzB82YZNBBxUdsnTvWD59bJ3EHEyghRB5r9nHI73Qw6v4U1CfW9I9SOH7Z34dbVyGnuqTGton5oywXUFSz9AwuU8XWGrevPpXxmMpI3+nyEd/wCKVb/R6yl9YuUVMK59YbOOwDf1PRoYi3v7bKFsRZIaS+G8cz4GNQ9a71XC77A188TDeJDQuIhKau6TPN5q4HaaxNi129e2rK5Z/GeHCUHjoERprc4Jzfn+Jy3uPAF2g7oeEobqgazRUIitlX4i3FY6aylauJ+DmdTkcZnnYRmS00LTR2uiqbck8s/MA9TU5OpywIDAQAB",
   "minimum_chrome_version": "120",
   "permissions": ["nativeMessaging", "activeTab", "scripting"],

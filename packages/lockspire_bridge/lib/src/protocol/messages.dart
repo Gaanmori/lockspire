@@ -330,10 +330,14 @@ Map<String, Object?> pongResponse(
   required bool locked,
   String? themeFamily,
   String? themeMode,
+  String? language,
 }) => _response(id, MessageType.pong, {
   'locked': locked,
   if (themeFamily != null && themeMode != null)
     'theme': {'family': themeFamily, 'mode': themeMode},
+  // Idioma de la app ("es", "en"), para que la extensión use el mismo
+  // (ADR 0032). Opcional: una extensión vieja lo ignora.
+  'lang': ?language,
 });
 
 Map<String, Object?> credentialsResponse(

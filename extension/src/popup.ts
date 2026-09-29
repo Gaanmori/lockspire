@@ -3,11 +3,13 @@
 
 import { fillCredentials, type FillResult } from './fill.ts';
 import { filterEntries } from './filter.ts';
+import { t, translatePage, useAppLanguage } from './i18n.ts';
 import { applyAppTheme, applyCachedTheme } from './theme.ts';
 
-// Antes que nada: sin esto el popup se pinta un instante con el tema por
-// defecto hasta que responde la app.
+// Antes que nada: sin esto el popup se pinta un instante con el tema y el
+// idioma por defecto hasta que responde la app.
 applyCachedTheme();
+translatePage();
 import { send, webOrigin, type CredentialSummary, type Response } from './protocol.ts';
 
 const GENERATED_LENGTH = 20;
@@ -45,13 +47,13 @@ function problemMessage(response: Response): string | null {
   switch (response.code) {
     case 'HOST_NOT_INSTALLED':
       return (
-        'La extensión no está conectada con la app. En Lockspire: Navegador → "Conectar con Chrome/Edge".' +
+        t('hostNotInstalled') +
         (response.detail ? `\n\n(Chrome: ${response.detail})` : '')
       );
     case 'APP_NOT_RUNNING':
-      return 'Abra Lockspire en este equipo para usar la extensión.';
+      return t('appNotRunning');
     default:
-      return 'Algo salió mal al hablar con Lockspire.';
+      return t('somethingWrong');
   }
 }
 
@@ -66,7 +68,10 @@ async function main(): Promise<void> {
   if (origin) siteEl.textContent = new URL(origin).host;
 
   const ping = await send({ type: 'PING' });
-  if (ping.type === 'PONG') applyAppTheme(ping.theme);
+  if (ping.type === 'PONG') {
+    applyAppTheme(ping.theme);
+    useAppLanguage(ping.lang);
+  }
   const problem = problemMessage(ping);
   if (problem) {
     setStatus(problem, true);
@@ -75,13 +80,13 @@ async function main(): Promise<void> {
   generatorEl.hidden = false;
 
   if (ping.type === 'PONG' && ping.locked) {
-    setStatus('Su bóveda está bloqueada.');
-    showAction('Desbloquear en Lockspire', () => void showApp());
+    setStatus(t('locked'));
+    showAction(t('unlockInApp'), () => void showApp());
     return;
   }
 
   if (!tab?.id || !origin) {
-    setStatus('Esta página no admite autocompletado.');
+    setStatus(t('pageNotSupported'));
     return;
   }
   await listCredentials(tab.id, origin);
@@ -90,12 +95,12 @@ async function main(): Promise<void> {
 async function listCredentials(tabId: number, origin: string): Promise<void> {
   const response = await send({ type: 'GET_CREDENTIALS_FOR_ORIGIN', origin });
   if (response.type === 'UNLOCK_REQUIRED') {
-    setStatus('Su bóveda está bloqueada.');
-    showAction('Desbloquear en Lockspire', () => void showApp());
+    setStatus(t('locked'));
+    showAction(t('unlockInApp'), () => void showApp());
     return;
   }
   if (response.type !== 'CREDENTIALS') {
-    setStatus(problemMessage(response) ?? 'Respuesta inesperada de Lockspire.', true);
+    setStatus(problemMessage(response) ?? t('unexpectedResponse'), true);
     return;
   }
   // Siempre se puede elegir otra entrada: también sirve cuando la que
@@ -104,11 +109,11 @@ async function listCredentials(tabId: number, origin: string): Promise<void> {
   chooseOther.onclick = () => void openPicker(origin);
 
   if (response.entries.length === 0) {
-    setStatus('No hay credenciales guardadas para este sitio.');
+    setStatus(t('noCredentials'));
     return;
   }
 
-  setStatus('Elija una credencial para rellenar:');
+  setStatus(t('chooseCredential'));
   entriesEl.replaceChildren(
     ...response.entries.map((entry) =>
       entryItem(entry, () => void fill(entry, tabId, origin)),
@@ -120,24 +125,24 @@ async function listCredentials(tabId: number, origin: string): Promise<void> {
 async function openPicker(origin: string): Promise<void> {
   entriesEl.hidden = true;
   chooseOther.hidden = true;
-  setStatus('Cargando sus entradas…');
+  setStatus(t('loadingEntries'));
 
   const response = await send({ type: 'LIST_CREDENTIALS' });
   if (response.type === 'UNLOCK_REQUIRED') {
-    setStatus('Su bóveda está bloqueada.');
-    showAction('Desbloquear en Lockspire', () => void showApp());
+    setStatus(t('locked'));
+    showAction(t('unlockInApp'), () => void showApp());
     return;
   }
   if (response.type !== 'CREDENTIALS') {
-    setStatus(problemMessage(response) ?? 'Respuesta inesperada de Lockspire.', true);
+    setStatus(problemMessage(response) ?? t('unexpectedResponse'), true);
     return;
   }
   if (response.entries.length === 0) {
-    setStatus('Su bóveda no tiene entradas todavía.');
+    setStatus(t('vaultEmpty'));
     return;
   }
 
-  setStatus(`Vincular ${new URL(origin).host} a una entrada:`);
+  setStatus(t('linkSiteTo', { host: new URL(origin).host }));
   const all = response.entries;
   const render = () => {
     const visible = filterEntries(all, filterInput.value);
@@ -161,15 +166,13 @@ async function requestLink(entry: CredentialSummary, origin: string): Promise<vo
   if (response.type === 'OK') {
     // La app muestra la confirmación en su ventana; al ganar el foco, el
     // navegador suele cerrar este popup.
-    setStatus(
-      `Confirmá el vínculo en la ventana de Lockspire. Después volvé a abrir esta extensión para rellenar "${entry.title}".`,
-    );
+    setStatus(t('confirmLink', { title: entry.title }));
     return;
   }
   setStatus(
     response.type === 'UNLOCK_REQUIRED'
-      ? 'La bóveda se bloqueó. Desbloquéela e intente de nuevo.'
-      : 'No se pudo pedir el vínculo.',
+      ? t('lockedRetry')
+      : t('linkFailed'),
     true,
   );
 }
@@ -179,10 +182,10 @@ function entryItem(entry: CredentialSummary, onClick: () => void): HTMLLIElement
   button.className = 'entry';
   const title = document.createElement('span');
   title.className = 'title';
-  title.textContent = entry.title || 'Sin título';
+  title.textContent = entry.title || t('untitled');
   const user = document.createElement('span');
   user.className = 'user';
-  user.textContent = entry.username || '(sin usuario)';
+  user.textContent = entry.username || t('noUsername');
   button.append(title, user);
   button.addEventListener('click', onClick);
 
@@ -200,8 +203,8 @@ async function fill(entry: CredentialSummary, tabId: number, origin: string): Pr
   if (secret.type !== 'CREDENTIAL_SECRET') {
     setStatus(
       secret.type === 'UNLOCK_REQUIRED'
-        ? 'La bóveda se bloqueó. Desbloquéela e intente de nuevo.'
-        : 'No se pudo obtener la credencial.',
+        ? t('lockedRetry')
+        : t('secretFailed'),
       true,
     );
     return;
@@ -219,8 +222,8 @@ async function fill(entry: CredentialSummary, tabId: number, origin: string): Pr
   }
   setStatus(
     result?.reason === 'origin-changed'
-      ? 'La página cambió de sitio; no se rellenó nada.'
-      : 'No se encontró un campo de contraseña en esta página.',
+      ? t('originChanged')
+      : t('noPasswordField'),
     true,
   );
 }
@@ -228,7 +231,7 @@ async function fill(entry: CredentialSummary, tabId: number, origin: string): Pr
 $('generate').addEventListener('click', async () => {
   const response = await send({ type: 'GENERATE_PASSWORD', length: GENERATED_LENGTH });
   if (response.type !== 'GENERATED_PASSWORD') {
-    setStatus('No se pudo generar la contraseña.', true);
+    setStatus(t('generateFailed'), true);
     return;
   }
   $('generated').textContent = response.password;
@@ -238,7 +241,7 @@ $('generate').addEventListener('click', async () => {
 
 $('copy').addEventListener('click', async () => {
   await navigator.clipboard.writeText($('generated').textContent ?? '');
-  $('copy').textContent = 'Copiada';
+  $('copy').textContent = t('copied');
 });
 
-void main().catch(() => setStatus('Algo salió mal al hablar con Lockspire.', true));
+void main().catch(() => setStatus(t('somethingWrong'), true));

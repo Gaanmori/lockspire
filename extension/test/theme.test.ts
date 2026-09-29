@@ -14,7 +14,7 @@ test('themeName: modo fijo ignora el sistema; system lo sigue', () => {
   assert.equal(themeName({ family: 'ubuntu', mode: 'system' }, false), 'ubuntu-light');
 });
 
-test('"Colores del sistema" se muestra como Cálido en el popup', () => {
+test('"Colores del sistema" se muestra como Lineage en el popup', () => {
   assert.equal(themeName({ family: 'sistema', mode: 'dark' }, false), 'lineage-dark');
   assert.equal(themeName({ family: 'lineage', mode: 'light' }, true), 'lineage-light');
   assert.equal(themeName({ family: 'pixel', mode: 'system' }, true), 'pixel-dark');

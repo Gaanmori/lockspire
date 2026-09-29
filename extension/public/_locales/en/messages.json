@@ -1,0 +1,6 @@
+{
+  "extName": { "message": "Lockspire" },
+  "extDescription": {
+    "message": "Fills in your Lockspire credentials on websites. Requires the Lockspire desktop app."
+  }
+}

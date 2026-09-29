@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import { parseLanguage, type Language } from './i18n.ts';
+
 // Protocolo v1 con la app (ADR 0013), lado extensión. La app y el native
 // host validan las peticiones; aquí se validan las respuestas antes de
 // usarlas — nada que venga del host se usa sin comprobar su forma.
@@ -32,7 +34,7 @@ export interface AppTheme {
 }
 
 export type Response =
-  | { type: 'PONG'; locked: boolean; theme?: AppTheme }
+  | { type: 'PONG'; locked: boolean; theme?: AppTheme; lang?: Language }
   | { type: 'CREDENTIALS'; entries: CredentialSummary[] }
   | { type: 'CREDENTIAL_SECRET'; username: string; password: string }
   | { type: 'GENERATED_PASSWORD'; password: string }
@@ -68,7 +70,14 @@ export function parseResponse(raw: unknown, requestId: string): Response {
     case 'PONG': {
       if (typeof raw['locked'] !== 'boolean') throw new ProtocolError('locked');
       const theme = parseTheme(raw['theme']);
-      return { type, locked: raw['locked'], ...(theme ? { theme } : {}) };
+      // Idioma de la app (ADR 0032). Uno desconocido se ignora: es cosmético.
+      const lang = parseLanguage(raw['lang']);
+      return {
+        type,
+        locked: raw['locked'],
+        ...(theme ? { theme } : {}),
+        ...(lang ? { lang } : {}),
+      };
     }
     case 'CREDENTIALS': {
       const list = raw['entries'];

@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:lockspire_bridge/lockspire_bridge.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:lockspire/features/appearance/presentation/providers/app_l10n_provider.dart';
 
 import '../../../appearance/domain/appearance_preference.dart';
 import '../../../appearance/presentation/appearance_controller.dart';
@@ -56,6 +57,7 @@ Future<BrowserBridgeStatus> browserBridge(Ref ref) async {
     currentAppearance: () =>
         ref.read(appearanceControllerProvider).value ??
         AppearancePreference.defaults,
+    currentLanguage: () => ref.read(appL10nProvider).localeName,
   );
 
   try {
