@@ -734,5 +734,168 @@
         "type": "String"
       }
     }
-  }
+  },
+  "importReadFailed": "No se pudo leer el archivo: {error}",
+  "@importReadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "importConflict": "{error} Vuelva a intentar importar.",
+  "@importConflict": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "importFailed": "No se pudo importar: {error}",
+  "@importFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "importDoneTitle": "Importación completada",
+  "importDoneUnencrypted": "{count, plural, =1{Se importó 1 entrada} other{Se importaron {count} entradas}}. Por su seguridad: el archivo que eligió no está cifrado. Bórrelo del lugar donde lo guardó (y de la papelera): Lockspire no puede borrarlo por usted.",
+  "@importDoneUnencrypted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importDoneBackup": "{count, plural, =1{Se importó 1 entrada} other{Se importaron {count} entradas}} desde el respaldo.",
+  "@importDoneBackup": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonGotIt": "Entendido",
+  "importTitle": "Importar",
+  "importIntro": "Elija el archivo que exportó desde su otro gestor, o un respaldo de Lockspire. Se lee directo en memoria, sin guardar ninguna copia, y nunca se duplican entradas que ya tiene.",
+  "importBitwardenDetail": "CSV o JSON sin cifrar",
+  "importOthersSource": "Chrome, Edge, Firefox, KeePassXC y otros",
+  "importLockspireBackup": "Respaldo de Lockspire",
+  "importLockspireBackupDetail": ".lockspire, con su contraseña",
+  "importChooseFile": "Elegir archivo",
+  "importNothingNew": "No hay entradas nuevas",
+  "importWillImport": "{count, plural, =1{Se importará 1 entrada} other{Se importarán {count} entradas}}",
+  "@importWillImport": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importSkipped": "{count, plural, =1{1 ya estaba en su bóveda y se omite} other{{count} ya estaban en su bóveda y se omiten}}",
+  "@importSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importBackupPassword": "Contraseña del respaldo",
+  "importBackupPasswordHint": "Ingrese la contraseña maestra que tenía la bóveda cuando se hizo este respaldo.",
+  "commonOpen": "Abrir",
+  "exportUnencryptedTitle": "El archivo no va a estar cifrado",
+  "exportUnencryptedConfirm": "Entiendo, exportar",
+  "exportWrongPassword": "La contraseña maestra no es correcta",
+  "exportSaveDialogTitle": "Guardar exportación",
+  "exportFailed": "No se pudo exportar: {error}",
+  "@exportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "exportDoneTitle": "Exportación lista",
+  "exportDoneBackup": "Se guardó el respaldo cifrado. Para abrirlo hace falta la contraseña maestra actual; si la cambia después, este respaldo sigue pidiendo la de hoy.",
+  "exportDoneFile": "Se guardó el {format}.",
+  "@exportDoneFile": {
+    "placeholders": {
+      "format": {
+        "type": "Object"
+      }
+    }
+  },
+  "exportSkipped": "{count, plural, =1{1 tarjeta o documento no se incluyó} other{{count} tarjetas o documentos no se incluyeron}}: este formato solo lleva contraseñas.",
+  "@exportSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exportDeleteReminder": "Recuerde borrarlo, también de la papelera, en cuanto lo importe en el otro gestor.",
+  "exportTitle": "Exportar",
+  "exportFormat": "Formato",
+  "exportBackupLabel": "Respaldo de Lockspire (cifrado)",
+  "exportBackupHint": "Todo su contenido, cifrado con su contraseña maestra. Para guardarlo como respaldo o restaurarlo en otro Lockspire.",
+  "exportUnencryptedNote": "Este formato no está cifrado. Úselo solo para pasar sus datos a otro gestor.",
+  "exportPasswordAlwaysAsked": "Para exportar siempre se pide la contraseña.",
+  "importCountPasswords": "{count, plural, =1{1 contraseña} other{{count} contraseñas}}",
+  "@importCountPasswords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importCountCards": "{count, plural, =1{1 tarjeta} other{{count} tarjetas}}",
+  "@importCountCards": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importCountDocuments": "{count, plural, =1{1 documento} other{{count} documentos}}",
+  "@importCountDocuments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonListAnd": "{first} y {last}",
+  "@commonListAnd": {
+    "placeholders": {
+      "first": {
+        "type": "Object"
+      },
+      "last": {
+        "type": "Object"
+      }
+    }
+  },
+  "exportUnencryptedBodyPasswords": "Cualquiera que abra el {format} verá todas sus contraseñas. Guárdelo solo el tiempo necesario para importarlo en el otro gestor y después bórrelo, también de la papelera. No lo suba a la nube ni lo envíe por correo o chat.",
+  "@exportUnencryptedBodyPasswords": {
+    "placeholders": {
+      "format": {
+        "type": "Object"
+      }
+    }
+  },
+  "exportUnencryptedBodyAll": "Cualquiera que abra el {format} verá todas sus contraseñas, tarjetas y documentos. Guárdelo solo el tiempo necesario para importarlo en el otro gestor y después bórrelo, también de la papelera. No lo suba a la nube ni lo envíe por correo o chat.",
+  "@exportUnencryptedBodyAll": {
+    "placeholders": {
+      "format": {
+        "type": "Object"
+      }
+    }
+  },
+  "exportBitwardenCsv": "CSV de Bitwarden",
+  "exportBitwardenCsvHint": "Sin cifrar. Lo aceptan Bitwarden, Proton Pass, 1Password, KeePassXC y otros. Tarjetas y documentos van como notas.",
+  "exportBitwardenJson": "JSON de Bitwarden",
+  "exportBitwardenJsonHint": "Sin cifrar. Incluye tarjetas y documentos. Lo leen Bitwarden y otros gestores que importan desde Bitwarden.",
+  "exportChromeCsv": "CSV de Chrome",
+  "exportChromeCsvHint": "Sin cifrar. El formato más simple: lo importan Chrome, Edge, Firefox y Google Password Manager. Solo contraseñas."
 }

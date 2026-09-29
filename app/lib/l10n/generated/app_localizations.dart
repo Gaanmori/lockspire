@@ -1771,6 +1771,294 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{type, select, card{Editar tarjeta} document{Editar documento} note{Editar nota} passkey{Editar passkey} other{Editar contraseña}}'**
   String entryEditTitle(String type);
+
+  /// No description provided for @importReadFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo leer el archivo: {error}'**
+  String importReadFailed(Object error);
+
+  /// No description provided for @importConflict.
+  ///
+  /// In es, this message translates to:
+  /// **'{error} Vuelva a intentar importar.'**
+  String importConflict(Object error);
+
+  /// No description provided for @importFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo importar: {error}'**
+  String importFailed(Object error);
+
+  /// No description provided for @importDoneTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Importación completada'**
+  String get importDoneTitle;
+
+  /// No description provided for @importDoneUnencrypted.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Se importó 1 entrada} other{Se importaron {count} entradas}}. Por su seguridad: el archivo que eligió no está cifrado. Bórrelo del lugar donde lo guardó (y de la papelera): Lockspire no puede borrarlo por usted.'**
+  String importDoneUnencrypted(int count);
+
+  /// No description provided for @importDoneBackup.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Se importó 1 entrada} other{Se importaron {count} entradas}} desde el respaldo.'**
+  String importDoneBackup(int count);
+
+  /// No description provided for @commonGotIt.
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
+  String get commonGotIt;
+
+  /// No description provided for @importTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar'**
+  String get importTitle;
+
+  /// No description provided for @importIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Elija el archivo que exportó desde su otro gestor, o un respaldo de Lockspire. Se lee directo en memoria, sin guardar ninguna copia, y nunca se duplican entradas que ya tiene.'**
+  String get importIntro;
+
+  /// No description provided for @importBitwardenDetail.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV o JSON sin cifrar'**
+  String get importBitwardenDetail;
+
+  /// No description provided for @importOthersSource.
+  ///
+  /// In es, this message translates to:
+  /// **'Chrome, Edge, Firefox, KeePassXC y otros'**
+  String get importOthersSource;
+
+  /// No description provided for @importLockspireBackup.
+  ///
+  /// In es, this message translates to:
+  /// **'Respaldo de Lockspire'**
+  String get importLockspireBackup;
+
+  /// No description provided for @importLockspireBackupDetail.
+  ///
+  /// In es, this message translates to:
+  /// **'.lockspire, con su contraseña'**
+  String get importLockspireBackupDetail;
+
+  /// No description provided for @importChooseFile.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir archivo'**
+  String get importChooseFile;
+
+  /// No description provided for @importNothingNew.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay entradas nuevas'**
+  String get importNothingNew;
+
+  /// No description provided for @importWillImport.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Se importará 1 entrada} other{Se importarán {count} entradas}}'**
+  String importWillImport(int count);
+
+  /// No description provided for @importSkipped.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 ya estaba en su bóveda y se omite} other{{count} ya estaban en su bóveda y se omiten}}'**
+  String importSkipped(int count);
+
+  /// No description provided for @importBackupPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña del respaldo'**
+  String get importBackupPassword;
+
+  /// No description provided for @importBackupPasswordHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingrese la contraseña maestra que tenía la bóveda cuando se hizo este respaldo.'**
+  String get importBackupPasswordHint;
+
+  /// No description provided for @commonOpen.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir'**
+  String get commonOpen;
+
+  /// No description provided for @exportUnencryptedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'El archivo no va a estar cifrado'**
+  String get exportUnencryptedTitle;
+
+  /// No description provided for @exportUnencryptedConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Entiendo, exportar'**
+  String get exportUnencryptedConfirm;
+
+  /// No description provided for @exportWrongPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña maestra no es correcta'**
+  String get exportWrongPassword;
+
+  /// No description provided for @exportSaveDialogTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar exportación'**
+  String get exportSaveDialogTitle;
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo exportar: {error}'**
+  String exportFailed(Object error);
+
+  /// No description provided for @exportDoneTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportación lista'**
+  String get exportDoneTitle;
+
+  /// No description provided for @exportDoneBackup.
+  ///
+  /// In es, this message translates to:
+  /// **'Se guardó el respaldo cifrado. Para abrirlo hace falta la contraseña maestra actual; si la cambia después, este respaldo sigue pidiendo la de hoy.'**
+  String get exportDoneBackup;
+
+  /// No description provided for @exportDoneFile.
+  ///
+  /// In es, this message translates to:
+  /// **'Se guardó el {format}.'**
+  String exportDoneFile(Object format);
+
+  /// No description provided for @exportSkipped.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 tarjeta o documento no se incluyó} other{{count} tarjetas o documentos no se incluyeron}}: este formato solo lleva contraseñas.'**
+  String exportSkipped(int count);
+
+  /// No description provided for @exportDeleteReminder.
+  ///
+  /// In es, this message translates to:
+  /// **'Recuerde borrarlo, también de la papelera, en cuanto lo importe en el otro gestor.'**
+  String get exportDeleteReminder;
+
+  /// No description provided for @exportTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar'**
+  String get exportTitle;
+
+  /// No description provided for @exportFormat.
+  ///
+  /// In es, this message translates to:
+  /// **'Formato'**
+  String get exportFormat;
+
+  /// No description provided for @exportBackupLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Respaldo de Lockspire (cifrado)'**
+  String get exportBackupLabel;
+
+  /// No description provided for @exportBackupHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo su contenido, cifrado con su contraseña maestra. Para guardarlo como respaldo o restaurarlo en otro Lockspire.'**
+  String get exportBackupHint;
+
+  /// No description provided for @exportUnencryptedNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Este formato no está cifrado. Úselo solo para pasar sus datos a otro gestor.'**
+  String get exportUnencryptedNote;
+
+  /// No description provided for @exportPasswordAlwaysAsked.
+  ///
+  /// In es, this message translates to:
+  /// **'Para exportar siempre se pide la contraseña.'**
+  String get exportPasswordAlwaysAsked;
+
+  /// No description provided for @importCountPasswords.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 contraseña} other{{count} contraseñas}}'**
+  String importCountPasswords(int count);
+
+  /// No description provided for @importCountCards.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 tarjeta} other{{count} tarjetas}}'**
+  String importCountCards(int count);
+
+  /// No description provided for @importCountDocuments.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 documento} other{{count} documentos}}'**
+  String importCountDocuments(int count);
+
+  /// No description provided for @commonListAnd.
+  ///
+  /// In es, this message translates to:
+  /// **'{first} y {last}'**
+  String commonListAnd(Object first, Object last);
+
+  /// No description provided for @exportUnencryptedBodyPasswords.
+  ///
+  /// In es, this message translates to:
+  /// **'Cualquiera que abra el {format} verá todas sus contraseñas. Guárdelo solo el tiempo necesario para importarlo en el otro gestor y después bórrelo, también de la papelera. No lo suba a la nube ni lo envíe por correo o chat.'**
+  String exportUnencryptedBodyPasswords(Object format);
+
+  /// No description provided for @exportUnencryptedBodyAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Cualquiera que abra el {format} verá todas sus contraseñas, tarjetas y documentos. Guárdelo solo el tiempo necesario para importarlo en el otro gestor y después bórrelo, también de la papelera. No lo suba a la nube ni lo envíe por correo o chat.'**
+  String exportUnencryptedBodyAll(Object format);
+
+  /// No description provided for @exportBitwardenCsv.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV de Bitwarden'**
+  String get exportBitwardenCsv;
+
+  /// No description provided for @exportBitwardenCsvHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin cifrar. Lo aceptan Bitwarden, Proton Pass, 1Password, KeePassXC y otros. Tarjetas y documentos van como notas.'**
+  String get exportBitwardenCsvHint;
+
+  /// No description provided for @exportBitwardenJson.
+  ///
+  /// In es, this message translates to:
+  /// **'JSON de Bitwarden'**
+  String get exportBitwardenJson;
+
+  /// No description provided for @exportBitwardenJsonHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin cifrar. Incluye tarjetas y documentos. Lo leen Bitwarden y otros gestores que importan desde Bitwarden.'**
+  String get exportBitwardenJsonHint;
+
+  /// No description provided for @exportChromeCsv.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV de Chrome'**
+  String get exportChromeCsv;
+
+  /// No description provided for @exportChromeCsvHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin cifrar. El formato más simple: lo importan Chrome, Edge, Firefox y Google Password Manager. Solo contraseñas.'**
+  String get exportChromeCsvHint;
 }
 
 class _AppLocalizationsDelegate

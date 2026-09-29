@@ -17,6 +17,8 @@ import '../providers/vault_import_source_provider.dart';
 import '../vault_entries_controller.dart';
 import '../vault_session_controller.dart';
 import '../vault_session_state.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 
 /// Importar desde SafeInCloud (XML), un CSV (Bitwarden, Chrome, Firefox,
 /// KeePassXC…), el JSON de Bitwarden o un respaldo de Lockspire (ADR 0027).
@@ -45,19 +47,22 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   static const _extensions = ['xml', 'csv', 'json', 'lockspire'];
 
   String _summary(List<VaultEntry> entries) {
+    final l10n = context.l10n;
     int count(VaultEntryType type) =>
         entries.where((e) => e.type == type).length;
-    String part(int n, String one, String many) => '$n ${n == 1 ? one : many}';
+    final cards = count(VaultEntryType.card);
+    final documents = count(VaultEntryType.document);
     final parts = [
-      part(count(VaultEntryType.password), 'contraseña', 'contraseñas'),
-      if (count(VaultEntryType.card) > 0)
-        part(count(VaultEntryType.card), 'tarjeta', 'tarjetas'),
-      if (count(VaultEntryType.document) > 0)
-        part(count(VaultEntryType.document), 'documento', 'documentos'),
+      l10n.importCountPasswords(count(VaultEntryType.password)),
+      if (cards > 0) l10n.importCountCards(cards),
+      if (documents > 0) l10n.importCountDocuments(documents),
     ];
     return parts.length == 1
         ? parts.single
-        : '${parts.sublist(0, parts.length - 1).join(', ')} y ${parts.last}';
+        : l10n.commonListAnd(
+            parts.sublist(0, parts.length - 1).join(', '),
+            parts.last,
+          );
   }
 
   Future<void> _pickFile() async {
@@ -105,22 +110,24 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     } on UnknownImportFormatException catch (e) {
       setState(() {
         _busy = false;
-        _errorMessage = '$e';
+        _errorMessage = localizeError(context.l10n, e);
       });
     } on IncorrectBackupPasswordException catch (e) {
       setState(() {
         _busy = false;
-        _errorMessage = '$e';
+        _errorMessage = localizeError(context.l10n, e);
       });
     } on FormatException catch (e) {
       setState(() {
         _busy = false;
-        _errorMessage = 'No se pudo leer el archivo: ${e.message}';
+        _errorMessage = context.l10n.importReadFailed(e.message);
       });
     } catch (e) {
       setState(() {
         _busy = false;
-        _errorMessage = 'No se pudo leer el archivo: $e';
+        _errorMessage = context.l10n.importReadFailed(
+          localizeError(context.l10n, e),
+        );
       });
     }
   }
@@ -145,12 +152,16 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     } on VaultWriteConflictException catch (e) {
       setState(() {
         _busy = false;
-        _errorMessage = '$e Vuelva a intentar importar.';
+        _errorMessage = context.l10n.importConflict(
+          localizeError(context.l10n, e),
+        );
       });
     } catch (e) {
       setState(() {
         _busy = false;
-        _errorMessage = 'No se pudo importar: $e';
+        _errorMessage = context.l10n.importFailed(
+          localizeError(context.l10n, e),
+        );
       });
     }
   }
@@ -160,23 +171,20 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Importación completada'),
+        title: Text(context.l10n.importDoneTitle),
         // Sin tope, en escritorio el texto se estira a todo el ancho.
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Text(
             _sourceUnencrypted
-                ? 'Se importaron $count entradas. Por su seguridad: el archivo '
-                      'que eligió no está cifrado. Bórrelo del lugar donde lo '
-                      'guardó (y de la papelera): Lockspire no puede borrarlo '
-                      'por usted.'
-                : 'Se importaron $count entradas desde el respaldo.',
+                ? context.l10n.importDoneUnencrypted(count)
+                : context.l10n.importDoneBackup(count),
           ),
         ),
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Entendido'),
+            child: Text(context.l10n.commonGotIt),
           ),
         ],
       ),
@@ -188,7 +196,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     final selection = _selection;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Importar')),
+      appBar: AppBar(title: Text(context.l10n.importTitle)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
@@ -233,18 +241,19 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           ),
           const SizedBox(height: LockspireSpacing.md),
           Text(
-            'Elija el archivo que exportó desde su otro gestor, o un respaldo '
-            'de Lockspire. Se lee directo en memoria, sin guardar ninguna '
-            'copia, y nunca se duplican entradas que ya tiene.',
+            context.l10n.importIntro,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: LockspireSpacing.md),
-          for (final (format, detail) in const [
+          for (final (format, detail) in [
             ('SafeInCloud', 'XML'),
-            ('Bitwarden', 'CSV o JSON sin cifrar'),
-            ('Chrome, Edge, Firefox, KeePassXC y otros', 'CSV'),
-            ('Respaldo de Lockspire', '.lockspire, con su contraseña'),
+            ('Bitwarden', context.l10n.importBitwardenDetail),
+            (context.l10n.importOthersSource, 'CSV'),
+            (
+              context.l10n.importLockspireBackup,
+              context.l10n.importLockspireBackupDetail,
+            ),
           ])
             Padding(
               padding: const EdgeInsets.only(bottom: LockspireSpacing.xs),
@@ -256,7 +265,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
             width: double.infinity,
             child: FilledButton(
               onPressed: _busy ? null : _pickFile,
-              child: _spinnerOr('Elegir archivo'),
+              child: _spinnerOr(context.l10n.importChooseFile),
             ),
           ),
         ],
@@ -272,8 +281,8 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       children: [
         Text(
           candidates.isEmpty
-              ? 'No hay entradas nuevas'
-              : 'Se importarán ${candidates.length} entradas',
+              ? context.l10n.importNothingNew
+              : context.l10n.importWillImport(candidates.length),
           style: Theme.of(context).textTheme.headlineSmall,
           textAlign: TextAlign.center,
         ),
@@ -282,7 +291,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           [
             if (candidates.isNotEmpty) _summary(candidates),
             if (selection.skipped > 0)
-              '${selection.skipped} ya estaban en su bóveda y se omiten',
+              context.l10n.importSkipped(selection.skipped),
           ].join('. '),
           style: Theme.of(context).textTheme.bodySmall,
           textAlign: TextAlign.center,
@@ -302,13 +311,17 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         if (candidates.isNotEmpty) ...[
           FilledButton(
             onPressed: _busy ? null : _confirmImport,
-            child: _spinnerOr('Importar'),
+            child: _spinnerOr(context.l10n.importTitle),
           ),
           const SizedBox(height: LockspireSpacing.smMd),
         ],
         OutlinedButton(
           onPressed: _busy ? null : () => setState(() => _selection = null),
-          child: Text(candidates.isEmpty ? 'Volver' : 'Cancelar'),
+          child: Text(
+            candidates.isEmpty
+                ? context.l10n.commonBack
+                : context.l10n.commonCancel,
+          ),
         ),
       ],
     );
@@ -340,23 +353,20 @@ class _BackupPasswordDialogState extends State<_BackupPasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Contraseña del respaldo'),
+      title: Text(context.l10n.importBackupPassword),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Ingrese la contraseña maestra que tenía la bóveda cuando se '
-              'hizo este respaldo.',
-            ),
+            Text(context.l10n.importBackupPasswordHint),
             const SizedBox(height: LockspireSpacing.md),
             TextField(
               controller: _controller,
               obscureText: _obscure,
               autofocus: true,
               decoration: InputDecoration(
-                labelText: 'Contraseña',
+                labelText: context.l10n.fieldPassword,
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscure ? Icons.visibility : Icons.visibility_off,
@@ -372,9 +382,9 @@ class _BackupPasswordDialogState extends State<_BackupPasswordDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(context.l10n.commonCancel),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Abrir')),
+        FilledButton(onPressed: _submit, child: Text(context.l10n.commonOpen)),
       ],
     );
   }

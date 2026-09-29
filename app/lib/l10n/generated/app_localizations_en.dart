@@ -1109,4 +1109,239 @@ class AppLocalizationsEn extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String importReadFailed(Object error) {
+    return 'Could not read the file: $error';
+  }
+
+  @override
+  String importConflict(Object error) {
+    return '$error Try importing again.';
+  }
+
+  @override
+  String importFailed(Object error) {
+    return 'Could not import: $error';
+  }
+
+  @override
+  String get importDoneTitle => 'Import complete';
+
+  @override
+  String importDoneUnencrypted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries were imported',
+      one: '1 entry was imported',
+    );
+    return '$_temp0. For your security: the file you chose is not encrypted. Delete it from where you saved it (and from the trash): Lockspire can\'t delete it for you.';
+  }
+
+  @override
+  String importDoneBackup(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries were imported',
+      one: '1 entry was imported',
+    );
+    return '$_temp0 from the backup.';
+  }
+
+  @override
+  String get commonGotIt => 'Got it';
+
+  @override
+  String get importTitle => 'Import';
+
+  @override
+  String get importIntro =>
+      'Choose the file you exported from your other manager, or a Lockspire backup. It is read directly in memory without saving any copy, and entries you already have are never duplicated.';
+
+  @override
+  String get importBitwardenDetail => 'Unencrypted CSV or JSON';
+
+  @override
+  String get importOthersSource =>
+      'Chrome, Edge, Firefox, KeePassXC and others';
+
+  @override
+  String get importLockspireBackup => 'Lockspire backup';
+
+  @override
+  String get importLockspireBackupDetail => '.lockspire, with its password';
+
+  @override
+  String get importChooseFile => 'Choose file';
+
+  @override
+  String get importNothingNew => 'No new entries';
+
+  @override
+  String importWillImport(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries will be imported',
+      one: '1 entry will be imported',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count were already in your vault and are skipped',
+      one: '1 was already in your vault and is skipped',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get importBackupPassword => 'Backup password';
+
+  @override
+  String get importBackupPasswordHint =>
+      'Enter the master password the vault had when this backup was made.';
+
+  @override
+  String get commonOpen => 'Open';
+
+  @override
+  String get exportUnencryptedTitle => 'The file will not be encrypted';
+
+  @override
+  String get exportUnencryptedConfirm => 'I understand, export';
+
+  @override
+  String get exportWrongPassword => 'The master password is not correct';
+
+  @override
+  String get exportSaveDialogTitle => 'Save export';
+
+  @override
+  String exportFailed(Object error) {
+    return 'Could not export: $error';
+  }
+
+  @override
+  String get exportDoneTitle => 'Export ready';
+
+  @override
+  String get exportDoneBackup =>
+      'The encrypted backup was saved. Opening it requires the current master password; if you change it later, this backup still asks for today\'s.';
+
+  @override
+  String exportDoneFile(Object format) {
+    return 'The $format was saved.';
+  }
+
+  @override
+  String exportSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cards or documents were not included',
+      one: '1 card or document was not included',
+    );
+    return '$_temp0: this format only carries passwords.';
+  }
+
+  @override
+  String get exportDeleteReminder =>
+      'Remember to delete it, also from the trash, as soon as you import it into the other manager.';
+
+  @override
+  String get exportTitle => 'Export';
+
+  @override
+  String get exportFormat => 'Format';
+
+  @override
+  String get exportBackupLabel => 'Lockspire backup (encrypted)';
+
+  @override
+  String get exportBackupHint =>
+      'All your content, encrypted with your master password. To keep as a backup or restore into another Lockspire.';
+
+  @override
+  String get exportUnencryptedNote =>
+      'This format is not encrypted. Only use it to move your data to another manager.';
+
+  @override
+  String get exportPasswordAlwaysAsked =>
+      'Exporting always asks for the password.';
+
+  @override
+  String importCountPasswords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count passwords',
+      one: '1 password',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importCountCards(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cards',
+      one: '1 card',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importCountDocuments(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count documents',
+      one: '1 document',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String commonListAnd(Object first, Object last) {
+    return '$first and $last';
+  }
+
+  @override
+  String exportUnencryptedBodyPasswords(Object format) {
+    return 'Anyone who opens the $format will see all your passwords. Keep it only as long as needed to import it into the other manager, then delete it, also from the trash. Don\'t upload it to the cloud or send it by email or chat.';
+  }
+
+  @override
+  String exportUnencryptedBodyAll(Object format) {
+    return 'Anyone who opens the $format will see all your passwords, cards and documents. Keep it only as long as needed to import it into the other manager, then delete it, also from the trash. Don\'t upload it to the cloud or send it by email or chat.';
+  }
+
+  @override
+  String get exportBitwardenCsv => 'Bitwarden CSV';
+
+  @override
+  String get exportBitwardenCsvHint =>
+      'Unencrypted. Accepted by Bitwarden, Proton Pass, 1Password, KeePassXC and others. Cards and documents go as notes.';
+
+  @override
+  String get exportBitwardenJson => 'Bitwarden JSON';
+
+  @override
+  String get exportBitwardenJsonHint =>
+      'Unencrypted. Includes cards and documents. Read by Bitwarden and other managers that import from Bitwarden.';
+
+  @override
+  String get exportChromeCsv => 'Chrome CSV';
+
+  @override
+  String get exportChromeCsvHint =>
+      'Unencrypted. The simplest format: imported by Chrome, Edge, Firefox and Google Password Manager. Passwords only.';
 }

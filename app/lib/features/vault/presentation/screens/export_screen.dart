@@ -18,6 +18,9 @@ import '../providers/vault_import_source_provider.dart';
 import '../providers/vault_storage_port_provider.dart';
 import '../vault_session_controller.dart';
 import '../vault_session_state.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
+import 'package:lockspire/l10n/localized_values.dart';
 
 /// Exportar la bóveda (ADR 0027): respaldo cifrado de Lockspire o un
 /// formato abierto sin cifrar para otro gestor. Siempre pide la
@@ -54,25 +57,27 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           Icons.warning_amber_rounded,
           color: Theme.of(context).colorScheme.error,
         ),
-        title: const Text('El archivo no va a estar cifrado'),
+        title: Text(context.l10n.exportUnencryptedTitle),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Text(
-            'Cualquiera que abra el ${exporter.label} verá todas sus '
-            'contraseñas${exporter.passwordsOnly ? '' : ', tarjetas y documentos'}. '
-            'Guárdelo solo el tiempo necesario para importarlo en el otro '
-            'gestor y después bórrelo, también de la papelera. No lo suba '
-            'a la nube ni lo envíe por correo o chat.',
+            exporter.passwordsOnly
+                ? context.l10n.exportUnencryptedBodyPasswords(
+                    context.l10n.exportFormatLabel(exporter.format),
+                  )
+                : context.l10n.exportUnencryptedBodyAll(
+                    context.l10n.exportFormatLabel(exporter.format),
+                  ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Entiendo, exportar'),
+            child: Text(context.l10n.exportUnencryptedConfirm),
           ),
         ],
       ),
@@ -100,7 +105,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       if (!ok) {
         setState(() {
           _busy = false;
-          _error = 'La contraseña maestra no es correcta';
+          _error = context.l10n.exportWrongPassword;
         });
         return;
       }
@@ -124,7 +129,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       final today = DateTime.now().toIso8601String().substring(0, 10);
       final isAndroid = ref.read(platformCapabilitiesProvider).isAndroid;
       final saved = await FilePicker.saveFile(
-        dialogTitle: 'Guardar exportación',
+        dialogTitle: context.l10n.exportSaveDialogTitle,
         fileName: 'lockspire-$today.$extension',
         bytes: bytes,
         mimeType: mimeType,
@@ -140,7 +145,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'No se pudo exportar: $e';
+        _error = context.l10n.exportFailed(localizeError(context.l10n, e));
       });
     }
   }
@@ -153,28 +158,25 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Exportación lista'),
+        title: Text(context.l10n.exportDoneTitle),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Text(
             exporter == null
-                ? 'Se guardó el respaldo cifrado. Para abrirlo hace falta la '
-                      'contraseña maestra actual; si la cambia después, este '
-                      'respaldo sigue pidiendo la de hoy.'
+                ? context.l10n.exportDoneBackup
                 : [
-                    'Se guardó el ${exporter.label}.',
-                    if (skipped > 0)
-                      '$skipped tarjetas o documentos no se incluyeron: este '
-                          'formato solo lleva contraseñas.',
-                    'Recuerde borrarlo, también de la papelera, en cuanto lo '
-                        'importe en el otro gestor.',
+                    context.l10n.exportDoneFile(
+                      context.l10n.exportFormatLabel(exporter.format),
+                    ),
+                    if (skipped > 0) context.l10n.exportSkipped(skipped),
+                    context.l10n.exportDeleteReminder,
                   ].join(' '),
           ),
         ),
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Entendido'),
+            child: Text(context.l10n.commonGotIt),
           ),
         ],
       ),
@@ -207,29 +209,31 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   Widget build(BuildContext context) {
     final exporters = ref.watch(vaultExportersProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Exportar')),
+      appBar: AppBar(title: Text(context.l10n.exportTitle)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: ListView(
             padding: const EdgeInsets.all(LockspireSpacing.lg),
             children: [
-              Text('Formato', style: Theme.of(context).textTheme.titleSmall),
+              Text(
+                context.l10n.exportFormat,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
               const SizedBox(height: LockspireSpacing.sm),
               _option(
                 value: null,
-                title: 'Respaldo de Lockspire (cifrado)',
-                subtitle:
-                    'Todo su contenido, cifrado con su contraseña maestra. '
-                    'Para guardarlo como respaldo o restaurarlo en otro '
-                    'Lockspire.',
+                title: context.l10n.exportBackupLabel,
+                subtitle: context.l10n.exportBackupHint,
                 icon: Icons.lock_outline,
               ),
               for (final exporter in exporters)
                 _option(
                   value: exporter,
-                  title: exporter.label,
-                  subtitle: exporter.description,
+                  title: context.l10n.exportFormatLabel(exporter.format),
+                  subtitle: context.l10n.exportFormatDescription(
+                    exporter.format,
+                  ),
                   icon: Icons.description_outlined,
                 ),
               const SizedBox(height: LockspireSpacing.md),
@@ -237,8 +241,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: LockspireSpacing.md),
                   child: Text(
-                    'Este formato no está cifrado. Úselo solo para pasar sus '
-                    'datos a otro gestor.',
+                    context.l10n.exportUnencryptedNote,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                     ),
@@ -249,8 +252,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                 obscureText: _obscure,
                 enabled: !_busy,
                 decoration: InputDecoration(
-                  labelText: 'Contraseña maestra',
-                  helperText: 'Para exportar siempre se pide la contraseña.',
+                  labelText: context.l10n.commonMasterPassword,
+                  helperText: context.l10n.exportPasswordAlwaysAsked,
                   errorText: _error,
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -270,7 +273,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Exportar'),
+                    : Text(context.l10n.exportTitle),
               ),
             ],
           ),

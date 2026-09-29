@@ -1125,4 +1125,238 @@ class AppLocalizationsEs extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String importReadFailed(Object error) {
+    return 'No se pudo leer el archivo: $error';
+  }
+
+  @override
+  String importConflict(Object error) {
+    return '$error Vuelva a intentar importar.';
+  }
+
+  @override
+  String importFailed(Object error) {
+    return 'No se pudo importar: $error';
+  }
+
+  @override
+  String get importDoneTitle => 'Importación completada';
+
+  @override
+  String importDoneUnencrypted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se importaron $count entradas',
+      one: 'Se importó 1 entrada',
+    );
+    return '$_temp0. Por su seguridad: el archivo que eligió no está cifrado. Bórrelo del lugar donde lo guardó (y de la papelera): Lockspire no puede borrarlo por usted.';
+  }
+
+  @override
+  String importDoneBackup(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se importaron $count entradas',
+      one: 'Se importó 1 entrada',
+    );
+    return '$_temp0 desde el respaldo.';
+  }
+
+  @override
+  String get commonGotIt => 'Entendido';
+
+  @override
+  String get importTitle => 'Importar';
+
+  @override
+  String get importIntro =>
+      'Elija el archivo que exportó desde su otro gestor, o un respaldo de Lockspire. Se lee directo en memoria, sin guardar ninguna copia, y nunca se duplican entradas que ya tiene.';
+
+  @override
+  String get importBitwardenDetail => 'CSV o JSON sin cifrar';
+
+  @override
+  String get importOthersSource => 'Chrome, Edge, Firefox, KeePassXC y otros';
+
+  @override
+  String get importLockspireBackup => 'Respaldo de Lockspire';
+
+  @override
+  String get importLockspireBackupDetail => '.lockspire, con su contraseña';
+
+  @override
+  String get importChooseFile => 'Elegir archivo';
+
+  @override
+  String get importNothingNew => 'No hay entradas nuevas';
+
+  @override
+  String importWillImport(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Se importarán $count entradas',
+      one: 'Se importará 1 entrada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ya estaban en su bóveda y se omiten',
+      one: '1 ya estaba en su bóveda y se omite',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get importBackupPassword => 'Contraseña del respaldo';
+
+  @override
+  String get importBackupPasswordHint =>
+      'Ingrese la contraseña maestra que tenía la bóveda cuando se hizo este respaldo.';
+
+  @override
+  String get commonOpen => 'Abrir';
+
+  @override
+  String get exportUnencryptedTitle => 'El archivo no va a estar cifrado';
+
+  @override
+  String get exportUnencryptedConfirm => 'Entiendo, exportar';
+
+  @override
+  String get exportWrongPassword => 'La contraseña maestra no es correcta';
+
+  @override
+  String get exportSaveDialogTitle => 'Guardar exportación';
+
+  @override
+  String exportFailed(Object error) {
+    return 'No se pudo exportar: $error';
+  }
+
+  @override
+  String get exportDoneTitle => 'Exportación lista';
+
+  @override
+  String get exportDoneBackup =>
+      'Se guardó el respaldo cifrado. Para abrirlo hace falta la contraseña maestra actual; si la cambia después, este respaldo sigue pidiendo la de hoy.';
+
+  @override
+  String exportDoneFile(Object format) {
+    return 'Se guardó el $format.';
+  }
+
+  @override
+  String exportSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tarjetas o documentos no se incluyeron',
+      one: '1 tarjeta o documento no se incluyó',
+    );
+    return '$_temp0: este formato solo lleva contraseñas.';
+  }
+
+  @override
+  String get exportDeleteReminder =>
+      'Recuerde borrarlo, también de la papelera, en cuanto lo importe en el otro gestor.';
+
+  @override
+  String get exportTitle => 'Exportar';
+
+  @override
+  String get exportFormat => 'Formato';
+
+  @override
+  String get exportBackupLabel => 'Respaldo de Lockspire (cifrado)';
+
+  @override
+  String get exportBackupHint =>
+      'Todo su contenido, cifrado con su contraseña maestra. Para guardarlo como respaldo o restaurarlo en otro Lockspire.';
+
+  @override
+  String get exportUnencryptedNote =>
+      'Este formato no está cifrado. Úselo solo para pasar sus datos a otro gestor.';
+
+  @override
+  String get exportPasswordAlwaysAsked =>
+      'Para exportar siempre se pide la contraseña.';
+
+  @override
+  String importCountPasswords(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count contraseñas',
+      one: '1 contraseña',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importCountCards(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tarjetas',
+      one: '1 tarjeta',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String importCountDocuments(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count documentos',
+      one: '1 documento',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String commonListAnd(Object first, Object last) {
+    return '$first y $last';
+  }
+
+  @override
+  String exportUnencryptedBodyPasswords(Object format) {
+    return 'Cualquiera que abra el $format verá todas sus contraseñas. Guárdelo solo el tiempo necesario para importarlo en el otro gestor y después bórrelo, también de la papelera. No lo suba a la nube ni lo envíe por correo o chat.';
+  }
+
+  @override
+  String exportUnencryptedBodyAll(Object format) {
+    return 'Cualquiera que abra el $format verá todas sus contraseñas, tarjetas y documentos. Guárdelo solo el tiempo necesario para importarlo en el otro gestor y después bórrelo, también de la papelera. No lo suba a la nube ni lo envíe por correo o chat.';
+  }
+
+  @override
+  String get exportBitwardenCsv => 'CSV de Bitwarden';
+
+  @override
+  String get exportBitwardenCsvHint =>
+      'Sin cifrar. Lo aceptan Bitwarden, Proton Pass, 1Password, KeePassXC y otros. Tarjetas y documentos van como notas.';
+
+  @override
+  String get exportBitwardenJson => 'JSON de Bitwarden';
+
+  @override
+  String get exportBitwardenJsonHint =>
+      'Sin cifrar. Incluye tarjetas y documentos. Lo leen Bitwarden y otros gestores que importan desde Bitwarden.';
+
+  @override
+  String get exportChromeCsv => 'CSV de Chrome';
+
+  @override
+  String get exportChromeCsvHint =>
+      'Sin cifrar. El formato más simple: lo importan Chrome, Edge, Firefox y Google Password Manager. Solo contraseñas.';
 }
