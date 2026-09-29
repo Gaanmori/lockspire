@@ -37,7 +37,16 @@ como actividad) solo se veían recorriendo la app.
   un test va ahí, no copiado en cada archivo.
 - **Sin esperas reales.** En `test/` el reloj es simulado: se avanza con
   `tester.pump(const Duration(minutes: 5))` o `fakeAsync`. Solo
-  `integration_test/` espera de verdad (`robot.waitFor`).
+  `integration_test/` espera de verdad (`robot.waitFor`). El robot usa
+  `settle()` en vez de `pumpAndSettle()`: con una animación infinita,
+  `pumpAndSettle` avanzaba minutos en silencio y disparaba el bloqueo
+  automático en medio del test.
+- **Nada de plugins en la presentación.** Cada plugin o canal nativo va
+  detrás de un puerto con su adaptador en `infrastructure` (CLAUDE.md); así
+  los tests usan un doble. `test/app_composition_adapters_test.dart`
+  comprueba que sin dobles se conectan los adaptadores reales.
+- **Cobertura mínima:** 90 % para dominio, aplicación y presentación
+  (`dart run tool/check_coverage.dart`, también en la CI).
 - **Textos de la interfaz en español**, tal como en `app_es.arb`: el
   arnés monta la app con el sistema en español. Si un texto cambia, se
   arregla en el robot o en el test que lo nombra.
@@ -59,12 +68,24 @@ testWidgets('una contraseña agregada aparece en la lista', (tester) async {
 });
 ```
 
-- **`TestApp`** monta `MyApp` con la raíz de composición de `main()`. Todo es
-  real, casos de uso y adaptadores de preferencias incluidos, salvo:
-  - la bóveda en memoria;
-  - la criptografía falsa y rápida;
-  - el almacenamiento seguro simulado y propio de cada instancia;
-  - la nube en memoria.
+- **`TestApp`** arranca la app con `startApp()`, el mismo arranque que
+  `main()`: raíz de composición, tema y servicios en segundo plano (bloqueo
+  automático, sync, íconos). Todo es real, casos de uso y adaptadores de
+  preferencias incluidos, salvo los bordes de plataforma, que son dobles en
+  memoria:
+  - la bóveda y el ancestro del merge, y la criptografía falsa y rápida;
+  - el almacenamiento seguro, simulado y propio de cada instancia;
+  - la nube (`cloud`, con modo `offline`);
+  - el selector de archivos (`files`), los enlaces (`links`) y la versión;
+  - la ventana, la bandeja y la sesión del sistema (`desktop: true`);
+  - los ajustes de autocompletado, el ícono del lanzador y los íconos de
+    apps (`android: true`);
+  - la extensión del navegador (`nativeMessaging`), la actividad de
+    autocompletado (`pumpAutofill`) y los íconos de sitios (`siteIcons`).
+
+  Los dobles pueden fallar a pedido (`writeError`, `pickError`,
+  `saveError`, `offline`…) para probar los mensajes de error. Para lo que
+  llega de afuera (un pedido de la extensión), `app.container`.
 - **Dos dispositivos:** dos `TestApp` con la misma `cloud`. "Usar" uno es
   montarlo con `pump`.
 - **Reabrir la app:** montar otro `TestApp` con el mismo `storage`.

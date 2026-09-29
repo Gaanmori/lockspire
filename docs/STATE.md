@@ -688,6 +688,32 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
 
+### Tests: cobertura de pantallas al 90 % y puertos para todo plugin (2026-09-29)
+
+- **Hecho:**
+  - **Presentación al 90,1 %** (era ~26 % al empezar el día). Dominio 94,4 % y aplicación 95 %. La CI exige 90 % en las tres capas (`tool/check_coverage.dart`). El margen de presentación es chico: si la CI de Linux mide un poco menos, se ajusta.
+  - **Ningún plugin ni canal nativo en la presentación:** todos quedaron detrás de un puerto en su feature, con el adaptador en `infrastructure` (lo pide CLAUDE.md):
+    - `FileTransferPort` (selector de archivos);
+    - `AppInfoPort` y `ExternalLinkPort` (Acerca de);
+    - `DesktopWindowPort`, `TrayPort` y `ThemedIconFilePort` (bandeja y ventana, ADR 0012);
+    - `AutofillHostPort`, con el pedido tipado (`AutofillRequest`);
+    - `SystemAutofillSettingsPort`, `LauncherIconPort` e `InstalledAppIconPort`.
+
+    `window_actions.dart` se eliminó. `test/app_composition_adapters_test.dart` comprueba que sin dobles se conectan los adaptadores reales.
+  - **`startApp()` en `app_composition.dart`:** el arranque de `main()` (tema, tiempo de bloqueo, servicios en segundo plano), que ahora usan también los tests.
+  - **Tests de flujo:** unos 100 en `test/flows/`, entre ellos importar y exportar, Acerca de, bandeja de escritorio, navegador, autocompletado de Android, sync entre dos dispositivos (conflicto de campos, contraseña cambiada con la app abierta, copia vieja en la nube), huella, íconos de sitios, validaciones y errores de disco. 470 tests en `test/`.
+- **Bugs de la app encontrados por esos tests y corregidos**, cada uno con test de regresión que falla sin la corrección:
+  1. **Pantalla en blanco** si la bóveda se bloqueaba con un diálogo final abierto, por ejemplo tras importar, al ir a borrar el archivo como pide el aviso. `if (mounted) Navigator.pop()` se llevaba la ruta raíz. Se corrigió en 6 lugares con `popIfCurrent` (`lib/shared/presentation/navigation.dart`).
+  2. **Clave del `Navigator` global:** otro `MyApp` heredaba la pila de pantallas. Ahora es de cada instancia.
+  3. **Íconos de sitios:** activarlos no buscaba nada hasta el siguiente guardado, porque `.future` devolvía el valor del arranque.
+  4. **Seguridad mostraba la huella desactivada** cuando se había activado en el ofrecimiento tras crear la bóveda, porque la pestaña leía el estado una sola vez. Ahora hay `biometricStatusProvider`.
+  5. **El tiempo de bloqueo elegido no se aplicaba** hasta reiniciar la app: los servicios en segundo plano se leían sin escucharlos y Riverpod 3 los dejaba en pausa. `startApp()` ahora los escucha (`_keepRunning`). Afectaba también a la sync automática, los íconos y el ícono del lanzador.
+  6. **Resumen de importación** decía "0 contraseñas, 1 tarjeta y 1 documento".
+  7. **Fallo del CI de Linux:** el test de punta a punta buscaba textos en español y el runner está en inglés. Ahora fija el idioma de la app.
+- **Pendiente:**
+  - **Nubes con OAuth:** el controlador de cuentas depende directo de los adaptadores de Google y Microsoft. Conviene un `CloudAuthPort` por nube, para probar conectar, mudar y desconectar Google Drive y OneDrive como flujo. Toca el inicio de sesión real: hay que verificarlo en los dispositivos.
+  - **Confirmar en GitHub** que el job de Linux pasa con el test de punta a punta y que el piso de 90 % en presentación se sostiene.
+
 ### Tests: reorganización, tests de flujo y de punta a punta (2026-09-29)
 
 - **Hecho:**

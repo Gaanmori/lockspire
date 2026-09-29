@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
-// Piso de cobertura para dominio y aplicación (la lógica de negocio). Lee
+// Piso de cobertura para dominio, aplicación y presentación. Lee
 // coverage/lcov.info (de `flutter test --coverage`), imprime la cobertura
-// por capa y termina con error si dominio o aplicación bajan de [minimum].
+// por capa y termina con error si alguna de esas tres baja de [minimum].
+// Infraestructura no tiene piso: son los adaptadores de plataforma (red,
+// canales nativos, OAuth), que se prueban con sus propios tests y de punta
+// a punta en el dispositivo.
 //
 //     dart run tool/check_coverage.dart [mínimo, por defecto 90]
 
@@ -38,7 +41,11 @@ void main(List<String> args) {
   var failed = false;
   for (final layer in (total.keys.toList()..sort())) {
     final percent = 100 * (hit[layer] ?? 0) / total[layer]!;
-    final gated = layer == 'domain' || layer == 'application';
+    final gated = const {
+      'domain',
+      'application',
+      'presentation',
+    }.contains(layer);
     final ok = !gated || percent >= minimum;
     failed |= !ok;
     stdout.writeln(
