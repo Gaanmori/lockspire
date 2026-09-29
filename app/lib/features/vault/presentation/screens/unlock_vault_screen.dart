@@ -170,10 +170,12 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
       context.l10n.unlockPreviousPasswordWrong,
     IncorrectMasterPasswordException() when _askNewPassword =>
       context.l10n.pwChangedNotNew,
-    _ when _askNewPassword => context.l10n.commonCouldNotComplete(
+    IncorrectMasterPasswordException() => context.l10n.commonWrongPassword,
+    // Cualquier otro error (archivo ilegible, bóveda dañada) con su propio
+    // mensaje: antes todo se mostraba como "Contraseña incorrecta".
+    _ => context.l10n.commonCouldNotComplete(
       localizeError(context.l10n, error ?? ''),
     ),
-    _ => context.l10n.commonWrongPassword,
   };
 
   Future<void> _submitWithBiometrics() async {

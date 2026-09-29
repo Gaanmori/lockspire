@@ -7,6 +7,7 @@ import '../domain/entities/vault.dart';
 import '../domain/ports/crypto_port.dart';
 import '../domain/ports/vault_storage_port.dart';
 import '../domain/vault_file_codec.dart';
+import 'incorrect_master_password_exception.dart';
 import 'unlocked_vault_result.dart';
 
 /// Desbloquea la bóveda existente con la contraseña maestra del usuario.
@@ -28,7 +29,7 @@ class UnlockVaultUseCase {
       params: file.header.kdfParams,
     );
 
-    return _decrypt(file: file, key: key);
+    return _decryptWithPassword(file: file, key: key);
   }
 
   /// Vuelve a leer y desencriptar el archivo actual con una clave ya
@@ -57,22 +58,49 @@ class UnlockVaultUseCase {
       salt: file.header.salt,
       params: file.header.kdfParams,
     );
-    return _decrypt(file: file, key: key);
+    return _decryptWithPassword(file: file, key: key);
+  }
+
+  /// Si la clave derivada de la contraseña no pasa la autenticación del
+  /// cifrado, la contraseña es incorrecta. Solo ese paso se traduce: un
+  /// archivo ilegible o un contenido dañado siguen siendo errores propios.
+  Future<UnlockedVaultResult> _decryptWithPassword({
+    required VaultFile file,
+    required Uint8List key,
+  }) async {
+    final Uint8List plaintext;
+    try {
+      plaintext = await _open(file: file, key: key);
+    } catch (_) {
+      throw const IncorrectMasterPasswordException();
+    }
+    return _result(file: file, key: key, plaintext: plaintext);
   }
 
   Future<UnlockedVaultResult> _decrypt({
     required VaultFile file,
     required Uint8List key,
-  }) async {
-    final plaintext = await crypto.decrypt(
-      key: key,
-      payload: EncryptedPayload(
-        nonce: file.header.nonce,
-        ciphertext: file.encryptedPayload,
-      ),
-      aad: file.header.toAadBytes(),
-    );
+  }) async => _result(
+    file: file,
+    key: key,
+    plaintext: await _open(file: file, key: key),
+  );
 
+  Future<Uint8List> _open({required VaultFile file, required Uint8List key}) =>
+      crypto.decrypt(
+        key: key,
+        payload: EncryptedPayload(
+          nonce: file.header.nonce,
+          ciphertext: file.encryptedPayload,
+        ),
+        aad: file.header.toAadBytes(),
+      );
+
+  UnlockedVaultResult _result({
+    required VaultFile file,
+    required Uint8List key,
+    required Uint8List plaintext,
+  }) {
     return UnlockedVaultResult(
       vault: Vault.fromJsonBytes(plaintext),
       key: key,

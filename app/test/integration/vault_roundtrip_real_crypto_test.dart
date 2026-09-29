@@ -4,6 +4,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/features/vault/application/incorrect_master_password_exception.dart';
 import 'package:lockspire/features/vault/application/create_vault_use_case.dart';
 import 'package:lockspire/features/vault/application/unlock_vault_use_case.dart';
 import 'package:lockspire/features/vault/infrastructure/atomic_file_vault_storage_adapter.dart';
@@ -77,7 +78,7 @@ void main() {
         UnlockVaultUseCase(storage: storage, crypto: crypto)(
           masterPassword: 'contraseña-incorrecta',
         ),
-        throwsA(isA<SodiumException>()),
+        throwsA(isA<IncorrectMasterPasswordException>()),
       );
     },
   );

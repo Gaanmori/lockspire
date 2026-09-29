@@ -59,7 +59,14 @@ class AppRobot {
     await tester.pumpAndSettle();
   }
 
+  /// Toca el campo y escribe [text], como el usuario. Tocar primero importa
+  /// con el binding real de `integration_test`: un campo que se deshabilitó
+  /// un momento (p. ej. mientras se desbloqueaba) pierde la conexión con el
+  /// método de entrada, y escribir sin enfocarlo de nuevo no llegaba.
   Future<void> type(String label, String text) async {
+    await tester.ensureVisible(field(label));
+    await tester.tap(field(label));
+    await tester.pump();
     await tester.enterText(field(label), text);
     await tester.pump();
   }

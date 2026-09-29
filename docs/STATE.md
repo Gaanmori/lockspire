@@ -688,6 +688,25 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
 
+### Tests: reorganización, tests de flujo y de punta a punta (2026-09-29)
+
+- **Hecho:**
+  - **Orden:** `app/test/` refleja `lib/`. En `test/support/` están los dobles compartidos (`fakes/`, sin copias repetidas), los constructores de datos (`anEntry()`, `testEpoch`), el arnés `TestApp` y el robot `AppRobot`. Guía de convenciones en `app/test/README.md`.
+  - **Tests de flujo** (`test/flows/`, 25): la app completa con la raíz de composición de `main()`. Solo van en memoria la bóveda y la criptografía, y el almacenamiento seguro es simulado y propio de cada "dispositivo". Cubren primer arranque, entradas, tarjetas y documentos, sesión, generador, idioma, portapapeles, bloqueo automático, dos dispositivos con sync por WebDAV configurado desde la pantalla, cambio de contraseña maestra con y sin sync, y el diseño de escritorio.
+  - **De punta a punta:** `integration_test/app_real_crypto_flow_test.dart`, con libsodium real y el archivo en disco. Pasa en Windows en unos 16 s.
+  - **CI:**
+    - `flutter test --coverage` con piso de 90 % para dominio y aplicación (`tool/check_coverage.dart`). Hoy: aplicación 95 %, dominio 94 %, presentación 62 % (era ~26 %).
+    - El test de punta a punta corre en Linux con xvfb.
+  - **389 tests** en `test/`.
+- **Bugs de la app encontrados por los tests nuevos y corregidos**, cada uno con su test de regresión, que falla sin la corrección:
+  1. **Escritorio:** los avisos (SnackBar) iban de lado a lado y tapaban "Bloquear" al pie del riel. Ahora flotan a la derecha del riel, midiendo su ancho real.
+  2. **Android:** escribir con el teclado en pantalla no contaba como actividad para el bloqueo automático, porque no produce eventos de teclado físico ni toques en la app. Al pasar 5 minutos escribiendo, la bóveda se bloqueaba y se perdía la entrada sin guardar. `ActivityAndLifecycleWatcher` ahora mira cada 15 s si cambió el campo con el foco; solo guarda un hash del texto.
+  3. **Desbloqueo:** mostraba "Contraseña incorrecta" para cualquier error. `UnlockVaultUseCase` ahora traduce solo el fallo de autenticación del descifrado a `IncorrectMasterPasswordException`, que tiene su propio archivo. Los demás errores muestran su mensaje. AEAD no distingue una contraseña equivocada de un archivo manipulado; eso es inherente.
+- **Pendiente:**
+  - Confirmar en GitHub que el job de Linux corre el test de punta a punta con xvfb. No se probó en la CI.
+  - Tests de pantallas sueltas de Seguridad y Sincronización. Ya los cubren en parte los flujos.
+  - Correr `integration_test/` también en el Redmi.
+
 ### Idiomas: español e inglés (ADR 0032, 2026-09-29)
 
 - **Hecho:**

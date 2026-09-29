@@ -11,15 +11,10 @@ import '../domain/vault_file_codec.dart';
 import 'create_vault_use_case.dart' show defaultArgon2Params;
 import 'master_password_policy.dart';
 import 'save_vault_use_case.dart';
+import 'incorrect_master_password_exception.dart';
 import 'unlocked_vault_result.dart';
 
-/// La contraseña actual ingresada no abre la bóveda.
-class IncorrectMasterPasswordException implements Exception {
-  const IncorrectMasterPasswordException();
-
-  @override
-  String toString() => 'IncorrectMasterPasswordException';
-}
+export 'incorrect_master_password_exception.dart';
 
 /// La contraseña nueva no cumple la política (ADR 0018).
 class WeakMasterPasswordException implements Exception {

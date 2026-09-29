@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/features/vault/application/incorrect_master_password_exception.dart';
 import 'package:lockspire/features/vault/application/create_vault_use_case.dart';
 import 'package:lockspire/features/vault/application/unlock_vault_use_case.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
@@ -62,7 +63,7 @@ void main() {
         UnlockVaultUseCase(storage: storage, crypto: crypto)(
           masterPassword: masterPassword,
         ),
-        throwsA(isA<StateError>()),
+        throwsA(isA<IncorrectMasterPasswordException>()),
       );
     });
 
@@ -88,10 +89,25 @@ void main() {
           UnlockVaultUseCase(storage: storage, crypto: crypto)(
             masterPassword: masterPassword,
           ),
-          throwsA(isA<StateError>()),
+          throwsA(isA<IncorrectMasterPasswordException>()),
         );
       },
     );
+
+    // Regresión (2026-09-29, encontrada por el test de punta a punta): la
+    // pantalla mostraba "Contraseña incorrecta" para cualquier error. Solo
+    // el fallo de autenticación del cifrado es una contraseña incorrecta.
+    test('si no se puede leer el archivo, el error no se disfraza de '
+        'contraseña incorrecta', () async {
+      final storage = FakeVaultStoragePort(); // sin bóveda guardada
+
+      await expectLater(
+        UnlockVaultUseCase(storage: storage, crypto: FakeCryptoPort())(
+          masterPassword: 'lo que sea',
+        ),
+        throwsA(isNot(isA<IncorrectMasterPasswordException>())),
+      );
+    });
   });
 
   group('UnlockVaultUseCase.unlockFile (Fase 9 — restaurar bóveda)', () {
@@ -138,7 +154,7 @@ void main() {
           file: downloadedFile,
           masterPassword: 'contraseña-incorrecta',
         ),
-        throwsA(isA<StateError>()),
+        throwsA(isA<IncorrectMasterPasswordException>()),
       );
     });
   });
