@@ -4,6 +4,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'providers/biometric_auth_port_provider.dart';
+import 'providers/biometric_status_provider.dart';
 import 'vault_session_controller.dart';
 import 'vault_session_state.dart';
 
@@ -28,8 +29,12 @@ class BiometricUnlockController {
     final session = _ref.read(vaultSessionControllerProvider).value;
     if (session is! VaultSessionUnlocked) return;
     await _ref.read(biometricAuthPortProvider).storeKey(key: session.key);
+    _ref.invalidate(biometricStatusProvider);
   }
 
   /// Borra la clave cacheada.
-  Future<void> disable() => _ref.read(biometricAuthPortProvider).deleteKey();
+  Future<void> disable() async {
+    await _ref.read(biometricAuthPortProvider).deleteKey();
+    _ref.invalidate(biometricStatusProvider);
+  }
 }

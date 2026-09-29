@@ -10,7 +10,6 @@ import '../../domain/auto_lock_timeout.dart';
 import '../../domain/master_password_reminder.dart';
 import '../../domain/ports/biometric_auth_port.dart';
 import '../providers/auto_lock_timeout_setting_provider.dart';
-import '../providers/biometric_auth_port_provider.dart';
 import '../providers/master_password_reminder_setting_provider.dart';
 import '../biometric_unlock_controller.dart';
 import '../providers/site_icons_providers.dart';
@@ -19,17 +18,16 @@ import 'change_master_password_screen.dart';
 import 'package:lockspire/l10n/localized_values.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/features/autofill/presentation/providers/system_autofill_settings_port_provider.dart';
+import '../providers/biometric_status_provider.dart';
 
 /// Nombre del método biométrico de esta plataforma (hallazgo C2).
 String _biometricMethodName(BuildContext context, WidgetRef ref) => context.l10n
     .biometricName(ref.watch(platformCapabilitiesProvider).biometricMethod);
 
-/// Activar/desactivar el desbloqueo biométrico (ver `BiometricAuthPort`)
-/// — accesible desde `vault_unlocked_screen.dart`. Sin `Riverpod`
-/// provider dedicado para el estado activado/disponible a propósito:
-/// alcance chico, esta es la única pantalla que lo necesita, así que un
-/// `FutureBuilder` local re-consultado tras cada cambio alcanza sin
-/// plumbing de invalidación extra.
+/// Contraseña maestra, bloqueo automático, desbloqueo biométrico (ver
+/// `BiometricAuthPort`), autocompletado e íconos de sitios. El estado de la
+/// biometría sale de `biometricStatusProvider`: también lo cambia el
+/// ofrecimiento tras crear la bóveda, y esta pestaña queda construida.
 class SecurityScreen extends ConsumerStatefulWidget {
   const SecurityScreen({super.key});
 
@@ -38,27 +36,9 @@ class SecurityScreen extends ConsumerStatefulWidget {
 }
 
 class _SecurityScreenState extends ConsumerState<SecurityScreen> {
-  late Future<(BiometricAvailability, bool)> _statusFuture;
   bool _busy = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _statusFuture = _loadStatus();
-  }
-
-  Future<(BiometricAvailability, bool)> _loadStatus() async {
-    final port = ref.read(biometricAuthPortProvider);
-    final availability = await port.checkAvailability();
-    final enabled = await port.hasStoredKey();
-    return (availability, enabled);
-  }
-
-  // Cuerpo con llaves: `() => _statusFuture = ...` devolvería el Future y
-  // setState lo rechaza.
-  void _refresh() => setState(() {
-    _statusFuture = _loadStatus();
-  });
+  void _refresh() => ref.invalidate(biometricStatusProvider);
 
   Future<void> _openAutofillServiceSettings() async {
     final opened = await ref.read(systemAutofillSettingsPortProvider).open();
@@ -78,7 +58,6 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     }
     if (!mounted) return;
     setState(() => _busy = false);
-    _refresh();
   }
 
   @override
@@ -89,7 +68,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
         child: Padding(
           padding: const EdgeInsets.all(LockspireSpacing.lg),
           child: FutureBuilder<(BiometricAvailability, bool)>(
-            future: _statusFuture,
+            future: ref.watch(biometricStatusProvider.future),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());

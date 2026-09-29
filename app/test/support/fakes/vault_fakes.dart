@@ -101,8 +101,15 @@ class FakeCryptoPort implements CryptoPort {
 class FakeVaultStoragePort implements VaultStoragePort {
   VaultFile? stored;
 
+  /// Si no es `null`, ver si existe la bóveda falla con este error (disco
+  /// ilegible, permisos).
+  Object? existsError;
+
   @override
-  Future<bool> exists() async => stored != null;
+  Future<bool> exists() async {
+    if (existsError case final error?) throw error;
+    return stored != null;
+  }
 
   @override
   Future<VaultFile> read() async {

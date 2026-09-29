@@ -26,6 +26,7 @@ import 'providers/password_unlock_history_port_provider.dart';
 import 'providers/vault_auth_attempt_provider.dart';
 import 'providers/vault_storage_port_provider.dart';
 import 'vault_session_state.dart';
+import 'providers/biometric_status_provider.dart';
 
 part 'vault_session_controller.g.dart';
 
@@ -218,6 +219,7 @@ class VaultSessionController extends _$VaultSessionController {
   /// Windows).
   Future<void> adoptRekeyedSession(UnlockedVaultResult result) async {
     await ref.read(replaceBiometricKeyUseCaseProvider).call(result.key);
+    ref.invalidate(biometricStatusProvider);
     state = AsyncData(
       VaultSessionUnlocked(
         vault: result.vault,

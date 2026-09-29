@@ -3,7 +3,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/features/vault/domain/master_password_reminder.dart';
 import 'package:lockspire/features/vault/domain/ports/biometric_auth_port.dart';
+import 'package:lockspire/features/vault/presentation/providers/master_password_reminder_setting_provider.dart';
 
 import '../support/app_robot.dart';
 import '../support/fakes/vault_fakes.dart';
@@ -18,27 +20,28 @@ TestApp _withFingerprint() => TestApp(
     ..fingerAccepted = true,
 );
 
-/// Crea la bóveda, bloquea y desbloquea con contraseña: ahí se ofrece
-/// activar la huella.
-Future<AppRobot> _firstPasswordUnlock(WidgetTester tester, TestApp app) async {
+/// Crea la bóveda: al terminar, con la huella disponible, se ofrece
+/// activarla. [choice] responde al ofrecimiento; después agrega "Banco".
+Future<AppRobot> _createVault(
+  WidgetTester tester,
+  TestApp app, {
+  required String choice,
+}) async {
   await app.pump(tester);
   final robot = AppRobot(tester);
   await robot.createVault(_master);
+  expect(find.text('¿Activar desbloqueo con la huella?'), findsOneWidget);
+  await robot.tapText(choice);
   await robot.addPassword(title: 'Banco');
-  await robot.lock();
-  await robot.unlock(_master);
   return robot;
 }
 
 /// Desbloqueo con huella (ADR 0010, 0017).
 void main() {
-  testWidgets('tras desbloquear con contraseña se ofrece activar la huella; '
-      'activada, desbloquea sin escribir la contraseña', (tester) async {
+  testWidgets('al crear la bóveda se ofrece activar la huella; activada, '
+      'desbloquea sin escribir la contraseña', (tester) async {
     final app = _withFingerprint();
-    final robot = await _firstPasswordUnlock(tester, app);
-
-    expect(find.text('¿Activar desbloqueo con la huella?'), findsOneWidget);
-    await robot.tapText('Activar');
+    final robot = await _createVault(tester, app, choice: 'Activar');
 
     await robot.lock();
     await robot.tapText('Usar la huella');
@@ -48,8 +51,7 @@ void main() {
   testWidgets('una huella rechazada deja la pantalla de contraseña, sin '
       'error', (tester) async {
     final app = _withFingerprint();
-    final robot = await _firstPasswordUnlock(tester, app);
-    await robot.tapText('Activar');
+    final robot = await _createVault(tester, app, choice: 'Activar');
     await robot.lock();
 
     app.biometric.fingerAccepted = false;
@@ -62,9 +64,8 @@ void main() {
 
   testWidgets('"Ahora no" no lo vuelve a preguntar', (tester) async {
     final app = _withFingerprint();
-    final robot = await _firstPasswordUnlock(tester, app);
+    final robot = await _createVault(tester, app, choice: 'Ahora no');
 
-    await robot.tapText('Ahora no');
     await robot.lock();
     await robot.unlock(_master);
 
@@ -75,12 +76,15 @@ void main() {
   testWidgets('en Seguridad se desactiva la huella y se elige cada cuánto '
       'pedir la contraseña', (tester) async {
     final app = _withFingerprint();
-    final robot = await _firstPasswordUnlock(tester, app);
-    await robot.tapText('Activar');
+    final robot = await _createVault(tester, app, choice: 'Activar');
 
     await robot.tapText('Seguridad');
     expect(
-      tester.widget<SwitchListTile>(find.byType(SwitchListTile).first).value,
+      tester
+          .widget<SwitchListTile>(
+            find.widgetWithText(SwitchListTile, 'Desbloquear con la huella'),
+          )
+          .value,
       isTrue,
     );
     await robot.tapText('Desbloquear con la huella');
@@ -89,12 +93,8 @@ void main() {
     await robot.reveal(find.text('30 días'));
     await robot.tapText('30 días');
     expect(
-      tester
-          .widget<SegmentedButton<Object?>>(find.byType(SegmentedButton).first)
-          .selected
-          .single
-          .toString(),
-      contains('thirty'),
+      app.container.read(masterPasswordReminderSettingProvider).value,
+      MasterPasswordReminder.thirtyDays,
     );
   });
 
