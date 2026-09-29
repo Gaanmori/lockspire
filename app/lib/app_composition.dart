@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/misc.dart' show Override;
+import 'package:flutter_riverpod/misc.dart' show Override, ProviderListenable;
 
 import 'features/appearance/presentation/appearance_controller.dart';
 import 'features/appearance/presentation/launcher_icon_sync.dart';
@@ -50,17 +50,29 @@ Future<void> startApp(
   await container.read(autoLockTimeoutSettingProvider.future);
   // El bloqueo automático escucha la sesión desde el arranque, también en
   // la pantalla de autocompletado de Android (hallazgo A1).
-  container.read(autoLockControllerProvider);
+  _keepRunning(container, autoLockControllerProvider);
   // La sync automática escucha los eventos de la bóveda (hallazgo A3).
   // No en el autocompletado de Android: rellenar no necesita la nube, y
   // conectar Google Drive ahí muestra la ventana "Iniciando sesión" encima
   // de la app que pide (ADR 0026). Lo guardado desde ahí se sube en la
   // próxima sync de la app.
   if (!isAutofill) {
-    container.read(autoSyncControllerProvider);
+    _keepRunning(container, autoSyncControllerProvider);
     // Íconos de los sitios, si están activados (ADR 0029).
-    container.read(siteIconsControllerProvider);
+    _keepRunning(container, siteIconsControllerProvider);
     // Ícono del lanzador de Android según el tema (ADR 0031).
-    container.read(launcherIconSyncProvider);
+    _keepRunning(container, launcherIconSyncProvider);
   }
+}
+
+/// Arranca un servicio en segundo plano y lo mantiene escuchado. Con solo
+/// leerlo, Riverpod lo deja en pausa por no tener quien lo escuche, y lo que
+/// él escucha deja de actualizarse: cambiar el tiempo de bloqueo no llegaba
+/// al temporizador, que seguía con el anterior (encontrado por un test de
+/// flujo, 2026-09-29).
+void _keepRunning<T>(
+  ProviderContainer container,
+  ProviderListenable<T> provider,
+) {
+  container.listen<T>(provider, (_, _) {});
 }

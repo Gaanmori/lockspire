@@ -51,8 +51,6 @@ void main() {
     await robot.openSettings();
     await robot.tapText('Importar');
     await robot.tapText('Elegir archivo');
-    // ignore: avoid_print
-    print('DIAG-X ${robot.visibleTexts()}');
     expect(find.text('1 tarjeta y 1 documento'), findsOneWidget);
     await robot.tapButton('Importar');
     await robot.tapText('Entendido');
@@ -78,10 +76,12 @@ void main() {
     await robot.openSettings();
     await robot.tapText('Importar');
     await robot.tapText('Elegir archivo');
-    // ignore: avoid_print
-    print('DIAG-B ${robot.visibleTexts()}');
-    // Un .lockspire que no es un respaldo válido se rechaza al leerlo.
-    expect(find.textContaining('No se pudo leer el archivo'), findsOneWidget);
+    expect(find.text('Contraseña del respaldo'), findsOneWidget);
+    await robot.tapText('Cancelar');
+
+    expect(find.text('Elegir archivo'), findsOneWidget);
+    expect(find.textContaining('Se importará'), findsNothing);
+    expect(find.textContaining('No se pudo'), findsNothing);
   });
 
   testWidgets('desbloquear sin escribir nada pide la contraseña', (

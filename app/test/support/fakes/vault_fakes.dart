@@ -120,8 +120,13 @@ class FakeVaultStoragePort implements VaultStoragePort {
     return file;
   }
 
+  /// Si no es `null`, escribir falla con este error (disco lleno, sin
+  /// permisos).
+  Object? writeError;
+
   @override
   Future<void> write(VaultFile file) async {
+    if (writeError case final error?) throw error;
     stored = file;
   }
 }

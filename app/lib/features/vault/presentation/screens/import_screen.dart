@@ -50,10 +50,14 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     final l10n = context.l10n;
     int count(VaultEntryType type) =>
         entries.where((e) => e.type == type).length;
+    final passwords = count(VaultEntryType.password);
     final cards = count(VaultEntryType.card);
     final documents = count(VaultEntryType.document);
+    // Solo lo que hay: "1 tarjeta y 1 documento", no "0 contraseñas, …"
+    // (encontrado por un test de flujo, 2026-09-29).
     final parts = [
-      l10n.importCountPasswords(count(VaultEntryType.password)),
+      if (passwords > 0 || cards + documents == 0)
+        l10n.importCountPasswords(passwords),
       if (cards > 0) l10n.importCountCards(cards),
       if (documents > 0) l10n.importCountDocuments(documents),
     ];
