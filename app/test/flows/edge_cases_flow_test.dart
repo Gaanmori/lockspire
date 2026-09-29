@@ -65,6 +65,40 @@ void main() {
     // Lo secreto del historial no se muestra en claro.
     expect(find.textContaining('999'), findsNothing);
     expect(find.textContaining('ANA P —'), findsOneWidget);
+
+    await robot.systemBack();
+    await robot.openEntry('Pasaporte');
+    await robot.reveal(find.text('Valores anteriores'));
+    await robot.tapText('Valores anteriores');
+    expect(find.textContaining('AA000 —'), findsOneWidget);
+    expect(find.textContaining('Ana —'), findsOneWidget);
+  });
+
+  testWidgets('si el sistema no deja leer el archivo elegido, lo dice', (
+    tester,
+  ) async {
+    final (app, robot) = await _unlocked(tester);
+    app.files.pickError = const FileSystemException('sin permiso de lectura');
+
+    await robot.openSettings();
+    await robot.tapText('Importar');
+    await robot.tapText('Elegir archivo');
+
+    expect(find.textContaining('No se pudo leer el archivo'), findsOneWidget);
+  });
+
+  testWidgets('si el sistema no deja guardar la exportación, lo dice', (
+    tester,
+  ) async {
+    final (app, robot) = await _unlocked(tester);
+    app.files.saveError = const FileSystemException('sin espacio');
+
+    await robot.openSettings();
+    await robot.tapText('Exportar');
+    await robot.type('Contraseña maestra', _master);
+    await robot.tapButton('Exportar');
+
+    expect(find.textContaining('No se pudo exportar'), findsOneWidget);
   });
 
   testWidgets('cancelar la contraseña de un respaldo no importa nada', (

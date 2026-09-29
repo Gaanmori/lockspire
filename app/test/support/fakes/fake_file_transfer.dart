@@ -21,6 +21,11 @@ class SavedFile {
 class FakeFileTransfer implements FileTransferPort {
   PickedFile? nextPick;
   bool cancelSave = false;
+
+  /// Si no es `null`, elegir o guardar falla con este error (el sistema no
+  /// deja leer o escribir el archivo).
+  Object? pickError;
+  Object? saveError;
   final saved = <SavedFile>[];
 
   /// Prepara la próxima elección con un archivo de texto.
@@ -34,8 +39,10 @@ class FakeFileTransfer implements FileTransferPort {
       nextPick = PickedFile(name: file.fileName, bytes: file.bytes);
 
   @override
-  Future<PickedFile?> pickFile({required List<String> extensions}) async =>
-      nextPick;
+  Future<PickedFile?> pickFile({required List<String> extensions}) async {
+    if (pickError case final error?) throw error;
+    return nextPick;
+  }
 
   @override
   Future<bool> saveFile({
@@ -45,6 +52,7 @@ class FakeFileTransfer implements FileTransferPort {
     required String mimeType,
     required String extension,
   }) async {
+    if (saveError case final error?) throw error;
     if (cancelSave) return false;
     saved.add(SavedFile(fileName, bytes));
     return true;
