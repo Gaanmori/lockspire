@@ -19,11 +19,11 @@ void main() {
     // persona ("usá" frente a "usa").
     r'ingresá|elegí|usá|tocá|configurá|creá|activá|revisá|intentá|volvé|'
     r'probá|abrí|conectá|buscá|podés|tenés|querés|usás|olvidás|perdés|'
-    r'sabés|'
+    r'sabés|verificate|'
     // Tuteo sin ambigüedad.
-    r'puedes|tienes|quieres|olvidas|vas|debes|necesitas|eliges|'
+    r'puedes|tienes|quieres|olvidas|vas|debes|necesitas|eliges|estarías|'
     // Posesivos y pronombres de segunda persona.
-    r'tu|tus|te|ti|vos|contigo'
+    r'tu|tus|te|ti|vos|contigo|tuyo|tuya|tuyos|tuyas'
     r')(?!\p{L})',
     caseSensitive: false,
     unicode: true,
