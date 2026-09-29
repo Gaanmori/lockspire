@@ -48,7 +48,8 @@ class CloudAccountSection extends StatelessWidget {
             : [
                 Text('Conectado como $email', textAlign: TextAlign.center),
                 const SizedBox(height: LockspireSpacing.lg),
-                OutlinedButton(
+                // Secundaria: desconectar no debería invitar a tocarla.
+                TextButton(
                   onPressed: onDisconnect,
                   child: const Text('Desconectar'),
                 ),

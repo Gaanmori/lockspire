@@ -21,7 +21,7 @@ void main() {
     r'probá|abrí|conectá|buscá|podés|tenés|querés|usás|olvidás|perdés|'
     r'sabés|'
     // Tuteo sin ambigüedad.
-    r'puedes|tienes|quieres|olvidas|'
+    r'puedes|tienes|quieres|olvidas|vas|debes|necesitas|eliges|'
     // Posesivos y pronombres de segunda persona.
     r'tu|tus|te|ti|vos|contigo'
     r')(?!\p{L})',

@@ -5,6 +5,10 @@ import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:lockspire/design/lockspire_icon.dart';
+import 'package:lockspire/features/appearance/presentation/providers/app_icon_colors_provider.dart';
+
+import '../../infrastructure/themed_app_icon.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
@@ -51,6 +55,12 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
     trayManager.addListener(this);
     unawaited(windowManager.setPreventClose(true));
     unawaited(_initTray());
+    // El ícono de la ventana, la barra de tareas y la bandeja sigue al tema
+    // elegido en Apariencia.
+    ref.listenManual(
+      appIconColorsProvider,
+      (_, colors) => unawaited(_applyThemedIcon(colors)),
+    );
     _osLockSubscription = ref
         .read(osSessionEventsPortProvider)
         .lockRequests
@@ -73,6 +83,7 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
           ? 'assets/tray/tray_icon.ico'
           : 'assets/tray/tray_icon.png',
     );
+    await _applyThemedIcon(ref.read(appIconColorsProvider));
     // setToolTip no está soportado por AppIndicator en Linux.
     if (Platform.isWindows) await trayManager.setToolTip('Lockspire');
     await _updateTrayMenu(
@@ -80,6 +91,18 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
           ref.read(vaultSessionControllerProvider).value
               is VaultSessionUnlocked,
     );
+  }
+
+  /// Si algo falla (disco, plugin), quedan los íconos de Lineage que trae
+  /// la app instalada: no es motivo para romper nada.
+  Future<void> _applyThemedIcon(LockspireIconColors colors) async {
+    try {
+      final path = await writeThemedAppIcon(colors);
+      if (!mounted) return;
+      await windowManager.setIcon(path);
+      await trayManager.setIcon(path);
+      if (Platform.isWindows) await trayManager.setToolTip('Lockspire');
+    } catch (_) {}
   }
 
   Future<void> _updateTrayMenu({required bool isUnlocked}) {

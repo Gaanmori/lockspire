@@ -9,6 +9,8 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app_composition.dart';
 import 'app_shell.dart';
+import 'design/lockspire_icon.dart';
+import 'features/appearance/presentation/providers/app_icon_colors_provider.dart';
 import 'features/appearance/presentation/appearance_controller.dart';
 import 'features/appearance/presentation/providers/app_themes_provider.dart';
 import 'features/appearance/presentation/providers/system_accent_color_provider.dart';
@@ -118,20 +120,23 @@ class MyApp extends ConsumerWidget {
 
     final themes = ref.watch(appThemesProvider);
 
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'Lockspire',
-      theme: themes.light,
-      darkTheme: themes.dark,
-      themeMode: themes.mode,
-      // DesktopShell dentro de MaterialApp: necesita un Navigator para
-      // mostrar el aviso de "sigue en la bandeja" al cerrar la ventana.
-      home: DesktopShell(
-        child: LinkRequestListener(
-          child: ActivityAndLifecycleWatcher(
-            child: VaultGateScreen(
-              unlockedBuilder: (vault) => AppShell(vault: vault),
-              restoreVaultBuilder: (_) => const RestoreVaultScreen(),
+    return LockspireBrand(
+      colors: ref.watch(appIconColorsProvider),
+      child: MaterialApp(
+        navigatorKey: navigatorKey,
+        title: 'Lockspire',
+        theme: themes.light,
+        darkTheme: themes.dark,
+        themeMode: themes.mode,
+        // DesktopShell dentro de MaterialApp: necesita un Navigator para
+        // mostrar el aviso de "sigue en la bandeja" al cerrar la ventana.
+        home: DesktopShell(
+          child: LinkRequestListener(
+            child: ActivityAndLifecycleWatcher(
+              child: VaultGateScreen(
+                unlockedBuilder: (vault) => AppShell(vault: vault),
+                restoreVaultBuilder: (_) => const RestoreVaultScreen(),
+              ),
             ),
           ),
         ),

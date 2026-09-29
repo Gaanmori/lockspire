@@ -196,6 +196,7 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
               key: _formKey,
               child: AuthCard(
                 icon: Icons.lock_outline,
+                brand: true,
                 title: '¡Hola de nuevo!',
                 subtitle: 'Ingrese su contraseña para entrar a su bóveda',
                 child: Column(

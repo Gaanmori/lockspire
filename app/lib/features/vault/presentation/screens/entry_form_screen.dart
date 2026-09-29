@@ -15,7 +15,6 @@ import '../../domain/entities/vault_entry.dart';
 import '../../domain/ports/word_list_port.dart';
 import '../providers/word_list_port_provider.dart';
 import '../vault_entries_controller.dart';
-import '../widgets/auth_card.dart';
 import '../widgets/entry_form_fields.dart';
 import '../widgets/entry_type_sections.dart';
 import '../widgets/field_history_section.dart';
@@ -278,6 +277,18 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     }
   }
 
+  void _addUrl() => setState(() => _urls.add(TextEditingController()));
+
+  void _addApp() => setState(() => _apps.add(TextEditingController()));
+
+  Future<void> _addCustom() async {
+    final draft = await CustomFieldsEditor.askNew(
+      context,
+      taken: {for (final d in _custom) d.name},
+    );
+    if (draft != null && mounted) setState(() => _custom.add(draft));
+  }
+
   String get _appBarTitle {
     if (_isEditing) return 'Editar ${_type.label}';
     return _type == VaultEntryType.document
@@ -349,45 +360,48 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
             ),
         ],
       ),
-      body: Center(
+      // Formulario simple, alineado arriba: el título ya está en la barra
+      // (antes se repetía en una tarjeta con ícono que además le quitaba
+      // ancho al teléfono — revisión de diseño 2026-09-29).
+      body: Align(
+        alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
+          constraints: const BoxConstraints(maxWidth: 560),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(LockspireSpacing.lg),
             child: Form(
               key: _formKey,
-              child: AuthCard(
-                icon: _type.icon,
-                title: _appBarTitle,
-                subtitle: 'Se guarda cifrada junto con el resto de su bóveda.',
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextFormField(
-                      controller: _titleController,
-                      autofocus: !_isEditing,
-                      decoration: const InputDecoration(labelText: 'Título'),
-                      validator: (value) => (value == null || value.isEmpty)
-                          ? 'Ingrese un título'
-                          : null,
-                    ),
-                    _gap(),
-                    ...switch (_type) {
-                      VaultEntryType.card => [
-                        CardFieldsSection(
-                          fields: _fixed,
-                          onCopy: _copyToClipboard,
-                        ),
-                      ],
-                      VaultEntryType.document => [
-                        DocumentFieldsSection(
-                          fields: _fixed,
-                          onCopy: _copyToClipboard,
-                        ),
-                      ],
-                      _ => _passwordSection(),
-                    },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    autofocus: !_isEditing,
+                    decoration: const InputDecoration(labelText: 'Título'),
+                    validator: (value) => (value == null || value.isEmpty)
+                        ? 'Ingrese un título'
+                        : null,
+                  ),
+                  _gap(),
+                  ...switch (_type) {
+                    VaultEntryType.card => [
+                      CardFieldsSection(
+                        fields: _fixed,
+                        onCopy: _copyToClipboard,
+                      ),
+                    ],
+                    VaultEntryType.document => [
+                      DocumentFieldsSection(
+                        fields: _fixed,
+                        onCopy: _copyToClipboard,
+                      ),
+                    ],
+                    _ => _passwordSection(),
+                  },
+                  // Cada sección aparece cuando tiene algo; vacías, se
+                  // agregan desde la fila de botones de abajo.
+                  if (_urls.isNotEmpty) ...[
                     _sectionTitle('Sitios web'),
                     RepeatedFieldList(
                       controllers: _urls,
@@ -397,11 +411,12 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                       icon: Icons.language,
                       keyboardType: TextInputType.url,
                       onCopy: _copyToClipboard,
-                      onAdd: () =>
-                          setState(() => _urls.add(TextEditingController())),
+                      onAdd: _addUrl,
                       onRemove: (i) =>
                           setState(() => _urls.removeAt(i).dispose()),
                     ),
+                  ],
+                  if (_apps.isNotEmpty) ...[
                     _sectionTitle('Apps Android'),
                     RepeatedFieldList(
                       controllers: _apps,
@@ -410,11 +425,12 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                       hint: 'com.ejemplo.app',
                       icon: Icons.android,
                       onCopy: _copyToClipboard,
-                      onAdd: () =>
-                          setState(() => _apps.add(TextEditingController())),
+                      onAdd: _addApp,
                       onRemove: (i) =>
                           setState(() => _apps.removeAt(i).dispose()),
                     ),
+                  ],
+                  if (_custom.isNotEmpty) ...[
                     _sectionTitle('Otros campos'),
                     CustomFieldsEditor(
                       drafts: _custom,
@@ -423,44 +439,76 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                       onRemove: (i) =>
                           setState(() => _custom.removeAt(i).value.dispose()),
                     ),
-                    _gap(),
-                    TextFormField(
-                      controller: _notesController,
-                      decoration: const InputDecoration(labelText: 'Notas'),
-                      minLines: 3,
-                      maxLines: 8,
-                    ),
-                    if (widget.entry != null &&
-                        widget.entry!.fieldHistory.isNotEmpty) ...[
-                      _gap(),
-                      FieldHistorySection(entry: widget.entry!),
-                    ],
-                    const SizedBox(height: LockspireSpacing.lg),
-                    if (_errorMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: LockspireSpacing.md,
-                        ),
-                        child: Text(
-                          _errorMessage!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
+                  ],
+                  if (_urls.isEmpty || _apps.isEmpty || _custom.isEmpty) ...[
+                    const SizedBox(height: LockspireSpacing.sm),
+                    Wrap(
+                      spacing: LockspireSpacing.sm,
+                      children: [
+                        if (_urls.isEmpty)
+                          TextButton.icon(
+                            onPressed: _addUrl,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Sitio web'),
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    FilledButton(
-                      onPressed: _saving ? null : _save,
-                      child: _saving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Guardar'),
+                        if (_apps.isEmpty)
+                          TextButton.icon(
+                            onPressed: _addApp,
+                            icon: const Icon(Icons.add),
+                            label: const Text('App Android'),
+                          ),
+                        if (_custom.isEmpty)
+                          TextButton.icon(
+                            onPressed: _addCustom,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Campo'),
+                          ),
+                      ],
                     ),
                   ],
-                ),
+                  _gap(),
+                  TextFormField(
+                    controller: _notesController,
+                    decoration: const InputDecoration(labelText: 'Notas'),
+                    minLines: 3,
+                    maxLines: 8,
+                  ),
+                  if (widget.entry != null &&
+                      widget.entry!.fieldHistory.isNotEmpty) ...[
+                    _gap(),
+                    FieldHistorySection(entry: widget.entry!),
+                  ],
+                  const SizedBox(height: LockspireSpacing.lg),
+                  if (_errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: LockspireSpacing.md,
+                      ),
+                      child: Text(
+                        _errorMessage!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  FilledButton(
+                    onPressed: _saving ? null : _save,
+                    child: _saving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Guardar'),
+                  ),
+                  const SizedBox(height: LockspireSpacing.sm),
+                  Text(
+                    'Se guarda cifrada junto con el resto de su bóveda.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
           ),

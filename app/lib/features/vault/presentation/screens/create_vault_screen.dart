@@ -59,6 +59,7 @@ class _CreateVaultScreenState extends ConsumerState<CreateVaultScreen> {
               key: _formKey,
               child: AuthCard(
                 icon: Icons.gpp_good_outlined,
+                brand: true,
                 title: 'Cree su bóveda',
                 subtitle:
                     'Elija una contraseña maestra. Nunca se envía ni se '

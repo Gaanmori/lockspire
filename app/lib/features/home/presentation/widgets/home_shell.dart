@@ -109,7 +109,18 @@ class _HomeShellState extends State<HomeShell> {
                   ),
                 ),
                 const VerticalDivider(width: 1, thickness: 1),
-                Expanded(child: body),
+                // En pantallas anchas el contenido va en una columna
+                // centrada: listas y formularios estirados a 1200 px se
+                // leen mal (revisión de diseño 2026-09-29).
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 880),
+                      child: body,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

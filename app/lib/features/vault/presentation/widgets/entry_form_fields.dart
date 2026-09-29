@@ -217,11 +217,19 @@ class CustomFieldsEditor extends StatelessWidget {
     required this.onRemove,
   });
 
+  /// Pide nombre y si es oculto para un campo nuevo; `null` si se cancela.
+  static Future<CustomFieldDraft?> askNew(
+    BuildContext context, {
+    required Set<String> taken,
+  }) => showDialog<CustomFieldDraft>(
+    context: context,
+    builder: (_) => _NewCustomFieldDialog(taken: taken),
+  );
+
   Future<void> _askNew(BuildContext context) async {
-    final draft = await showDialog<CustomFieldDraft>(
-      context: context,
-      builder: (_) =>
-          _NewCustomFieldDialog(taken: {for (final d in drafts) d.name}),
+    final draft = await askNew(
+      context,
+      taken: {for (final d in drafts) d.name},
     );
     if (draft != null) onAdd(draft);
   }

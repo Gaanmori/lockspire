@@ -153,6 +153,8 @@ abstract final class LockspireTheme {
         ),
       ),
       dialogTheme: DialogThemeData(
+        // Sin tope, en escritorio los diálogos se estiraban a todo el ancho.
+        constraints: const BoxConstraints(minWidth: 280, maxWidth: 480),
         backgroundColor: p.bgSurface,
         surfaceTintColor: Colors.transparent,
         titleTextStyle: textTheme.titleLarge,

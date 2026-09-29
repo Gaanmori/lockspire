@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design/lockspire_colors.dart';
+import '../../../../design/lockspire_icon.dart';
 import '../../../../design/lockspire_spacing.dart';
 
 /// Tarjeta de autenticación (crear/desbloquear bóveda): chip de icono +
@@ -12,6 +13,10 @@ import '../../../../design/lockspire_spacing.dart';
 /// (ver docs/design/README.md).
 class AuthCard extends StatelessWidget {
   final IconData icon;
+
+  /// El ícono de Lockspire (con los colores del tema) en vez de [icon]:
+  /// para las pantallas de entrada a la app, crear y desbloquear la bóveda.
+  final bool brand;
   final String title;
   final String subtitle;
   final Widget child;
@@ -19,6 +24,7 @@ class AuthCard extends StatelessWidget {
   const AuthCard({
     super.key,
     required this.icon,
+    this.brand = false,
     required this.title,
     required this.subtitle,
     required this.child,
@@ -48,15 +54,21 @@ class AuthCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Center(
-            child: Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: context.palette.bgSurfaceSubtle,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(icon, size: 28, color: context.palette.accentDefault),
-            ),
+            child: brand
+                ? const LockspireIcon(size: 72)
+                : Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: context.palette.bgSurfaceSubtle,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 28,
+                      color: context.palette.accentDefault,
+                    ),
+                  ),
           ),
           const SizedBox(height: LockspireSpacing.mdLg),
           Text(

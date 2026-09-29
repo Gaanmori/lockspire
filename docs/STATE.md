@@ -688,6 +688,26 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
 
+### Revisión de diseño + ícono según el tema (2026-09-29)
+
+- **Ícono temático (pedido del usuario):**
+  - `lib/design/lockspire_icon.dart` dibuja el "Candado aguja" con los colores del tema elegido, tomados de su versión clara: fondo = acento, candado = fondo de página, cerradura = acento oscuro. Con Lineage da el ícono original.
+  - `LockspireBrand` (widget heredado sobre `MaterialApp`) y `appIconColorsProvider`. El ícono de marca se usa en desbloquear, crear bóveda y "Acerca de".
+  - **Escritorio:** `writeThemedAppIcon` genera `.ico` (Windows, varios tamaños PNG) o `.png` (Linux) en la carpeta de soporte, y `DesktopShell` lo pone en la ventana, la barra de tareas y la bandeja al cambiar de tema.
+  - **Extensión:** `src/icon.ts` dibuja el mismo ícono en `OffscreenCanvas` y `chrome.action.setIcon` lo pone en la barra al abrir el popup. Queda hasta reiniciar el navegador; "Colores del sistema" usa Lineage.
+  - El ícono instalado en el sistema (acceso directo, lista de apps, Android) sigue siendo el de Lineage: solo cambia en tiempo de ejecución.
+- **Revisión visual con capturas reales** (test temporal que dibuja cada pantalla con las fuentes reales, en teléfono y escritorio y en varios temas). Arreglado:
+  - Tuteo en el aviso para activar la huella ("vas a poder"). El test de "usted" ahora detecta `vas|debes|necesitas|eliges`.
+  - Diálogos: máximo 480 px de ancho en el tema. En escritorio se estiraban a toda la ventana.
+  - Escritorio: el contenido va en una columna centrada de 880 px (`HomeShell`).
+  - Formulario de entrada:
+    - sin la tarjeta con título e ícono repetidos;
+    - alineado arriba, hasta 560 px;
+    - sitios, apps y campos a medida solo se muestran si tienen algo; si no, una fila "+ Sitio web / + App Android / + Campo".
+  - Sincronización alineada arriba; "Sincronizar ahora" como acción principal y "Desconectar" como botón de texto.
+- **Propuesto, no hecho:** vista de dos paneles en escritorio (lista + detalle) y revisar el borde de foco del botón "+" en escritorio.
+- Tests: `test/design/lockspire_icon_test.dart` (3), extensión 10. Suite: 346.
+
 ### Revisión final pre-MVP (2026-09-28) — `docs/reviews/2026-09-28-revision-final-pre-mvp.md`
 
 - **Corregido en la revisión:**

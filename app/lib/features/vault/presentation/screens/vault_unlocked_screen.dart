@@ -132,7 +132,7 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
       builder: (dialogContext) => AlertDialog(
         title: Text('¿Activar desbloqueo con $methodName?'),
         content: Text(
-          'En vez de escribir la contraseña maestra cada vez, vas a poder '
+          'En vez de escribir la contraseña maestra cada vez, podrá '
           'desbloquear la bóveda con $methodName. Puede cambiarlo después '
           'desde "Seguridad".',
         ),

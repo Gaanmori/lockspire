@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../design/lockspire_colors.dart';
+import '../../../../design/lockspire_icon.dart';
 import '../../../../design/lockspire_spacing.dart';
 
 const _sourceUrl = 'https://github.com/Gaanmori/lockspire';
@@ -40,11 +40,7 @@ class AboutScreen extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(LockspireSpacing.lg),
             children: [
-              Icon(
-                Icons.lock_outline,
-                size: 56,
-                color: context.palette.accentDefault,
-              ),
+              const Center(child: LockspireIcon(size: 88)),
               const SizedBox(height: LockspireSpacing.sm),
               Text(
                 'Lockspire',

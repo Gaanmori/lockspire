@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Lockspire
 
+import { setToolbarIcon } from './icon.ts';
 import type { AppTheme } from './protocol.ts';
 
 const STORAGE_KEY = 'lockspire.theme';
@@ -21,6 +22,8 @@ const prefersDark = () => window.matchMedia('(prefers-color-scheme: dark)').matc
 
 function apply(theme: AppTheme): void {
   document.documentElement.dataset['theme'] = themeName(theme, prefersDark());
+  // El ícono de la barra sigue al tema de la app, como en escritorio.
+  void setToolbarIcon(theme.family).catch(() => {});
 }
 
 /**

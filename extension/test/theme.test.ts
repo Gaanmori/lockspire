@@ -33,3 +33,10 @@ test('PONG con tema válido lo expone; desconocido o ausente se ignora', () => {
     assert.deepEqual(pong(bad), { type: 'PONG', locked: false }, JSON.stringify(bad));
   }
 });
+
+test('iconColorsFor: cada tema con su acento; sistema y desconocidos, Lineage', async () => {
+  const { iconColorsFor } = await import('../src/icon.ts');
+  assert.deepEqual(iconColorsFor('ubuntu'), ['#e95420', '#fafafa', '#c7461a']);
+  assert.deepEqual(iconColorsFor('sistema'), iconColorsFor('lineage'));
+  assert.deepEqual(iconColorsFor('neon'), iconColorsFor('lineage'));
+});

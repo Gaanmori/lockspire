@@ -312,7 +312,8 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Sincronización')),
-      body: Center(
+      body: Align(
+        alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: SingleChildScrollView(
@@ -356,7 +357,8 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                     data: _buildWebDavForm,
                   ),
                 const SizedBox(height: LockspireSpacing.md),
-                OutlinedButton(
+                // Acción principal de la pantalla una vez conectada la nube.
+                FilledButton.tonal(
                   onPressed: !hasSomethingConfigured || syncState.isLoading
                       ? null
                       : _syncNow,
