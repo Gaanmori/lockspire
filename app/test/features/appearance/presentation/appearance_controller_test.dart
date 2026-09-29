@@ -7,12 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/design/lockspire_colors.dart';
 import 'package:lockspire/features/appearance/domain/appearance_preference.dart';
 import 'package:lockspire/features/appearance/domain/ports/appearance_preferences_port.dart';
-import 'package:lockspire/features/appearance/domain/ports/system_accent_color_port.dart';
 import 'package:lockspire/features/appearance/presentation/appearance_controller.dart';
 import 'package:lockspire/features/appearance/presentation/appearance_theme.dart';
 import 'package:lockspire/features/appearance/presentation/providers/app_themes_provider.dart';
 import 'package:lockspire/features/appearance/presentation/providers/appearance_preferences_port_provider.dart';
 import 'package:lockspire/features/appearance/presentation/providers/system_accent_color_provider.dart';
+
+import '../../../support/fakes/fake_system_accent.dart';
 
 class _FakePort implements AppearancePreferencesPort {
   AppearancePreference stored;
@@ -28,19 +29,13 @@ class _FakePort implements AppearancePreferencesPort {
   }
 }
 
-class _FakeAccent implements SystemAccentColorPort {
-  final int? argb;
-  const _FakeAccent(this.argb);
-
-  @override
-  Future<int?> accentColorArgb() async => argb;
-}
-
 ProviderContainer _container(_FakePort port, {int? systemArgb}) {
   final container = ProviderContainer(
     overrides: [
       appearancePreferencesPortProvider.overrideWithValue(port),
-      systemAccentColorPortProvider.overrideWithValue(_FakeAccent(systemArgb)),
+      systemAccentColorPortProvider.overrideWithValue(
+        FakeSystemAccent(systemArgb),
+      ),
     ],
   );
   addTearDown(container.dispose);

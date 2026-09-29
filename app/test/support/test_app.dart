@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/app_composition.dart';
 import 'package:lockspire/features/about/presentation/providers/about_providers.dart';
 import 'package:lockspire/features/appearance/presentation/launcher_icon_sync.dart';
+import 'package:lockspire/features/appearance/presentation/providers/system_accent_color_provider.dart';
 import 'package:lockspire/features/autofill/presentation/providers/system_autofill_settings_port_provider.dart';
 import 'package:lockspire/features/clipboard/presentation/providers/clipboard_guard_provider.dart';
 import 'package:lockspire/features/desktop/presentation/providers/desktop_ports_providers.dart';
@@ -34,6 +35,7 @@ import 'fakes/fake_about_ports.dart';
 import 'fakes/fake_android_ports.dart';
 import 'fakes/fake_desktop_ports.dart';
 import 'fakes/fake_file_transfer.dart';
+import 'fakes/fake_system_accent.dart';
 import 'fakes/fake_secure_clipboard.dart';
 import 'fakes/sync_fakes.dart';
 import 'fakes/vault_fakes.dart';
@@ -166,6 +168,9 @@ class TestApp {
     trayPortProvider.overrideWithValue(tray),
     themedIconFilePortProvider.overrideWithValue(FakeThemedIconFile()),
     osSessionEventsPortProvider.overrideWithValue(osSession),
+    // El plugin de color del sistema no responde en tests: sin color de
+    // acento, "Colores del sistema" usa Lineage.
+    systemAccentColorPortProvider.overrideWithValue(const FakeSystemAccent()),
     systemAutofillSettingsPortProvider.overrideWithValue(autofillSettings),
     launcherIconPortProvider.overrideWithValue(launcherIcon),
     installedAppIconPortProvider.overrideWithValue(appIcons),
@@ -197,13 +202,12 @@ class TestApp {
     // El mismo arranque que main(): tema, tiempo de bloqueo y servicios en
     // segundo plano (bloqueo automático, sync, íconos, lanzador).
     final container = ProviderContainer(overrides: overrides);
-    addTearDown(container.dispose);
     await startApp(container, isAutofill: false);
 
     await tester.pumpWidget(
       // Key nueva en cada arranque: si no, Flutter reusa el scope anterior y
       // "volver a abrir la app" no reinicia nada.
-      UncontrolledProviderScope(
+      _OwnedContainerScope(
         key: UniqueKey(),
         container: container,
         child: const MyApp(),
@@ -211,6 +215,37 @@ class TestApp {
     );
     await tester.pumpAndSettle();
   }
+}
+
+/// Como `ProviderScope`, descarta su contenedor al desmontarse: "cerrar la
+/// app" (montar otra, o terminar el test) apaga sus servicios y
+/// temporizadores, como al cerrar el proceso.
+class _OwnedContainerScope extends StatefulWidget {
+  final ProviderContainer container;
+  final Widget child;
+
+  const _OwnedContainerScope({
+    super.key,
+    required this.container,
+    required this.child,
+  });
+
+  @override
+  State<_OwnedContainerScope> createState() => _OwnedContainerScopeState();
+}
+
+class _OwnedContainerScopeState extends State<_OwnedContainerScope> {
+  @override
+  void dispose() {
+    widget.container.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => UncontrolledProviderScope(
+    container: widget.container,
+    child: widget.child,
+  );
 }
 
 /// Monta [screen] sola, con los textos en [locale] y el tamaño de un
