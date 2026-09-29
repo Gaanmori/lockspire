@@ -141,8 +141,17 @@ class FakeBiometricAuthPort implements BiometricAuthPort {
     _storedKey = key;
   }
 
+  /// Con valor, se comporta como el sistema real: la huella aceptada
+  /// devuelve la clave guardada y la rechazada, `null`. Sin valor, devuelve
+  /// [nextReadKeyResult].
+  bool? fingerAccepted;
+
   @override
-  Future<Uint8List?> readKey() async => nextReadKeyResult;
+  Future<Uint8List?> readKey() async => switch (fingerAccepted) {
+    true => _storedKey,
+    false => null,
+    null => nextReadKeyResult,
+  };
 
   @override
   Future<void> deleteKey() async {
