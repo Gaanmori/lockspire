@@ -37,10 +37,9 @@ class WindowsBiometricAuthAdapter implements BiometricAuthPort {
 
   WindowsBiometricAuthAdapter({
     required this._storage,
-    required String promptReason,
+    required this._promptReason,
     LocalAuthentication? localAuth,
-  }) : _promptReason = promptReason,
-       _localAuth = localAuth ?? LocalAuthentication();
+  }) : _localAuth = localAuth ?? LocalAuthentication();
 
   @override
   Future<BiometricAvailability> checkAvailability() async {
