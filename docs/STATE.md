@@ -1,6 +1,6 @@
 # Estado actual — Lockspire
 
-Última actualización: 2026-09-28 (ADR 0024 — contraseña cambiada en otro dispositivo se pide al abrir; ADR 0023 — nube de la bóveda y mudanza, implementado y con tests, pendiente de prueba manual entre Windows y el Redmi). Anterior: 2026-09-24 (soporte Linux; ADR 0012 — escritorio en la bandeja del sistema, bloqueo por inactividad/sesión del SO; ADR 0013 — native host en Dart + canal IPC + extensión Chrome/Edge v1. Todo implementado y con tests, **pendiente de verificación manual** — ver la entrada "Linux, bandeja y extensión de navegador" en Completado y el punch list en Pendiente). Anterior: 2026-09-12 (ADR 0010 — desbloqueo biométrico, confirmado en Android y Windows; OneDrive implementado y verificado como tercer y último proveedor de sync — Dropbox descartado —, con un bug de navegación real encontrado y corregido; ADR 0011 — autofill nativo en Android, Credential Manager + `AutofillService` legado, núcleo funcionando en el Redmi tras 4 bugs reales encontrados y corregidos en verificación manual, vinculación automática app↔entrada pedida por el usuario para la próxima sesión — ver Completado/Pendiente)
+Última actualización: 2026-09-29 (ADR 0032 — idiomas español e inglés, ver "Idiomas: español e inglés" en Pendiente; arreglo del cierre al arrancar en frío en release). Anterior: 2026-09-28 (ADR 0024 — contraseña cambiada en otro dispositivo se pide al abrir; ADR 0023 — nube de la bóveda y mudanza, implementado y con tests, pendiente de prueba manual entre Windows y el Redmi). Anterior: 2026-09-24 (soporte Linux; ADR 0012 — escritorio en la bandeja del sistema, bloqueo por inactividad/sesión del SO; ADR 0013 — native host en Dart + canal IPC + extensión Chrome/Edge v1. Todo implementado y con tests, **pendiente de verificación manual** — ver la entrada "Linux, bandeja y extensión de navegador" en Completado y el punch list en Pendiente). Anterior: 2026-09-12 (ADR 0010 — desbloqueo biométrico, confirmado en Android y Windows; OneDrive implementado y verificado como tercer y último proveedor de sync — Dropbox descartado —, con un bug de navegación real encontrado y corregido; ADR 0011 — autofill nativo en Android, Credential Manager + `AutofillService` legado, núcleo funcionando en el Redmi tras 4 bugs reales encontrados y corregidos en verificación manual, vinculación automática app↔entrada pedida por el usuario para la próxima sesión — ver Completado/Pendiente)
 
 ## Fase actual
 
@@ -687,6 +687,20 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Arreglo:** `freshActiveSyncPort` y `freshSyncPortFor` (en `active_sync_port_provider.dart`) invalidan y arman el puerto de nuevo antes de cada operación: sync, adoptar contraseña, consulta previa al desbloqueo, mudanza, restaurar, y la réplica del cambio de contraseña (envoltorio `_FreshRemoteReplica`).
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
+
+### Idiomas: español e inglés (ADR 0032, 2026-09-29)
+
+- **Hecho:**
+  - **Selector de idioma:** en Apariencia (Sistema / Español / English), guardado en `appearance.language`. En "Sistema" usa español si el sistema está en español, e inglés en cualquier otro caso.
+  - **App traducida entera**, unos 500 textos en `app/lib/l10n/app_es.arb` (plantilla) y `app_en.arb`. Incluye el autocompletado de Android, la bandeja (se rearma al cambiar el idioma) y el diálogo de huella o Windows Hello (`appL10nProvider`).
+  - **Errores con código:** `AppProblem(AppProblemCode)` en `lib/shared/domain/app_problem.dart` reemplaza los `StateError` y `FormatException` con texto en español. La presentación los traduce con `localizeError`. Tiempo de descifrado, método biométrico, formato de exportación y navegador salen como datos (`localized_values.dart`).
+  - **Extensión:** sigue el idioma de la app (campo `lang` en `PONG`) y tiene `_locales` para la tienda.
+  - **Generador "fácil de recordar":** siempre en inglés, a pedido del usuario. Se eliminaron `assets/wordlists/es.txt` y su licencia GFDL.
+  - **Registro "usted":** se corrigieron textos que no lo cumplían ("Verificate", "la tuya", "Actualiza", "le estarías", "Confirmá/volvé" y "tus credenciales" en la extensión) y concordancias de género ("Nueva documento", "Contraseña copiado").
+  - **Tests nuevos:** `test/l10n_test.dart` (mismas claves y parámetros en cada idioma) y `extension/test/i18n.test.ts`. `ui_register_test` detecta más formas.
+- **Pendiente:**
+  - **Etiquetas de importación y exportación:** siguen en español. Son datos ("Teléfono", "Sin título", etiquetas de tarjeta y documento en notas de CSV), y la importación las usa para reconocer los campos de vuelta. Ver ADR 0032.
+  - **Probar en el Redmi y en Windows:** cambiar el idioma y revisar las pantallas en inglés, el diálogo de huella y la extensión.
 
 ### Autor y copyright (2026-09-29)
 
