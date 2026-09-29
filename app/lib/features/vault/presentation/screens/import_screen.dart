@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lockspire/shared/platform_capabilities.dart';
 
 import '../../../../design/lockspire_colors.dart';
 import '../../../../design/lockspire_spacing.dart';
@@ -13,12 +11,14 @@ import '../../application/prepare_import_use_case.dart';
 import '../../application/vault_transfer_use_cases.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../../domain/vault_import_merge.dart';
+import '../providers/file_transfer_port_provider.dart';
 import '../providers/vault_import_source_provider.dart';
 import '../vault_entries_controller.dart';
 import '../vault_session_controller.dart';
 import '../vault_session_state.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
+import 'package:lockspire/shared/presentation/navigation.dart';
 
 /// Importar desde SafeInCloud (XML), un CSV (Bitwarden, Chrome, Firefox,
 /// KeePassXC…), el JSON de Bitwarden o un respaldo de Lockspire (ADR 0027).
@@ -73,24 +73,17 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     });
 
     try {
-      // Android no conoce `.lockspire` y el filtro por extensión puede
-      // fallar: ahí se elige cualquier archivo y se valida después.
-      final isAndroid = ref.read(platformCapabilitiesProvider).isAndroid;
-      final picked = await FilePicker.pickFile(
-        type: isAndroid ? FileType.any : FileType.custom,
-        allowedExtensions: isAndroid ? null : _extensions,
-      );
+      final picked = await ref
+          .read(fileTransferPortProvider)
+          .pickFile(extensions: _extensions);
       if (picked == null) {
         setState(() => _busy = false);
         return;
       }
-      // readAsBytes() funciona igual haya un path local o no — no se crea
-      // ninguna copia propia del archivo (docs/THREAT_MODEL.md, actor #8).
-      final bytes = await picked.readAsBytes();
       final session = ref.read(vaultSessionControllerProvider).value;
       final prepared =
           await (await ref.read(prepareImportUseCaseProvider.future)).call(
-            bytes: bytes,
+            bytes: picked.bytes,
             fileName: picked.name,
             existing: session is VaultSessionUnlocked
                 ? session.vault.entries
@@ -148,7 +141,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       if (!mounted) return;
       setState(() => _selection = null);
       await _showDoneDialog(selection.toAdd.length);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) popIfCurrent(context);
     } on VaultWriteConflictException catch (e) {
       setState(() {
         _busy = false;

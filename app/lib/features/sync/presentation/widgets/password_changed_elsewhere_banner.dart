@@ -11,6 +11,7 @@ import '../../application/sync_vault_use_case.dart';
 import '../sync_controller.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
+import 'package:lockspire/shared/presentation/navigation.dart';
 
 /// Aviso visible en toda la app cuando la última sync se rechazó porque la
 /// contraseña maestra se cambió en otro dispositivo (ADR 0018). Sin ese
@@ -73,7 +74,7 @@ class _AdoptRemotePasswordDialogState
       await ref
           .read(syncControllerProvider.notifier)
           .adoptRemoteMasterPassword(_controller.text);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) popIfCurrent(context);
     } on IncorrectMasterPasswordException {
       setState(() => _error = context.l10n.pwChangedNotNew);
     } catch (error) {

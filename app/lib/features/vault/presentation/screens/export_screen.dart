@@ -4,15 +4,14 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lockspire/shared/platform_capabilities.dart';
 
 import '../../../../design/lockspire_spacing.dart';
 import '../../application/vault_transfer_use_cases.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../../domain/ports/vault_exporter.dart';
+import '../providers/file_transfer_port_provider.dart';
 import '../providers/crypto_port_provider.dart';
 import '../providers/vault_import_source_provider.dart';
 import '../providers/vault_storage_port_provider.dart';
@@ -127,20 +126,20 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       }
 
       final today = DateTime.now().toIso8601String().substring(0, 10);
-      final isAndroid = ref.read(platformCapabilitiesProvider).isAndroid;
       if (!mounted) return;
-      final saved = await FilePicker.saveFile(
-        dialogTitle: context.l10n.exportSaveDialogTitle,
-        fileName: 'lockspire-$today.$extension',
-        bytes: bytes,
-        mimeType: mimeType,
-        type: isAndroid ? FileType.any : FileType.custom,
-        allowedExtensions: isAndroid ? null : [extension],
-      );
+      final saved = await ref
+          .read(fileTransferPortProvider)
+          .saveFile(
+            dialogTitle: context.l10n.exportSaveDialogTitle,
+            fileName: 'lockspire-$today.$extension',
+            bytes: bytes,
+            mimeType: mimeType,
+            extension: extension,
+          );
       _passwordController.clear();
       if (!mounted) return;
       setState(() => _busy = false);
-      if (saved == null) return;
+      if (!saved) return;
       await _showDone(session.vault.entries.where((e) => !e.deleted));
     } catch (e) {
       if (!mounted) return;

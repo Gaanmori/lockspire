@@ -2,11 +2,11 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_icon.dart';
 import '../../../../design/lockspire_spacing.dart';
+import '../providers/about_providers.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
 const _sourceUrl = 'https://github.com/Gaanmori/lockspire';
@@ -18,14 +18,11 @@ const _authorGitHub = 'https://github.com/Gaanmori';
 
 /// Versión, licencia y código fuente (ADR 0028). La AGPLv3 pide ofrecer el
 /// código fuente a quien usa el programa; esta pantalla lo enlaza.
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
 
-  Future<void> _open(BuildContext context, String url) async {
-    final ok = await launchUrl(
-      Uri.parse(url),
-      mode: LaunchMode.externalApplication,
-    );
+  Future<void> _open(BuildContext context, WidgetRef ref, String url) async {
+    final ok = await ref.read(externalLinkPortProvider).open(Uri.parse(url));
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.aboutOpenFailed(url))),
@@ -34,7 +31,7 @@ class AboutScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.aboutTitle)),
@@ -51,21 +48,13 @@ class AboutScreen extends StatelessWidget {
                 style: textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),
-              FutureBuilder<PackageInfo>(
-                future: PackageInfo.fromPlatform(),
-                builder: (context, snapshot) {
-                  final info = snapshot.data;
-                  return Text(
-                    info == null
-                        ? ''
-                        : context.l10n.aboutVersion(
-                            info.version,
-                            info.buildNumber,
-                          ),
-                    style: textTheme.bodySmall,
-                    textAlign: TextAlign.center,
-                  );
+              Text(
+                switch (ref.watch(appVersionProvider).value) {
+                  final v? => context.l10n.aboutVersion(v.version, v.build),
+                  null => '',
                 },
+                style: textTheme.bodySmall,
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: LockspireSpacing.md),
               Text(
@@ -105,12 +94,13 @@ class AboutScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           TextButton.icon(
-                            onPressed: () => _open(context, _authorLinkedIn),
+                            onPressed: () =>
+                                _open(context, ref, _authorLinkedIn),
                             icon: const Icon(Icons.work_outline),
                             label: const Text('LinkedIn'),
                           ),
                           TextButton.icon(
-                            onPressed: () => _open(context, _authorGitHub),
+                            onPressed: () => _open(context, ref, _authorGitHub),
                             icon: const Icon(Icons.code),
                             label: const Text('GitHub'),
                           ),
@@ -129,20 +119,20 @@ class AboutScreen extends StatelessWidget {
                       title: Text(context.l10n.aboutSourceCode),
                       subtitle: const Text('github.com/Gaanmori/lockspire'),
                       trailing: const Icon(Icons.open_in_new),
-                      onTap: () => _open(context, _sourceUrl),
+                      onTap: () => _open(context, ref, _sourceUrl),
                     ),
                     ListTile(
                       leading: const Icon(Icons.gavel_outlined),
                       title: Text(context.l10n.aboutLicense),
                       subtitle: Text(context.l10n.aboutLicenseName),
                       trailing: const Icon(Icons.open_in_new),
-                      onTap: () => _open(context, _licenseUrl),
+                      onTap: () => _open(context, ref, _licenseUrl),
                     ),
                     ListTile(
                       leading: const Icon(Icons.privacy_tip_outlined),
                       title: Text(context.l10n.aboutPrivacyPolicy),
                       trailing: const Icon(Icons.open_in_new),
-                      onTap: () => _open(context, _privacyUrl),
+                      onTap: () => _open(context, ref, _privacyUrl),
                     ),
                     ListTile(
                       leading: const Icon(Icons.library_books_outlined),

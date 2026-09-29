@@ -15,6 +15,20 @@ class AppRobot {
 
   AppRobot(this.tester);
 
+  /// Deja correr las animaciones hasta que se asienten, con un tope de
+  /// [limit] de reloj simulado. `pumpAndSettle` sigue avanzando mientras haya
+  /// una animación infinita (un indicador de carga detrás de un diálogo) y
+  /// podía adelantar minutos en silencio, hasta disparar el bloqueo
+  /// automático en medio del test.
+  Future<void> settle({Duration limit = const Duration(seconds: 3)}) async {
+    var elapsed = Duration.zero;
+    const step = Duration(milliseconds: 100);
+    do {
+      await tester.pump(step);
+      elapsed += step;
+    } while (tester.binding.hasScheduledFrame && elapsed < limit);
+  }
+
   /// Los textos visibles, para diagnosticar un test que falla.
   String visibleTexts() => tester
       .widgetList<Text>(find.byType(Text))
@@ -25,8 +39,10 @@ class AppRobot {
   Finder field(String label) => find.widgetWithText(TextField, label);
 
   Future<void> tapText(String text) async {
+    await tester.ensureVisible(find.text(text).last);
+    await tester.pump();
     await tester.tap(find.text(text).last);
-    await tester.pumpAndSettle();
+    await settle();
   }
 
   /// Espera a que aparezca [finder]: con la criptografía real (tests de
@@ -45,18 +61,40 @@ class AppRobot {
       }
       await tester.pump(const Duration(milliseconds: 100));
     }
-    await tester.pumpAndSettle();
+    await settle();
   }
 
   /// El "atrás" del sistema (botón o gesto de Android).
   Future<void> systemBack() async {
     await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
+    await settle();
+  }
+
+  /// Desplaza la lista principal hasta que [finder] exista: las listas se
+  /// construyen por partes y lo que está más abajo todavía no existe.
+  Future<void> reveal(Finder finder) async {
+    if (finder.evaluate().isNotEmpty) return;
+    await tester.scrollUntilVisible(
+      finder,
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await settle();
+  }
+
+  /// Toca el botón principal con [label], llevándolo antes a la vista.
+  Future<void> tapButton(String label) async {
+    await reveal(find.widgetWithText(FilledButton, label));
+    final button = find.widgetWithText(FilledButton, label).last;
+    await tester.ensureVisible(button);
+    await settle();
+    await tester.tap(button);
+    await settle();
   }
 
   Future<void> tapTooltip(String tooltip) async {
     await tester.tap(find.byTooltip(tooltip).first);
-    await tester.pumpAndSettle();
+    await settle();
   }
 
   /// Toca el campo y escribe [text], como el usuario. Tocar primero importa
@@ -64,6 +102,7 @@ class AppRobot {
   /// un momento (p. ej. mientras se desbloqueaba) pierde la conexión con el
   /// método de entrada, y escribir sin enfocarlo de nuevo no llegaba.
   Future<void> type(String label, String text) async {
+    await reveal(field(label));
     await tester.ensureVisible(field(label));
     await tester.tap(field(label));
     await tester.pump();
@@ -77,13 +116,13 @@ class AppRobot {
     await type('Contraseña maestra', password);
     await type('Confirmar contraseña', password);
     await tester.tap(find.widgetWithText(FilledButton, 'Crear bóveda'));
-    await tester.pumpAndSettle();
+    await settle();
   }
 
   Future<void> unlock(String password) async {
     await type('Contraseña maestra', password);
     await tester.tap(find.widgetWithText(FilledButton, 'Desbloquear'));
-    await tester.pumpAndSettle();
+    await settle();
   }
 
   /// En el teléfono "Bloquear" está en la barra de la pestaña Bóveda; en
@@ -118,7 +157,7 @@ class AppRobot {
   Future<void> save() async {
     await tester.ensureVisible(find.widgetWithText(FilledButton, 'Guardar'));
     await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
-    await tester.pumpAndSettle();
+    await settle();
   }
 
   Future<void> openEntry(String title) => tapText(title);
@@ -128,7 +167,7 @@ class AppRobot {
       find.widgetWithText(TextField, 'Buscar por título, usuario o sitio'),
       query,
     );
-    await tester.pumpAndSettle();
+    await settle();
   }
 
   // ── Sincronización ───────────────────────────────────────────────────
@@ -144,7 +183,7 @@ class AppRobot {
     await type('Usuario', user);
     await type('Contraseña', password);
     await tester.tap(find.widgetWithText(FilledButton, 'Guardar'));
-    await tester.pumpAndSettle();
+    await settle();
   }
 
   Future<void> syncNow() async {

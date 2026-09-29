@@ -37,7 +37,10 @@ void main() {
 
   setUp(() {
     dir = Directory.systemTemp.createTempSync('lockspire_e2e_');
-    FlutterSecureStorage.setMockInitialValues({});
+    // Idioma de la app fijado en español (preferencia de Apariencia, ADR
+    // 0032): el robot usa los textos en español y el sistema de la CI está
+    // en inglés.
+    FlutterSecureStorage.setMockInitialValues({'appearance.language': 'es'});
   });
 
   tearDown(() => dir.deleteSync(recursive: true));

@@ -4,7 +4,6 @@
 import 'package:flutter/material.dart';
 import '../../appearance/presentation/providers/app_locale_provider.dart';
 import '../../../l10n/l10n.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../design/lockspire_icon.dart';
@@ -14,6 +13,7 @@ import '../../appearance/presentation/providers/app_themes_provider.dart';
 import '../../vault/presentation/screens/unlock_vault_screen.dart';
 import '../../vault/presentation/vault_session_controller.dart';
 import '../../vault/presentation/vault_session_state.dart';
+import 'providers/autofill_host_port_provider.dart';
 import 'screens/autofill_screen.dart';
 import 'package:lockspire/l10n/localized_error.dart';
 
@@ -82,11 +82,11 @@ class _AutofillGate extends ConsumerWidget {
   }
 }
 
-class _NoVaultView extends StatelessWidget {
+class _NoVaultView extends ConsumerWidget {
   const _NoVaultView();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: Center(
         child: Padding(
@@ -97,9 +97,7 @@ class _NoVaultView extends StatelessWidget {
               Text(context.l10n.autofillNoVault, textAlign: TextAlign.center),
               const SizedBox(height: LockspireSpacing.lg),
               FilledButton(
-                onPressed: () => const MethodChannel(
-                  'com.lockspire.lockspire/autofill',
-                ).invokeMethod('cancel'),
+                onPressed: () => ref.read(autofillHostPortProvider).cancel(),
                 child: Text(context.l10n.commonClose),
               ),
             ],

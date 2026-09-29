@@ -11,6 +11,7 @@ import '../../application/save_vault_use_case.dart';
 import '../vault_session_controller.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
+import 'package:lockspire/shared/presentation/navigation.dart';
 
 /// Cambiar la contraseña maestra (ADR 0018). Pide la actual aunque la
 /// bóveda esté desbloqueada.
@@ -60,7 +61,7 @@ class _ChangeMasterPasswordScreenState
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(context.l10n.changePwDone)));
-      Navigator.of(context).pop();
+      popIfCurrent(context);
     } on IncorrectMasterPasswordException {
       setState(() => _currentPasswordError = context.l10n.changePwCurrentWrong);
     } on VaultWriteConflictException {

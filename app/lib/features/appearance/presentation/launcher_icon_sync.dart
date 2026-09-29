@@ -3,16 +3,18 @@
 
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:lockspire/shared/platform_capabilities.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/appearance_preference.dart';
+import '../domain/ports/launcher_icon_port.dart';
+import '../infrastructure/method_channel_launcher_icon.dart';
 import 'appearance_controller.dart';
 
 part 'launcher_icon_sync.g.dart';
 
-const _channel = MethodChannel('com.lockspire.lockspire/launcher_icon');
+@Riverpod(keepAlive: true)
+LauncherIconPort launcherIconPort(Ref ref) => const MethodChannelLauncherIcon();
 
 /// En Android, el ícono de Lockspire en el lanzador sigue al tema elegido
 /// (ADR 0031): Kotlin activa el alias con el ícono de ese tema. Se
@@ -27,10 +29,6 @@ void launcherIconSync(Ref ref) {
   ) {
     final family = next.value?.family;
     if (family == null) return;
-    unawaited(
-      _channel
-          .invokeMethod<bool>('setTheme', {'theme': family.name})
-          .catchError((_) => false),
-    );
+    unawaited(ref.read(launcherIconPortProvider).useThemeIcon(family));
   }, fireImmediately: true);
 }

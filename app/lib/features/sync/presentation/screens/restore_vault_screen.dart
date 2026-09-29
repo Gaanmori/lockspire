@@ -15,6 +15,7 @@ import '../restore_vault_controller.dart';
 import 'sync_settings_screen.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
+import 'package:lockspire/shared/presentation/navigation.dart';
 
 enum _RestoreStep {
   configureProvider,
@@ -126,7 +127,7 @@ class _RestoreVaultScreenState extends ConsumerState<RestoreVaultScreen> {
     // falló (contraseña incorrecta), el error queda en
     // vaultAuthAttemptProvider y esta pantalla sigue montada.
     if (mounted && !ref.read(vaultAuthAttemptProvider).hasError) {
-      Navigator.of(context).pop();
+      popIfCurrent(context);
     }
   }
 

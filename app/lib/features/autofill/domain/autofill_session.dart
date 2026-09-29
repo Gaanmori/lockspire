@@ -21,15 +21,6 @@ class AutofillSessionItem {
     required this.sites,
     required this.apps,
   });
-
-  Map<String, Object> toChannel() => {
-    'title': title,
-    'username': username,
-    'password': password,
-    'hosts': [for (final s in sites) s.host],
-    'httpsOnly': [for (final s in sites) s.httpsOnly],
-    'apps': apps,
-  };
 }
 
 /// Lo mínimo que el servicio nativo necesita: solo contraseñas con algo

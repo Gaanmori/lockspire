@@ -1,25 +1,23 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
-import 'package:flutter/services.dart';
+import 'dart:typed_data';
+
 import 'package:lockspire/shared/platform_capabilities.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../domain/ports/installed_app_icon_port.dart';
+import '../../infrastructure/method_channel_app_icons.dart';
+
 part 'installed_app_icon_provider.g.dart';
 
-const _channel = MethodChannel('com.lockspire.lockspire/app_icons');
+@Riverpod(keepAlive: true)
+InstalledAppIconPort installedAppIconPort(Ref ref) =>
+    const MethodChannelAppIcons();
 
-/// Ícono de una app Android instalada (ADR 0029), leído del sistema sin
-/// red. `null` fuera de Android o si la app no está instalada. Se guarda
-/// en memoria mientras la app está abierta.
+/// Ícono de la app instalada [packageName]; `null` fuera de Android.
 @Riverpod(keepAlive: true)
 Future<Uint8List?> installedAppIcon(Ref ref, String packageName) async {
   if (!ref.watch(platformCapabilitiesProvider).isAndroid) return null;
-  try {
-    return await _channel.invokeMethod<Uint8List>('getAppIcon', {
-      'package': packageName,
-    });
-  } catch (_) {
-    return null;
-  }
+  return ref.watch(installedAppIconPortProvider).iconFor(packageName);
 }

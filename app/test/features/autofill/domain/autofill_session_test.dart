@@ -42,12 +42,12 @@ void main() {
           'url_4': 'https://interno.test:8443',
         }),
       ]).single;
-      expect(item.toChannel()['hosts'], [
+      expect(item.sites.map((s) => s.host), [
         'www.ejemplo.test',
         'viejo.test',
         'sinesquema.test',
       ]);
-      expect(item.toChannel()['httpsOnly'], [true, false, true]);
+      expect(item.sites.map((s) => s.httpsOnly), [true, false, true]);
     });
 
     test('un sitio que no es web no entra', () {

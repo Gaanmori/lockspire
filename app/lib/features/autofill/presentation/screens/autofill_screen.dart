@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../design/lockspire_spacing.dart';
@@ -13,11 +12,11 @@ import '../../../browser_bridge/domain/origin_matcher.dart';
 import '../../../vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
 import '../../domain/autofill_session.dart';
 import '../../domain/autofill_web_origin.dart';
+import '../../domain/ports/autofill_host_port.dart';
+import '../providers/autofill_host_port_provider.dart';
 import '../widgets/get_credential_view.dart';
 import '../widgets/create_credential_view.dart';
 import 'package:lockspire/l10n/l10n.dart';
-
-const _channel = MethodChannel('com.lockspire.lockspire/autofill');
 
 /// Pantalla mostrada dentro de `AutofillActivity` (ADR 0011) una vez que
 /// la bóveda ya está desbloqueada — la parte nativa (Kotlin) nunca ve
@@ -32,12 +31,12 @@ class AutofillScreen extends ConsumerStatefulWidget {
 }
 
 class _AutofillScreenState extends ConsumerState<AutofillScreen> {
-  Future<Map<String, dynamic>>? _requestFuture;
+  late final AutofillHostPort _host = ref.read(autofillHostPortProvider);
+  late final Future<AutofillRequest> _request = _host.request();
 
   @override
   void initState() {
     super.initState();
-    _requestFuture = _fetchRequest();
     _startNativeSession();
   }
 
@@ -48,31 +47,20 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
   Future<void> _startNativeSession() async {
     try {
       final timeout = await ref.read(autoLockTimeoutSettingProvider.future);
-      await _channel.invokeMethod('startSession', {
-        'ttlMillis': timeout.duration.inMilliseconds,
-        'trustedBrowsers': trustedBrowserPackages.toList(),
-        'items': [
-          for (final item in autofillSessionItems(widget.vault.entries))
-            item.toChannel(),
-        ],
-      });
+      await _host.startSession(
+        ttl: timeout.duration,
+        trustedBrowsers: trustedBrowserPackages.toSet(),
+        items: autofillSessionItems(widget.vault.entries).toList(),
+      );
     } catch (_) {}
   }
 
-  Future<Map<String, dynamic>> _fetchRequest() async {
-    final result = await _channel.invokeMethod<Map<Object?, Object?>>(
-      'getRequest',
-    );
-    return (result ?? const {}).map((key, value) => MapEntry('$key', value));
-  }
+  Future<void> _cancel() => _host.cancel();
 
-  Future<void> _cancel() => _channel.invokeMethod('cancel');
-
-  Future<void> _submitGet(VaultEntry entry) =>
-      _channel.invokeMethod('submitGet', {
-        'username': entry.fields['username'] ?? '',
-        'password': entry.fields['password'] ?? '',
-      });
+  Future<void> _submitGet(VaultEntry entry) => _host.fill(
+    username: entry.fields['username'] ?? '',
+    password: entry.fields['password'] ?? '',
+  );
 
   /// "Rellenar y recordar este sitio" (ADR 0020): la entrada pasa a
   /// coincidir sola la próxima vez, igual que al vincular desde la
@@ -106,7 +94,7 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
             if (origin != null) 'url': linkedUrlForOrigin(origin),
           },
         );
-    await _channel.invokeMethod('submitCreate');
+    await _host.confirmSaved();
   }
 
   @override
@@ -117,34 +105,36 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
         leading: IconButton(icon: const Icon(Icons.close), onPressed: _cancel),
       ),
       body: SafeArea(
-        child: FutureBuilder<Map<String, dynamic>>(
-          future: _requestFuture,
+        child: FutureBuilder<AutofillRequest>(
+          future: _request,
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
-            final request = snapshot.data!;
-            final origin = webOriginFor(
-              webDomain: request['webDomain'] as String?,
-              webScheme: request['webScheme'] as String?,
-            );
-            return switch (request['mode']) {
-              'get' => GetCredentialView(
-                vault: widget.vault,
-                packageName: request['packageName'] as String? ?? '',
-                origin: origin,
-                onFill: _submitGet,
-                onLinkAndFill: _linkSiteAndSubmit,
-              ),
-              'create' => CreateCredentialView(
-                packageName: request['packageName'] as String? ?? '',
-                origin: origin,
-                username: request['username'] as String? ?? '',
-                password: request['password'] as String? ?? '',
-                onSave: _submitCreate,
-                onDismiss: _cancel,
-              ),
-              _ => Center(
+            return switch (snapshot.data!) {
+              AutofillFillRequest(:final packageName, :final origin) =>
+                GetCredentialView(
+                  vault: widget.vault,
+                  packageName: packageName,
+                  origin: origin,
+                  onFill: _submitGet,
+                  onLinkAndFill: _linkSiteAndSubmit,
+                ),
+              AutofillSaveRequest(
+                :final packageName,
+                :final origin,
+                :final username,
+                :final password,
+              ) =>
+                CreateCredentialView(
+                  packageName: packageName,
+                  origin: origin,
+                  username: username,
+                  password: password,
+                  onSave: _submitCreate,
+                  onDismiss: _cancel,
+                ),
+              AutofillUnknownRequest() => Center(
                 child: Padding(
                   padding: const EdgeInsets.all(LockspireSpacing.lg),
                   child: Text(

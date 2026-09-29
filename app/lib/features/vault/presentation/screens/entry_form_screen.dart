@@ -21,6 +21,7 @@ import '../widgets/password_generator_panel.dart';
 import '../widgets/password_strength_indicator.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
+import 'package:lockspire/shared/presentation/navigation.dart';
 
 /// Formulario único de crear/editar una entrada — sin vista de detalle de
 /// solo lectura separada (ver docs/STATE.md — Fase 5). [entry] nulo =
@@ -188,7 +189,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
           fields: fields,
         );
       }
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) popIfCurrent(context);
     } on VaultWriteConflictException catch (e) {
       if (mounted) {
         setState(() {
@@ -233,7 +234,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     await ref
         .read(vaultEntriesControllerProvider)
         .deleteEntry(widget.entry!.id);
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) popIfCurrent(context);
   }
 
   /// Regenera la contraseña con [_generation] (ver

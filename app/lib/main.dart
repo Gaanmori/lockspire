@@ -13,20 +13,13 @@ import 'app_composition.dart';
 import 'app_shell.dart';
 import 'design/lockspire_icon.dart';
 import 'features/appearance/presentation/providers/app_icon_colors_provider.dart';
-import 'features/appearance/presentation/appearance_controller.dart';
-import 'features/appearance/presentation/launcher_icon_sync.dart';
 import 'features/appearance/presentation/providers/app_themes_provider.dart';
-import 'features/appearance/presentation/providers/system_accent_color_provider.dart';
 import 'features/autofill/presentation/autofill_app.dart';
 import 'features/browser_bridge/infrastructure/single_instance.dart';
 import 'features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
 import 'features/browser_bridge/presentation/widgets/link_request_listener.dart';
 import 'features/desktop/presentation/widgets/desktop_shell.dart';
-import 'features/sync/presentation/auto_sync_controller.dart';
 import 'features/sync/presentation/screens/restore_vault_screen.dart';
-import 'features/vault/presentation/auto_lock_controller.dart';
-import 'features/vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
-import 'features/vault/presentation/site_icons_controller.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
 import 'features/vault/presentation/vault_session_controller.dart';
 import 'features/vault/presentation/vault_session_state.dart';
@@ -47,28 +40,7 @@ Future<void> main() async {
       WidgetsBinding.instance.platformDispatcher.defaultRouteName ==
       '/autofill';
   final container = ProviderContainer(overrides: appOverrides());
-  // El tema elegido se carga antes del primer frame: si no, la app
-  // mostraría un instante el tema por defecto y luego cambiaría.
-  await container.read(appearanceControllerProvider.future);
-  await container.read(systemAccentColorProvider.future);
-  // Igual con el tiempo de bloqueo (ADR 0016): el primer desbloqueo ya
-  // usa el valor guardado.
-  await container.read(autoLockTimeoutSettingProvider.future);
-  // El bloqueo automático escucha la sesión desde el arranque, también en
-  // la pantalla de autocompletado de Android (hallazgo A1).
-  container.read(autoLockControllerProvider);
-  // La sync automática escucha los eventos de la bóveda (hallazgo A3).
-  // No en el autocompletado de Android: rellenar no necesita la nube, y
-  // conectar Google Drive ahí muestra la ventana "Iniciando sesión" encima
-  // de la app que pide (ADR 0026). Lo guardado desde ahí se sube en la
-  // próxima sync de la app.
-  if (!isAutofill) {
-    container.read(autoSyncControllerProvider);
-    // Íconos de los sitios, si están activados (ADR 0029).
-    container.read(siteIconsControllerProvider);
-    // Ícono del lanzador de Android según el tema (ADR 0031).
-    container.read(launcherIconSyncProvider);
-  }
+  await startApp(container, isAutofill: isAutofill);
   if (Platform.isWindows || Platform.isLinux) {
     // DesktopShell (ADR 0012) usa window_manager, que exige inicializarse
     // antes de runApp().
@@ -92,16 +64,23 @@ Future<void> main() async {
   );
 }
 
-/// Dueño único del `Navigator` de la app — lo necesita [MyApp] para poder
-/// descartar pantallas empujadas (Sync, Seguridad, Importar, editar una
-/// entrada) cuando la sesión se bloquea, ver el comentario en `build()`.
-final navigatorKey = GlobalKey<NavigatorState>();
-
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  /// Dueño del `Navigator` de la app: hace falta para descartar pantallas
+  /// empujadas (Sync, Seguridad, Importar, editar una entrada) cuando la
+  /// sesión se bloquea, ver el comentario en `build()`. Es de esta instancia
+  /// y no global: una `GlobalKey` global hacía que otro `MyApp` heredara la
+  /// pila de pantallas del anterior.
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  Widget build(BuildContext context) {
     // VaultGateScreen (home) es un swap condicional sin Navigator propio
     // — reacciona solo a vaultSessionControllerProvider. Pero pantallas
     // como SyncSettingsScreen se abren con Navigator.push por encima de
@@ -124,7 +103,7 @@ class MyApp extends ConsumerWidget {
       final wasUnlocked = previous?.value is VaultSessionUnlocked;
       final isUnlocked = next.value is VaultSessionUnlocked;
       if (wasUnlocked && !isUnlocked) {
-        navigatorKey.currentState?.popUntil((route) => route.isFirst);
+        _navigatorKey.currentState?.popUntil((route) => route.isFirst);
       }
     });
 
@@ -133,7 +112,7 @@ class MyApp extends ConsumerWidget {
     return LockspireBrand(
       colors: ref.watch(appIconColorsProvider),
       child: MaterialApp(
-        navigatorKey: navigatorKey,
+        navigatorKey: _navigatorKey,
         title: 'Lockspire',
         locale: ref.watch(appLocaleProvider),
         supportedLocales: AppLocalizations.supportedLocales,

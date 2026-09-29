@@ -8,14 +8,21 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/app_composition.dart';
+import 'package:lockspire/features/about/presentation/providers/about_providers.dart';
+import 'package:lockspire/features/appearance/presentation/launcher_icon_sync.dart';
+import 'package:lockspire/features/autofill/presentation/providers/system_autofill_settings_port_provider.dart';
 import 'package:lockspire/features/clipboard/presentation/providers/clipboard_guard_provider.dart';
+import 'package:lockspire/features/desktop/presentation/providers/desktop_ports_providers.dart';
 import 'package:lockspire/features/desktop/presentation/providers/is_desktop_shell_provider.dart';
+import 'package:lockspire/features/desktop/presentation/providers/os_session_events_port_provider.dart';
 import 'package:lockspire/features/sync/domain/ports/active_sync_provider_port.dart';
 import 'package:lockspire/features/sync/presentation/providers/active_sync_port_provider.dart';
 import 'package:lockspire/features/sync/presentation/providers/sync_ancestor_storage_port_provider.dart';
 import 'package:lockspire/features/vault/domain/ports/biometric_auth_port.dart';
 import 'package:lockspire/features/vault/presentation/providers/biometric_auth_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
+import 'package:lockspire/features/vault/presentation/providers/file_transfer_port_provider.dart';
+import 'package:lockspire/features/vault/presentation/providers/installed_app_icon_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/master_password_reminder_settings_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/password_unlock_history_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
@@ -23,6 +30,10 @@ import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/main.dart';
 import 'package:lockspire/shared/platform_capabilities.dart';
 
+import 'fakes/fake_about_ports.dart';
+import 'fakes/fake_android_ports.dart';
+import 'fakes/fake_desktop_ports.dart';
+import 'fakes/fake_file_transfer.dart';
 import 'fakes/fake_secure_clipboard.dart';
 import 'fakes/sync_fakes.dart';
 import 'fakes/vault_fakes.dart';
@@ -35,6 +46,20 @@ const phonePixelRatio = 2.625;
 
 /// Ventana de escritorio: riel lateral y columna central.
 const desktopSize = Size(1280, 800);
+
+/// Android: autocompletado, Material You e ícono del lanzador.
+const androidPlatform = PlatformCapabilities(
+  isDesktop: false,
+  isAndroid: true,
+  biometricMethod: BiometricMethod.fingerprint,
+);
+
+/// Escritorio con bandeja (ADR 0012), sin canal con la extensión.
+const desktopPlatform = PlatformCapabilities(
+  isDesktop: true,
+  isAndroid: false,
+  biometricMethod: BiometricMethod.windowsHello,
+);
 
 /// Una plataforma sin canales nativos: ni Android (autocompletado, ícono
 /// del lanzador) ni escritorio (bandeja, extensión).
@@ -57,7 +82,10 @@ const plainPlatform = PlatformCapabilities(
 /// - [cloud]: el transporte de WebDAV va a una nube en memoria, compartible
 ///   entre varios [TestApp] para simular varios dispositivos. WebDAV se
 ///   configura desde la pantalla, como lo haría el usuario.
-/// - Sin bandeja, sin canal con la extensión, sin biometría disponible.
+/// - [files]: el selector de archivos del sistema, en memoria; [links]: los
+///   enlaces que se abrirían en el navegador.
+/// - Sin canal con la extensión ni biometría disponible. La bandeja y la
+///   ventana de escritorio (ADR 0012) solo con [desktop], en memoria.
 ///
 /// Montar otro [TestApp] con el mismo [storage] simula cerrar la app y
 /// volver a abrirla.
@@ -68,6 +96,22 @@ class TestApp {
   final FakeBiometricAuthPort biometric;
   final FakeSecureClipboard clipboard;
   final FakeSyncPort? cloud;
+  final FakeFileTransfer files;
+  final FakeExternalLinks links = FakeExternalLinks();
+
+  /// Escritorio: ventana, bandeja y sesión del sistema en memoria. Solo se
+  /// usan con [desktop] (la bandeja de ADR 0012 activa).
+  final bool desktop;
+  final window = FakeDesktopWindow();
+  final tray = FakeTray();
+  final osSession = FakeOsSessionEvents();
+
+  /// Android: ajustes de autocompletado, ícono del lanzador e íconos de
+  /// apps instaladas, en memoria. Solo se usan con [android].
+  final bool android;
+  final autofillSettings = FakeAutofillSettings();
+  final launcherIcon = FakeLauncherIcon();
+  final appIcons = FakeInstalledAppIcons();
   final PlatformCapabilities platform;
   final List<Override> extraOverrides;
   final Map<String, String> secureStorage = {};
@@ -77,17 +121,28 @@ class TestApp {
     FakeVaultStoragePort? storage,
     FakeBiometricAuthPort? biometric,
     FakeSecureClipboard? clipboard,
+    FakeFileTransfer? files,
     this.cloud,
-    this.platform = plainPlatform,
+    this.desktop = false,
+    this.android = false,
+    PlatformCapabilities? platform,
     this.extraOverrides = const [],
-  }) : crypto = crypto ?? FakeCryptoPort(),
+  }) : platform =
+           platform ??
+           (desktop
+               ? desktopPlatform
+               : android
+               ? androidPlatform
+               : plainPlatform),
+       crypto = crypto ?? FakeCryptoPort(),
        storage = storage ?? FakeVaultStoragePort(),
        ancestor = FakeVaultStoragePort(),
        biometric =
            biometric ??
            (FakeBiometricAuthPort()
              ..available = BiometricAvailability.unavailable),
-       clipboard = clipboard ?? FakeSecureClipboard();
+       clipboard = clipboard ?? FakeSecureClipboard(),
+       files = files ?? FakeFileTransfer();
 
   List<Override> get overrides => [
     // La misma raíz de composición que main() (ADR 0018, 0024).
@@ -97,13 +152,23 @@ class TestApp {
     syncAncestorStoragePortProvider.overrideWith((ref) async => ancestor),
     biometricAuthPortProvider.overrideWith((ref) => biometric),
     secureClipboardPortProvider.overrideWithValue(clipboard),
+    fileTransferPortProvider.overrideWithValue(files),
+    appInfoPortProvider.overrideWithValue(const FakeAppInfo()),
+    externalLinkPortProvider.overrideWithValue(links),
     passwordUnlockHistoryPortProvider.overrideWithValue(
       FakePasswordUnlockHistoryPort(),
     ),
     masterPasswordReminderSettingsPortProvider.overrideWithValue(
       FakeMasterPasswordReminderSettingsPort(),
     ),
-    isDesktopShellProvider.overrideWith((ref) => false),
+    isDesktopShellProvider.overrideWith((ref) => desktop),
+    desktopWindowPortProvider.overrideWithValue(window),
+    trayPortProvider.overrideWithValue(tray),
+    themedIconFilePortProvider.overrideWithValue(FakeThemedIconFile()),
+    osSessionEventsPortProvider.overrideWithValue(osSession),
+    systemAutofillSettingsPortProvider.overrideWithValue(autofillSettings),
+    launcherIconPortProvider.overrideWithValue(launcherIcon),
+    installedAppIconPortProvider.overrideWithValue(appIcons),
     platformCapabilitiesProvider.overrideWithValue(platform),
     if (cloud case final cloud?)
       syncPortForProvider(
@@ -112,27 +177,35 @@ class TestApp {
     ...extraOverrides,
   ];
 
-  /// Monta [MyApp] en un teléfono, con el sistema en [systemLocale].
+  /// Monta [MyApp] en un teléfono (o una ventana de escritorio, con
+  /// [desktop]), con el sistema en [systemLocale].
   Future<void> pump(
     WidgetTester tester, {
     Locale systemLocale = const Locale('es', 'CO'),
-    Size size = phoneSize,
-    double pixelRatio = phonePixelRatio,
+    Size? size,
+    double? pixelRatio,
   }) async {
     FlutterSecureStorage.setMockInitialValues(secureStorage);
     _clearAssetCache();
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = pixelRatio;
+    tester.view.physicalSize = size ?? (desktop ? desktopSize : phoneSize);
+    tester.view.devicePixelRatio =
+        pixelRatio ?? (desktop ? 1 : phonePixelRatio);
     tester.platformDispatcher.localesTestValue = [systemLocale];
     addTearDown(tester.view.reset);
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
 
+    // El mismo arranque que main(): tema, tiempo de bloqueo y servicios en
+    // segundo plano (bloqueo automático, sync, íconos, lanzador).
+    final container = ProviderContainer(overrides: overrides);
+    addTearDown(container.dispose);
+    await startApp(container, isAutofill: false);
+
     await tester.pumpWidget(
-      // Key nueva en cada arranque: si no, Flutter reusa el ProviderScope
-      // anterior y "volver a abrir la app" no reinicia nada.
-      ProviderScope(
+      // Key nueva en cada arranque: si no, Flutter reusa el scope anterior y
+      // "volver a abrir la app" no reinicia nada.
+      UncontrolledProviderScope(
         key: UniqueKey(),
-        overrides: overrides,
+        container: container,
         child: const MyApp(),
       ),
     );

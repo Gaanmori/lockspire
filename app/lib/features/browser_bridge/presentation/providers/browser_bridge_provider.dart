@@ -10,7 +10,7 @@ import 'package:lockspire/features/appearance/presentation/providers/app_l10n_pr
 import '../../../appearance/domain/appearance_preference.dart';
 import '../../../appearance/presentation/appearance_controller.dart';
 import '../../../desktop/presentation/providers/is_desktop_shell_provider.dart';
-import '../../../desktop/presentation/window_actions.dart';
+import '../../../desktop/presentation/providers/desktop_ports_providers.dart';
 import '../../../vault/application/password_generator.dart';
 import '../../../vault/presentation/vault_session_controller.dart';
 import '../../../vault/presentation/vault_session_state.dart';
@@ -48,11 +48,11 @@ Future<BrowserBridgeStatus> browserBridge(Ref ref) async {
       final session = ref.read(vaultSessionControllerProvider).value;
       return session is VaultSessionUnlocked ? session.vault : null;
     },
-    showApp: () => unawaited(showMainWindow()),
+    showApp: () => unawaited(ref.read(desktopWindowPortProvider).show()),
     generatePassword: (length) => generatePassword(length: length),
     requestLink: (request) {
       ref.read(pendingLinkRequestProvider.notifier).set(request);
-      unawaited(showMainWindow());
+      unawaited(ref.read(desktopWindowPortProvider).show());
     },
     currentAppearance: () =>
         ref.read(appearanceControllerProvider).value ??

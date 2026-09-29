@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/shared/platform_capabilities.dart';
 
@@ -19,8 +18,7 @@ import '../site_icons_controller.dart';
 import 'change_master_password_screen.dart';
 import 'package:lockspire/l10n/localized_values.dart';
 import 'package:lockspire/l10n/l10n.dart';
-
-const _settingsChannel = MethodChannel('com.lockspire.lockspire/settings');
+import 'package:lockspire/features/autofill/presentation/providers/system_autofill_settings_port_provider.dart';
 
 /// Nombre del método biométrico de esta plataforma (hallazgo C2).
 String _biometricMethodName(BuildContext context, WidgetRef ref) => context.l10n
@@ -63,16 +61,11 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   });
 
   Future<void> _openAutofillServiceSettings() async {
-    try {
-      await _settingsChannel.invokeMethod('openAutofillServiceSettings');
-    } on PlatformException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message ?? context.l10n.securityOpenSettingsFailed),
-        ),
-      );
-    }
+    final opened = await ref.read(systemAutofillSettingsPortProvider).open();
+    if (opened || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.securityOpenSettingsFailed)),
+    );
   }
 
   Future<void> _toggle(bool value) async {

@@ -2,37 +2,29 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/design/lockspire_icon.dart';
 import 'package:lockspire/features/appearance/presentation/providers/app_icon_colors_provider.dart';
-
-import '../../infrastructure/themed_app_icon.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tray_manager/tray_manager.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 import '../../../clipboard/presentation/providers/clipboard_guard_provider.dart';
 import '../../../vault/presentation/vault_session_controller.dart';
 import '../../../vault/presentation/vault_session_state.dart';
+import '../../domain/ports/desktop_window_port.dart';
+import '../../domain/ports/tray_port.dart';
+import '../providers/desktop_ports_providers.dart';
 import '../providers/is_desktop_shell_provider.dart';
-import '../providers/tray_hint_store_provider.dart';
 import '../providers/os_session_events_port_provider.dart';
-import '../window_actions.dart';
-import 'package:lockspire/l10n/l10n.dart';
-
-const _menuOpen = 'open';
-const _menuLock = 'lock';
-const _menuQuit = 'quit';
+import '../providers/tray_hint_store_provider.dart';
 
 /// Comportamiento de escritorio de ADR 0012: cerrar la ventana la oculta
 /// en la bandeja, el icono de la bandeja permite abrir/bloquear/salir, y
 /// bloquear la sesión del SO o suspender bloquea la bóveda.
 ///
-/// Fuera de escritorio es transparente (devuelve [child] tal cual).
-/// Requiere que `windowManager.ensureInitialized()` se haya llamado en
-/// `main()` antes de `runApp()`.
+/// Fuera de escritorio es transparente (devuelve [child] tal cual). Habla
+/// con la ventana y la bandeja por [DesktopWindowPort] y [TrayPort].
 class DesktopShell extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -42,19 +34,27 @@ class DesktopShell extends ConsumerStatefulWidget {
   ConsumerState<DesktopShell> createState() => _DesktopShellState();
 }
 
-class _DesktopShellState extends ConsumerState<DesktopShell>
-    with WindowListener, TrayListener {
+class _DesktopShellState extends ConsumerState<DesktopShell> {
   late final bool _enabled = ref.read(isDesktopShellProvider);
-  StreamSubscription<void>? _osLockSubscription;
+  late final DesktopWindowPort _window = ref.read(desktopWindowPortProvider);
+  late final TrayPort _tray = ref.read(trayPortProvider);
+  final _subscriptions = <StreamSubscription<Object?>>[];
   bool _quitting = false;
 
   @override
   void initState() {
     super.initState();
     if (!_enabled) return;
-    windowManager.addListener(this);
-    trayManager.addListener(this);
-    unawaited(windowManager.setPreventClose(true));
+    unawaited(_window.interceptClose(true));
+    _subscriptions
+      ..add(_window.closeRequests.listen((_) => unawaited(_hideToTray())))
+      ..add(_tray.actions.listen(_onTrayAction))
+      ..add(
+        ref
+            .read(osSessionEventsPortProvider)
+            .lockRequests
+            .listen((_) => _lockVault()),
+      );
     unawaited(_initTray());
     // El ícono de la ventana, la barra de tareas y la bandeja sigue al tema
     // elegido en Apariencia.
@@ -62,10 +62,6 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
       appIconColorsProvider,
       (_, colors) => unawaited(_applyThemedIcon(colors)),
     );
-    _osLockSubscription = ref
-        .read(osSessionEventsPortProvider)
-        .lockRequests
-        .listen((_) => _lockVault());
   }
 
   /// El menú de la bandeja se arma con los textos del idioma de la app:
@@ -77,80 +73,51 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
     super.didChangeDependencies();
     final locale = Localizations.localeOf(context);
     if (_enabled && _menuLocale != null && locale != _menuLocale) {
-      unawaited(
-        _updateTrayMenu(
-          isUnlocked:
-              ref.read(vaultSessionControllerProvider).value
-                  is VaultSessionUnlocked,
-        ),
-      );
+      unawaited(_updateTrayMenu(isUnlocked: _isUnlocked));
     }
     _menuLocale = locale;
   }
 
   @override
   void dispose() {
-    if (_enabled) {
-      windowManager.removeListener(this);
-      trayManager.removeListener(this);
-      unawaited(_osLockSubscription?.cancel());
+    for (final subscription in _subscriptions) {
+      unawaited(subscription.cancel());
     }
     super.dispose();
   }
 
+  bool get _isUnlocked =>
+      ref.read(vaultSessionControllerProvider).value is VaultSessionUnlocked;
+
   Future<void> _initTray() async {
-    await trayManager.setIcon(
-      Platform.isWindows
-          ? 'assets/tray/tray_icon.ico'
-          : 'assets/tray/tray_icon.png',
-    );
+    await _tray.showDefaultIcon();
     await _applyThemedIcon(ref.read(appIconColorsProvider));
-    // setToolTip no está soportado por AppIndicator en Linux.
-    if (Platform.isWindows) await trayManager.setToolTip('Lockspire');
-    await _updateTrayMenu(
-      isUnlocked:
-          ref.read(vaultSessionControllerProvider).value
-              is VaultSessionUnlocked,
-    );
+    await _updateTrayMenu(isUnlocked: _isUnlocked);
   }
 
   /// Si algo falla (disco, plugin), quedan los íconos de Lineage que trae
   /// la app instalada: no es motivo para romper nada.
   Future<void> _applyThemedIcon(LockspireIconColors colors) async {
     try {
-      final path = await writeThemedAppIcon(colors);
+      final path = await ref.read(themedIconFilePortProvider).write(colors);
       if (!mounted) return;
-      await windowManager.setIcon(path);
-      await trayManager.setIcon(path);
-      if (Platform.isWindows) await trayManager.setToolTip('Lockspire');
+      await _window.setIcon(path);
+      await _tray.setIcon(path);
     } catch (_) {}
   }
 
-  Future<void> _updateTrayMenu({required bool isUnlocked}) {
-    return trayManager.setContextMenu(
-      Menu(
-        items: [
-          MenuItem(key: _menuOpen, label: context.l10n.trayOpen),
-          MenuItem(
-            key: _menuLock,
-            label: context.l10n.commonLock,
-            disabled: !isUnlocked,
-          ),
-          MenuItem.separator(),
-          MenuItem(key: _menuQuit, label: context.l10n.trayQuit),
-        ],
-      ),
-    );
-  }
+  Future<void> _updateTrayMenu({required bool isUnlocked}) => _tray.setMenu(
+    TrayMenu(
+      open: context.l10n.trayOpen,
+      lock: context.l10n.commonLock,
+      quit: context.l10n.trayQuit,
+      lockEnabled: isUnlocked,
+    ),
+  );
 
   void _lockVault() {
-    final session = ref.read(vaultSessionControllerProvider).value;
-    if (session is VaultSessionUnlocked) {
-      ref.read(vaultSessionControllerProvider.notifier).lock();
-    }
+    if (_isUnlocked) ref.read(vaultSessionControllerProvider.notifier).lock();
   }
-
-  Future<void> _showWindow() => showMainWindow();
 
   /// Bloquea (descarta la clave de memoria) y termina el proceso de verdad.
   Future<void> _quit() async {
@@ -160,18 +127,23 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
     // Esperar al borrado antes de destruir la ventana: en Windows lo hace
     // el runner nativo, que necesita la ventana viva (hallazgo S4).
     await ref.read(clipboardGuardProvider).clearNow();
-    await trayManager.destroy();
-    await windowManager.setPreventClose(false);
-    await windowManager.destroy();
+    await _tray.destroy();
+    await _window.interceptClose(false);
+    await _window.destroy();
   }
 
-  // --- WindowListener -------------------------------------------------
-
-  @override
-  void onWindowClose() {
-    unawaited(_hideToTray());
+  void _onTrayAction(TrayAction action) {
+    switch (action) {
+      case TrayAction.open:
+        unawaited(_window.show());
+      case TrayAction.lock:
+        _lockVault();
+      case TrayAction.quit:
+        unawaited(_quit());
+    }
   }
 
+  /// La primera vez explica que la app sigue en la bandeja (ADR 0012).
   Future<void> _hideToTray() async {
     if (_quitting) return;
     if (!await ref.read(trayHintStoreProvider).wasShown() && mounted) {
@@ -190,31 +162,7 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
       );
       await ref.read(trayHintStoreProvider).markShown();
     }
-    await windowManager.hide();
-  }
-
-  // --- TrayListener ---------------------------------------------------
-
-  @override
-  void onTrayIconMouseDown() {
-    unawaited(_showWindow());
-  }
-
-  @override
-  void onTrayIconRightMouseDown() {
-    unawaited(trayManager.popUpContextMenu());
-  }
-
-  @override
-  void onTrayMenuItemClick(MenuItem menuItem) {
-    switch (menuItem.key) {
-      case _menuOpen:
-        unawaited(_showWindow());
-      case _menuLock:
-        _lockVault();
-      case _menuQuit:
-        unawaited(_quit());
-    }
+    await _window.hide();
   }
 
   @override

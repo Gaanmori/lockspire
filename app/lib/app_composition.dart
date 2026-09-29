@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
+
+import 'features/appearance/presentation/appearance_controller.dart';
+import 'features/appearance/presentation/launcher_icon_sync.dart';
+import 'features/appearance/presentation/providers/system_accent_color_provider.dart';
+import 'features/sync/presentation/auto_sync_controller.dart';
+import 'features/vault/presentation/auto_lock_controller.dart';
+import 'features/vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
+import 'features/vault/presentation/site_icons_controller.dart';
 
 import 'features/sync/presentation/providers/sync_master_password_change_replica_provider.dart';
 import 'features/sync/presentation/providers/sync_password_changed_elsewhere_provider.dart';
@@ -23,3 +32,35 @@ List<Override> appOverrides() => [
     (ref) => ref.watch(syncPasswordChangedElsewhereProvider.future),
   ),
 ];
+
+/// Lo que la app carga antes del primer cuadro y los servicios que corren en
+/// segundo plano. La usan `main()` y los tests de flujo, así prueban el
+/// mismo arranque. [isAutofill]: la pantalla de autocompletado de Android
+/// (ADR 0011), que no sincroniza.
+Future<void> startApp(
+  ProviderContainer container, {
+  required bool isAutofill,
+}) async {
+  // El tema elegido se carga antes del primer frame: si no, la app
+  // mostraría un instante el tema por defecto y luego cambiaría.
+  await container.read(appearanceControllerProvider.future);
+  await container.read(systemAccentColorProvider.future);
+  // Igual con el tiempo de bloqueo (ADR 0016): el primer desbloqueo ya
+  // usa el valor guardado.
+  await container.read(autoLockTimeoutSettingProvider.future);
+  // El bloqueo automático escucha la sesión desde el arranque, también en
+  // la pantalla de autocompletado de Android (hallazgo A1).
+  container.read(autoLockControllerProvider);
+  // La sync automática escucha los eventos de la bóveda (hallazgo A3).
+  // No en el autocompletado de Android: rellenar no necesita la nube, y
+  // conectar Google Drive ahí muestra la ventana "Iniciando sesión" encima
+  // de la app que pide (ADR 0026). Lo guardado desde ahí se sube en la
+  // próxima sync de la app.
+  if (!isAutofill) {
+    container.read(autoSyncControllerProvider);
+    // Íconos de los sitios, si están activados (ADR 0029).
+    container.read(siteIconsControllerProvider);
+    // Ícono del lanzador de Android según el tema (ADR 0031).
+    container.read(launcherIconSyncProvider);
+  }
+}
