@@ -21,20 +21,45 @@ import 'package:lockspire/shared/domain/app_problem.dart';
 ///   directorio de configuración exista.
 ///
 /// El binario del host se busca junto al ejecutable de la app.
+/// El sistema donde se registra el host: la rama de Windows (registro) o la
+/// de Linux (archivos en la configuración del navegador).
+enum HostPlatform { windows, linux, other }
+
+/// Ejecuta un programa del sistema (`reg`, `powershell.exe`).
+typedef ProcessRunner =
+    Future<ProcessResult> Function(String executable, List<String> arguments);
+
 class NativeMessagingRegistrationAdapter
     implements NativeMessagingRegistrationPort {
   final String _appDirectory;
   final Map<String, String> _environment;
+  final HostPlatform _platform;
+  final ProcessRunner _run;
 
+  /// [platform] y [runProcess] son los del sistema por defecto; los tests
+  /// los cambian para probar las dos ramas sin tocar el registro real.
   NativeMessagingRegistrationAdapter({
     String? appDirectory,
     Map<String, String>? environment,
+    HostPlatform? platform,
+    ProcessRunner? runProcess,
   }) : _appDirectory = appDirectory ?? p.dirname(Platform.resolvedExecutable),
-       _environment = environment ?? Platform.environment;
+       _environment = environment ?? Platform.environment,
+       _platform = platform ?? _currentPlatform(),
+       _run = runProcess ?? Process.run;
+
+  static HostPlatform _currentPlatform() => Platform.isWindows
+      ? HostPlatform.windows
+      : Platform.isLinux
+      ? HostPlatform.linux
+      : HostPlatform.other;
+
+  bool get _isWindows => _platform == HostPlatform.windows;
+  bool get _isLinux => _platform == HostPlatform.linux;
 
   String get _hostBinaryPath => p.join(
     _appDirectory,
-    Platform.isWindows ? 'lockspire-native-host.exe' : 'lockspire-native-host',
+    _isWindows ? 'lockspire-native-host.exe' : 'lockspire-native-host',
   );
 
   String _manifestJson() => const JsonEncoder.withIndent('  ').convert({
@@ -50,7 +75,7 @@ class NativeMessagingRegistrationAdapter
   @override
   Future<NativeMessagingStatus> status() async {
     final registered = <SupportedBrowser>{};
-    if (Platform.isWindows) {
+    if (_isWindows) {
       final manifestPath = _windowsManifestPath();
       for (final browser in SupportedBrowser.values) {
         final value = await _regQueryDefault(_windowsRegistryKey(browser));
@@ -58,7 +83,7 @@ class NativeMessagingRegistrationAdapter
           registered.add(browser);
         }
       }
-    } else if (Platform.isLinux) {
+    } else if (_isLinux) {
       for (final browser in SupportedBrowser.values) {
         final file = File(_linuxManifestPath(browser));
         if (file.existsSync() && _pointsToThisHost(file.readAsStringSync())) {
@@ -67,7 +92,7 @@ class NativeMessagingRegistrationAdapter
       }
     }
     final registeredSystemWide = <SupportedBrowser>{};
-    if (Platform.isWindows) {
+    if (_isWindows) {
       final manifestPath = _windowsSystemManifestPath();
       final manifest = File(manifestPath);
       final pointsHere =
@@ -89,7 +114,7 @@ class NativeMessagingRegistrationAdapter
       hostBinaryFound: File(_hostBinaryPath).existsSync(),
       registeredIn: registered,
       registeredSystemWideIn: registeredSystemWide,
-      systemWideSupported: Platform.isWindows,
+      systemWideSupported: _isWindows,
     );
   }
 
@@ -111,13 +136,13 @@ class NativeMessagingRegistrationAdapter
       );
     }
     final registered = <SupportedBrowser>{};
-    if (Platform.isWindows) {
+    if (_isWindows) {
       final manifestPath = _windowsManifestPath();
       final file = File(manifestPath);
       file.parent.createSync(recursive: true);
       file.writeAsStringSync(_manifestJson(), flush: true);
       for (final browser in SupportedBrowser.values) {
-        final result = await Process.run('reg', [
+        final result = await _run('reg', [
           'add',
           _windowsRegistryKey(browser),
           '/ve',
@@ -129,7 +154,7 @@ class NativeMessagingRegistrationAdapter
         ]);
         if (result.exitCode == 0) registered.add(browser);
       }
-    } else if (Platform.isLinux) {
+    } else if (_isLinux) {
       for (final browser in SupportedBrowser.values) {
         // Solo en navegadores instalados (su directorio de configuración
         // existe): no se crean carpetas de navegadores ajenos.
@@ -146,17 +171,13 @@ class NativeMessagingRegistrationAdapter
 
   @override
   Future<void> unregister() async {
-    if (Platform.isWindows) {
+    if (_isWindows) {
       for (final browser in SupportedBrowser.values) {
-        await Process.run('reg', [
-          'delete',
-          _windowsRegistryKey(browser),
-          '/f',
-        ]);
+        await _run('reg', ['delete', _windowsRegistryKey(browser), '/f']);
       }
       final file = File(_windowsManifestPath());
       if (file.existsSync()) file.deleteSync();
-    } else if (Platform.isLinux) {
+    } else if (_isLinux) {
       for (final browser in SupportedBrowser.values) {
         final file = File(_linuxManifestPath(browser));
         if (file.existsSync() && _pointsToThisHost(file.readAsStringSync())) {
@@ -168,7 +189,7 @@ class NativeMessagingRegistrationAdapter
 
   @override
   Future<void> registerSystemWide() async {
-    if (!Platform.isWindows) {
+    if (!_isWindows) {
       throw const AppProblem(AppProblemCode.nativeHostWindowsOnly);
     }
     if (!File(_hostBinaryPath).existsSync()) {
@@ -182,7 +203,7 @@ class NativeMessagingRegistrationAdapter
 
   @override
   Future<void> unregisterSystemWide() async {
-    if (!Platform.isWindows) {
+    if (!_isWindows) {
       throw const AppProblem(AppProblemCode.nativeHostWindowsOnly);
     }
     await _runElevated(_systemWideScript(install: false));
@@ -237,14 +258,14 @@ $manifestJson
   /// archivo en `%TEMP%` podría modificarlo cualquier proceso del usuario
   /// entre que se escribe y Windows lo ejecuta elevado (escalada de
   /// privilegios).
-  static Future<void> _runElevated(String script) async {
+  Future<void> _runElevated(String script) async {
     final encoded = _encodePowerShellCommand(script);
     final launcher =
         "\$p = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait "
         "-PassThru -WindowStyle Hidden -ArgumentList '-NoProfile', "
         "'-NonInteractive', '-EncodedCommand', '$encoded'; "
         'exit \$p.ExitCode';
-    final result = await Process.run('powershell.exe', [
+    final result = await _run('powershell.exe', [
       '-NoProfile',
       '-NonInteractive',
       '-Command',
@@ -304,16 +325,11 @@ $manifestJson
     String root = 'HKCU',
   }) => '$root\\${_windowsRegistrySubkey(browser)}';
 
-  static Future<String?> _regQueryDefault(
+  Future<String?> _regQueryDefault(
     String key, {
     List<String> extraArgs = const [],
   }) async {
-    final result = await Process.run('reg', [
-      'query',
-      key,
-      '/ve',
-      ...extraArgs,
-    ]);
+    final result = await _run('reg', ['query', key, '/ve', ...extraArgs]);
     if (result.exitCode != 0) return null;
     // Línea: "    (Default)    REG_SZ    C:\...\x.json" (el nombre del
     // valor por defecto depende del idioma del sistema).

@@ -164,13 +164,22 @@ class MicrosoftOAuthAuth {
   /// vez de por loopback (Android, ADR 0022). Si no, loopback (escritorio).
   final OAuthAppRedirect? _appRedirect;
 
+  /// Abre la página de inicio de sesión de Microsoft. Por defecto, el
+  /// navegador del sistema; en los tests, el test hace de navegador.
+  final Future<bool> Function(Uri) _openBrowser;
+
   MicrosoftOAuthAuth(
     this._clientId, {
     http.Client? httpClient,
     OAuthAppRedirect? appRedirect,
+    Future<bool> Function(Uri)? openBrowser,
   }) : _http = httpClient ?? http.Client(),
        // ignore: prefer_initializing_formals, parámetro público sin guion bajo
-       _appRedirect = appRedirect;
+       _appRedirect = appRedirect,
+       _openBrowser = openBrowser ?? _openSystemBrowser;
+
+  static Future<bool> _openSystemBrowser(Uri url) =>
+      launchUrl(url, mode: LaunchMode.externalApplication);
 
   /// Conexión interactiva — abre el navegador del sistema para el
   /// consentimiento. Solo debe llamarse desde el botón "Conectar con
@@ -203,11 +212,11 @@ class MicrosoftOAuthAuth {
         },
       );
 
-      final launched = await launchUrl(
-        authorizeUri,
-        mode: LaunchMode.externalApplication,
-      );
+      final launched = await _openBrowser(authorizeUri);
       if (!launched) {
+        // Nadie va a esperar el código: al cerrar el servidor, su error
+        // quedaba sin manejar (encontrado por un test, 2026-09-29).
+        codeFuture.ignore();
         throw const AppProblem(AppProblemCode.oauthBrowserFailed);
       }
 
@@ -250,7 +259,12 @@ class MicrosoftOAuthAuth {
           return code;
         case OAuthCallbackError(:final message):
           await _respond(request, HttpStatus.ok, _errorPage);
-          throw StateError(message);
+          // Igual que la vuelta por dirección propia (Android): un error que
+          // la app sabe traducir.
+          throw AppProblem(
+            AppProblemCode.oauthNoCode,
+            detail: message.isEmpty ? null : message,
+          );
       }
     }
     throw const AppProblem(AppProblemCode.oauthLoginClosed);

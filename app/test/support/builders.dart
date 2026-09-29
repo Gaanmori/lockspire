@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import 'dart:typed_data';
+
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
+import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 
 /// Fecha fija de los datos de prueba: los tests no dependen del reloj.
 final testEpoch = DateTime.utc(2026, 1, 1);
@@ -44,3 +47,23 @@ VaultEntry anEntry({
     fieldHistory: fieldHistory,
   );
 }
+
+/// Un archivo de bóveda válido para los adaptadores de almacenamiento y
+/// sync, que solo lo guardan y lo devuelven: [payload] hace de contenido
+/// cifrado para distinguir versiones.
+VaultFile aVaultFile([List<int> payload = const [1, 2, 3]]) => VaultFile(
+  header: VaultHeader(
+    formatVersion: 1,
+    formatMinReaderVersion: 1,
+    salt: Uint8List.fromList(List.filled(16, 1)),
+    nonce: Uint8List.fromList(List.filled(24, 2)),
+    vaultId: 'vault-1',
+    createdAt: testEpoch,
+    kdfParams: const Argon2Params(
+      memoryKib: 262144,
+      iterations: 3,
+      parallelism: 1,
+    ),
+  ),
+  encryptedPayload: Uint8List.fromList(payload),
+);
