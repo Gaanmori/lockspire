@@ -15,10 +15,42 @@ class AppRobot {
 
   AppRobot(this.tester);
 
+  /// Los textos visibles, para diagnosticar un test que falla.
+  String visibleTexts() => tester
+      .widgetList<Text>(find.byType(Text))
+      .map((t) => t.data)
+      .whereType<String>()
+      .join(' | ');
+
   Finder field(String label) => find.widgetWithText(TextField, label);
 
   Future<void> tapText(String text) async {
     await tester.tap(find.text(text).last);
+    await tester.pumpAndSettle();
+  }
+
+  /// Espera a que aparezca [finder]: con la criptografía real (tests de
+  /// `integration_test`) desbloquear tarda segundos y no siempre hay una
+  /// animación que haga esperar a `pumpAndSettle`.
+  Future<void> waitFor(
+    Finder finder, {
+    Duration timeout = const Duration(seconds: 60),
+  }) async {
+    final end = DateTime.now().add(timeout);
+    while (finder.evaluate().isEmpty) {
+      if (DateTime.now().isAfter(end)) {
+        throw TestFailure(
+          'No apareció a tiempo: $finder. En pantalla: ${visibleTexts()}',
+        );
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pumpAndSettle();
+  }
+
+  /// El "atrás" del sistema (botón o gesto de Android).
+  Future<void> systemBack() async {
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
   }
 

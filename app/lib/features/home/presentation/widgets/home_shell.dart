@@ -37,6 +37,18 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
+  /// Ancho real del riel (depende de las etiquetas y del idioma), para que
+  /// los avisos floten a su derecha.
+  final _railKey = GlobalKey();
+  double _railWidth = 80;
+
+  void _measureRail() {
+    final width = _railKey.currentContext?.size?.width;
+    if (width != null && width != _railWidth && mounted) {
+      setState(() => _railWidth = width);
+    }
+  }
+
   int _selected = 0;
 
   void _select(int index) => setState(() => _selected = index);
@@ -80,49 +92,59 @@ class _HomeShellState extends State<HomeShell> {
               ],
             ),
           ),
-          NavigationLayout.rail => Scaffold(
-            body: Row(
-              children: [
-                NavigationRail(
-                  selectedIndex: _selected,
-                  onDestinationSelected: _select,
-                  labelType: NavigationRailLabelType.all,
-                  destinations: [
-                    for (final d in widget.destinations)
-                      NavigationRailDestination(
-                        icon: Icon(d.icon),
-                        selectedIcon: Icon(d.selectedIcon),
-                        label: Text(d.label),
-                      ),
-                  ],
-                  trailing: Expanded(
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: IconButton(
-                          icon: const Icon(Icons.lock_outline),
-                          tooltip: context.l10n.commonLock,
-                          onPressed: widget.onLock,
+          // Los avisos flotan a la derecha del riel: a lo ancho tapaban
+          // "Bloquear" al pie del riel mientras se mostraban (encontrado por
+          // un test de flujo, 2026-09-29).
+          NavigationLayout.rail => _afterLayout(
+            _measureRail,
+            Theme(
+              data: _railSnackBarTheme(Theme.of(context), _railWidth),
+              child: Scaffold(
+                body: Row(
+                  children: [
+                    NavigationRail(
+                      key: _railKey,
+                      selectedIndex: _selected,
+                      onDestinationSelected: _select,
+                      labelType: NavigationRailLabelType.all,
+                      destinations: [
+                        for (final d in widget.destinations)
+                          NavigationRailDestination(
+                            icon: Icon(d.icon),
+                            selectedIcon: Icon(d.selectedIcon),
+                            label: Text(d.label),
+                          ),
+                      ],
+                      trailing: Expanded(
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: IconButton(
+                              icon: const Icon(Icons.lock_outline),
+                              tooltip: context.l10n.commonLock,
+                              onPressed: widget.onLock,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                const VerticalDivider(width: 1, thickness: 1),
-                // En pantallas anchas el contenido va en una columna
-                // centrada: listas y formularios estirados a 1200 px se
-                // leen mal (revisión de diseño 2026-09-29).
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 880),
-                      child: body,
+                    const VerticalDivider(width: 1, thickness: 1),
+                    // En pantallas anchas el contenido va en una columna
+                    // centrada: listas y formularios estirados a 1200 px se
+                    // leen mal (revisión de diseño 2026-09-29).
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 880),
+                          child: body,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         };
@@ -130,3 +152,18 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 }
+
+/// Devuelve [child] y corre [callback] tras el frame, ya con el layout
+/// hecho (para medir el riel).
+Widget _afterLayout(VoidCallback callback, Widget child) {
+  WidgetsBinding.instance.addPostFrameCallback((_) => callback());
+  return child;
+}
+
+ThemeData _railSnackBarTheme(ThemeData theme, double railWidth) =>
+    theme.copyWith(
+      snackBarTheme: theme.snackBarTheme.copyWith(
+        behavior: SnackBarBehavior.floating,
+        insetPadding: EdgeInsets.fromLTRB(railWidth + 16, 10, 16, 10),
+      ),
+    );

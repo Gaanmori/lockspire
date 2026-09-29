@@ -75,27 +75,31 @@ void main() {
     await robot.unlock(_old);
     await _changeMasterPassword(robot);
 
-    // El portátil, al abrir, pide la nueva.
+    // El portátil, al abrir, pide la nueva (ADR 0024), sin huella.
     await laptop.pump(tester);
     expect(
-      find.textContaining(
-        'La contraseña maestra se cambió en otro dispositivo',
+      find.text(
+        'La contraseña maestra se cambió en otro dispositivo. Ingrese la '
+        'nueva para entrar. Hasta entonces no se puede usar la huella.',
       ),
       findsOneWidget,
     );
     await robot.type('Contraseña maestra nueva', _new);
-    // Tiene cambios locales cifrados con la anterior: también la pide.
-    if (find.text('Contraseña anterior').evaluate().isNotEmpty) {
-      await robot.type('Contraseña anterior', _old);
-    }
-    await tester.tap(find.widgetWithText(FilledButton, 'Desbloquear'));
+    await robot.tester.tap(find.widgetWithText(FilledButton, 'Desbloquear'));
     await tester.pumpAndSettle();
-    if (find.text('Contraseña anterior').evaluate().isNotEmpty &&
-        find.text('Banco').evaluate().isEmpty) {
-      await robot.type('Contraseña anterior', _old);
-      await tester.tap(find.widgetWithText(FilledButton, 'Desbloquear'));
-      await tester.pumpAndSettle();
-    }
+
+    // Tiene cambios sin sincronizar, cifrados con la anterior: la pide
+    // también para no perderlos (ADR 0018).
+    expect(
+      find.text(
+        'Este dispositivo tiene cambios que aún no se sincronizaron. Para '
+        'conservarlos, ingrese también la contraseña anterior.',
+      ),
+      findsOneWidget,
+    );
+    await robot.type('Contraseña anterior', _old);
+    await robot.tester.tap(find.widgetWithText(FilledButton, 'Desbloquear'));
+    await tester.pumpAndSettle();
 
     expect(find.text('Banco'), findsOneWidget);
     expect(find.text('Solo en el portátil'), findsOneWidget);
