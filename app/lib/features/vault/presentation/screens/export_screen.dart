@@ -128,6 +128,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
       final today = DateTime.now().toIso8601String().substring(0, 10);
       final isAndroid = ref.read(platformCapabilitiesProvider).isAndroid;
+      if (!mounted) return;
       final saved = await FilePicker.saveFile(
         dialogTitle: context.l10n.exportSaveDialogTitle,
         fileName: 'lockspire-$today.$extension',

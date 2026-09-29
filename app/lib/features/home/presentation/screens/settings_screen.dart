@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:flutter/material.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Una opción de la sección Ajustes, que abre su propia pantalla.
 class SettingsItem {
@@ -29,7 +30,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes')),
+      appBar: AppBar(title: Text(context.l10n.settingsTitle)),
       body: ListView(
         children: [
           for (final item in items)

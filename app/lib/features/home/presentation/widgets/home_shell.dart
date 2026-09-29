@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../home_destination.dart';
 import '../navigation_layout.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Navegación principal de Material 3 tras desbloquear: barra inferior en
 /// ventanas compactas, riel lateral en las demás (ver
@@ -101,7 +102,7 @@ class _HomeShellState extends State<HomeShell> {
                         padding: const EdgeInsets.only(bottom: 16),
                         child: IconButton(
                           icon: const Icon(Icons.lock_outline),
-                          tooltip: 'Bloquear',
+                          tooltip: context.l10n.commonLock,
                           onPressed: widget.onLock,
                         ),
                       ),

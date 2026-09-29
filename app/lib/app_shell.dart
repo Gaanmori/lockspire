@@ -21,6 +21,7 @@ import 'features/vault/presentation/screens/import_screen.dart';
 import 'features/vault/presentation/screens/security_screen.dart';
 import 'features/vault/presentation/screens/vault_unlocked_screen.dart';
 import 'features/vault/presentation/vault_session_controller.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Composición de la navegación principal (Material 3): qué secciones hay
 /// y qué pantalla de cada feature va en cada una. Vive a nivel de app,
@@ -41,7 +42,7 @@ class AppShell extends ConsumerWidget {
       ),
       destinations: [
         HomeDestination(
-          label: 'Bóveda',
+          label: context.l10n.navVault,
           icon: Icons.key_outlined,
           selectedIcon: Icons.key,
           // En el riel, Bloquear ya está al pie: no se repite arriba.
@@ -51,54 +52,52 @@ class AppShell extends ConsumerWidget {
           ),
         ),
         HomeDestination(
-          label: 'Sincronización',
+          label: context.l10n.syncTitle,
           icon: Icons.sync_outlined,
           selectedIcon: Icons.sync,
           builder: (_, _) => const SyncSettingsScreen(),
         ),
         HomeDestination(
-          label: 'Seguridad',
+          label: context.l10n.securityTitle,
           icon: Icons.security_outlined,
           selectedIcon: Icons.security,
           builder: (_, _) => const SecurityScreen(),
         ),
         HomeDestination(
-          label: 'Ajustes',
+          label: context.l10n.settingsTitle,
           icon: Icons.settings_outlined,
           selectedIcon: Icons.settings,
           builder: (_, _) => SettingsScreen(
             items: [
               SettingsItem(
                 icon: Icons.palette_outlined,
-                title: 'Apariencia',
-                subtitle: 'Tema claro u oscuro y colores',
+                title: context.l10n.appearanceTitle,
+                subtitle: context.l10n.settingsAppearanceHint,
                 builder: (_) => const AppearanceScreen(),
               ),
               SettingsItem(
                 icon: Icons.upload_file_outlined,
-                title: 'Importar',
-                subtitle:
-                    'Desde SafeInCloud, Bitwarden, Chrome, KeePassXC o un '
-                    'respaldo de Lockspire',
+                title: context.l10n.importTitle,
+                subtitle: context.l10n.settingsImportHint,
                 builder: (_) => const ImportScreen(),
               ),
               SettingsItem(
                 icon: Icons.download_outlined,
-                title: 'Exportar',
-                subtitle: 'Respaldo cifrado, o CSV/JSON para otro gestor',
+                title: context.l10n.exportTitle,
+                subtitle: context.l10n.settingsExportHint,
                 builder: (_) => const ExportScreen(),
               ),
               if (ref.watch(platformCapabilitiesProvider).isDesktop)
                 SettingsItem(
                   icon: Icons.extension_outlined,
-                  title: 'Navegador',
-                  subtitle: 'Conectar con la extensión de Chrome/Edge',
+                  title: context.l10n.browserTitle,
+                  subtitle: context.l10n.settingsBrowserHint,
                   builder: (_) => const BrowserIntegrationScreen(),
                 ),
               SettingsItem(
                 icon: Icons.info_outline,
-                title: 'Acerca de',
-                subtitle: 'Versión, licencia y código fuente',
+                title: context.l10n.aboutTitle,
+                subtitle: context.l10n.settingsAboutHint,
                 builder: (_) => const AboutScreen(),
               ),
             ],

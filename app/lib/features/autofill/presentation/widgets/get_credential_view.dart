@@ -287,13 +287,13 @@ class RequesterHeader extends StatelessWidget {
                 Text(
                   origin != null
                       ? Uri.parse(origin).host
-                      : (packageName.isEmpty ? 'App desconocida' : packageName),
+                      : (packageName.isEmpty ? context.l10n.autofillUnknownApp : packageName),
                   style: theme.textTheme.titleMedium,
                 ),
                 Text(
                   origin != null
-                      ? describeRequestingApp(packageName)
-                      : 'App de Android',
+                      ? _requestingApp(context.l10n, packageName)
+                      : context.l10n.autofillAndroidApp,
                   style: theme.textTheme.bodySmall,
                 ),
               ],
@@ -303,4 +303,12 @@ class RequesterHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Quién muestra la página: "en Chrome" o "dentro de la app com.ejemplo".
+String _requestingApp(AppLocalizations l10n, String packageName) {
+  final browser = knownBrowserName(packageName);
+  if (browser != null) return l10n.autofillInBrowser(browser);
+  if (packageName.isEmpty) return l10n.autofillInUnknownApp;
+  return l10n.autofillInsideApp(packageName);
 }

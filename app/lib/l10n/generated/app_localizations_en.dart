@@ -1344,4 +1344,166 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get exportChromeCsvHint =>
       'Unencrypted. The simplest format: imported by Chrome, Edge, Firefox and Google Password Manager. Passwords only.';
+
+  @override
+  String get browserRegistered =>
+      'Done. Restart the browser if it was already open.';
+
+  @override
+  String get browserUnregistered =>
+      'Lockspire is no longer connected to browsers.';
+
+  @override
+  String get browserRegisteredSystemWide =>
+      'Done for the whole computer. Restart the browser if it was already open.';
+
+  @override
+  String get browserUnregisteredSystemWide =>
+      'The registration for the whole computer was removed.';
+
+  @override
+  String get browserTitle => 'Browser';
+
+  @override
+  String get browserIntro =>
+      'With the Lockspire extension for Chrome or Edge you can fill in usernames and passwords on websites. The extension asks this app for the credentials; the vault never leaves here and, if it\'s locked, the extension asks you to unlock it first.';
+
+  @override
+  String browserConnectedWith(Object browsers) {
+    return 'Connected with $browsers';
+  }
+
+  @override
+  String get browserNotConnected => 'Not connected with any browser';
+
+  @override
+  String get browserHostMissing =>
+      'The \"lockspire-native-host\" component is missing next to the app. See native-host/README.md.';
+
+  @override
+  String get browserReconnect => 'Reconnect';
+
+  @override
+  String get browserConnect => 'Connect with Chrome/Edge';
+
+  @override
+  String get browserSystemWide => 'For the whole computer';
+
+  @override
+  String get browserSystemWideHint =>
+      'If the extension still says it\'s not connected, your organization may be blocking per-user connections (Chrome\'s \"NativeMessagingUserLevelHosts\" policy, visible at chrome://policy). In that case, register Lockspire for the whole computer: Windows will ask for administrator permission.';
+
+  @override
+  String get browserSystemWideOn => 'Registered for the whole computer';
+
+  @override
+  String get browserSystemWideOff => 'Not registered for the whole computer';
+
+  @override
+  String get browserReregister => 'Register again';
+
+  @override
+  String get browserRegisterSystemWide => 'Register for the whole computer';
+
+  @override
+  String get browserRemoveRegistration => 'Remove registration';
+
+  @override
+  String get browserInstallExtension => 'Install the extension';
+
+  @override
+  String get browserInstallExtensionHint =>
+      'Until it\'s published in the Chrome Web Store: open chrome://extensions (or edge://extensions), turn on \"Developer mode\", choose \"Load unpacked\" and select the project\'s extension/dist folder.';
+
+  @override
+  String get bridgeRunning => 'Lockspire is listening to the extension.';
+
+  @override
+  String get bridgeAnotherInstance =>
+      'Another Lockspire instance is already serving the extension.';
+
+  @override
+  String get bridgeUnavailable =>
+      'Could not open the channel with the extension on this computer.';
+
+  @override
+  String get bridgeUnsupported =>
+      'The browser extension only works on desktop.';
+
+  @override
+  String get commonStarting => 'Starting…';
+
+  @override
+  String get linkTitle => 'Link this site?';
+
+  @override
+  String linkBody(Object title) {
+    return 'The extension wants to use \"$title\" on:';
+  }
+
+  @override
+  String get linkNoUrl => 'The entry didn\'t have any URL.';
+
+  @override
+  String linkReplacesUrl(Object url) {
+    return 'Replaces the current URL: $url';
+  }
+
+  @override
+  String get linkPhishingWarning =>
+      'Check that the address is the real one: if it\'s a fake site imitating the original, you\'d be giving it this password.';
+
+  @override
+  String get linkConfirm => 'Link';
+
+  @override
+  String get linkEntryGone => 'The entry no longer exists.';
+
+  @override
+  String linkDone(Object title, Object host) {
+    return '\"$title\" linked to $host. Open the extension again to fill in.';
+  }
+
+  @override
+  String get linkSaveFailed => 'Could not save the link.';
+
+  @override
+  String get navVault => 'Vault';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsAppearanceHint =>
+      'Language, light or dark theme and colors';
+
+  @override
+  String get settingsImportHint =>
+      'From SafeInCloud, Bitwarden, Chrome, KeePassXC or a Lockspire backup';
+
+  @override
+  String get settingsExportHint =>
+      'Encrypted backup, or CSV/JSON for another manager';
+
+  @override
+  String get settingsBrowserHint => 'Connect with the Chrome/Edge extension';
+
+  @override
+  String get aboutTitle => 'About';
+
+  @override
+  String get settingsAboutHint => 'Version, license and source code';
+
+  @override
+  String get trayOpen => 'Open Lockspire';
+
+  @override
+  String get trayQuit => 'Quit';
+
+  @override
+  String get trayStillOpenTitle => 'Lockspire is still open';
+
+  @override
+  String get trayStillOpenBody =>
+      'When you close the window, Lockspire stays in the system tray so the browser extension can autofill. The vault locks itself after the idle time you choose in Security, when you lock your session or when the computer goes to sleep.\n\nTo close it completely, use \"Quit\" on the tray icon.';
 }

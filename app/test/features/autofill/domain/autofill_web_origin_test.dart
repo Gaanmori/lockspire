@@ -122,11 +122,8 @@ void main() {
     });
   });
 
-  test('describeRequestingApp nombra navegadores conocidos', () {
-    expect(describeRequestingApp('com.android.chrome'), 'en Chrome');
-    expect(
-      describeRequestingApp('com.crunchyroll.crunchyroid'),
-      'dentro de la app com.crunchyroll.crunchyroid',
-    );
+  test('knownBrowserName nombra navegadores conocidos', () {
+    expect(knownBrowserName('com.android.chrome'), 'Chrome');
+    expect(knownBrowserName('com.crunchyroll.crunchyroid'), isNull);
   });
 }

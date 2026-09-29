@@ -88,14 +88,11 @@ const _knownBrowsers = {
   'com.mi.globalbrowser': 'Mi Browser',
 };
 
-/// Texto de quién muestra la página: "en Chrome" o "dentro de la app
-/// com.ejemplo". Ver ADR 0020, "Qué se muestra".
-String describeRequestingApp(String packageName) {
-  final browser = _knownBrowsers[packageName];
-  if (browser != null) return 'en $browser';
-  if (packageName.isEmpty) return 'en una app desconocida';
-  return 'dentro de la app $packageName';
-}
+/// Nombre legible del navegador [packageName] ("Chrome"), o `null` si no es
+/// un navegador conocido. La frase que se muestra ("en Chrome", "dentro de
+/// la app com.ejemplo") la arma la presentación en el idioma de la app (ADR
+/// 0020, "Qué se muestra"; ADR 0032).
+String? knownBrowserName(String packageName) => _knownBrowsers[packageName];
 
 /// Solo las contraseñas se ofrecen para rellenar un login: tarjetas y
 /// documentos (ADR 0025) no tienen usuario ni contraseña.

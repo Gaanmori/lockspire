@@ -9,6 +9,8 @@ import '../../domain/ports/native_messaging_registration_port.dart';
 import '../providers/browser_bridge_provider.dart';
 import '../providers/native_messaging_registration_port_provider.dart';
 import 'package:lockspire/shared/domain/app_problem.dart';
+import 'package:lockspire/l10n/l10n.dart';
+import 'package:lockspire/l10n/localized_error.dart';
 
 /// Conectar Lockspire con la extensión de Chrome/Edge (ADR 0013). El
 /// registro del native host en el navegador es opt-in: solo ocurre al
@@ -43,11 +45,14 @@ class _BrowserIntegrationScreenState
 
   Future<void> _run(Future<void> Function() action, String doneMessage) async {
     setState(() => _busy = true);
+    final l10n = context.l10n;
     String message = doneMessage;
     try {
       await action();
     } catch (e) {
-      message = e is StateError ? e.message : 'No se pudo completar: $e';
+      message = e is AppProblem
+          ? localizeError(l10n, e)
+          : l10n.commonCouldNotComplete(localizeError(l10n, e));
     }
     if (!mounted) return;
     setState(() => _busy = false);
@@ -64,24 +69,24 @@ class _BrowserIntegrationScreenState
     if (registered.isEmpty) {
       throw const AppProblem(AppProblemCode.noSupportedBrowser);
     }
-  }, 'Listo. Reinicie el navegador si ya estaba abierto.');
+  }, context.l10n.browserRegistered);
 
   Future<void> _unregister() => _run(
     () => ref.read(nativeMessagingRegistrationPortProvider).unregister(),
-    'Lockspire ya no está conectado a los navegadores.',
+    context.l10n.browserUnregistered,
   );
 
   Future<void> _registerSystemWide() => _run(
     () =>
         ref.read(nativeMessagingRegistrationPortProvider).registerSystemWide(),
-    'Listo para todo el equipo. Reinicie el navegador si ya estaba abierto.',
+    context.l10n.browserRegisteredSystemWide,
   );
 
   Future<void> _unregisterSystemWide() => _run(
     () => ref
         .read(nativeMessagingRegistrationPortProvider)
         .unregisterSystemWide(),
-    'Se quitó el registro para todo el equipo.',
+    context.l10n.browserUnregisteredSystemWide,
   );
 
   @override
@@ -90,7 +95,7 @@ class _BrowserIntegrationScreenState
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Navegador')),
+      appBar: AppBar(title: Text(context.l10n.browserTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(LockspireSpacing.lg),
@@ -101,13 +106,7 @@ class _BrowserIntegrationScreenState
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Con la extensión de Lockspire para Chrome o Edge puede '
-                    'rellenar usuario y contraseña en los sitios web. La '
-                    'extensión le pide las credenciales a esta app; la '
-                    'bóveda nunca sale de acá y, si está bloqueada, la '
-                    'extensión le pide que la desbloquee primero.',
-                  ),
+                  Text(context.l10n.browserIntro),
                   const SizedBox(height: LockspireSpacing.lg),
                   _BridgeStatusTile(status: bridge),
                   const SizedBox(height: LockspireSpacing.md),
@@ -123,16 +122,16 @@ class _BrowserIntegrationScreenState
                       ),
                       title: Text(
                         status.isRegistered
-                            ? 'Conectado con '
-                                  '${status.registeredIn.map((b) => b.displayName).join(', ')}'
-                            : 'No conectado con ningún navegador',
+                            ? context.l10n.browserConnectedWith(
+                                status.registeredIn
+                                    .map((b) => b.displayName)
+                                    .join(', '),
+                              )
+                            : context.l10n.browserNotConnected,
                       ),
                       subtitle: status.hostBinaryFound
                           ? null
-                          : const Text(
-                              'Falta el componente "lockspire-native-host" '
-                              'junto a la app. Ver native-host/README.md.',
-                            ),
+                          : Text(context.l10n.browserHostMissing),
                     ),
                     const SizedBox(height: LockspireSpacing.md),
                     Wrap(
@@ -145,30 +144,25 @@ class _BrowserIntegrationScreenState
                               : _register,
                           child: Text(
                             status.isRegistered
-                                ? 'Volver a conectar'
-                                : 'Conectar con Chrome/Edge',
+                                ? context.l10n.browserReconnect
+                                : context.l10n.browserConnect,
                           ),
                         ),
                         if (status.isRegistered)
                           OutlinedButton(
                             onPressed: _busy ? null : _unregister,
-                            child: const Text('Desconectar'),
+                            child: Text(context.l10n.cloudDisconnect),
                           ),
                       ],
                     ),
                     if (status.systemWideSupported) ...[
                       const SizedBox(height: LockspireSpacing.xl),
-                      Text('Para todo el equipo', style: textTheme.titleMedium),
-                      const SizedBox(height: LockspireSpacing.sm),
-                      const Text(
-                        'Si la extensión sigue diciendo que no está '
-                        'conectada, su organización puede estar bloqueando '
-                        'las conexiones por usuario (política '
-                        '"NativeMessagingUserLevelHosts" de Chrome, visible '
-                        'en chrome://policy). En ese caso, registre '
-                        'Lockspire para todo el equipo: Windows le va a '
-                        'pedir permisos de administrador.',
+                      Text(
+                        context.l10n.browserSystemWide,
+                        style: textTheme.titleMedium,
                       ),
+                      const SizedBox(height: LockspireSpacing.sm),
+                      Text(context.l10n.browserSystemWideHint),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
@@ -178,8 +172,8 @@ class _BrowserIntegrationScreenState
                         ),
                         title: Text(
                           status.isRegisteredSystemWide
-                              ? 'Registrado para todo el equipo'
-                              : 'No registrado para todo el equipo',
+                              ? context.l10n.browserSystemWideOn
+                              : context.l10n.browserSystemWideOff,
                         ),
                       ),
                       Wrap(
@@ -195,28 +189,28 @@ class _BrowserIntegrationScreenState
                                 : _registerSystemWide,
                             label: Text(
                               status.isRegisteredSystemWide
-                                  ? 'Volver a registrar'
-                                  : 'Registrar para todo el equipo',
+                                  ? context.l10n.browserReregister
+                                  : context.l10n.browserRegisterSystemWide,
                             ),
                           ),
                           if (status.isRegisteredSystemWide)
                             OutlinedButton(
                               onPressed: _busy ? null : _unregisterSystemWide,
-                              child: const Text('Quitar registro'),
+                              child: Text(
+                                context.l10n.browserRemoveRegistration,
+                              ),
                             ),
                         ],
                       ),
                     ],
                   ],
                   const SizedBox(height: LockspireSpacing.xl),
-                  Text('Instalar la extensión', style: textTheme.titleMedium),
-                  const SizedBox(height: LockspireSpacing.sm),
-                  const Text(
-                    'Mientras no esté publicada en la Chrome Web Store: '
-                    'abra chrome://extensions (o edge://extensions), active '
-                    '"Modo de desarrollador", elija "Cargar descomprimida" y '
-                    'seleccione la carpeta extension/dist del proyecto.',
+                  Text(
+                    context.l10n.browserInstallExtension,
+                    style: textTheme.titleMedium,
                   ),
+                  const SizedBox(height: LockspireSpacing.sm),
+                  Text(context.l10n.browserInstallExtensionHint),
                 ],
               );
             },
@@ -237,21 +231,21 @@ class _BridgeStatusTile extends StatelessWidget {
     final (icon, text) = switch (status) {
       BrowserBridgeStatus.running => (
         Icons.check_circle_outline,
-        'Lockspire está escuchando a la extensión.',
+        context.l10n.bridgeRunning,
       ),
       BrowserBridgeStatus.anotherInstance => (
         Icons.warning_amber_outlined,
-        'Otra instancia de Lockspire ya atiende a la extensión.',
+        context.l10n.bridgeAnotherInstance,
       ),
       BrowserBridgeStatus.unavailable => (
         Icons.error_outline,
-        'No se pudo abrir el canal con la extensión en este equipo.',
+        context.l10n.bridgeUnavailable,
       ),
       BrowserBridgeStatus.unsupported => (
         Icons.info_outline,
-        'La extensión de navegador solo funciona en escritorio.',
+        context.l10n.bridgeUnsupported,
       ),
-      null => (Icons.hourglass_empty, 'Iniciando…'),
+      null => (Icons.hourglass_empty, context.l10n.commonStarting),
     };
     return ListTile(
       contentPadding: EdgeInsets.zero,

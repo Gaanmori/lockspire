@@ -9,6 +9,7 @@ import '../../../vault/presentation/vault_entries_controller.dart';
 import '../../../vault/presentation/vault_session_state.dart';
 import '../../application/handle_bridge_request.dart';
 import '../providers/pending_link_request_provider.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 /// Muestra en la ventana de Lockspire la confirmación de vincular un sitio
 /// a una entrada que pidió la extensión (ADR 0015). Es la interfaz de
@@ -37,12 +38,12 @@ class LinkRequestListener extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('¿Vincular este sitio?'),
+        title: Text(context.l10n.linkTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('La extensión pide usar "${request.entryTitle}" en:'),
+            Text(context.l10n.linkBody(request.entryTitle)),
             const SizedBox(height: 8),
             SelectableText(
               newHost,
@@ -53,25 +54,21 @@ class LinkRequestListener extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               request.currentUrl.isEmpty
-                  ? 'La entrada no tenía ninguna URL.'
-                  : 'Reemplaza la URL actual: ${request.currentUrl}',
+                  ? context.l10n.linkNoUrl
+                  : context.l10n.linkReplacesUrl(request.currentUrl),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Compruebe que la dirección sea la real: si es un sitio '
-              'falso que imita al original, le estarías dando esta '
-              'contraseña.',
-            ),
+            Text(context.l10n.linkPhishingWarning),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(context.l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Vincular'),
+            child: Text(context.l10n.linkConfirm),
           ),
         ],
       ),
@@ -86,10 +83,9 @@ class LinkRequestListener extends ConsumerWidget {
         .where((e) => e.id == request.entryId && !e.deleted)
         .firstOrNull;
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     if (entry == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('La entrada ya no existe.')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.linkEntryGone)));
       return;
     }
     try {
@@ -101,17 +97,10 @@ class LinkRequestListener extends ConsumerWidget {
             fields: {...entry.fields, 'url': request.newUrl},
           );
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            '"${entry.title}" vinculada a $newHost. Vuelva a abrir la '
-            'extensión para rellenar.',
-          ),
-        ),
+        SnackBar(content: Text(l10n.linkDone(entry.title, newHost))),
       );
     } catch (_) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('No se pudo guardar el vínculo.')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.linkSaveFailed)));
     }
   }
 }

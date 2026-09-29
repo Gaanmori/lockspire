@@ -1359,4 +1359,165 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get exportChromeCsvHint =>
       'Sin cifrar. El formato más simple: lo importan Chrome, Edge, Firefox y Google Password Manager. Solo contraseñas.';
+
+  @override
+  String get browserRegistered =>
+      'Listo. Reinicie el navegador si ya estaba abierto.';
+
+  @override
+  String get browserUnregistered =>
+      'Lockspire ya no está conectado a los navegadores.';
+
+  @override
+  String get browserRegisteredSystemWide =>
+      'Listo para todo el equipo. Reinicie el navegador si ya estaba abierto.';
+
+  @override
+  String get browserUnregisteredSystemWide =>
+      'Se quitó el registro para todo el equipo.';
+
+  @override
+  String get browserTitle => 'Navegador';
+
+  @override
+  String get browserIntro =>
+      'Con la extensión de Lockspire para Chrome o Edge puede rellenar usuario y contraseña en los sitios web. La extensión le pide las credenciales a esta app; la bóveda nunca sale de acá y, si está bloqueada, la extensión le pide que la desbloquee primero.';
+
+  @override
+  String browserConnectedWith(Object browsers) {
+    return 'Conectado con $browsers';
+  }
+
+  @override
+  String get browserNotConnected => 'No conectado con ningún navegador';
+
+  @override
+  String get browserHostMissing =>
+      'Falta el componente \"lockspire-native-host\" junto a la app. Ver native-host/README.md.';
+
+  @override
+  String get browserReconnect => 'Volver a conectar';
+
+  @override
+  String get browserConnect => 'Conectar con Chrome/Edge';
+
+  @override
+  String get browserSystemWide => 'Para todo el equipo';
+
+  @override
+  String get browserSystemWideHint =>
+      'Si la extensión sigue diciendo que no está conectada, su organización puede estar bloqueando las conexiones por usuario (política \"NativeMessagingUserLevelHosts\" de Chrome, visible en chrome://policy). En ese caso, registre Lockspire para todo el equipo: Windows le va a pedir permisos de administrador.';
+
+  @override
+  String get browserSystemWideOn => 'Registrado para todo el equipo';
+
+  @override
+  String get browserSystemWideOff => 'No registrado para todo el equipo';
+
+  @override
+  String get browserReregister => 'Volver a registrar';
+
+  @override
+  String get browserRegisterSystemWide => 'Registrar para todo el equipo';
+
+  @override
+  String get browserRemoveRegistration => 'Quitar registro';
+
+  @override
+  String get browserInstallExtension => 'Instalar la extensión';
+
+  @override
+  String get browserInstallExtensionHint =>
+      'Mientras no esté publicada en la Chrome Web Store: abra chrome://extensions (o edge://extensions), active \"Modo de desarrollador\", elija \"Cargar descomprimida\" y seleccione la carpeta extension/dist del proyecto.';
+
+  @override
+  String get bridgeRunning => 'Lockspire está escuchando a la extensión.';
+
+  @override
+  String get bridgeAnotherInstance =>
+      'Otra instancia de Lockspire ya atiende a la extensión.';
+
+  @override
+  String get bridgeUnavailable =>
+      'No se pudo abrir el canal con la extensión en este equipo.';
+
+  @override
+  String get bridgeUnsupported =>
+      'La extensión de navegador solo funciona en escritorio.';
+
+  @override
+  String get commonStarting => 'Iniciando…';
+
+  @override
+  String get linkTitle => '¿Vincular este sitio?';
+
+  @override
+  String linkBody(Object title) {
+    return 'La extensión pide usar \"$title\" en:';
+  }
+
+  @override
+  String get linkNoUrl => 'La entrada no tenía ninguna URL.';
+
+  @override
+  String linkReplacesUrl(Object url) {
+    return 'Reemplaza la URL actual: $url';
+  }
+
+  @override
+  String get linkPhishingWarning =>
+      'Compruebe que la dirección sea la real: si es un sitio falso que imita al original, le estaría dando esta contraseña.';
+
+  @override
+  String get linkConfirm => 'Vincular';
+
+  @override
+  String get linkEntryGone => 'La entrada ya no existe.';
+
+  @override
+  String linkDone(Object title, Object host) {
+    return '\"$title\" vinculada a $host. Vuelva a abrir la extensión para rellenar.';
+  }
+
+  @override
+  String get linkSaveFailed => 'No se pudo guardar el vínculo.';
+
+  @override
+  String get navVault => 'Bóveda';
+
+  @override
+  String get settingsTitle => 'Ajustes';
+
+  @override
+  String get settingsAppearanceHint => 'Idioma, tema claro u oscuro y colores';
+
+  @override
+  String get settingsImportHint =>
+      'Desde SafeInCloud, Bitwarden, Chrome, KeePassXC o un respaldo de Lockspire';
+
+  @override
+  String get settingsExportHint =>
+      'Respaldo cifrado, o CSV/JSON para otro gestor';
+
+  @override
+  String get settingsBrowserHint => 'Conectar con la extensión de Chrome/Edge';
+
+  @override
+  String get aboutTitle => 'Acerca de';
+
+  @override
+  String get settingsAboutHint => 'Versión, licencia y código fuente';
+
+  @override
+  String get trayOpen => 'Abrir Lockspire';
+
+  @override
+  String get trayQuit => 'Salir';
+
+  @override
+  String get trayStillOpenTitle => 'Lockspire sigue abierto';
+
+  @override
+  String get trayStillOpenBody =>
+      'Al cerrar la ventana, Lockspire queda en la bandeja del sistema para que la extensión del navegador pueda autocompletar. La bóveda se bloquea sola tras el tiempo sin uso que elija en Seguridad, al bloquear la sesión o al suspender el equipo.\n\nPara cerrarlo del todo, use \"Salir\" en el icono de la bandeja.';
 }

@@ -2059,6 +2059,282 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sin cifrar. El formato más simple: lo importan Chrome, Edge, Firefox y Google Password Manager. Solo contraseñas.'**
   String get exportChromeCsvHint;
+
+  /// No description provided for @browserRegistered.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo. Reinicie el navegador si ya estaba abierto.'**
+  String get browserRegistered;
+
+  /// No description provided for @browserUnregistered.
+  ///
+  /// In es, this message translates to:
+  /// **'Lockspire ya no está conectado a los navegadores.'**
+  String get browserUnregistered;
+
+  /// No description provided for @browserRegisteredSystemWide.
+  ///
+  /// In es, this message translates to:
+  /// **'Listo para todo el equipo. Reinicie el navegador si ya estaba abierto.'**
+  String get browserRegisteredSystemWide;
+
+  /// No description provided for @browserUnregisteredSystemWide.
+  ///
+  /// In es, this message translates to:
+  /// **'Se quitó el registro para todo el equipo.'**
+  String get browserUnregisteredSystemWide;
+
+  /// No description provided for @browserTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Navegador'**
+  String get browserTitle;
+
+  /// No description provided for @browserIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Con la extensión de Lockspire para Chrome o Edge puede rellenar usuario y contraseña en los sitios web. La extensión le pide las credenciales a esta app; la bóveda nunca sale de acá y, si está bloqueada, la extensión le pide que la desbloquee primero.'**
+  String get browserIntro;
+
+  /// No description provided for @browserConnectedWith.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectado con {browsers}'**
+  String browserConnectedWith(Object browsers);
+
+  /// No description provided for @browserNotConnected.
+  ///
+  /// In es, this message translates to:
+  /// **'No conectado con ningún navegador'**
+  String get browserNotConnected;
+
+  /// No description provided for @browserHostMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'Falta el componente \"lockspire-native-host\" junto a la app. Ver native-host/README.md.'**
+  String get browserHostMissing;
+
+  /// No description provided for @browserReconnect.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a conectar'**
+  String get browserReconnect;
+
+  /// No description provided for @browserConnect.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectar con Chrome/Edge'**
+  String get browserConnect;
+
+  /// No description provided for @browserSystemWide.
+  ///
+  /// In es, this message translates to:
+  /// **'Para todo el equipo'**
+  String get browserSystemWide;
+
+  /// No description provided for @browserSystemWideHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Si la extensión sigue diciendo que no está conectada, su organización puede estar bloqueando las conexiones por usuario (política \"NativeMessagingUserLevelHosts\" de Chrome, visible en chrome://policy). En ese caso, registre Lockspire para todo el equipo: Windows le va a pedir permisos de administrador.'**
+  String get browserSystemWideHint;
+
+  /// No description provided for @browserSystemWideOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrado para todo el equipo'**
+  String get browserSystemWideOn;
+
+  /// No description provided for @browserSystemWideOff.
+  ///
+  /// In es, this message translates to:
+  /// **'No registrado para todo el equipo'**
+  String get browserSystemWideOff;
+
+  /// No description provided for @browserReregister.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a registrar'**
+  String get browserReregister;
+
+  /// No description provided for @browserRegisterSystemWide.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar para todo el equipo'**
+  String get browserRegisterSystemWide;
+
+  /// No description provided for @browserRemoveRegistration.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar registro'**
+  String get browserRemoveRegistration;
+
+  /// No description provided for @browserInstallExtension.
+  ///
+  /// In es, this message translates to:
+  /// **'Instalar la extensión'**
+  String get browserInstallExtension;
+
+  /// No description provided for @browserInstallExtensionHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Mientras no esté publicada en la Chrome Web Store: abra chrome://extensions (o edge://extensions), active \"Modo de desarrollador\", elija \"Cargar descomprimida\" y seleccione la carpeta extension/dist del proyecto.'**
+  String get browserInstallExtensionHint;
+
+  /// No description provided for @bridgeRunning.
+  ///
+  /// In es, this message translates to:
+  /// **'Lockspire está escuchando a la extensión.'**
+  String get bridgeRunning;
+
+  /// No description provided for @bridgeAnotherInstance.
+  ///
+  /// In es, this message translates to:
+  /// **'Otra instancia de Lockspire ya atiende a la extensión.'**
+  String get bridgeAnotherInstance;
+
+  /// No description provided for @bridgeUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir el canal con la extensión en este equipo.'**
+  String get bridgeUnavailable;
+
+  /// No description provided for @bridgeUnsupported.
+  ///
+  /// In es, this message translates to:
+  /// **'La extensión de navegador solo funciona en escritorio.'**
+  String get bridgeUnsupported;
+
+  /// No description provided for @commonStarting.
+  ///
+  /// In es, this message translates to:
+  /// **'Iniciando…'**
+  String get commonStarting;
+
+  /// No description provided for @linkTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Vincular este sitio?'**
+  String get linkTitle;
+
+  /// No description provided for @linkBody.
+  ///
+  /// In es, this message translates to:
+  /// **'La extensión pide usar \"{title}\" en:'**
+  String linkBody(Object title);
+
+  /// No description provided for @linkNoUrl.
+  ///
+  /// In es, this message translates to:
+  /// **'La entrada no tenía ninguna URL.'**
+  String get linkNoUrl;
+
+  /// No description provided for @linkReplacesUrl.
+  ///
+  /// In es, this message translates to:
+  /// **'Reemplaza la URL actual: {url}'**
+  String linkReplacesUrl(Object url);
+
+  /// No description provided for @linkPhishingWarning.
+  ///
+  /// In es, this message translates to:
+  /// **'Compruebe que la dirección sea la real: si es un sitio falso que imita al original, le estaría dando esta contraseña.'**
+  String get linkPhishingWarning;
+
+  /// No description provided for @linkConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Vincular'**
+  String get linkConfirm;
+
+  /// No description provided for @linkEntryGone.
+  ///
+  /// In es, this message translates to:
+  /// **'La entrada ya no existe.'**
+  String get linkEntryGone;
+
+  /// No description provided for @linkDone.
+  ///
+  /// In es, this message translates to:
+  /// **'\"{title}\" vinculada a {host}. Vuelva a abrir la extensión para rellenar.'**
+  String linkDone(Object title, Object host);
+
+  /// No description provided for @linkSaveFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar el vínculo.'**
+  String get linkSaveFailed;
+
+  /// No description provided for @navVault.
+  ///
+  /// In es, this message translates to:
+  /// **'Bóveda'**
+  String get navVault;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustes'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsAppearanceHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Idioma, tema claro u oscuro y colores'**
+  String get settingsAppearanceHint;
+
+  /// No description provided for @settingsImportHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Desde SafeInCloud, Bitwarden, Chrome, KeePassXC o un respaldo de Lockspire'**
+  String get settingsImportHint;
+
+  /// No description provided for @settingsExportHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Respaldo cifrado, o CSV/JSON para otro gestor'**
+  String get settingsExportHint;
+
+  /// No description provided for @settingsBrowserHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Conectar con la extensión de Chrome/Edge'**
+  String get settingsBrowserHint;
+
+  /// No description provided for @aboutTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Acerca de'**
+  String get aboutTitle;
+
+  /// No description provided for @settingsAboutHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Versión, licencia y código fuente'**
+  String get settingsAboutHint;
+
+  /// No description provided for @trayOpen.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir Lockspire'**
+  String get trayOpen;
+
+  /// No description provided for @trayQuit.
+  ///
+  /// In es, this message translates to:
+  /// **'Salir'**
+  String get trayQuit;
+
+  /// No description provided for @trayStillOpenTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Lockspire sigue abierto'**
+  String get trayStillOpenTitle;
+
+  /// No description provided for @trayStillOpenBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Al cerrar la ventana, Lockspire queda en la bandeja del sistema para que la extensión del navegador pueda autocompletar. La bóveda se bloquea sola tras el tiempo sin uso que elija en Seguridad, al bloquear la sesión o al suspender el equipo.\n\nPara cerrarlo del todo, use \"Salir\" en el icono de la bandeja.'**
+  String get trayStillOpenBody;
 }
 
 class _AppLocalizationsDelegate

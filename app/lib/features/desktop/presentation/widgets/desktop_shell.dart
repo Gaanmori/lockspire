@@ -20,6 +20,7 @@ import '../providers/is_desktop_shell_provider.dart';
 import '../providers/tray_hint_store_provider.dart';
 import '../providers/os_session_events_port_provider.dart';
 import '../window_actions.dart';
+import 'package:lockspire/l10n/l10n.dart';
 
 const _menuOpen = 'open';
 const _menuLock = 'lock';
@@ -67,6 +68,26 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
         .listen((_) => _lockVault());
   }
 
+  /// El menú de la bandeja se arma con los textos del idioma de la app:
+  /// si el usuario cambia de idioma, se vuelve a armar (ADR 0032).
+  Locale? _menuLocale;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.localeOf(context);
+    if (_enabled && _menuLocale != null && locale != _menuLocale) {
+      unawaited(
+        _updateTrayMenu(
+          isUnlocked:
+              ref.read(vaultSessionControllerProvider).value
+                  is VaultSessionUnlocked,
+        ),
+      );
+    }
+    _menuLocale = locale;
+  }
+
   @override
   void dispose() {
     if (_enabled) {
@@ -109,10 +130,14 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
     return trayManager.setContextMenu(
       Menu(
         items: [
-          MenuItem(key: _menuOpen, label: 'Abrir Lockspire'),
-          MenuItem(key: _menuLock, label: 'Bloquear', disabled: !isUnlocked),
+          MenuItem(key: _menuOpen, label: context.l10n.trayOpen),
+          MenuItem(
+            key: _menuLock,
+            label: context.l10n.commonLock,
+            disabled: !isUnlocked,
+          ),
           MenuItem.separator(),
-          MenuItem(key: _menuQuit, label: 'Salir'),
+          MenuItem(key: _menuQuit, label: context.l10n.trayQuit),
         ],
       ),
     );
@@ -153,18 +178,12 @@ class _DesktopShellState extends ConsumerState<DesktopShell>
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Lockspire sigue abierto'),
-          content: const Text(
-            'Al cerrar la ventana, Lockspire queda en la bandeja del sistema '
-            'para que la extensión del navegador pueda autocompletar. La '
-            'bóveda se bloquea sola tras el tiempo sin uso que elija en '
-            'Seguridad, al bloquear la sesión o al suspender el equipo.\n\n'
-            'Para cerrarlo del todo, use "Salir" en el icono de la bandeja.',
-          ),
+          title: Text(context.l10n.trayStillOpenTitle),
+          content: Text(context.l10n.trayStillOpenBody),
           actions: [
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Entendido'),
+              child: Text(context.l10n.commonGotIt),
             ),
           ],
         ),
