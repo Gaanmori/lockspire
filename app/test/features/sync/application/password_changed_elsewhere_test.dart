@@ -14,20 +14,14 @@ import 'package:lockspire/features/vault/application/unlock_vault_use_case.dart'
 import 'package:lockspire/features/vault/application/unlocked_vault_result.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 
-import '../../vault/application/fakes.dart';
-import 'fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
+import '../../../support/fakes/sync_fakes.dart';
+import '../../../support/builders.dart';
+
+VaultEntry _entry(String id) => anEntry(id: id);
 
 const _password = 'contraseña de prueba larga';
 const _newPassword = 'Tr3s-Tigres!Trigo nuevo';
-
-VaultEntry _entry(String id) => VaultEntry(
-  id: id,
-  type: VaultEntryType.password,
-  title: id,
-  createdAt: DateTime.utc(2026, 1, 1),
-  modifiedAt: DateTime.utc(2026, 1, 1),
-  fields: const {},
-);
 
 class _Device {
   final local = FakeVaultStoragePort();

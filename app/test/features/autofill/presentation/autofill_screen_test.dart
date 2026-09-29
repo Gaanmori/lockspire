@@ -10,16 +10,12 @@ import 'package:lockspire/features/vault/domain/entities/vault.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
-const _channel = MethodChannel('com.lockspire.lockspire/autofill');
+import '../../../support/builders.dart';
 
-VaultEntry _entry(String title, {String? url}) => VaultEntry(
-  id: title,
-  type: VaultEntryType.password,
-  title: title,
-  createdAt: DateTime.utc(2026, 1, 1),
-  modifiedAt: DateTime.utc(2026, 1, 1),
-  fields: {'username': 'yo', 'password': 'secreto', 'url': ?url},
-);
+VaultEntry _entry(String title, {String? url}) =>
+    anEntry(title: title, username: 'yo', password: 'secreto', url: url);
+
+const _channel = MethodChannel('com.lockspire.lockspire/autofill');
 
 /// Pide autofill [webDomain] dentro de [packageName] y registra qué se
 /// rellena (ADR 0020).

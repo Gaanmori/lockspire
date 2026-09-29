@@ -15,7 +15,7 @@ import 'package:lockspire/features/vault/presentation/screens/export_screen.dart
 import 'package:lockspire/features/vault/presentation/screens/import_screen.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
 
-import '../application/fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
 const _password = 'contraseña de prueba larga';

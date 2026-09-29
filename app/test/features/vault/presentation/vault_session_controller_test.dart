@@ -38,8 +38,9 @@ import 'package:lockspire/features/vault/presentation/vault_entries_controller.d
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
 
-import '../../sync/application/fakes.dart' as sync_fakes;
-import '../application/fakes.dart';
+import '../../../support/fakes/sync_fakes.dart' as sync_fakes;
+import '../../../support/fakes/vault_fakes.dart';
+import '../../../support/fakes/fake_secure_clipboard.dart';
 
 // Duración corta para no esperar minutos reales en los tests — usa Timer
 // real, así que hay margen inherente de timing (ver docs/STATE.md, nota
@@ -95,7 +96,7 @@ List<Override> _reminderOverrides(
       lockOnBackgroundProvider.overrideWith((ref) => lockOnBackground),
       biometricAuthPortProvider.overrideWith((ref) => biometric),
       secureClipboardPortProvider.overrideWithValue(
-        clipboard ?? _FakeClipboard(),
+        clipboard ?? FakeSecureClipboard(),
       ),
       ..._reminderOverrides(history, clock: clock),
     ],
@@ -112,19 +113,6 @@ List<Override> _reminderOverrides(
       history: history,
     ),
   );
-}
-
-class _FakeClipboard implements SecureClipboardPort {
-  int clears = 0;
-
-  @override
-  Future<void> copySensitive(
-    String text, {
-    required Duration clearAfter,
-  }) async {}
-
-  @override
-  Future<void> clearIfStillOurs() async => clears++;
 }
 
 class _SyncTestFakes {
@@ -402,7 +390,7 @@ void main() {
     // era imposible. Lo borra el plazo de ClipboardGuard.
     test('pasar a segundo plano bloquea pero NO borra el portapapeles; '
         'bloquear a mano sí (S4)', () async {
-      final clipboard = _FakeClipboard();
+      final clipboard = FakeSecureClipboard();
       final built = _buildContainer(
         timeout: const Duration(minutes: 5),
         clipboard: clipboard,

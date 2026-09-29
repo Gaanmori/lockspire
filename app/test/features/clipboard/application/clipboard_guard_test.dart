@@ -4,36 +4,15 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/clipboard/application/clipboard_guard.dart';
-import 'package:lockspire/features/clipboard/domain/ports/secure_clipboard_port.dart';
 
-class _FakeClipboard implements SecureClipboardPort {
-  final copies = <String>[];
-  int clears = 0;
-  bool failClear = false;
-  final delays = <Duration>[];
-
-  @override
-  Future<void> copySensitive(
-    String text, {
-    required Duration clearAfter,
-  }) async {
-    copies.add(text);
-    delays.add(clearAfter);
-  }
-
-  @override
-  Future<void> clearIfStillOurs() async {
-    clears++;
-    if (failClear) throw StateError('sin portapapeles');
-  }
-}
+import '../../../support/fakes/fake_secure_clipboard.dart';
 
 void main() {
-  late _FakeClipboard clipboard;
+  late FakeSecureClipboard clipboard;
   late ClipboardGuard guard;
 
   setUp(() {
-    clipboard = _FakeClipboard();
+    clipboard = FakeSecureClipboard();
     guard = ClipboardGuard(port: clipboard);
   });
 

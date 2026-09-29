@@ -4,7 +4,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/vault/application/create_vault_use_case.dart';
 
-import 'fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
 
 void main() {
   group('CreateVaultUseCase', () {

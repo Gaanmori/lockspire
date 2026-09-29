@@ -7,7 +7,7 @@ import 'package:local_auth_platform_interface/local_auth_platform_interface.dart
 import 'package:lockspire/features/vault/domain/ports/biometric_auth_port.dart';
 import 'package:lockspire/features/vault/infrastructure/android_biometric_auth_adapter.dart';
 
-import 'fake_local_authentication.dart';
+import '../../../support/fakes/fake_local_authentication.dart';
 
 void main() {
   // `_storage` nunca se toca en ninguno de los caminos probados acá —

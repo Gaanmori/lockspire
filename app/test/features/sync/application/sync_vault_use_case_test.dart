@@ -14,8 +14,10 @@ import 'package:lockspire/features/vault/domain/ports/crypto_port.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 import 'package:lockspire/features/vault/domain/vault_file_codec.dart';
 
-import '../../vault/application/fakes.dart';
-import 'fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
+import '../../../support/fakes/sync_fakes.dart';
+
+import '../../../support/builders.dart';
 
 /// Mismo cálculo que usa [SyncVaultUseCase] internamente (hash del blob
 /// codificado) — se recalcula aquí para preparar el "último hash
@@ -80,18 +82,13 @@ VaultEntry _entry(
   DateTime? modifiedAt,
   bool deleted = false,
   Map<String, String> fields = const {},
-}) {
-  final t = modifiedAt ?? DateTime.utc(2026, 1, 1);
-  return VaultEntry(
-    id: id,
-    type: VaultEntryType.password,
-    title: title,
-    createdAt: t,
-    modifiedAt: t,
-    deleted: deleted,
-    fields: fields,
-  );
-}
+}) => anEntry(
+  id: id,
+  title: title,
+  createdAt: modifiedAt,
+  deleted: deleted,
+  fields: fields,
+);
 
 void main() {
   // Revisión 2026-09-25, hallazgo S1: un archivo remoto que no se descifra

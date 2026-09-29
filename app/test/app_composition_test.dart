@@ -15,8 +15,8 @@ import 'package:lockspire/features/vault/presentation/providers/crypto_port_prov
 import 'package:lockspire/features/vault/presentation/providers/master_password_change_replica_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
 
-import 'features/sync/application/fakes.dart';
-import 'features/vault/application/fakes.dart';
+import 'support/fakes/sync_fakes.dart';
+import 'support/fakes/vault_fakes.dart';
 
 void main() {
   group('Composition root de la app (hallazgo A3)', () {

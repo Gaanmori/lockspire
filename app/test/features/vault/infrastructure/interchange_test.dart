@@ -16,7 +16,7 @@ import 'package:lockspire/features/vault/infrastructure/interchange/csv_codec.da
 import 'package:lockspire/features/vault/infrastructure/interchange/csv_exporters.dart';
 import 'package:lockspire/features/vault/infrastructure/interchange/csv_import_source.dart';
 
-import '../application/fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
 
 /// Datos inventados. Nunca datos reales del usuario.
 final _login = VaultEntry.create(

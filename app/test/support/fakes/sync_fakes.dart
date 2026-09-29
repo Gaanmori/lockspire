@@ -4,6 +4,7 @@
 import 'package:lockspire/features/sync/domain/ports/sync_port.dart';
 import 'package:lockspire/features/sync/domain/ports/sync_state_port.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
+import 'package:lockspire/features/sync/domain/ports/active_sync_provider_port.dart';
 
 /// Remoto falso en memoria para tests — no hace red real.
 class FakeSyncPort implements SyncPort {
@@ -53,4 +54,20 @@ class FakeSyncStatePort implements SyncStatePort {
   Future<void> setPasswordChangedElsewhere(bool value) async {
     passwordChangedElsewhereFlag = value;
   }
+}
+
+/// Nube activa en memoria. [active] arranca con la que se pase.
+class FakeActiveSyncProviderPort implements ActiveSyncProviderPort {
+  SyncProviderId? active;
+
+  FakeActiveSyncProviderPort([this.active]);
+
+  @override
+  Future<SyncProviderId?> activeProvider() async => active;
+
+  @override
+  Future<void> saveActiveProvider(SyncProviderId id) async => active = id;
+
+  @override
+  Future<void> clearActiveProvider() async => active = null;
 }

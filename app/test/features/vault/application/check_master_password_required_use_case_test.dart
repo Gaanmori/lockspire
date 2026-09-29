@@ -6,7 +6,7 @@ import 'package:lockspire/features/vault/application/check_master_password_requi
 import 'package:lockspire/features/vault/domain/master_password_reminder.dart';
 import 'package:lockspire/features/vault/domain/ports/password_unlock_history_port.dart';
 
-import 'fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
 
 class _ThrowingHistory implements PasswordUnlockHistoryPort {
   @override

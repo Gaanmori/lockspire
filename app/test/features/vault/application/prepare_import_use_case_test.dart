@@ -12,7 +12,7 @@ import 'package:lockspire/features/vault/application/vault_transfer_use_cases.da
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 import 'package:lockspire/features/vault/infrastructure/interchange/csv_import_source.dart';
 
-import 'fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
 
 const _password = 'contraseña de prueba larga';
 

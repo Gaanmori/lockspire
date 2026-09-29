@@ -5,16 +5,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/vault/domain/entities/vault.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 
+import '../../../../support/builders.dart';
+
 final _created = DateTime.utc(2026, 1, 1);
 final _now = DateTime.utc(2026, 9, 27, 12);
 
-VaultEntry _entry(String id, {String? title}) => VaultEntry(
+VaultEntry _entry(String id, {String? title}) => anEntry(
   id: id,
-  type: VaultEntryType.password,
-  title: title ?? id,
+  title: title,
   createdAt: _created,
-  modifiedAt: _created,
-  fields: const {'username': 'yo', 'password': 'viejo'},
+  username: 'yo',
+  password: 'viejo',
 );
 
 Vault _vault(List<VaultEntry> entries) =>

@@ -6,6 +6,8 @@ import 'package:lockspire/features/sync/domain/vault_merge.dart';
 import 'package:lockspire/features/vault/domain/entities/vault.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 
+import '../../../support/builders.dart';
+
 VaultEntry _entry(
   String id,
   String title, {
@@ -14,20 +16,15 @@ VaultEntry _entry(
   DateTime? deletedAt,
   Map<String, String> fields = const {},
   Map<String, List<FieldHistoryRecord>> fieldHistory = const {},
-}) {
-  final t = modifiedAt ?? DateTime.utc(2026, 1, 1);
-  return VaultEntry(
-    id: id,
-    type: VaultEntryType.password,
-    title: title,
-    createdAt: t,
-    modifiedAt: t,
-    deleted: deleted,
-    deletedAt: deletedAt,
-    fields: fields,
-    fieldHistory: fieldHistory,
-  );
-}
+}) => anEntry(
+  id: id,
+  title: title,
+  createdAt: modifiedAt,
+  deleted: deleted,
+  deletedAt: deletedAt,
+  fields: fields,
+  fieldHistory: fieldHistory,
+);
 
 Vault _vault(List<VaultEntry> entries) =>
     Vault(vaultId: 'v1', schemaVersion: 1, entries: entries);

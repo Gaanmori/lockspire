@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/vault/application/replace_biometric_key_use_case.dart';
 
-import 'fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
 
 /// Registra el orden de llamadas y puede fallar al guardar.
 class _RecordingPort extends FakeBiometricAuthPort {

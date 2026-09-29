@@ -10,7 +10,7 @@ import 'package:lockspire/features/vault/application/unlock_vault_use_case.dart'
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 
-import 'fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
 
 const _masterPassword = 'correcto-caballo-batería-grapa';
 

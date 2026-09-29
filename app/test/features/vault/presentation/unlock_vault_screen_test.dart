@@ -14,7 +14,7 @@ import 'package:lockspire/features/vault/presentation/providers/password_unlock_
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/screens/unlock_vault_screen.dart';
 
-import '../application/fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
 /// Pantalla de desbloqueo con biometría activa y un último desbloqueo con

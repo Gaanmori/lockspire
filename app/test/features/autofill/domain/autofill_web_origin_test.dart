@@ -5,16 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/autofill/domain/autofill_web_origin.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 
-VaultEntry _entry(String title, {String? url, bool deleted = false}) =>
-    VaultEntry(
-      id: title,
-      type: VaultEntryType.password,
-      title: title,
-      createdAt: DateTime.utc(2026, 1, 1),
-      modifiedAt: DateTime.utc(2026, 1, 1),
-      deleted: deleted,
-      fields: {'username': 'yo', 'password': 'x', 'url': ?url},
-    );
+import '../../../support/builders.dart';
+
+VaultEntry _entry(String title, {String? url, bool deleted = false}) => anEntry(
+  title: title,
+  username: 'yo',
+  password: 'x',
+  url: url,
+  deleted: deleted,
+);
 
 void main() {
   group('webOriginFor (ADR 0020)', () {

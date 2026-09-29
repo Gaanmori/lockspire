@@ -14,20 +14,14 @@ import 'package:lockspire/features/vault/application/unlocked_vault_result.dart'
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
 
-import '../../vault/application/fakes.dart';
-import 'fakes.dart';
+import '../../../support/fakes/vault_fakes.dart';
+import '../../../support/fakes/sync_fakes.dart';
+import '../../../support/builders.dart';
+
+VaultEntry _entry(String id, String title) => anEntry(id: id, title: title);
 
 const _oldPassword = 'contraseña vieja de prueba';
 const _newPassword = 'Tr3s-Tigres!Trigo nuevo';
-
-VaultEntry _entry(String id, String title) => VaultEntry(
-  id: id,
-  type: VaultEntryType.password,
-  title: title,
-  createdAt: DateTime.utc(2026, 1, 1),
-  modifiedAt: DateTime.utc(2026, 1, 1),
-  fields: const {},
-);
 
 class _FailingSyncPort extends FakeSyncPort {
   bool failDownload = false;
