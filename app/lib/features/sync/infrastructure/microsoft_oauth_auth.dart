@@ -122,13 +122,16 @@ const _loginTimeout = Duration(minutes: 5);
 
 /// Páginas fijas: nunca se refleja nada de la petición (antes se escribía
 /// `error_description` sin escapar, hallazgo S9). El detalle del error se
-/// muestra en la app.
+/// muestra en la app. Fijas y en los dos idiomas de la app (ADR 0032): no
+/// llevan datos, así que no hace falta saber el idioma elegido.
 const _successPage =
     '<!doctype html><meta charset="utf-8"><title>Lockspire</title>'
-    '<p>Listo, ya puede volver a Lockspire.</p>';
+    '<p>Listo, ya puede volver a Lockspire.</p>'
+    '<p lang="en">Done, you can go back to Lockspire.</p>';
 const _errorPage =
     '<!doctype html><meta charset="utf-8"><title>Lockspire</title>'
-    '<p>No se pudo conectar. Vuelva a Lockspire para ver el detalle.</p>';
+    '<p>No se pudo conectar. Vuelva a Lockspire para ver el detalle.</p>'
+    '<p lang="en">Could not connect. Go back to Lockspire for details.</p>';
 
 Future<void> _respond(HttpRequest request, int status, String? html) async {
   request.response

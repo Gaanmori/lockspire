@@ -24,6 +24,7 @@ void main() {
             code: LocalAuthExceptionCode.userCanceled,
           );
         final adapter = AndroidBiometricAuthAdapter(
+          promptReason: 'Verifíquese para desbloquear Lockspire',
           storage: storage,
           localAuth: localAuth,
         );
@@ -39,6 +40,7 @@ void main() {
       () async {
         final localAuth = FakeLocalAuthentication()..authenticateResult = false;
         final adapter = AndroidBiometricAuthAdapter(
+          promptReason: 'Verifíquese para desbloquear Lockspire',
           storage: storage,
           localAuth: localAuth,
         );
@@ -54,6 +56,7 @@ void main() {
       () async {
         final localAuth = FakeLocalAuthentication();
         final adapter = AndroidBiometricAuthAdapter(
+          promptReason: 'Verifíquese para desbloquear Lockspire',
           storage: storage,
           localAuth: localAuth,
         );
@@ -70,6 +73,7 @@ void main() {
       () async {
         final localAuth = FakeLocalAuthentication()..deviceSupported = false;
         final adapter = AndroidBiometricAuthAdapter(
+          promptReason: 'Verifíquese para desbloquear Lockspire',
           storage: storage,
           localAuth: localAuth,
         );
@@ -85,6 +89,7 @@ void main() {
       () async {
         final localAuth = FakeLocalAuthentication()..canCheck = false;
         final adapter = AndroidBiometricAuthAdapter(
+          promptReason: 'Verifíquese para desbloquear Lockspire',
           storage: storage,
           localAuth: localAuth,
         );
@@ -100,6 +105,7 @@ void main() {
       () async {
         final localAuth = FakeLocalAuthentication()..enrolled = const [];
         final adapter = AndroidBiometricAuthAdapter(
+          promptReason: 'Verifíquese para desbloquear Lockspire',
           storage: storage,
           localAuth: localAuth,
         );

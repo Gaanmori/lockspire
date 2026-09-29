@@ -2533,6 +2533,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'dentro de la app {package}'**
   String autofillInsideApp(Object package);
+
+  /// No description provided for @biometricPromptReason.
+  ///
+  /// In es, this message translates to:
+  /// **'Verifíquese para desbloquear Lockspire'**
+  String get biometricPromptReason;
 }
 
 class _AppLocalizationsDelegate

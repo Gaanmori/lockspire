@@ -24,6 +24,7 @@ void main() {
             code: LocalAuthExceptionCode.userCanceled,
           );
         final adapter = WindowsBiometricAuthAdapter(
+          promptReason: 'Verifíquese para desbloquear Lockspire',
           storage: storage,
           localAuth: localAuth,
         );
@@ -39,6 +40,7 @@ void main() {
       () async {
         final localAuth = FakeLocalAuthentication()..authenticateResult = false;
         final adapter = WindowsBiometricAuthAdapter(
+          promptReason: 'Verifíquese para desbloquear Lockspire',
           storage: storage,
           localAuth: localAuth,
         );
@@ -54,6 +56,7 @@ void main() {
       () async {
         final localAuth = FakeLocalAuthentication();
         final adapter = WindowsBiometricAuthAdapter(
+          promptReason: 'Verifíquese para desbloquear Lockspire',
           storage: storage,
           localAuth: localAuth,
         );
@@ -73,6 +76,7 @@ void main() {
         // notEnrolled porque su implementación real tampoco lo hace.
         final localAuth = FakeLocalAuthentication()..deviceSupported = false;
         final adapter = WindowsBiometricAuthAdapter(
+          promptReason: 'Verifíquese para desbloquear Lockspire',
           storage: storage,
           localAuth: localAuth,
         );

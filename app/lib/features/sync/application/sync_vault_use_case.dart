@@ -121,7 +121,7 @@ class RemoteVaultRejectedException implements Exception {
   @override
   String toString() => switch (reason) {
     RemoteVaultRejection.differentVault =>
-      'La nube tiene otra bóveda distinta a la tuya. No se cambió nada en '
+      'La nube tiene una bóveda distinta a la suya. No se cambió nada en '
           'este dispositivo.',
     RemoteVaultRejection.notAuthentic =>
       'La bóveda de la nube no se pudo verificar (está dañada, fue '

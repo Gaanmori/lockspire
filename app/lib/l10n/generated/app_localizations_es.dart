@@ -1643,4 +1643,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String autofillInsideApp(Object package) {
     return 'dentro de la app $package';
   }
+
+  @override
+  String get biometricPromptReason => 'Verifíquese para desbloquear Lockspire';
 }

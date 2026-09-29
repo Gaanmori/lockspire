@@ -11,7 +11,6 @@ import '../domain/ports/biometric_auth_port.dart';
 
 const _keyBiometricKey = 'biometric.vault_key';
 const _keyOnboardingDismissed = 'biometric.onboarding_dismissed';
-const _promptReason = 'Verificate para desbloquear Lockspire';
 
 /// Implementa [BiometricAuthPort] en Android con `local_auth`
 /// (`BiometricPrompt` real) para disparar el prompt del sistema antes de
@@ -39,10 +38,15 @@ class AndroidBiometricAuthAdapter implements BiometricAuthPort {
   final FlutterSecureStorage _storage;
   final LocalAuthentication _localAuth;
 
+  /// Texto del diálogo del sistema, en el idioma de la app (ADR 0032).
+  final String _promptReason;
+
   AndroidBiometricAuthAdapter({
     required this._storage,
+    required String promptReason,
     LocalAuthentication? localAuth,
-  }) : _localAuth = localAuth ?? LocalAuthentication();
+  }) : _promptReason = promptReason,
+       _localAuth = localAuth ?? LocalAuthentication();
 
   @override
   Future<BiometricAvailability> checkAvailability() async {

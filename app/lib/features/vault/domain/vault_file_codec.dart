@@ -25,7 +25,7 @@ class UnsupportedVaultFormatException implements Exception {
   String toString() =>
       'La bóveda requiere un lector de versión >= '
       '$fileFormatMinReaderVersion, pero esta app solo soporta '
-      'la versión $supportedFormatVersion. Actualiza la app.';
+      'la versión $supportedFormatVersion. Actualice la app.';
 }
 
 /// El header pide parámetros de Argon2id fuera de los límites aceptados

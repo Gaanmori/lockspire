@@ -405,5 +405,6 @@
   "autofillUnknownApp": "Unknown app",
   "autofillInBrowser": "in {browser}",
   "autofillInUnknownApp": "in an unknown app",
-  "autofillInsideApp": "inside the app {package}"
+  "autofillInsideApp": "inside the app {package}",
+  "biometricPromptReason": "Verify your identity to unlock Lockspire"
 }

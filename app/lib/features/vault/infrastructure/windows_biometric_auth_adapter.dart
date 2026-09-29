@@ -11,7 +11,6 @@ import '../domain/ports/biometric_auth_port.dart';
 
 const _keyBiometricKey = 'biometric.vault_key';
 const _keyOnboardingDismissed = 'biometric.onboarding_dismissed';
-const _promptReason = 'Verificate para desbloquear Lockspire';
 
 /// Implementa [BiometricAuthPort] en Windows con `local_auth`
 /// (`local_auth_windows`, del propio equipo de Flutter) para disparar el
@@ -33,10 +32,15 @@ class WindowsBiometricAuthAdapter implements BiometricAuthPort {
   final FlutterSecureStorage _storage;
   final LocalAuthentication _localAuth;
 
+  /// Texto del diálogo del sistema, en el idioma de la app (ADR 0032).
+  final String _promptReason;
+
   WindowsBiometricAuthAdapter({
     required this._storage,
+    required String promptReason,
     LocalAuthentication? localAuth,
-  }) : _localAuth = localAuth ?? LocalAuthentication();
+  }) : _promptReason = promptReason,
+       _localAuth = localAuth ?? LocalAuthentication();
 
   @override
   Future<BiometricAvailability> checkAvailability() async {

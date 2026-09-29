@@ -3,6 +3,7 @@
 
 import 'dart:io' show Platform;
 
+import 'package:lockspire/features/appearance/presentation/providers/app_l10n_provider.dart';
 import 'package:lockspire/shared/secure_storage_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -23,11 +24,13 @@ BiometricAuthPort biometricAuthPort(Ref ref) {
   if (Platform.isAndroid) {
     return AndroidBiometricAuthAdapter(
       storage: ref.watch(secureStorageProvider),
+      promptReason: ref.watch(appL10nProvider).biometricPromptReason,
     );
   }
   if (Platform.isWindows) {
     return WindowsBiometricAuthAdapter(
       storage: ref.watch(secureStorageProvider),
+      promptReason: ref.watch(appL10nProvider).biometricPromptReason,
     );
   }
   return const UnavailableBiometricAuthAdapter();

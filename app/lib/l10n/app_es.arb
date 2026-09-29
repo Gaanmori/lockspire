@@ -1068,5 +1068,6 @@
         "type": "Object"
       }
     }
-  }
+  },
+  "biometricPromptReason": "Verifíquese para desbloquear Lockspire"
 }
