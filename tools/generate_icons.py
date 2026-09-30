@@ -143,8 +143,8 @@ def save(img, path):
     print(f'  {path.relative_to(ROOT)}')
 
 
-def save_ico(path, sizes):
-    images = [render(s) for s in sizes]
+def save_ico(path, sizes, colors=None):
+    images = [render(s, colors=colors) for s in sizes]
     path.parent.mkdir(parents=True, exist_ok=True)
     images[-1].save(path, format='ICO', sizes=[(s, s) for s in sizes],
                     append_images=images[:-1])
@@ -205,10 +205,22 @@ def main():
     (res / 'values/ic_launcher_background.xml').write_text(
         '\n'.join(colors_xml) + '\n', encoding='utf-8')
 
+    # El ícono "del sistema" en escritorio (el .exe, la bandeja antes de
+    # cargar el tema, el paquete MSIX) es el de Grafito, el tema por defecto
+    # (ADR 0036). La ventana y la bandeja cambian después al tema elegido.
+    grafito = THEMES['neutral']
     print('Windows')
-    save_ico(APP / 'windows/runner/resources/app_icon.ico', [16, 24, 32, 48, 64, 128, 256])
-    save_ico(APP / 'assets/tray/tray_icon.ico', [16, 24, 32, 48, 64, 256])
-    save(render(144), APP / 'assets/tray/tray_icon.png')
+    save_ico(APP / 'windows/runner/resources/app_icon.ico',
+             [16, 24, 32, 48, 64, 128, 256], colors=grafito)
+    save_ico(APP / 'assets/tray/tray_icon.ico', [16, 24, 32, 48, 64, 256],
+             colors=grafito)
+    save(render(144, colors=grafito), APP / 'assets/tray/tray_icon.png')
+
+    print('MSIX (Microsoft Store)')
+    msix = APP / 'windows/packaging/Assets'
+    for name, px in [('StoreLogo', 50), ('Square44x44Logo', 44),
+                     ('Square150x150Logo', 150)]:
+        save(render(px, colors=grafito), msix / f'{name}.png')
 
     print('Web')
     web = APP / 'web'
@@ -236,8 +248,8 @@ def main():
         save(render(px), mac / f'app_icon_{px}.png')
 
     print('Extensión')
-    save(render(48), ROOT / 'extension/public/icons/icon-48.png')
-    save(render(128), ROOT / 'extension/public/icons/icon-128.png')
+    save(render(48, colors=grafito), ROOT / 'extension/public/icons/icon-48.png')
+    save(render(128, colors=grafito), ROOT / 'extension/public/icons/icon-128.png')
 
 
 if __name__ == '__main__':

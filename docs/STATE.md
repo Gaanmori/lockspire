@@ -929,6 +929,14 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - Tests: `replace_biometric_key_use_case_test.dart` (3).
 - **Confirmado por el usuario en el Redmi (2026-09-28).**
 
+### Google Play: cuenta creada (2026-09-30)
+
+- Cuenta de desarrollador **personal** "Gaanmori" (ID 8341593776593425102), con la verificación de identidad en curso.
+- **Siguiente:**
+  - firma de release (clave de subida) y AAB;
+  - prueba cerrada de 12 personas durante 14 días;
+  - decidir si las donaciones van desde el inicio. El perfil de pagos puede hacer pública la dirección en la ficha.
+
 ### MVP — canales y checklist (ADR 0028, decidido 2026-09-28)
 
 Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome Web Store y Edge Add-ons. **F-Droid fuera por ahora.** Costo total: US$30 (Play US$25, Chrome US$5).
