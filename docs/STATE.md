@@ -688,6 +688,21 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
 
+### Tests: infraestructura al 90 % (2026-09-30)
+
+- **Hecho:** infraestructura pasó de 75,5 % a **92,4 %** medido en Windows. 567 tests. La CI ahora exige 90 % también en infraestructura (`tool/check_coverage.dart`).
+  - **`test/support/fake_method_channel.dart`:** el lado nativo de un canal en memoria, que anota las llamadas, contesta y llama a Dart. Lo usan los tests de los canales de Kotlin (autocompletado, ajustes, ícono del lanzador, íconos de apps, vuelta de OAuth), del runner de Windows (sesión bloqueada), de `tray_manager`, de `window_manager`, de `path_provider`, de `url_launcher` y de `dynamic_color`.
+  - **Tests nuevos:**
+    - clave biométrica: el mismo contrato en Android y en Windows;
+    - íconos de sitios: el camino exitoso;
+    - Google Drive: inicio de sesión en escritorio (loopback) y en Android (sin ventanas en la sync);
+    - `file_picker`, Acerca de, y los casos de Bitwarden que faltaban.
+  - **Linux D-Bus:** `LinuxOsSessionEventsAdapter` recibe los buses. El test (`@TestOn('linux')`) arma logind y los salvapantallas en un `DBusServer` en memoria. En Windows no corre, porque el servidor de prueba usa `RawSocket.readMessage`, que es solo de Unix. **No se vio pasar todavía: se verá en la CI de Linux.**
+- **Bug encontrado y corregido:** Google Drive en escritorio esperaba para siempre si el navegador no abría. Ahora da `oauthBrowserFailed`, como OneDrive. `GoogleDriveDesktopAuth` recibe `openBrowser` y `baseClient`.
+- **Pendiente:**
+  - confirmar en GitHub el test de D-Bus y el piso de 90 % medido en Linux;
+  - verificar a mano "Conectar con Google" en Windows.
+
 ### Tests: adaptadores de infraestructura, grupo 2 (2026-09-30)
 
 - **Hecho:** infraestructura pasó de 57,9 % a 75,5 %. 509 tests pasan en `test/`. Aplicación 95,0 %, dominio 94,8 %, presentación 90,1 %. Infraestructura sigue sin piso en la CI.

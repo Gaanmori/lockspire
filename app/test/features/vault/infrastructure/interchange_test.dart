@@ -187,6 +187,69 @@ void main() {
         expect(login.fields['hidden:TOTP'], 'JBSWY3DP');
       },
     );
+
+    test('un archivo que no es JSON se rechaza', () {
+      expect(
+        () => BitwardenJsonImportSource().parse('no es json'),
+        throwsA(
+          isA<AppProblem>().having(
+            (e) => e.code,
+            'code',
+            AppProblemCode.importInvalidJson,
+          ),
+        ),
+      );
+    });
+
+    test('notas seguras, la marca de la tarjeta y la dirección de la '
+        'identidad no se pierden; tipos desconocidos se omiten', () async {
+      final entries = await BitwardenJsonImportSource().parse(
+        jsonEncode({
+          'encrypted': false,
+          'items': [
+            {'type': 2, 'name': 'Wifi', 'notes': 'clave del router'},
+            {
+              'type': 3,
+              'name': 'Visa',
+              'card': {'brand': 'Visa', 'number': '4111'},
+            },
+            {
+              'type': 4,
+              'name': 'Cédula',
+              'identity': {'address1': 'Calle 1', 'city': 'Ciudad'},
+            },
+            {'type': 99, 'name': 'Futuro'},
+          ],
+        }),
+      );
+
+      expect(entries.map((e) => e.title), ['Wifi', 'Visa', 'Cédula']);
+      expect(entries[0].fields[EntryFields.notes], 'clave del router');
+      expect(entries[1].fields['custom:Marca'], 'Visa');
+      expect(entries[2].fields['custom:Dirección'], 'Calle 1, Ciudad');
+    });
+
+    test('un vencimiento de tarjeta que Bitwarden no entiende viaja como '
+        'campo', () {
+      final card = VaultEntry.create(
+        title: 'Vieja',
+        type: VaultEntryType.card,
+        fields: {EntryFields.cardExpiry: 'algún día'},
+      );
+      final exporter = BitwardenJsonExporter();
+
+      final item =
+          ((jsonDecode(exporter.encode([card])) as Map)['items'] as List).single
+              as Map;
+
+      expect(
+        (item['fields'] as List).map((f) => (f as Map)['value']),
+        contains('algún día'),
+      );
+      expect(exporter.fileExtension, 'json');
+      expect(exporter.mimeType, 'application/json');
+      expect(exporter.passwordsOnly, isFalse);
+    });
   });
 
   group('CSV de Bitwarden', () {

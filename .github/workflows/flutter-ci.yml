@@ -38,11 +38,12 @@ jobs:
         run: flutter analyze
 
       # Unitarios, de pantallas y de flujo (app/test/README.md), con
-      # cobertura. Dominio, aplicación y presentación no pueden bajar del 90 %.
+      # cobertura. Dominio, aplicación, infraestructura y presentación no pueden
+      # bajar del 90 %.
       - name: Test
         run: flutter test --coverage
 
-      - name: Coverage gate (domain, application and presentation)
+      - name: Coverage gate (domain, application, infrastructure and presentation)
         run: dart run tool/check_coverage.dart 90
 
       - name: Upload coverage

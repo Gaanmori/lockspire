@@ -27,6 +27,17 @@ const _screenSaverInterfaces = [
 /// escucha la sesión propia en login1 — no las de otros usuarios del
 /// equipo, que también emiten `Lock` en el bus de sistema.
 class LinuxOsSessionEventsAdapter implements OsSessionEventsPort {
+  /// Conexión a cada bus. Por defecto, los del escritorio; los tests pasan
+  /// buses propios en memoria.
+  final DBusClient Function() _connectSystemBus;
+  final DBusClient Function() _connectSessionBus;
+
+  LinuxOsSessionEventsAdapter({
+    DBusClient Function()? systemBus,
+    DBusClient Function()? sessionBus,
+  }) : _connectSystemBus = systemBus ?? DBusClient.system,
+       _connectSessionBus = sessionBus ?? DBusClient.session;
+
   final _controller = StreamController<void>.broadcast();
   final _subscriptions = <StreamSubscription<DBusSignal>>[];
   DBusClient? _systemBus;
@@ -49,7 +60,7 @@ class LinuxOsSessionEventsAdapter implements OsSessionEventsPort {
 
   Future<void> _listenLogind() async {
     try {
-      final bus = _systemBus = DBusClient.system();
+      final bus = _systemBus = _connectSystemBus();
       final login1 = DBusRemoteObject(
         bus,
         name: 'org.freedesktop.login1',
@@ -92,7 +103,7 @@ class LinuxOsSessionEventsAdapter implements OsSessionEventsPort {
 
   void _listenScreenSavers() {
     try {
-      final bus = _sessionBus = DBusClient.session();
+      final bus = _sessionBus = _connectSessionBus();
       for (final interface in _screenSaverInterfaces) {
         _subscriptions.add(
           DBusSignalStream(

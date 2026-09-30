@@ -46,6 +46,16 @@ class FakeLocalAuthentication extends LocalAuthentication {
     return authenticateResult;
   }
 
+  /// Si no es `null`, `stopAuthentication()` lo lanza.
+  Object? stopError;
+
+  @override
+  Future<bool> stopAuthentication() async {
+    final error = stopError;
+    if (error != null) throw error;
+    return true;
+  }
+
   @override
   Future<bool> isDeviceSupported() async => deviceSupported;
 

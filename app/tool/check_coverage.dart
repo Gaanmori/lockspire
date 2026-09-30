@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
-// Piso de cobertura para dominio, aplicación y presentación. Lee
-// coverage/lcov.info (de `flutter test --coverage`), imprime la cobertura
-// por capa y termina con error si alguna de esas tres baja de [minimum].
-// Infraestructura no tiene piso: son los adaptadores de plataforma (red,
-// canales nativos, OAuth), que se prueban con sus propios tests y de punta
-// a punta en el dispositivo.
+// Piso de cobertura para dominio, aplicación, infraestructura y
+// presentación. Lee coverage/lcov.info (de `flutter test --coverage`),
+// imprime la cobertura por capa y termina con error si alguna de esas cuatro
+// baja de [minimum]. Los adaptadores de plataforma se prueban con el lado
+// nativo simulado (canales, servidores HTTP y D-Bus en memoria).
 //
 //     dart run tool/check_coverage.dart [mínimo, por defecto 90]
 
@@ -44,6 +43,7 @@ void main(List<String> args) {
     final gated = const {
       'domain',
       'application',
+      'infrastructure',
       'presentation',
     }.contains(layer);
     final ok = !gated || percent >= minimum;

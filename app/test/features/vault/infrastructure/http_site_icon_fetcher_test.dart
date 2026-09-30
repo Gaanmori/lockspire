@@ -2,10 +2,14 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/painting.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:lockspire/design/lockspire_icon.dart';
 import 'package:lockspire/features/sync/domain/vault_merge.dart';
 import 'package:lockspire/features/vault/domain/entities/vault.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
@@ -17,6 +21,8 @@ VaultEntry _entry(String title, [String? url]) =>
     VaultEntry.create(title: title, fields: {'password': 'p', 'url': ?url});
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('HttpSiteIconFetcher', () {
     test('lee los íconos declarados: apple-touch-icon primero, sin SVG ni '
         'http', () {
@@ -62,6 +68,94 @@ void main() {
         HttpSiteIconFetcher(client: client).fetchPng('sitio.test'),
         throwsA(isA<SiteIconOfflineException>()),
       );
+    });
+
+    group('con un sitio que responde', () {
+      late Uint8List png;
+      late Map<String, http.Response Function()> site;
+      late List<String> requested;
+      late HttpSiteIconFetcher fetcher;
+
+      setUpAll(
+        () async =>
+            png = await renderLockspireIconPng(LockspireIconColors.lineage, 64),
+      );
+
+      setUp(() {
+        requested = [];
+        site = {};
+        fetcher = HttpSiteIconFetcher(
+          client: MockClient((request) async {
+            requested.add(request.url.toString());
+            return site[request.url.toString()]?.call() ??
+                http.Response('', 404);
+          }),
+        );
+      });
+
+      Future<void> expectIcon48(Uint8List? result) async {
+        expect(result, isNotNull);
+        final image = await decodeImageFromList(result!);
+        expect([image.width, image.height], [48, 48]);
+      }
+
+      test(
+        'sigue el ícono que declara la página y lo reduce a 48 px',
+        () async {
+          site['https://sitio.test/'] = () =>
+              http.Response('<link rel="icon" href="/i.png">', 200);
+          site['https://sitio.test/i.png'] = () =>
+              http.Response.bytes(png, 200);
+
+          await expectIcon48(await fetcher.fetchPng('sitio.test'));
+          expect(requested, [
+            'https://sitio.test/',
+            'https://sitio.test/i.png',
+          ]);
+        },
+      );
+
+      test('si el declarado no se puede leer, prueba /favicon.ico', () async {
+        site['https://sitio.test/'] = () =>
+            http.Response('<link rel="icon" href="/roto.png">', 200);
+        site['https://sitio.test/roto.png'] = () =>
+            http.Response('no es una imagen', 200);
+        site['https://sitio.test/favicon.ico'] = () =>
+            http.Response.bytes(png, 200);
+
+        await expectIcon48(await fetcher.fetchPng('sitio.test'));
+        expect(requested.last, 'https://sitio.test/favicon.ico');
+      });
+
+      test('sigue redirecciones https relativas', () async {
+        site['https://sitio.test/'] = () =>
+            http.Response('', 302, headers: {'location': '/es/'});
+        site['https://sitio.test/es/'] = () =>
+            http.Response('<link rel="apple-touch-icon" href="t.png">', 200);
+        site['https://sitio.test/es/t.png'] = () =>
+            http.Response.bytes(png, 200);
+
+        await expectIcon48(await fetcher.fetchPng('sitio.test'));
+      });
+
+      test('una redirección sin destino o una imagen enorme no dan '
+          'ícono', () async {
+        site['https://sitio.test/'] = () => http.Response('', 301);
+        site['https://sitio.test/favicon.ico'] = () =>
+            http.Response.bytes(Uint8List(301 * 1024), 200);
+
+        expect(await fetcher.fetchPng('sitio.test'), isNull);
+      });
+
+      test('DuckDuckGo también devuelve el ícono a 48 px', () async {
+        site['https://icons.duckduckgo.com/ip3/sitio.test.ico'] = () =>
+            http.Response.bytes(png, 200);
+        final duck = HttpSiteIconFetcher.duckDuckGo(
+          client: MockClient((r) async => site[r.url.toString()]!.call()),
+        );
+
+        await expectIcon48(await duck.fetchPng('sitio.test'));
+      });
     });
 
     test('un error inesperado es "sin ícono", nunca una excepción', () async {

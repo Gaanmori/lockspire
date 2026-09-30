@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:googleapis_auth/auth_io.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import 'google_drive_connection.dart';
@@ -29,19 +31,49 @@ bool get usesDesktopGoogleAuth => Platform.isWindows || Platform.isLinux;
 class GoogleDriveDesktopAuth {
   final ClientId _clientId;
 
-  GoogleDriveDesktopAuth(this._clientId);
+  /// Cliente HTTP de base. `null` en la app: `googleapis_auth` crea el suyo
+  /// y lo cierra con la conexión. Los tests pasan un servidor simulado.
+  final http.Client? _baseClient;
+
+  /// Abre la página de consentimiento de Google. Por defecto, el navegador
+  /// del sistema; en los tests, el test hace de navegador.
+  final Future<bool> Function(Uri) _openBrowser;
+
+  GoogleDriveDesktopAuth(
+    this._clientId, {
+    this._baseClient,
+    Future<bool> Function(Uri)? openBrowser,
+  }) : _openBrowser = openBrowser ?? _openSystemBrowser;
+
+  static Future<bool> _openSystemBrowser(Uri url) =>
+      launchUrl(url, mode: LaunchMode.externalApplication);
 
   /// Conexión interactiva — abre el navegador del sistema para el
   /// consentimiento. Solo debe llamarse desde el botón "Conectar con
   /// Google", nunca desde un trigger de sync automático. Pide, además del
   /// scope de Drive, el de email — solo para mostrar qué cuenta quedó
   /// conectada en la UI (ver `google_drive_scopes.dart`).
+  ///
+  /// Si el navegador no abre, falla con `oauthBrowserFailed` en vez de
+  /// esperar para siempre un consentimiento que nunca va a llegar
+  /// (encontrado por un test, 2026-09-30).
   Future<GoogleDriveConnection> connectInteractive() async {
-    final client = await clientViaUserConsent(
+    final browserFailed = Completer<AutoRefreshingAuthClient>();
+    final consent = clientViaUserConsent(
       _clientId,
       const [driveAppDataScope, driveUserInfoEmailScope],
-      (uri) => launchUrl(Uri.parse(uri), mode: LaunchMode.externalApplication),
+      (uri) => unawaited(
+        _openBrowser(Uri.parse(uri)).then((launched) {
+          if (!launched && !browserFailed.isCompleted) {
+            browserFailed.completeError(
+              const AppProblem(AppProblemCode.oauthBrowserFailed),
+            );
+          }
+        }),
+      ),
+      baseClient: _baseClient,
     );
+    final client = await Future.any([consent, browserFailed.future]);
     final email = await _fetchEmail(client);
     return GoogleDriveConnection(
       email: email,
@@ -60,7 +92,7 @@ class GoogleDriveDesktopAuth {
   }) async {
     final client = await clientViaRefreshToken(_clientId, refreshToken, const [
       driveAppDataScope,
-    ]);
+    ], baseClient: _baseClient);
     return GoogleDriveConnection(
       email: email,
       refreshToken: refreshToken,
