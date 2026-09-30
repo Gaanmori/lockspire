@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:lockspire/shared/presentation/preferences.dart';
 
 import '../domain/appearance_preference.dart';
 import 'providers/appearance_preferences_port_provider.dart';
@@ -33,8 +34,8 @@ class AppearanceController extends _$AppearanceController {
     // Se aplica de inmediato; si guardar falla, el tema dura hasta cerrar
     // la app (no vale la pena interrumpir al usuario por esto).
     state = AsyncData(next);
-    try {
-      await ref.read(appearancePreferencesPortProvider).save(next);
-    } catch (_) {}
+    await saveAppliedPreference(
+      () => ref.read(appearancePreferencesPortProvider).save(next),
+    );
   }
 }

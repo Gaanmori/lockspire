@@ -28,7 +28,10 @@ class ReplaceBiometricKeyUseCase {
     } catch (_) {
       try {
         await port.deleteKey();
-      } catch (_) {}
+      } catch (_) {
+        // Ni guardar ni borrar: la clave vieja ya no abre la bóveda nueva y
+        // la huella falla; se vuelve a pedir la contraseña, el lado seguro.
+      }
     }
   }
 }

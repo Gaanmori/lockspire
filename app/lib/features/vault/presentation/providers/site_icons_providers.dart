@@ -3,6 +3,7 @@
 
 import 'package:lockspire/shared/secure_storage_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:lockspire/shared/presentation/preferences.dart';
 
 import '../../domain/ports/site_icon_fetcher_port.dart';
 import '../../domain/ports/site_icons_preferences_port.dart';
@@ -33,9 +34,9 @@ class SiteIconsEnabled extends _$SiteIconsEnabled {
   /// Se aplica al instante; si guardar falla, dura hasta cerrar la app.
   Future<void> set(bool enabled) async {
     state = AsyncData(enabled);
-    try {
-      await ref.read(siteIconsPreferencesPortProvider).save(enabled);
-    } catch (_) {}
+    await saveAppliedPreference(
+      () => ref.read(siteIconsPreferencesPortProvider).save(enabled),
+    );
   }
 }
 
@@ -48,8 +49,8 @@ class SiteIconsFallbackEnabled extends _$SiteIconsFallbackEnabled {
 
   Future<void> set(bool enabled) async {
     state = AsyncData(enabled);
-    try {
-      await ref.read(siteIconsPreferencesPortProvider).saveFallback(enabled);
-    } catch (_) {}
+    await saveAppliedPreference(
+      () => ref.read(siteIconsPreferencesPortProvider).saveFallback(enabled),
+    );
   }
 }

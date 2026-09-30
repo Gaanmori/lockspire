@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
-import { format, MESSAGES, type MessageKey } from './i18n.ts';
+import { format, MESSAGES, type MessageKey } from './messages.ts';
 import { pickLoginFields, type FieldInfo } from './login_fields.ts';
 import type { AnswerResult, ContentMessage, PromptAnswer, SavePrompt } from './save_prompt.ts';
 
@@ -31,6 +31,18 @@ function fieldsOf(scope: ParentNode): FieldInfo[] {
   }));
 }
 
+/**
+ * El botón de "mostrar contraseña" vive junto al campo, sin otro campo al
+ * lado. Tocarlo no es enviar: la contraseña puede estar a medio escribir
+ * (revisión 2026-09-30).
+ */
+function isPasswordToggle(button: Element): boolean {
+  const box = button.parentElement;
+  if (!box) return false;
+  const inputs = box.querySelectorAll('input');
+  return inputs.length === 1 && inputs[0]!.type === 'password';
+}
+
 /** El formulario del elemento, o toda la página si no hay (SPA). */
 function scopeOf(target: EventTarget | null): ParentNode {
   return target instanceof Element ? (target.closest('form') ?? document) : document;
@@ -54,7 +66,7 @@ document.addEventListener(
   (e) => {
     if (!e.isTrusted || !(e.target instanceof Element)) return;
     const button = e.target.closest('button, input[type="submit"], [role="button"]');
-    if (button) onPossibleSubmit(button);
+    if (button && !isPasswordToggle(button)) onPossibleSubmit(button);
   },
   true,
 );
@@ -78,6 +90,14 @@ void ask<SavePrompt>({ kind: 'pending' }).then((prompt) => {
 // ---------------------------------------------------------------------
 
 let host: HTMLElement | null = null;
+
+/**
+ * El aviso no acepta clics hasta llevar este tiempo en pantalla: una página
+ * no puede hacerlo aparecer justo debajo del puntero para que el usuario lo
+ * toque sin verlo (revisión 2026-09-30, S21).
+ */
+const MIN_VISIBLE_MS = 500;
+let shownAt = 0;
 
 const STYLE = `
   :host { all: initial; }
@@ -154,6 +174,7 @@ function showPrompt(prompt: SavePrompt): void {
   card.append(actions);
   root.append(style, card);
   document.documentElement.append(host);
+  shownAt = performance.now();
 
   function answer(choice: PromptAnswer): void {
     actions.querySelectorAll('button').forEach((b) => (b.disabled = true));
@@ -173,7 +194,10 @@ function showPrompt(prompt: SavePrompt): void {
   }
 }
 
-/** Solo clics reales: la página no puede "tocar" Guardar por el usuario. */
+/**
+ * Solo clics reales y con el aviso ya visible: la página no puede "tocar"
+ * Guardar por el usuario.
+ */
 function button(label: string, className: string, onClick: () => void): HTMLButtonElement {
   const b = document.createElement('button');
   b.type = 'button';
@@ -181,7 +205,7 @@ function button(label: string, className: string, onClick: () => void): HTMLButt
   b.textContent = label;
   b.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (e.isTrusted) onClick();
+    if (e.isTrusted && performance.now() - shownAt >= MIN_VISIBLE_MS) onClick();
   });
   return b;
 }

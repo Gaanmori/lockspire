@@ -64,6 +64,28 @@ class AppRobot {
     await settle();
   }
 
+  /// Como [waitFor], pero dejando correr el tiempo real entre intentos:
+  /// para pantallas que esperan I/O de verdad (`dart:io`), que el reloj
+  /// simulado de `pump` no hace avanzar. Sin esperas fijas: sigue apenas
+  /// aparece (revisión 2026-09-30, T3).
+  Future<void> waitForIo(
+    Finder finder, {
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
+    final end = DateTime.now().add(timeout);
+    while (finder.evaluate().isEmpty) {
+      if (DateTime.now().isAfter(end)) {
+        throw TestFailure(
+          'No apareció a tiempo: $finder. En pantalla: ${visibleTexts()}',
+        );
+      }
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump();
+    }
+  }
+
   /// El "atrás" del sistema (botón o gesto de Android).
   Future<void> systemBack() async {
     await tester.binding.handlePopRoute();

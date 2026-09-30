@@ -3,6 +3,7 @@
 
 import 'dart:io';
 
+import 'package:lockspire/features/sync/domain/ports/cloud_sign_in_port.dart';
 import 'package:lockspire/features/sync/domain/ports/sync_port.dart';
 import 'package:lockspire/features/sync/domain/ports/sync_state_port.dart';
 import 'package:lockspire/features/vault/domain/ports/vault_storage_port.dart';
@@ -84,4 +85,24 @@ class FakeActiveSyncProviderPort implements ActiveSyncProviderPort {
 
   @override
   Future<void> clearActiveProvider() async => active = null;
+}
+
+/// Iniciar sesión en una nube sin OAuth real (A12): [account] es la cuenta
+/// que "elige" el usuario; [error], que el inicio de sesión falla.
+class FakeCloudSignIn implements CloudSignInPort {
+  CloudSignIn account;
+  Object? error;
+  bool disconnected = false;
+
+  FakeCloudSignIn(this.account);
+
+  @override
+  Future<CloudSignIn> connect() async {
+    if (error case final e?) throw e;
+    disconnected = false;
+    return account;
+  }
+
+  @override
+  Future<void> disconnect() async => disconnected = true;
 }

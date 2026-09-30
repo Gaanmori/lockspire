@@ -11,7 +11,6 @@ import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
 import '../../application/sync_vault_use_case.dart';
 import '../../domain/ports/active_sync_provider_port.dart';
 import '../../domain/ports/sync_credentials_port.dart';
-import '../../domain/webdav_url_policy.dart';
 import '../providers/current_active_sync_provider_provider.dart';
 import '../providers/current_google_drive_account_provider.dart';
 import '../providers/current_one_drive_account_provider.dart';
@@ -19,6 +18,7 @@ import '../providers/current_sync_credentials_provider.dart';
 import '../sync_accounts_controller.dart';
 import '../sync_controller.dart';
 import '../widgets/cloud_account_section.dart';
+import '../widgets/webdav_settings_form.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
 
@@ -30,54 +30,17 @@ class SyncSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _serverController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  // Los campos se precargan con las credenciales guardadas una sola vez.
-  // build() se vuelve a ejecutar cada vez que cambia syncControllerProvider
-  // (ej. al presionar "Sincronizar ahora") — sin este flag, ese rebuild
-  // pisaría cualquier edición sin guardar en curso (ej. el usuario cambia
-  // la URL del servidor y, antes de tocar "Guardar", presiona "Sincronizar
-  // ahora" para probar la conexión actual primero).
-  bool _prefilled = false;
-
   // Qué sub-formulario mostrar — se inicializa con el proveedor activo
   // guardado (ver `_prefillSelection`) una sola vez, mismo criterio que
   // `_prefilled` arriba.
   SyncProviderId? _selectedProvider;
   bool _selectionPrefilled = false;
 
-  @override
-  void dispose() {
-    _serverController.dispose();
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (!await _confirmMove(SyncProviderId.webdav)) return;
-
-    // Si se deja la contraseña vacía al editar credenciales existentes,
-    // se conserva la actual en vez de sobrescribirla con un valor vacío.
-    final existing = ref.read(currentSyncCredentialsProvider).value;
-    final password = (_passwordController.text.isEmpty && existing != null)
-        ? existing.password
-        : _passwordController.text;
-
-    await ref
-        .read(syncAccountsControllerProvider)
-        .saveCredentials(
-          WebDavCredentials(
-            serverUrl: _serverController.text,
-            username: _usernameController.text,
-            password: password,
-          ),
-        );
-    _passwordController.clear();
+  /// Guarda WebDAV como nube, confirmando antes si hay que mudar la bóveda.
+  Future<bool> _saveWebDav(WebDavCredentials credentials) async {
+    if (!await _confirmMove(SyncProviderId.webdav)) return false;
+    await ref.read(syncAccountsControllerProvider).saveCredentials(credentials);
+    return true;
   }
 
   Future<void> _connectGoogleDrive() => _connect(
@@ -222,68 +185,6 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
     );
   }
 
-  Widget _buildWebDavForm(WebDavCredentials? credentials) {
-    if (!_prefilled && credentials != null) {
-      _serverController.text = credentials.serverUrl;
-      _usernameController.text = credentials.username;
-      _prefilled = true;
-    }
-    return Form(
-      key: _formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TextFormField(
-            controller: _serverController,
-            decoration: InputDecoration(
-              labelText: context.l10n.syncWebdavUrl,
-              hintText: 'https://mi-servidor.ejemplo/dav',
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return context.l10n.syncWebdavUrlRequired;
-              }
-              return switch (checkWebDavUrl(value)) {
-                null => null,
-                WebDavUrlProblem.insecure =>
-                  context.l10n.syncWebdavHttpsRequired,
-                WebDavUrlProblem.invalid => context.l10n.syncWebdavUrlInvalid,
-              };
-            },
-          ),
-          const SizedBox(height: LockspireSpacing.md),
-          TextFormField(
-            controller: _usernameController,
-            decoration: InputDecoration(labelText: context.l10n.syncWebdavUser),
-            validator: (value) => (value == null || value.isEmpty)
-                ? context.l10n.syncWebdavUserRequired
-                : null,
-          ),
-          const SizedBox(height: LockspireSpacing.md),
-          TextFormField(
-            controller: _passwordController,
-            obscureText: true,
-            decoration: InputDecoration(
-              labelText: context.l10n.syncWebdavPassword,
-              hintText: credentials != null
-                  ? context.l10n.syncWebdavPasswordUnchanged
-                  : null,
-            ),
-            validator: (value) {
-              if (credentials == null && (value == null || value.isEmpty)) {
-                return context.l10n.syncWebdavPasswordRequired;
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: LockspireSpacing.lg),
-          FilledButton(onPressed: _save, child: Text(context.l10n.commonSave)),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final credentialsAsync = ref.watch(currentSyncCredentialsProvider);
@@ -342,7 +243,8 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    data: _buildWebDavForm,
+                    data: (saved) =>
+                        WebDavSettingsForm(saved: saved, onSave: _saveWebDav),
                   ),
                 const SizedBox(height: LockspireSpacing.md),
                 // Acción principal de la pantalla una vez conectada la nube.

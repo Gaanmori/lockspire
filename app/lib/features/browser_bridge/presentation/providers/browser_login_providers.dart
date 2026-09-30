@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../shared/secure_storage_provider.dart';
@@ -46,19 +48,46 @@ Future<void> Function(BrowserLogin, LoginMatch) browserLoginSaver(Ref ref) =>
       }
     };
 
+/// Cuánto espera un inicio de sesión a que se desbloquee la bóveda (revisión
+/// 2026-09-30, S18): la contraseña no se queda en memoria indefinidamente.
+const pendingBrowserLoginTtl = Duration(minutes: 10);
+
 /// Inicios de sesión que el usuario aceptó guardar con la bóveda bloqueada:
-/// se guardan al desbloquear (ADR 0034). Solo en memoria.
+/// se guardan al desbloquear (ADR 0034). Solo en memoria, y cada uno se
+/// descarta a los [pendingBrowserLoginTtl].
 @Riverpod(keepAlive: true)
 class PendingBrowserLogins extends _$PendingBrowserLogins {
-  @override
-  List<BrowserLogin> build() => const [];
+  final _expiries = <BrowserLogin, Timer>{};
 
-  void add(BrowserLogin login) => state = [...state, login];
+  @override
+  List<BrowserLogin> build() {
+    ref.onDispose(_cancelAll);
+    return const [];
+  }
+
+  void add(BrowserLogin login) {
+    state = [...state, login];
+    _expiries[login] = Timer(pendingBrowserLoginTtl, () {
+      _expiries.remove(login);
+      state = [
+        for (final pending in state)
+          if (!identical(pending, login)) pending,
+      ];
+    });
+  }
 
   /// Los devuelve y vacía la lista.
   List<BrowserLogin> take() {
     final taken = state;
+    _cancelAll();
     state = const [];
     return taken;
+  }
+
+  void _cancelAll() {
+    for (final timer in _expiries.values) {
+      timer.cancel();
+    }
+    _expiries.clear();
   }
 }

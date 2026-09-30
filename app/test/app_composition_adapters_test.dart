@@ -3,11 +3,11 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/features/appearance/presentation/providers/launcher_icon_port_provider.dart';
 import 'package:lockspire/features/about/infrastructure/package_info_adapter.dart';
 import 'package:lockspire/features/about/infrastructure/url_launcher_link_adapter.dart';
 import 'package:lockspire/features/about/presentation/providers/about_providers.dart';
 import 'package:lockspire/features/appearance/infrastructure/method_channel_launcher_icon.dart';
-import 'package:lockspire/features/appearance/presentation/launcher_icon_sync.dart';
 import 'package:lockspire/features/autofill/infrastructure/method_channel_autofill_host.dart';
 import 'package:lockspire/features/autofill/infrastructure/method_channel_autofill_settings.dart';
 import 'package:lockspire/features/autofill/presentation/providers/autofill_host_port_provider.dart';

@@ -18,6 +18,8 @@ class MethodChannelLauncherIcon implements LauncherIconPort {
   Future<void> useThemeIcon(ThemeFamilyId family) async {
     try {
       await _channel.invokeMethod<bool>('setTheme', {'theme': family.name});
-    } catch (_) {}
+    } catch (_) {
+      // Un lanzador que no acepta el cambio deja el ícono anterior.
+    }
   }
 }

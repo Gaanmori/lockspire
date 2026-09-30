@@ -8,17 +8,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../clipboard/presentation/providers/clipboard_guard_provider.dart';
 import '../../../../design/lockspire_spacing.dart';
-import '../../application/password_generation_settings.dart';
 import '../../application/save_vault_use_case.dart';
 import '../../domain/entities/entry_fields.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../providers/word_list_port_provider.dart';
+import '../entry_form_model.dart';
 import '../vault_entries_controller.dart';
 import '../widgets/entry_form_fields.dart';
 import '../widgets/entry_type_sections.dart';
 import '../widgets/field_history_section.dart';
-import '../widgets/password_generator_panel.dart';
-import '../widgets/password_strength_indicator.dart';
+import '../widgets/password_entry_section.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
 import 'package:lockspire/shared/presentation/navigation.dart';
@@ -47,121 +46,20 @@ class EntryFormScreen extends ConsumerStatefulWidget {
 class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  late final VaultEntryType _type = widget.entry?.type ?? widget.type;
-  late final Map<String, String> _initial = widget.entry?.fields ?? const {};
-
-  /// Keys con campo propio en el formulario, según el tipo.
-  late final Map<String, TextEditingController> _fixed = {
-    for (final key in _fixedKeys)
-      key: TextEditingController(text: _initial[key]),
-  };
-
-  List<String> get _fixedKeys => switch (_type) {
-    VaultEntryType.card => const [
-      EntryFields.cardNumber,
-      EntryFields.cardHolder,
-      EntryFields.cardExpiry,
-      EntryFields.cardCvv,
-      EntryFields.cardPin,
-    ],
-    VaultEntryType.document => const [
-      EntryFields.docNumber,
-      EntryFields.docName,
-      EntryFields.docBirthDate,
-      EntryFields.docIssued,
-      EntryFields.docExpiry,
-    ],
-    _ => const [EntryFields.username, EntryFields.password],
-  };
-
-  late final _titleController = TextEditingController(
-    text: widget.entry?.title ?? '',
-  );
-  late final _notesController = TextEditingController(
-    text: _initial[EntryFields.notes] ?? '',
-  );
-  late final List<TextEditingController> _urls = () {
-    final urls = repeatedValues(_initial, EntryFields.url);
-    return [
-      for (final url in urls) TextEditingController(text: url),
-      // Una contraseña nueva arranca con un sitio vacío, listo para escribir.
-      if (urls.isEmpty && _type == VaultEntryType.password)
-        TextEditingController(),
-    ];
-  }();
-  late final List<TextEditingController> _apps = [
-    for (final app in repeatedValues(_initial, EntryFields.app))
-      TextEditingController(text: app),
-  ];
-  late final List<CustomFieldDraft> _custom = [
-    for (final field in customFieldsOf(_initial))
-      CustomFieldDraft(
-        name: field.name,
-        hidden: field.hidden,
-        value: field.value,
-      ),
-  ];
+  late final _form = EntryFormModel(entry: widget.entry, type: widget.type);
 
   final _passwordObscure = ValueNotifier(true);
 
   bool _saving = false;
   String? _errorMessage;
 
-  late PasswordGenerationSettings _generation = widget.entry == null
-      ? PasswordGenerationSettings.forNewEntry
-      : PasswordGenerationSettings.fromFields(widget.entry!.fields);
-
   bool get _isEditing => widget.entry != null;
-
-  TextEditingController get _passwordController =>
-      _fixed[EntryFields.password]!;
 
   @override
   void dispose() {
-    _titleController.dispose();
-    _notesController.dispose();
+    _form.dispose();
     _passwordObscure.dispose();
-    for (final controller in [
-      ..._fixed.values,
-      ..._urls,
-      ..._apps,
-      for (final draft in _custom) draft.value,
-    ]) {
-      controller.dispose();
-    }
     super.dispose();
-  }
-
-  /// Parte de las keys actuales para no perder las que el formulario no
-  /// maneja, quita las que sí maneja y agrega lo que hay en pantalla.
-  Map<String, String> _buildFields() {
-    bool managed(String key) =>
-        _fixed.containsKey(key) ||
-        key == EntryFields.notes ||
-        repeatedIndex(EntryFields.url, key) != null ||
-        repeatedIndex(EntryFields.app, key) != null ||
-        CustomField.fromEntry(key, '') != null ||
-        key == PasswordGenerationSettings.modeFieldKey ||
-        key == PasswordGenerationSettings.lengthFieldKey;
-
-    return {
-      for (final MapEntry(:key, :value) in _initial.entries)
-        if (!managed(key)) key: value,
-      for (final MapEntry(:key, value: controller) in _fixed.entries)
-        if (controller.text.isNotEmpty) key: controller.text,
-      ...repeatedFields(EntryFields.url, _urls.map((c) => c.text)),
-      ...repeatedFields(EntryFields.app, _apps.map((c) => c.text)),
-      for (final draft in _custom)
-        if (draft.value.text.isNotEmpty)
-          CustomField(
-            name: draft.name,
-            value: draft.value.text,
-            hidden: draft.hidden,
-          ).key: draft.value.text,
-      if (_notesController.text.isNotEmpty)
-        EntryFields.notes: _notesController.text,
-      if (_type == VaultEntryType.password) ..._generation.toFields(),
-    };
   }
 
   Future<void> _save() async {
@@ -172,20 +70,20 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
       _errorMessage = null;
     });
 
-    final fields = _buildFields();
+    final fields = _form.toFields();
 
     try {
       final controller = ref.read(vaultEntriesControllerProvider);
       if (_isEditing) {
         await controller.updateEntry(
           id: widget.entry!.id,
-          title: _titleController.text,
+          title: _form.title.text,
           fields: fields,
         );
       } else {
         await controller.addEntry(
-          title: _titleController.text,
-          type: _type,
+          title: _form.title.text,
+          type: _form.type,
           fields: fields,
         );
       }
@@ -237,7 +135,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     if (mounted) popIfCurrent(context);
   }
 
-  /// Regenera la contraseña con [_generation] (ver
+  /// Regenera la contraseña con [_form.generation] (ver
   /// `PasswordGenerationSettings`). En modo "fácil de recordar" las palabras
   /// salen siempre de la lista en inglés, sea cual sea el idioma de la app
   /// (ADR 0032): la española daba frases más débiles y el usuario pidió
@@ -245,7 +143,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
   Future<void> _regeneratePassword() async {
     final wordList = await ref.read(wordListPortProvider).load();
     if (!mounted) return;
-    _passwordController.text = _generation.generate(wordList: wordList);
+    _form.password.text = _form.generation.generate(wordList: wordList);
     _passwordObscure.value = false;
   }
 
@@ -267,21 +165,21 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     }
   }
 
-  void _addUrl() => setState(() => _urls.add(TextEditingController()));
+  void _addUrl() => setState(() => _form.urls.add(TextEditingController()));
 
-  void _addApp() => setState(() => _apps.add(TextEditingController()));
+  void _addApp() => setState(() => _form.apps.add(TextEditingController()));
 
   Future<void> _addCustom() async {
     final draft = await CustomFieldsEditor.askNew(
       context,
-      taken: {for (final d in _custom) d.name},
+      taken: {for (final d in _form.custom) d.name},
     );
-    if (draft != null && mounted) setState(() => _custom.add(draft));
+    if (draft != null && mounted) setState(() => _form.custom.add(draft));
   }
 
   String get _appBarTitle => _isEditing
-      ? context.l10n.entryEditTitle(_type.name)
-      : context.l10n.entryNewTitle(_type.name);
+      ? context.l10n.entryEditTitle(_form.type.name)
+      : context.l10n.entryNewTitle(_form.type.name);
 
   Widget _gap() => const SizedBox(height: LockspireSpacing.md);
 
@@ -292,48 +190,6 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
     ),
     child: Text(text, style: Theme.of(context).textTheme.titleSmall),
   );
-
-  List<Widget> _passwordSection() => [
-    CopyableField(
-      controller: _fixed[EntryFields.username]!,
-      label: context.l10n.fieldUsername,
-      onCopy: _copyToClipboard,
-    ),
-    _gap(),
-    SecretField(
-      controller: _passwordController,
-      label: context.l10n.fieldPassword,
-      obscure: _passwordObscure,
-      onCopy: _copyToClipboard,
-      extraActions: [
-        IconButton(
-          icon: const Icon(Icons.casino_outlined),
-          tooltip: context.l10n.entryGeneratePassword,
-          onPressed: () => unawaited(_regeneratePassword()),
-        ),
-      ],
-    ),
-    const SizedBox(height: LockspireSpacing.sm),
-    PasswordGeneratorPanel(
-      settings: _generation,
-      onChanged: (settings) {
-        // setState: sin él la contraseña se regeneraba con el largo nuevo,
-        // pero el slider y el "N caracteres" seguían mostrando el viejo.
-        setState(() => _generation = settings);
-        unawaited(_regeneratePassword());
-      },
-    ),
-    ValueListenableBuilder<TextEditingValue>(
-      valueListenable: _passwordController,
-      builder: (context, value, _) {
-        if (value.text.isEmpty) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.only(top: LockspireSpacing.sm),
-          child: PasswordStrengthIndicator(password: value.text),
-        );
-      },
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +221,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   TextFormField(
-                    controller: _titleController,
+                    controller: _form.title,
                     autofocus: !_isEditing,
                     decoration: InputDecoration(
                       labelText: context.l10n.fieldTitle,
@@ -375,27 +231,43 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                         : null,
                   ),
                   _gap(),
-                  ...switch (_type) {
+                  ...switch (_form.type) {
                     VaultEntryType.card => [
                       CardFieldsSection(
-                        fields: _fixed,
+                        fields: _form.fixed,
                         onCopy: _copyToClipboard,
                       ),
                     ],
                     VaultEntryType.document => [
                       DocumentFieldsSection(
-                        fields: _fixed,
+                        fields: _form.fixed,
                         onCopy: _copyToClipboard,
                       ),
                     ],
-                    _ => _passwordSection(),
+                    _ => [
+                      PasswordEntrySection(
+                        username: _form.fixed[EntryFields.username]!,
+                        password: _form.password,
+                        obscure: _passwordObscure,
+                        generation: _form.generation,
+                        onGenerationChanged: (settings) {
+                          // setState: sin él la contraseña se regeneraba con
+                          // el largo nuevo, pero el slider y el "N
+                          // caracteres" seguían mostrando el viejo.
+                          setState(() => _form.generation = settings);
+                          unawaited(_regeneratePassword());
+                        },
+                        onRegenerate: () => unawaited(_regeneratePassword()),
+                        onCopy: _copyToClipboard,
+                      ),
+                    ],
                   },
                   // Cada sección aparece cuando tiene algo; vacías, se
                   // agregan desde la fila de botones de abajo.
-                  if (_urls.isNotEmpty) ...[
+                  if (_form.urls.isNotEmpty) ...[
                     _sectionTitle(context.l10n.entryWebsites),
                     RepeatedFieldList(
-                      controllers: _urls,
+                      controllers: _form.urls,
                       label: context.l10n.fieldWebsite,
                       addLabel: context.l10n.entryAddWebsite,
                       hint: 'https://ejemplo.com/login',
@@ -404,13 +276,13 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                       onCopy: _copyToClipboard,
                       onAdd: _addUrl,
                       onRemove: (i) =>
-                          setState(() => _urls.removeAt(i).dispose()),
+                          setState(() => _form.urls.removeAt(i).dispose()),
                     ),
                   ],
-                  if (_apps.isNotEmpty) ...[
+                  if (_form.apps.isNotEmpty) ...[
                     _sectionTitle(context.l10n.entryAndroidApps),
                     RepeatedFieldList(
-                      controllers: _apps,
+                      controllers: _form.apps,
                       label: context.l10n.entryAppPackage,
                       addLabel: context.l10n.entryAddApp,
                       hint: 'com.ejemplo.app',
@@ -418,37 +290,40 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                       onCopy: _copyToClipboard,
                       onAdd: _addApp,
                       onRemove: (i) =>
-                          setState(() => _apps.removeAt(i).dispose()),
+                          setState(() => _form.apps.removeAt(i).dispose()),
                     ),
                   ],
-                  if (_custom.isNotEmpty) ...[
+                  if (_form.custom.isNotEmpty) ...[
                     _sectionTitle(context.l10n.entryOtherFields),
                     CustomFieldsEditor(
-                      drafts: _custom,
+                      drafts: _form.custom,
                       onCopy: _copyToClipboard,
-                      onAdd: (draft) => setState(() => _custom.add(draft)),
-                      onRemove: (i) =>
-                          setState(() => _custom.removeAt(i).value.dispose()),
+                      onAdd: (draft) => setState(() => _form.custom.add(draft)),
+                      onRemove: (i) => setState(
+                        () => _form.custom.removeAt(i).value.dispose(),
+                      ),
                     ),
                   ],
-                  if (_urls.isEmpty || _apps.isEmpty || _custom.isEmpty) ...[
+                  if (_form.urls.isEmpty ||
+                      _form.apps.isEmpty ||
+                      _form.custom.isEmpty) ...[
                     const SizedBox(height: LockspireSpacing.sm),
                     Wrap(
                       spacing: LockspireSpacing.sm,
                       children: [
-                        if (_urls.isEmpty)
+                        if (_form.urls.isEmpty)
                           TextButton.icon(
                             onPressed: _addUrl,
                             icon: const Icon(Icons.add),
                             label: Text(context.l10n.fieldWebsite),
                           ),
-                        if (_apps.isEmpty)
+                        if (_form.apps.isEmpty)
                           TextButton.icon(
                             onPressed: _addApp,
                             icon: const Icon(Icons.add),
                             label: Text(context.l10n.entryAndroidApp),
                           ),
-                        if (_custom.isEmpty)
+                        if (_form.custom.isEmpty)
                           TextButton.icon(
                             onPressed: _addCustom,
                             icon: const Icon(Icons.add),
@@ -459,7 +334,7 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                   ],
                   _gap(),
                   TextFormField(
-                    controller: _notesController,
+                    controller: _form.notes,
                     decoration: InputDecoration(
                       labelText: context.l10n.fieldNotes,
                     ),
@@ -469,7 +344,10 @@ class _EntryFormScreenState extends ConsumerState<EntryFormScreen> {
                   if (widget.entry != null &&
                       widget.entry!.fieldHistory.isNotEmpty) ...[
                     _gap(),
-                    FieldHistorySection(entry: widget.entry!),
+                    FieldHistorySection(
+                      entry: widget.entry!,
+                      onCopy: _copyToClipboard,
+                    ),
                   ],
                   const SizedBox(height: LockspireSpacing.lg),
                   if (_errorMessage != null)

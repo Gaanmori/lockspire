@@ -39,6 +39,13 @@ abstract final class EntryFields {
   static const secretKeys = {password, cardCvv, cardPin};
 }
 
+/// Los secretos (contraseña, CVV, PIN y campos ocultos) guardan su valor
+/// anterior al cambiar (revisión 2026-09-30, S20): no se ven al editar, y un
+/// error los perdería.
+bool keepsFieldHistory(String key) =>
+    EntryFields.secretKeys.contains(key) ||
+    key.startsWith(EntryFields.hiddenPrefix);
+
 /// Key del valor número [index] (desde 0) de un campo repetible:
 /// `url`, `url_2`, `url_3`…
 String repeatedKey(String base, int index) =>

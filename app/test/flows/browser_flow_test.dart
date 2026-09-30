@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/browser_bridge/application/handle_bridge_request.dart';
 import 'package:lockspire/features/browser_bridge/domain/ports/native_messaging_registration_port.dart';
 import 'package:lockspire/features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
+import 'package:lockspire/features/browser_bridge/presentation/providers/browser_login_providers.dart';
 import 'package:lockspire/features/browser_bridge/presentation/providers/pending_link_request_provider.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
 import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
@@ -257,6 +258,20 @@ void main() {
         findsOneWidget,
       );
       expect(entryNamed(app, 'banco.ejemplo').fields['password'], 'Secreta-1');
+    });
+
+    testWidgets('si no se desbloquea en 10 minutos, se descarta: la '
+        'contraseña no queda en memoria (S18)', (tester) async {
+      final (app, robot) = await _desktopUnlocked(tester);
+      await robot.lock();
+      await fromExtension(app, tester, save('Secreta-1'));
+
+      await tester.pump(pendingBrowserLoginTtl + const Duration(seconds: 1));
+      expect(app.container.read(pendingBrowserLoginsProvider), isEmpty);
+      await robot.unlock(_master);
+
+      expect(find.textContaining('Se guardó la contraseña'), findsNothing);
+      expect(find.text('banco.ejemplo'), findsNothing);
     });
 
     testWidgets('"Nunca en este sitio" aparece en Navegador y se puede '

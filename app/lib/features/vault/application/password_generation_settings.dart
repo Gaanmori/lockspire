@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'password_generator.dart';
+import '../domain/entities/entry_fields.dart';
 
 /// Cómo se genera la contraseña de una entrada (revisión 2026-09-25,
 /// hallazgo C1: la regla sale de `EntryFormScreen`).
@@ -52,7 +53,7 @@ class PasswordGenerationSettings {
       ),
       _ => PasswordGenerationSettings(
         mode: PasswordGenerationMode.random,
-        length: (fields['password']?.length ?? defaultLength).clamp(
+        length: (fields[EntryFields.password]?.length ?? defaultLength).clamp(
           minLength,
           maxLength,
         ),

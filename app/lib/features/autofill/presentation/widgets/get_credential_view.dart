@@ -187,7 +187,7 @@ class GetCredentialViewState extends State<GetCredentialView> {
                       const SizedBox(height: LockspireSpacing.sm),
                   itemBuilder: (context, index) {
                     final entry = entries[index];
-                    final username = entry.fields['username'];
+                    final username = entry.fields[EntryFields.username];
                     final sameSite =
                         origin != null &&
                         classifyEntryForOrigin(entry, origin) ==

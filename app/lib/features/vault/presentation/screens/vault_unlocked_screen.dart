@@ -9,8 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/shared/platform_capabilities.dart';
 
 import '../../../../design/lockspire_spacing.dart';
+import '../../application/search_entries.dart';
 import '../../domain/entities/vault.dart';
-import '../../domain/entities/entry_fields.dart';
 import '../../domain/site_icons.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../../domain/ports/biometric_auth_port.dart';
@@ -168,23 +168,19 @@ class _VaultUnlockedScreenState extends ConsumerState<VaultUnlockedScreen> {
     }
   }
 
+  // La búsqueda se recalcula solo si cambió la bóveda o lo buscado, no en
+  // cada rebuild (selección, animaciones; revisión 2026-09-30, P3).
+  Vault? _searchedVault;
+  String? _searchedQuery;
+  List<VaultEntry> _searchResult = const [];
+
   List<VaultEntry> get _filteredEntries {
-    final query = _query.trim().toLowerCase();
-    final visible = widget.vault.entries.where((e) => !e.deleted);
-    bool contains(String? value) =>
-        value?.toLowerCase().contains(query) ?? false;
-    final matching = query.isEmpty
-        ? visible
-        : visible.where(
-            (e) =>
-                contains(e.title) ||
-                contains(e.fields[EntryFields.username]) ||
-                contains(e.fields[EntryFields.cardHolder]) ||
-                contains(e.fields[EntryFields.docName]) ||
-                e.urls.any(contains),
-          );
-    return matching.toList()
-      ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    if (!identical(_searchedVault, widget.vault) || _searchedQuery != _query) {
+      _searchedVault = widget.vault;
+      _searchedQuery = _query;
+      _searchResult = searchEntries(widget.vault.entries, _query);
+    }
+    return _searchResult;
   }
 
   /// Elige qué crear: contraseña, tarjeta o documento (ADR 0025).

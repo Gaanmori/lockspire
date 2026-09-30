@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import 'dart:async';
+
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -124,9 +126,14 @@ class FakeVaultStoragePort implements VaultStoragePort {
   /// permisos).
   Object? writeError;
 
+  /// Si no es `null`, cada escritura espera a que se complete: simula un
+  /// disco lento para ver qué pasa mientras se escribe.
+  Completer<void>? writeGate;
+
   @override
   Future<void> write(VaultFile file) async {
     if (writeError case final error?) throw error;
+    await writeGate?.future;
     stored = file;
   }
 }

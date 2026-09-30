@@ -16,6 +16,7 @@ import '../providers/vault_import_source_provider.dart';
 import '../vault_entries_controller.dart';
 import '../vault_session_controller.dart';
 import '../vault_session_state.dart';
+import '../widgets/backup_password_dialog.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
 import 'package:lockspire/shared/presentation/navigation.dart';
@@ -94,7 +95,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                 : const <VaultEntry>[],
             askBackupPassword: () => showDialog<String>(
               context: context,
-              builder: (_) => const _BackupPasswordDialog(),
+              builder: (_) => const BackupPasswordDialog(),
             ),
           );
       if (!mounted) return;
@@ -320,68 +321,6 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                 : context.l10n.commonCancel,
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _BackupPasswordDialog extends StatefulWidget {
-  const _BackupPasswordDialog();
-
-  @override
-  State<_BackupPasswordDialog> createState() => _BackupPasswordDialogState();
-}
-
-class _BackupPasswordDialogState extends State<_BackupPasswordDialog> {
-  final _controller = TextEditingController();
-  bool _obscure = true;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (_controller.text.isEmpty) return;
-    Navigator.of(context).pop(_controller.text);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(context.l10n.importBackupPassword),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(context.l10n.importBackupPasswordHint),
-            const SizedBox(height: LockspireSpacing.md),
-            TextField(
-              controller: _controller,
-              obscureText: _obscure,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: context.l10n.fieldPassword,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscure ? Icons.visibility : Icons.visibility_off,
-                  ),
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                ),
-              ),
-              onSubmitted: (_) => _submit(),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(context.l10n.commonCancel),
-        ),
-        FilledButton(onPressed: _submit, child: Text(context.l10n.commonOpen)),
       ],
     );
   }

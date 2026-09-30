@@ -16,7 +16,9 @@
 - **Lectura del código nuevo:** extensión (`capture.ts`, `background.ts`), `HandleBridgeRequest`, `matchLogin`, canal nativo de la Store en C++ y escritura de la bóveda (`saveVault`).
 - **Estado de la suite:** 603 tests de la app, 26 de la extensión, 29 del paquete del puente y 6 del native host, en verde. Cobertura: dominio 95,4 %, aplicación 95,2 %, infraestructura 92,7 %, presentación 90,4 %.
 
-Leyenda: 🔴 alta · 🟠 media · 🟡 baja o mantenimiento. Nada de esta revisión está corregido todavía: son recomendaciones.
+Leyenda: 🔴 alta · 🟠 media · 🟡 baja o mantenimiento.
+
+**Estado (mismo día):** todo lo de abajo quedó resuelto, cada punto con su test, salvo S19, que se decidió no hacer (ver su fila). La sección "Resolución", al final, dice qué se hizo en cada uno.
 
 ## Veredicto
 
@@ -103,3 +105,30 @@ La base es sólida:
 2. **S20** (historial al editar) y **S19** (borrar la clave al bloquear).
 3. **A11** (dividir `HandleBridgeRequest`) y **T3** (tests sin esperas reales).
 4. El resto, como mantenimiento.
+
+## Resolución (2026-09-30)
+
+Suite después de los arreglos: 625 tests de la app, 36 de la extensión, 29 del puente y 6 del native host, en verde. Cobertura: dominio 95,3 %, aplicación 95,6 %, infraestructura 92,8 %, presentación 92,8 %.
+
+| # | Qué se hizo | Test |
+|---|---|---|
+| P1 | `VaultSessionController.updateVault(cambio)`: las escrituras van en fila y cada cambio se aplica sobre la bóveda vigente. Ante un conflicto con el disco, se recarga y el cambio se aplica otra vez. **Bug encontrado al hacerlo:** si se bloqueaba mientras se escribía, al terminar la sesión volvía a abrirse. Corregido. | `vault_session_writes_test`: dos escrituras a la vez, conflicto con otro dispositivo, bloquear mientras se escribe |
+| S18 | Lo pendiente de guardar desde el navegador se descarta a los 10 minutos (`pendingBrowserLoginTtl`). | `browser_flow_test` |
+| S19 | **No se hace**, a propósito. La sync, la mudanza y la exportación usan la misma clave durante operaciones de red. Borrarla al bloquear con una sync en curso cifraría la bóveda con una clave en ceros y la subiría a la nube. Además, Dart puede mover objetos en memoria, así que quedarían copias. Sigue aceptado como S13 (ADR 0008). | — |
+| S20 | `withEntryUpdated` guarda el valor anterior de los secretos (contraseña, CVV, PIN y campos ocultos), también al borrarlos. **Además:** el historial ahora permite copiar un secreto anterior con el portapapeles protegido; antes se mostraba enmascarado y no se podía recuperar. | `vault_test`, `entries_flow_test` |
+| S21 | El aviso de la extensión no acepta clics hasta llevar 500 ms en pantalla. | Manual; la lógica de clics reales exige `isTrusted` |
+| S22 | Textos de la extensión en `messages.ts`, sin efectos al importarse; el content script ya no toca el `localStorage` de la página. | `i18n.test`, `capture.test` |
+| A11 | `HandleBridgeRequest` despacha a `BridgeAppRequests`, `BridgeCredentialRequests`, `BridgeLinkRequests` y `BridgeLoginSaveRequests`. | `handle_bridge_request_test` |
+| A12 | `CloudSignInPort` con `GoogleDriveDesktopSignIn`, `GoogleDriveAndroidSignIn` y `OneDriveSignIn`. El controller ya no conoce los adaptadores concretos. OneDrive sin refresh token da un error claro. | `cloud_accounts_flow_test` (nuevo: conectar, mudar, falla y sin token), `cloud_sign_in_adapters_test` |
+| A13 | `launcherIconPortProvider` pasó a `presentation/providers/`. `password_changed_elsewhere_port.dart` **se queda** en `application/`: devuelve `UnlockedVaultResult`, de esa capa, y ya lo explicaba su comentario. Era un falso hallazgo. | — |
+| A14 | `EntryFields` en lugar de claves sueltas (extensión, autofill, vínculos, generador). Las claves del canal con Kotlin siguen como texto: son el protocolo. | Suites existentes |
+| A15 | `entry_form_screen` pasó de 512 a 391 líneas (`EntryFormModel`, `PasswordEntrySection`), `sync_settings_screen` de 391 a 293 (`WebDavSettingsForm`) e `import_screen` de 388 a 327 (`BackupPasswordDialog`). | `entry_form_model_test` y flujos |
+| P2 | Medido: 500 entradas con íconos (~2 MB) tardan unos 17 ms por guardado en escritorio. Un isolate no ayuda, porque copiar la bóveda cuesta lo mismo. Se aplicó `JsonUtf8Encoder` (mismos bytes, −13 % y una copia de 2 MB menos). | Codec existente. Pendiente: medir en el Redmi |
+| P3 | `searchEntries` (pura, cada título se pasa a minúsculas una vez) y resultado memorizado mientras no cambien la bóveda ni la búsqueda. | `search_entries_test` |
+| T3 | Auto-bloqueo y sync automática con reloj simulado (`fake_async`). Las pantallas con I/O real usan `waitForIo` (reintenta sin espera fija). | — |
+| T4 | `vault_session_controller_test` (1062 líneas) quedó en 6 archivos por tema, más `vault_session_harness.dart`. | — |
+| T5 | Comentarios de los tests de biometría actualizados. | — |
+| T6 | Extensión: `background.test` (el origen sale de la pestaña, iframes y otras extensiones ignorados, pendiente, respuesta y vencimiento) y `capture.test` con linkedom (envío, una sola vez, aviso fuera de la página). El canal C++ de la Store sigue siendo prueba manual con el MSIX. | — |
+| T7 | Presentación subió a 92,8 %. | — |
+| Clean code | Los 10 `catch (_) {}`: cinco pasaron a `saveAppliedPreference` (una sola regla, con test) y los otros cinco explican por qué. El botón de "mostrar contraseña" ya no cuenta como envío. Cabecera AGPL en `flutter_window.*`. | `preferences_test` |
+

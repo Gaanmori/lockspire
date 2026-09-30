@@ -49,6 +49,31 @@ void main() {
 
   late HandleBridgeRequest handle;
 
+  /// El despachador con los cuatro temas (A11), sobre los mismos dobles.
+  HandleBridgeRequest build({
+    AppearancePreference Function()? appearance,
+    String? Function()? language,
+  }) => HandleBridgeRequest(
+    app: BridgeAppRequests(
+      isLocked: () => vault == null,
+      showApp: () => showCalls++,
+      generatePassword: (length) => 'x' * length,
+      currentAppearance: appearance ?? () => AppearancePreference.defaults,
+      currentLanguage: language ?? () => null,
+    ),
+    credentials: BridgeCredentialRequests(currentVault: () => vault),
+    links: BridgeLinkRequests(
+      currentVault: () => vault,
+      requestLink: linkRequests.add,
+    ),
+    logins: BridgeLoginSaveRequests(
+      currentVault: () => vault,
+      saveLogin: (login, match) async => saved.add((login, match)),
+      saveAfterUnlock: afterUnlock.add,
+      exclusions: exclusions,
+    ),
+  );
+
   setUp(() {
     linkRequests.clear();
     saved.clear();
@@ -60,15 +85,7 @@ void main() {
       entries: [_bank, _github, _githubWork],
     );
     showCalls = 0;
-    handle = HandleBridgeRequest(
-      currentVault: () => vault,
-      showApp: () => showCalls++,
-      generatePassword: (length) => 'x' * length,
-      requestLink: linkRequests.add,
-      saveLogin: (login, match) async => saved.add((login, match)),
-      saveAfterUnlock: afterUnlock.add,
-      exclusions: exclusions,
-    );
+    handle = build();
   });
 
   group('vincular un sitio (ADR 0015)', () {
@@ -132,15 +149,8 @@ void main() {
   test(
     'PING incluye el tema de la app para que la extensión lo siga',
     () async {
-      final themed = HandleBridgeRequest(
-        currentVault: () => vault,
-        showApp: () {},
-        generatePassword: (length) => '',
-        requestLink: (_) {},
-        saveLogin: (_, _) async {},
-        saveAfterUnlock: (_) {},
-        exclusions: exclusions,
-        currentAppearance: () => const AppearancePreference(
+      final themed = build(
+        appearance: () => const AppearancePreference(
           family: ThemeFamilyId.mint,
           mode: AppearanceMode.dark,
         ),
@@ -155,16 +165,7 @@ void main() {
   test(
     'PING incluye el idioma de la app para que la extensión lo siga',
     () async {
-      final localized = HandleBridgeRequest(
-        currentVault: () => vault,
-        showApp: () {},
-        generatePassword: (length) => '',
-        requestLink: (_) {},
-        saveLogin: (_, _) async {},
-        saveAfterUnlock: (_) {},
-        exclusions: exclusions,
-        currentLanguage: () => 'en',
-      );
+      final localized = build(language: () => 'en');
       expect((await localized(const PingRequest('a')))['lang'], 'en');
       expect(
         (await handle(const PingRequest('a'))).containsKey('lang'),

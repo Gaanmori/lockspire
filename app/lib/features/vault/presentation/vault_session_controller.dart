@@ -256,7 +256,9 @@ class VaultSessionController extends _$VaultSessionController {
       await ref
           .read(passwordUnlockHistoryPortProvider)
           .recordPasswordUnlock(ref.read(clockProvider)());
-    } catch (_) {}
+    } catch (_) {
+      // Ver arriba: la próxima vez se vuelve a pedir la contraseña.
+    }
   }
 
   /// Bloquea la sesión y, salvo [keepClipboard], borra ya cualquier
@@ -285,12 +287,16 @@ class VaultSessionController extends _$VaultSessionController {
   /// memoria no quede desactualizada respecto al archivo en disco.
   /// Deliberadamente **nunca** dispara sync — evita el loop obvio (sync
   /// escribe local → dispara sync → ...).
-  Future<void> reloadFromDisk() async {
+  Future<void> reloadFromDisk() => _enqueue(_reload);
+
+  Future<void> _reload() async {
     final current = state.value;
     if (current is! VaultSessionUnlocked) return;
     final reloaded = await (await ref.read(
       unlockVaultUseCaseProvider.future,
     )).reloadWithKey(key: current.key);
+    // Pudo bloquearse mientras se leía el archivo.
+    if (state.value is! VaultSessionUnlocked) return;
     state = AsyncData(
       VaultSessionUnlocked(
         vault: reloaded.vault,
@@ -301,21 +307,45 @@ class VaultSessionController extends _$VaultSessionController {
     );
   }
 
-  /// Único punto de escritura de la bóveda desbloqueada: cifra, guarda y
-  /// actualiza la sesión. Lo usan las operaciones sobre entradas
-  /// (`VaultEntriesController`, revisión 2026-09-25, hallazgo A1).
+  /// Escrituras en curso, una detrás de otra (revisión 2026-09-30, P1).
+  Future<void> _writes = Future.value();
+
+  /// Corre [write] cuando terminen las escrituras anteriores.
+  Future<T> _enqueue<T>(Future<T> Function() write) {
+    final done = _writes.then((_) => write());
+    _writes = done.then<void>((_) {}, onError: (Object _) {});
+    return done;
+  }
+
+  /// Único punto de escritura de la bóveda desbloqueada: aplica [change] a
+  /// la versión vigente, cifra, guarda y actualiza la sesión. Lo usan las
+  /// operaciones sobre entradas (`VaultEntriesController`, hallazgo A1),
+  /// los íconos de sitios y el guardado desde el navegador.
   ///
-  /// Lanza [VaultWriteConflictException] si la bóveda cambió en disco desde
-  /// la última lectura de esta sesión (ver `SaveVaultUseCase`); en ese caso
-  /// el estado ya queda actualizado con la versión fresca antes de
-  /// relanzar, para que un reintento inmediato parta de datos vigentes.
-  Future<void> saveVault(Vault newVault) async {
+  /// Las escrituras van en fila y cada una parte de la bóveda que dejó la
+  /// anterior: dos cambios a la vez (el usuario edita mientras la extensión
+  /// guarda un inicio de sesión) quedan los dos (revisión 2026-09-30, P1).
+  ///
+  /// Si la bóveda cambió en disco desde la última lectura (otro dispositivo
+  /// sincronizó), se recarga con la clave ya retenida y [change] se aplica
+  /// otra vez sobre esa versión. Solo si vuelve a cambiar en medio se lanza
+  /// [VaultWriteConflictException], con el estado ya actualizado.
+  Future<void> updateVault(Vault Function(Vault current) change) =>
+      _enqueue(() async {
+        try {
+          await _write(change);
+        } on VaultWriteConflictException {
+          await _reload();
+          await _write(change);
+        }
+      });
+
+  Future<void> _write(Vault Function(Vault current) change) async {
     final current = state.value;
     if (current is! VaultSessionUnlocked) return;
+    final newVault = change(current.vault);
 
     final save = await ref.read(saveVaultUseCaseProvider.future);
-    final unlock = await ref.read(unlockVaultUseCaseProvider.future);
-
     try {
       final file = await save.call(
         vault: newVault,
@@ -323,6 +353,9 @@ class VaultSessionController extends _$VaultSessionController {
         header: current.header,
         expectedFileHash: current.fileHash,
       );
+      // Si se bloqueó mientras se escribía, el archivo ya quedó guardado
+      // pero la sesión no debe volver a abrirse (revisión 2026-09-30).
+      if (state.value is! VaultSessionUnlocked) return;
       state = AsyncData(
         current.copyWith(
           vault: newVault,
@@ -334,15 +367,7 @@ class VaultSessionController extends _$VaultSessionController {
       // La contraseña maestra no cambió — solo el contenido en disco
       // (típicamente otro dispositivo sincronizó). Se recarga con la
       // misma key ya retenida, sin pedir la contraseña de nuevo.
-      final reloaded = await unlock.reloadWithKey(key: current.key);
-      state = AsyncData(
-        VaultSessionUnlocked(
-          vault: reloaded.vault,
-          key: reloaded.key,
-          header: reloaded.header,
-          fileHash: reloaded.fileHash,
-        ),
-      );
+      await _reload();
       rethrow;
     }
   }

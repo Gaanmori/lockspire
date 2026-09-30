@@ -9,16 +9,23 @@ import '../../domain/entities/entry_fields.dart';
 import '../../domain/entities/vault_entry.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
-/// Muestra los valores que un merge automático de Nivel 2 descartó por
-/// esta entrada (ADR 0009) — solo lectura, sin botón de restaurar (no se
-/// pidió esa funcionalidad, evita alcance extra). Nunca se pierde en
-/// silencio un valor perdedor, pero tampoco molesta a nadie que nunca tuvo
-/// un choque real: la sección entera no se muestra si `fieldHistory` está
-/// vacío (ver el `if` en el `build()` de arriba).
+/// Muestra los valores anteriores de la entrada: los que descartó un merge
+/// automático (ADR 0009), los que se importaron y los secretos cambiados al
+/// editar o desde el navegador (S20, ADR 0034). Los secretos se pueden
+/// copiar, sin mostrarse, para recuperar uno. La sección no aparece si
+/// `fieldHistory` está vacío.
 class FieldHistorySection extends StatelessWidget {
   final VaultEntry entry;
 
-  const FieldHistorySection({super.key, required this.entry});
+  /// Copia un valor anterior con el portapapeles protegido: (etiqueta,
+  /// valor).
+  final Future<void> Function(String label, String value) onCopy;
+
+  const FieldHistorySection({
+    super.key,
+    required this.entry,
+    required this.onCopy,
+  });
 
   static String _displayName(AppLocalizations l10n, String key) {
     if (key == titleFieldKey) return l10n.fieldTitle;
@@ -75,15 +82,30 @@ class FieldHistorySection extends StatelessWidget {
                     style: Theme.of(context).textTheme.labelMedium,
                   ),
                   for (final record in field.value)
-                    Text(
-                      // La contraseña nunca se muestra en texto plano acá
-                      // — mismo criterio de seguridad que el campo del
-                      // formulario, sin botón de "revelar" (fuera de
-                      // alcance, no se pidió).
-                      _isSecret(field.key)
-                          ? '•••••••• — ${record.replacedAt.toLocal()}'
-                          : '${record.value} — ${record.replacedAt.toLocal()}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            // Un secreto nunca se muestra en texto plano
+                            // acá; se puede copiar, con el portapapeles
+                            // protegido (S4), para recuperarlo (S20).
+                            _isSecret(field.key)
+                                ? '•••••••• — ${record.replacedAt.toLocal()}'
+                                : '${record.value} — '
+                                      '${record.replacedAt.toLocal()}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                        if (_isSecret(field.key))
+                          IconButton(
+                            icon: const Icon(Icons.copy, size: 18),
+                            tooltip: context.l10n.historyCopy,
+                            onPressed: () => onCopy(
+                              _displayName(context.l10n, field.key),
+                              record.value,
+                            ),
+                          ),
+                      ],
                     ),
                 ],
               ),

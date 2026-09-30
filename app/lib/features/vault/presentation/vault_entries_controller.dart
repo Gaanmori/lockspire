@@ -7,7 +7,6 @@ import '../domain/entities/vault.dart';
 import '../domain/entities/vault_entry.dart';
 import 'providers/clock_provider.dart';
 import 'vault_session_controller.dart';
-import 'vault_session_state.dart';
 
 part 'vault_entries_controller.g.dart';
 
@@ -18,11 +17,12 @@ VaultEntriesController vaultEntriesController(Ref ref) =>
 /// Operaciones sobre las entradas de la bóveda desbloqueada. Separado de
 /// `VaultSessionController`, que solo gestiona la sesión (revisión
 /// 2026-09-25, hallazgo A1). La regla de negocio está en el dominio
-/// (`Vault.withEntry…`, A2); acá solo se toma la bóveda de la sesión y se
-/// guarda con [VaultSessionController.saveVault].
+/// (`Vault.withEntry…`, A2); acá solo se describe el cambio y se guarda
+/// con [VaultSessionController.updateVault], que lo aplica sobre la bóveda
+/// vigente y en fila con las demás escrituras.
 ///
-/// Sin bóveda desbloqueada, las operaciones no hacen nada. Todas pueden
-/// lanzar `VaultWriteConflictException` (ver `saveVault`).
+/// Sin bóveda desbloqueada, las operaciones no hacen nada. Pueden lanzar
+/// `VaultWriteConflictException` (ver `updateVault`).
 class VaultEntriesController {
   final Ref _ref;
 
@@ -82,11 +82,6 @@ class VaultEntriesController {
 
   DateTime _now() => _ref.read(clockProvider)().toUtc();
 
-  Future<void> _save(Vault Function(Vault current) change) async {
-    final session = _ref.read(vaultSessionControllerProvider).value;
-    if (session is! VaultSessionUnlocked) return;
-    await _ref
-        .read(vaultSessionControllerProvider.notifier)
-        .saveVault(change(session.vault));
-  }
+  Future<void> _save(Vault Function(Vault current) change) =>
+      _ref.read(vaultSessionControllerProvider.notifier).updateVault(change);
 }

@@ -72,11 +72,9 @@ class SiteIconsController {
         );
       }
       if (found.isEmpty) return;
-      final current = _ref.read(vaultSessionControllerProvider).value;
-      if (current is! VaultSessionUnlocked) return;
       await _ref
           .read(vaultSessionControllerProvider.notifier)
-          .saveVault(current.vault.withSiteIcons(found));
+          .updateVault((vault) => vault.withSiteIcons(found));
     } catch (_) {
       // Ver arriba.
     } finally {
@@ -98,11 +96,7 @@ class SiteIconsController {
       await _ref.read(siteIconsFallbackEnabledProvider.future);
 
   /// "Volver a buscar": olvida los sitios marcados sin ícono.
-  Future<void> retryMissing() async {
-    final session = _ref.read(vaultSessionControllerProvider).value;
-    if (session is! VaultSessionUnlocked) return;
-    await _ref
-        .read(vaultSessionControllerProvider.notifier)
-        .saveVault(session.vault.withoutMissingSiteIcons());
-  }
+  Future<void> retryMissing() => _ref
+      .read(vaultSessionControllerProvider.notifier)
+      .updateVault((vault) => vault.withoutMissingSiteIcons());
 }

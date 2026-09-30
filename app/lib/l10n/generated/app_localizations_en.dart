@@ -1084,7 +1084,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get historyHint =>
-      'What these fields had before: imported from SafeInCloud, or from a change on another device that was resolved automatically.';
+      'What these fields had before: when you edited them, updated them from the browser, imported them, or when a change on another device was resolved automatically.';
+
+  @override
+  String get historyCopy => 'Copy the previous value';
 
   @override
   String entryNewTitle(String type) {

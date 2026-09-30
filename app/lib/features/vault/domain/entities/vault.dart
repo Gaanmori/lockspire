@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'entry_fields.dart';
 import 'vault_entry.dart';
 import 'vault_folder.dart';
 
@@ -78,15 +79,28 @@ class Vault {
   Vault withEntriesAdded(Iterable<VaultEntry> added) =>
       copyWith(entries: [...entries, ...added]);
 
+  /// Edita una entrada. Una contraseña (o un campo oculto) que cambia o se
+  /// borra deja su valor anterior en el historial de ese campo: un error al
+  /// editar no pierde la buena (revisión 2026-09-30, S20).
   Vault withEntryUpdated({
     required String id,
     required String title,
     required Map<String, String> fields,
     required DateTime now,
-  }) => _mapEntry(
-    id,
-    (e) => e.copyWith(title: title, fields: fields, modifiedAt: now),
-  );
+  }) => _mapEntry(id, (e) {
+    var history = e.fieldHistory;
+    for (final MapEntry(key: field, value: previous) in e.fields.entries) {
+      if (keepsFieldHistory(field) && fields[field] != previous) {
+        history = _withPrevious(history, field, previous, now);
+      }
+    }
+    return e.copyWith(
+      title: title,
+      fields: fields,
+      fieldHistory: history,
+      modifiedAt: now,
+    );
+  });
 
   /// Cambia un campo y guarda el valor anterior en su historial (el más
   /// reciente primero, hasta [maxFieldHistoryPerField]), para que se pueda
@@ -102,17 +116,28 @@ class Vault {
     if (previous == value) return e;
     return e.copyWith(
       fields: {...e.fields, field: value},
-      fieldHistory: {
-        ...e.fieldHistory,
-        if (previous != null && previous.isNotEmpty)
-          field: [
-            FieldHistoryRecord(value: previous, replacedAt: now),
-            ...?e.fieldHistory[field],
-          ].take(maxFieldHistoryPerField).toList(),
-      },
+      fieldHistory: previous == null
+          ? e.fieldHistory
+          : _withPrevious(e.fieldHistory, field, previous, now),
       modifiedAt: now,
     );
   });
+
+  static Map<String, List<FieldHistoryRecord>> _withPrevious(
+    Map<String, List<FieldHistoryRecord>> history,
+    String field,
+    String previous,
+    DateTime now,
+  ) {
+    if (previous.isEmpty) return history;
+    return {
+      ...history,
+      field: [
+        FieldHistoryRecord(value: previous, replacedAt: now),
+        ...?history[field],
+      ].take(maxFieldHistoryPerField).toList(),
+    };
+  }
 
   /// Borrado suave (tombstone): la entrada queda en la lista marcada como
   /// borrada, para que el merge (ADR 0006) propague el borrado a los demás
@@ -164,8 +189,12 @@ class Vault {
 
   /// Serializa el payload a los bytes UTF-8 que se cifran (ver
   /// docs/adr/0004-formato-boveda-v1.md — payload JSON dentro del blob).
-  Uint8List toJsonBytes() =>
-      Uint8List.fromList(utf8.encode(jsonEncode(toJson())));
+  ///
+  /// Directo a UTF-8, sin armar el texto intermedio ni copiarlo: con 500
+  /// entradas e íconos (~2 MB) baja de ~17 a ~15 ms por guardado en
+  /// escritorio. Pasarlo a otro isolate no ayuda: copiar la bóveda cuesta
+  /// lo mismo (revisión 2026-09-30, P2).
+  Uint8List toJsonBytes() => JsonUtf8Encoder().convert(toJson()) as Uint8List;
 
   factory Vault.fromJsonBytes(Uint8List bytes) {
     return Vault.fromJson(

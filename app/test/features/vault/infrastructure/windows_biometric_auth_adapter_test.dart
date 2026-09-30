@@ -10,9 +10,8 @@ import 'package:lockspire/features/vault/infrastructure/windows_biometric_auth_a
 import '../../../support/fakes/fake_local_authentication.dart';
 
 void main() {
-  // `_storage` nunca se toca en ninguno de los caminos probados acá —
-  // ver el comentario del plan aprobado — así que una instancia real
-  // alcanza, sin necesitar fakearla.
+  // Acá solo la disponibilidad y los fallos del diálogo del sistema: la
+  // clave guardada se prueba en `biometric_key_storage_test.dart`.
   const storage = FlutterSecureStorage();
 
   group('WindowsBiometricAuthAdapter', () {

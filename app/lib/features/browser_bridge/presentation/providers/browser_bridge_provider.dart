@@ -12,6 +12,7 @@ import '../../../appearance/presentation/appearance_controller.dart';
 import '../../../desktop/presentation/providers/is_desktop_shell_provider.dart';
 import '../../../desktop/presentation/providers/desktop_ports_providers.dart';
 import '../../../vault/application/password_generator.dart';
+import '../../../vault/domain/entities/vault.dart';
 import '../../../vault/presentation/vault_session_controller.dart';
 import '../../../vault/presentation/vault_session_state.dart';
 import '../../application/handle_bridge_request.dart';
@@ -64,26 +65,41 @@ Future<BrowserBridgeStatus> browserBridge(Ref ref) async {
 /// 0015, 0034). Separado del servidor IPC para que los tests de flujo le
 /// hablen como lo haría la extensión.
 @Riverpod(keepAlive: true)
-HandleBridgeRequest bridgeRequestHandler(Ref ref) => HandleBridgeRequest(
-  currentVault: () {
+HandleBridgeRequest bridgeRequestHandler(Ref ref) {
+  Vault? currentVault() {
     final session = ref.read(vaultSessionControllerProvider).value;
     return session is VaultSessionUnlocked ? session.vault : null;
-  },
-  showApp: () => unawaited(ref.read(desktopWindowPortProvider).show()),
-  generatePassword: (length) => generatePassword(length: length),
-  requestLink: (request) {
-    ref.read(pendingLinkRequestProvider.notifier).set(request);
-    unawaited(ref.read(desktopWindowPortProvider).show());
-  },
-  currentAppearance: () =>
-      ref.read(appearanceControllerProvider).value ??
-      AppearancePreference.defaults,
-  currentLanguage: () => ref.read(appL10nProvider).localeName,
-  saveLogin: (login, match) =>
-      ref.read(browserLoginSaverProvider)(login, match),
-  saveAfterUnlock: (login) {
-    ref.read(pendingBrowserLoginsProvider.notifier).add(login);
-    unawaited(ref.read(desktopWindowPortProvider).show());
-  },
-  exclusions: ref.read(loginSaveExclusionsPortProvider),
-);
+  }
+
+  void showApp() => unawaited(ref.read(desktopWindowPortProvider).show());
+
+  return HandleBridgeRequest(
+    app: BridgeAppRequests(
+      isLocked: () => currentVault() == null,
+      showApp: showApp,
+      generatePassword: (length) => generatePassword(length: length),
+      currentAppearance: () =>
+          ref.read(appearanceControllerProvider).value ??
+          AppearancePreference.defaults,
+      currentLanguage: () => ref.read(appL10nProvider).localeName,
+    ),
+    credentials: BridgeCredentialRequests(currentVault: currentVault),
+    links: BridgeLinkRequests(
+      currentVault: currentVault,
+      requestLink: (request) {
+        ref.read(pendingLinkRequestProvider.notifier).set(request);
+        showApp();
+      },
+    ),
+    logins: BridgeLoginSaveRequests(
+      currentVault: currentVault,
+      saveLogin: (login, match) =>
+          ref.read(browserLoginSaverProvider)(login, match),
+      saveAfterUnlock: (login) {
+        ref.read(pendingBrowserLoginsProvider.notifier).add(login);
+        showApp();
+      },
+      exclusions: ref.read(loginSaveExclusionsPortProvider),
+    ),
+  );
+}

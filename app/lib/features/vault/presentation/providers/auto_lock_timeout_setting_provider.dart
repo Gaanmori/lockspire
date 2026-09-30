@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:lockspire/shared/presentation/preferences.dart';
 
 import '../../domain/auto_lock_timeout.dart';
 import 'auto_lock_preferences_port_provider.dart';
@@ -20,8 +21,8 @@ class AutoLockTimeoutSetting extends _$AutoLockTimeoutSetting {
   /// Se aplica al instante; si guardar falla, dura hasta cerrar la app.
   Future<void> set(AutoLockTimeout timeout) async {
     state = AsyncData(timeout);
-    try {
-      await ref.read(autoLockPreferencesPortProvider).save(timeout);
-    } catch (_) {}
+    await saveAppliedPreference(
+      () => ref.read(autoLockPreferencesPortProvider).save(timeout),
+    );
   }
 }

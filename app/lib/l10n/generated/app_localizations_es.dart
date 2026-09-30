@@ -1100,7 +1100,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get historyHint =>
-      'Lo que tenían antes estos campos: importado de SafeInCloud o de un cambio en otro dispositivo que se resolvió solo.';
+      'Lo que tenían antes estos campos: al editarlos, al actualizarlos desde el navegador, al importar o al resolverse solo un cambio en otro dispositivo.';
+
+  @override
+  String get historyCopy => 'Copiar el valor anterior';
 
   @override
   String entryNewTitle(String type) {

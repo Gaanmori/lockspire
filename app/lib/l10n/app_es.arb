@@ -718,7 +718,8 @@
   "fieldGenerationMode": "Modo de generación",
   "fieldGenerationParam": "Parámetro de generación",
   "historyTitle": "Valores anteriores",
-  "historyHint": "Lo que tenían antes estos campos: importado de SafeInCloud o de un cambio en otro dispositivo que se resolvió solo.",
+  "historyHint": "Lo que tenían antes estos campos: al editarlos, al actualizarlos desde el navegador, al importar o al resolverse solo un cambio en otro dispositivo.",
+  "historyCopy": "Copiar el valor anterior",
   "entryNewTitle": "{type, select, card{Nueva tarjeta} document{Nuevo documento} note{Nueva nota} passkey{Nueva passkey} other{Nueva contraseña}}",
   "@entryNewTitle": {
     "placeholders": {

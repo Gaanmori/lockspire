@@ -103,7 +103,9 @@ class _DesktopShellState extends ConsumerState<DesktopShell> {
       if (!mounted) return;
       await _window.setIcon(path);
       await _tray.setIcon(path);
-    } catch (_) {}
+    } catch (_) {
+      // Ver arriba: quedan los íconos de la app instalada.
+    }
   }
 
   Future<void> _updateTrayMenu({required bool isUnlocked}) => _tray.setMenu(

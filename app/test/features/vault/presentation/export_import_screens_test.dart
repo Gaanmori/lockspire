@@ -15,6 +15,7 @@ import 'package:lockspire/features/vault/presentation/screens/export_screen.dart
 import 'package:lockspire/features/vault/presentation/screens/import_screen.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
 
+import '../../../support/app_robot.dart';
 import '../../../support/fakes/vault_fakes.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
@@ -104,13 +105,11 @@ void main() {
       await _pump(tester, container!, const ExportScreen());
 
       await tester.enterText(find.byType(TextField), 'no es esta');
-      await tester.runAsync(() async {
-        await tester.tap(find.widgetWithText(FilledButton, 'Exportar'));
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-      });
-      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Exportar'));
 
-      expect(find.text('La contraseña maestra no es correcta'), findsOneWidget);
+      await AppRobot(
+        tester,
+      ).waitForIo(find.text('La contraseña maestra no es correcta'));
     });
 
     testWidgets('un formato sin cifrar se advierte en pantalla y se confirma '

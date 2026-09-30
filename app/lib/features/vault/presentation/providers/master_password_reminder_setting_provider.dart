@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:lockspire/shared/presentation/preferences.dart';
 
 import '../../domain/master_password_reminder.dart';
 import 'master_password_reminder_settings_port_provider.dart';
@@ -19,8 +20,8 @@ class MasterPasswordReminderSetting extends _$MasterPasswordReminderSetting {
   /// Se aplica al instante; si guardar falla, dura hasta cerrar la app.
   Future<void> set(MasterPasswordReminder reminder) async {
     state = AsyncData(reminder);
-    try {
-      await ref.read(masterPasswordReminderSettingsPortProvider).save(reminder);
-    } catch (_) {}
+    await saveAppliedPreference(
+      () => ref.read(masterPasswordReminderSettingsPortProvider).save(reminder),
+    );
   }
 }

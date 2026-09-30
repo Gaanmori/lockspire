@@ -110,4 +110,52 @@ void main() {
       expect(vault.entries.single.modifiedAt, _created);
     });
   });
+
+  group('withEntryUpdated guarda el historial de los secretos (S20)', () {
+    Vault edit(Map<String, String> fields) => _vault([
+      _entry('a'),
+    ]).withEntryUpdated(id: 'a', title: 'a', fields: fields, now: _now);
+
+    test('cambiar la contraseña guarda la anterior', () {
+      final entry = edit({
+        'username': 'yo',
+        'password': 'nuevo',
+      }).entries.single;
+
+      expect(entry.fieldHistory['password']!.single.value, 'viejo');
+      expect(entry.fieldHistory['password']!.single.replacedAt, _now);
+    });
+
+    test('cambiar el usuario o no tocar la contraseña no deja historial', () {
+      expect(
+        edit({
+          'username': 'otro',
+          'password': 'viejo',
+        }).entries.single.fieldHistory,
+        isEmpty,
+      );
+    });
+
+    test('borrar un campo oculto también lo guarda', () {
+      final withHidden = _vault([_entry('a')]).withEntryUpdated(
+        id: 'a',
+        title: 'a',
+        fields: {'username': 'yo', 'password': 'viejo', 'hidden:PIN': '1234'},
+        now: _created,
+      );
+
+      final entry = withHidden
+          .withEntryUpdated(
+            id: 'a',
+            title: 'a',
+            fields: {'username': 'yo', 'password': 'viejo'},
+            now: _now,
+          )
+          .entries
+          .single;
+
+      expect(entry.fieldHistory['hidden:PIN']!.single.value, '1234');
+      expect(entry.fields.containsKey('hidden:PIN'), isFalse);
+    });
+  });
 }

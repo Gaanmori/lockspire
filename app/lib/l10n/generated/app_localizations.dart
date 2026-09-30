@@ -1757,8 +1757,14 @@ abstract class AppLocalizations {
   /// No description provided for @historyHint.
   ///
   /// In es, this message translates to:
-  /// **'Lo que tenían antes estos campos: importado de SafeInCloud o de un cambio en otro dispositivo que se resolvió solo.'**
+  /// **'Lo que tenían antes estos campos: al editarlos, al actualizarlos desde el navegador, al importar o al resolverse solo un cambio en otro dispositivo.'**
   String get historyHint;
+
+  /// No description provided for @historyCopy.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar el valor anterior'**
+  String get historyCopy;
 
   /// No description provided for @entryNewTitle.
   ///

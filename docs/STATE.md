@@ -690,15 +690,12 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 
 ### Revisión general (2026-09-30) — `docs/reviews/2026-09-30-revision-general.md`
 
-- Sin hallazgos altos. Todavía no hay nada corregido.
-- **Antes del lanzamiento:**
-  - **P1:** las escrituras simultáneas de la bóveda pueden perder un cambio; hace falta una cola y que se guarde el cambio en vez de la bóveda terminada;
-  - **S18:** los inicios de sesión que esperan el desbloqueo no vencen.
-- **Después:**
-  - S20: guardar el historial al editar a mano;
-  - S19: borrar la clave al bloquear;
-  - A11: dividir `HandleBridgeRequest`;
-  - T3: quitar las esperas de tiempo real en los tests.
+- **Hecho, el mismo día:** todos los hallazgos, cada uno con su test, salvo S19 (borrar la clave al bloquear), que se decidió no hacer porque es peligroso con una sync en curso. El detalle está en la sección "Resolución" de la revisión.
+- **Bug encontrado al hacerlo:** bloquear mientras se guardaba volvía a abrir la sesión al terminar. Corregido, con test.
+- **Resultado:** 625 tests de la app y 36 de la extensión. Cobertura: presentación 92,8 %, todas las capas sobre 90 %.
+- **Pendiente:**
+  - medir en el Redmi cuánto tarda un guardado con una bóveda grande (P2);
+  - probar el canal de la Store con el MSIX.
 
 ### Guardar contraseñas desde el navegador (ADR 0034, 2026-09-30)
 

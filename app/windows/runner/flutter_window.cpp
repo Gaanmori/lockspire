@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Gabriel Ángel Montoya Rico
+// Basado en la plantilla del runner de Flutter (BSD-3-Clause, The Flutter
+// Authors); los canales propios de Lockspire se agregaron encima.
+
 #include "flutter_window.h"
 
 #include <flutter/standard_method_codec.h>

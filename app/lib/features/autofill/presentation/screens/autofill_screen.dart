@@ -17,6 +17,7 @@ import '../providers/autofill_host_port_provider.dart';
 import '../widgets/get_credential_view.dart';
 import '../widgets/create_credential_view.dart';
 import 'package:lockspire/l10n/l10n.dart';
+import '../../../vault/domain/entities/entry_fields.dart';
 
 /// Pantalla mostrada dentro de `AutofillActivity` (ADR 0011) una vez que
 /// la bóveda ya está desbloqueada — la parte nativa (Kotlin) nunca ve
@@ -52,14 +53,16 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
         trustedBrowsers: trustedBrowserPackages.toSet(),
         items: autofillSessionItems(widget.vault.entries).toList(),
       );
-    } catch (_) {}
+    } catch (_) {
+      // Ver arriba: la próxima vez se vuelve a pedir desbloquear.
+    }
   }
 
   Future<void> _cancel() => _host.cancel();
 
   Future<void> _submitGet(VaultEntry entry) => _host.fill(
-    username: entry.fields['username'] ?? '',
-    password: entry.fields['password'] ?? '',
+    username: entry.fields[EntryFields.username] ?? '',
+    password: entry.fields[EntryFields.password] ?? '',
   );
 
   /// "Rellenar y recordar este sitio" (ADR 0020): la entrada pasa a
@@ -71,7 +74,10 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
         .updateEntry(
           id: entry.id,
           title: entry.title,
-          fields: {...entry.fields, 'url': linkedUrlForOrigin(origin)},
+          fields: {
+            ...entry.fields,
+            EntryFields.url: linkedUrlForOrigin(origin),
+          },
         );
     await _submitGet(entry);
   }
@@ -89,9 +95,9 @@ class _AutofillScreenState extends ConsumerState<AutofillScreen> {
         .addEntry(
           title: origin != null ? Uri.parse(origin).host : packageName,
           fields: {
-            'username': username,
-            'password': password,
-            if (origin != null) 'url': linkedUrlForOrigin(origin),
+            EntryFields.username: username,
+            EntryFields.password: password,
+            if (origin != null) EntryFields.url: linkedUrlForOrigin(origin),
           },
         );
     await _host.confirmSaved();

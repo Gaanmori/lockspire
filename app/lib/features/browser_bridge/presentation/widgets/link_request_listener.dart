@@ -10,6 +10,7 @@ import '../../../vault/presentation/vault_session_state.dart';
 import '../../application/handle_bridge_request.dart';
 import '../providers/pending_link_request_provider.dart';
 import 'package:lockspire/l10n/l10n.dart';
+import '../../../vault/domain/entities/entry_fields.dart';
 
 /// Muestra en la ventana de Lockspire la confirmación de vincular un sitio
 /// a una entrada que pidió la extensión (ADR 0015). Es la interfaz de
@@ -94,7 +95,7 @@ class LinkRequestListener extends ConsumerWidget {
           .updateEntry(
             id: entry.id,
             title: entry.title,
-            fields: {...entry.fields, 'url': request.newUrl},
+            fields: {...entry.fields, EntryFields.url: request.newUrl},
           );
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.linkDone(entry.title, newHost))),

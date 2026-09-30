@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
-import type { Language } from './i18n.ts';
+import type { Language } from './messages.ts';
 import type { Response } from './protocol.ts';
 
 /**

@@ -53,6 +53,25 @@ void main() {
     expect(find.text('Banco'), findsNothing);
   });
 
+  testWidgets('cambiar la contraseña guarda la anterior, que se puede '
+      'copiar desde el historial (S20)', (tester) async {
+    final (app, robot) = await _unlockedApp(tester);
+    await robot.addPassword(title: 'Banco', password: 'Vieja-1');
+
+    await robot.openEntry('Banco');
+    await robot.type('Contraseña', 'Nueva-2');
+    await robot.save();
+    await robot.openEntry('Banco');
+
+    await robot.reveal(find.text('Valores anteriores'));
+    await robot.tapText('Valores anteriores');
+    await robot.reveal(find.byTooltip('Copiar el valor anterior'));
+    await robot.tapTooltip('Copiar el valor anterior');
+
+    expect(app.clipboard.copies.last, 'Vieja-1');
+    expect(find.text('Vieja-1'), findsNothing, reason: 'no se muestra');
+  });
+
   testWidgets('eliminar una entrada desde su formulario la quita de la '
       'lista', (tester) async {
     final (_, robot) = await _unlockedApp(tester);
