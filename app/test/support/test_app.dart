@@ -151,6 +151,7 @@ class TestApp {
   final Map<String, String> secureStorage = {};
 
   final _profileStorages = <String, FakeVaultStoragePort>{};
+  final _unlockHistories = <String, FakePasswordUnlockHistoryPort>{};
   final _profileAncestors = <String, FakeVaultStoragePort>{};
 
   /// La bóveda en disco de un perfil (ADR 0039).
@@ -221,8 +222,12 @@ class TestApp {
     appInfoPortProvider.overrideWithValue(const FakeAppInfo()),
     externalLinkPortProvider.overrideWithValue(links),
     donationPortProvider.overrideWithValue(donations),
-    passwordUnlockHistoryPortProvider.overrideWithValue(
-      FakePasswordUnlockHistoryPort(),
+    // Por perfil, como en el almacenamiento seguro real (ADR 0039).
+    passwordUnlockHistoryPortProvider.overrideWith(
+      (ref) => _unlockHistories.putIfAbsent(
+        ref.watch(activeProfileIdProvider),
+        FakePasswordUnlockHistoryPort.new,
+      ),
     ),
     masterPasswordReminderSettingsPortProvider.overrideWithValue(
       FakeMasterPasswordReminderSettingsPort(),

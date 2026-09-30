@@ -165,12 +165,18 @@ class FakeBiometricAuthPort implements BiometricAuthPort {
   /// [nextReadKeyResult].
   bool? fingerAccepted;
 
+  /// Cuántas veces se pidió la huella (o Windows Hello).
+  int readKeyCalls = 0;
+
   @override
-  Future<Uint8List?> readKey() async => switch (fingerAccepted) {
-    true => _storedKey,
-    false => null,
-    null => nextReadKeyResult,
-  };
+  Future<Uint8List?> readKey() async {
+    readKeyCalls++;
+    return switch (fingerAccepted) {
+      true => _storedKey,
+      false => null,
+      null => nextReadKeyResult,
+    };
+  }
 
   @override
   Future<void> deleteKey() async {

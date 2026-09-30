@@ -8,6 +8,7 @@ import 'features/about/presentation/providers/about_providers.dart';
 import 'features/appearance/presentation/appearance_controller.dart';
 import 'features/appearance/presentation/launcher_icon_sync.dart';
 import 'features/appearance/presentation/providers/system_accent_color_provider.dart';
+import 'features/profiles/presentation/profiles_controller.dart';
 import 'features/sync/presentation/auto_sync_controller.dart';
 import 'features/vault/presentation/auto_lock_controller.dart';
 import 'features/vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
@@ -49,6 +50,9 @@ Future<void> startApp(
   // Igual con el tiempo de bloqueo (ADR 0016): el primer desbloqueo ya
   // usa el valor guardado.
   await container.read(autoLockTimeoutSettingProvider.future);
+  // Los perfiles también (ADR 0039): la pantalla de desbloqueo decide al
+  // aparecer si abre la huella o muestra la lista para elegir.
+  await container.read(profilesControllerProvider.future);
   // El bloqueo automático escucha la sesión desde el arranque, también en
   // la pantalla de autocompletado de Android (hallazgo A1).
   _keepRunning(container, autoLockControllerProvider);

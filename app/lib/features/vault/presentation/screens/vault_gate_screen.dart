@@ -30,11 +30,15 @@ class VaultGateScreen extends ConsumerWidget {
   /// perfiles (ADR 0039).
   final Widget? lockedHeader;
 
+  /// Ver `UnlockVaultScreen.autoPromptBiometric`.
+  final bool autoPromptBiometric;
+
   const VaultGateScreen({
     super.key,
     required this.unlockedBuilder,
     this.restoreVaultBuilder,
     this.lockedHeader,
+    this.autoPromptBiometric = true,
   });
 
   @override
@@ -73,7 +77,10 @@ class VaultGateScreen extends ConsumerWidget {
           restoreVaultBuilder: restoreVaultBuilder,
           header: lockedHeader,
         ),
-        VaultSessionLocked() => UnlockVaultScreen(header: lockedHeader),
+        VaultSessionLocked() => UnlockVaultScreen(
+          header: lockedHeader,
+          autoPromptBiometric: autoPromptBiometric,
+        ),
         VaultSessionUnlocked(:final vault) => unlockedBuilder(vault),
       },
     );

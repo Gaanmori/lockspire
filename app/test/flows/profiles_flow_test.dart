@@ -8,7 +8,10 @@ import 'package:lockspire/features/appearance/presentation/appearance_controller
 import 'package:lockspire/features/profiles/domain/profile.dart';
 import 'package:lockspire/shared/secure_storage_provider.dart';
 
+import 'package:lockspire/features/vault/domain/ports/biometric_auth_port.dart';
+
 import '../support/app_robot.dart';
+import '../support/fakes/vault_fakes.dart';
 import '../support/test_app.dart';
 
 const _mine = 'correcto caballo batería grapa';
@@ -174,6 +177,66 @@ void main() {
     expect(app.container.read(activeProfileIdProvider), mainProfileId);
     // Con un solo perfil, la lista ya no se muestra.
     expect(find.byType(ChoiceChip), findsNothing);
+  });
+
+  group('huella o Windows Hello al desbloquear', () {
+    TestApp withFingerprint() => TestApp(
+      biometric: FakeBiometricAuthPort()
+        ..available = BiometricAvailability.available
+        ..fingerAccepted = true,
+    );
+
+    Future<void> createWithFingerprint(AppRobot robot) async {
+      await robot.createVault(_mine);
+      await robot.tapText('Activar');
+    }
+
+    /// La app vuelve al primer plano: ahí se abre el diálogo del sistema.
+    Future<void> resume(WidgetTester tester, AppRobot robot) async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await robot.settle();
+    }
+
+    testWidgets('con un solo perfil se abre sola, como siempre', (
+      tester,
+    ) async {
+      final app = withFingerprint();
+      await app.pump(tester);
+      final robot = AppRobot(tester);
+      await createWithFingerprint(robot);
+      await robot.lock();
+
+      await resume(tester, robot);
+
+      expect(app.biometric.readKeyCalls, 1);
+      expect(find.text('Desbloquear'), findsNothing);
+    });
+
+    testWidgets('con varios perfiles espera a que el usuario elija el '
+        'perfil y la pida', (tester) async {
+      final app = withFingerprint();
+      await app.pump(tester);
+      final robot = AppRobot(tester);
+      await createWithFingerprint(robot);
+      await _openProfiles(robot);
+      await _addProfile(robot, 'María');
+      await robot.createVault(_hers);
+      if (find.text('Ahora no').evaluate().isNotEmpty) {
+        await robot.tapText('Ahora no');
+      }
+      await robot.lock();
+      await tester.tap(_chip('Principal'));
+      await robot.waitFor(find.text('Desbloquear').last);
+      final before = app.biometric.readKeyCalls;
+
+      await resume(tester, robot);
+      expect(app.biometric.readKeyCalls, before);
+      expect(_chip('María'), findsOneWidget);
+
+      await robot.tapText('Usar la huella');
+      expect(app.biometric.readKeyCalls, before + 1);
+      expect(find.text('Desbloquear'), findsNothing);
+    });
   });
 
   group('Android', () {

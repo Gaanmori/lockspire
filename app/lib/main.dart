@@ -21,6 +21,7 @@ import 'features/browser_bridge/presentation/widgets/link_request_listener.dart'
 import 'features/browser_bridge/presentation/widgets/browser_login_save_listener.dart';
 import 'features/desktop/presentation/widgets/desktop_shell.dart';
 import 'features/profiles/presentation/profile_switcher.dart';
+import 'features/profiles/presentation/profiles_controller.dart';
 import 'features/profiles/presentation/providers/profile_providers.dart';
 import 'features/profiles/presentation/start_profile.dart';
 import 'features/profiles/presentation/widgets/profile_host.dart';
@@ -160,6 +161,9 @@ class _MyAppState extends ConsumerState<MyApp> {
                   restoreVaultBuilder: (_) => const RestoreVaultScreen(),
                   // Con varios perfiles, se elige al abrir (ADR 0039).
                   lockedHeader: const ProfilePicker(),
+                  // Con la lista de perfiles a la vista, la huella o
+                  // Windows Hello esperan a que el usuario elija.
+                  autoPromptBiometric: !ref.watch(showsProfilePickerProvider),
                 ),
               ),
             ),

@@ -992,6 +992,8 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - `ProfileHost`;
   - 8 flujos: bóvedas y contraseñas separadas, el tema por perfil, validación de nombres, eliminar y el interruptor de Android.
   - 678 tests en total, con la cobertura por encima del 90 %.
+- **Ajuste pedido por el usuario (2026-09-30):** con varios perfiles, la huella o Windows Hello ya no se abren solos al desbloquear: primero se elige el perfil, y luego la huella con su botón. Con un solo perfil, igual que siempre. Se hace con `UnlockVaultScreen.autoPromptBiometric`, que `main.dart` apaga cuando se muestra la lista; `startApp` espera a los perfiles antes del primer cuadro. 2 tests de flujo.
+- **Verificado por el usuario:** el perfil de su esposa funciona en Windows.
 - **Pendiente:**
   - verificación manual del usuario en Windows: agregar un perfil "Demo", cambiar entre perfiles y que la extensión atienda al perfil abierto;
   - hacer las capturas de la Store con el perfil Demo;

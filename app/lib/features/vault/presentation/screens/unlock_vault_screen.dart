@@ -30,10 +30,16 @@ class UnlockVaultScreen extends ConsumerStatefulWidget {
   /// la raíz de la app: esta feature no conoce los perfiles.
   final Widget? header;
 
+  /// Abrir la huella o Windows Hello en cuanto aparece la pantalla. Con
+  /// varios perfiles no (pedido del usuario, 2026-09-30): primero se elige
+  /// el perfil, y el diálogo del sistema tapaba la lista.
+  final bool autoPromptBiometric;
+
   const UnlockVaultScreen({
     super.key,
     this.checkCloudForPasswordChange = true,
     this.header,
+    this.autoPromptBiometric = true,
   });
 
   @override
@@ -123,6 +129,7 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
       return;
     }
     setState(() => _biometricAvailable = true);
+    if (!widget.autoPromptBiometric) return;
     // Al pasar a segundo plano la bóveda se bloquea (ADR 0008) y esta
     // pantalla aparece con la app todavía en segundo plano. Android no puede
     // mostrar el diálogo de huella así, y local_auth quedaba con una
