@@ -12,12 +12,9 @@ import '../../domain/ports/biometric_auth_port.dart';
 import '../providers/auto_lock_timeout_setting_provider.dart';
 import '../providers/master_password_reminder_setting_provider.dart';
 import '../biometric_unlock_controller.dart';
-import '../providers/site_icons_providers.dart';
-import '../site_icons_controller.dart';
 import 'change_master_password_screen.dart';
 import 'package:lockspire/l10n/localized_values.dart';
 import 'package:lockspire/l10n/l10n.dart';
-import 'package:lockspire/features/autofill/presentation/providers/system_autofill_settings_port_provider.dart';
 import '../providers/biometric_status_provider.dart';
 
 /// Nombre del método biométrico de esta plataforma (hallazgo C2).
@@ -39,14 +36,6 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   bool _busy = false;
 
   void _refresh() => ref.invalidate(biometricStatusProvider);
-
-  Future<void> _openAutofillServiceSettings() async {
-    final opened = await ref.read(systemAutofillSettingsPortProvider).open();
-    if (opened || !mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.securityOpenSettingsFailed)),
-    );
-  }
 
   Future<void> _toggle(bool value) async {
     setState(() => _busy = true);
@@ -80,6 +69,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _SectionTitle(context.l10n.securityMasterPasswordSection),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.password),
@@ -88,12 +78,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: _openChangeMasterPassword,
                     ),
-                    const Divider(),
-                    const SizedBox(height: LockspireSpacing.md),
-                    const _AutoLockSection(),
-                    const SizedBox(height: LockspireSpacing.lg),
-                    const Divider(),
-                    const SizedBox(height: LockspireSpacing.md),
+                    const _SectionDivider(),
+                    _SectionTitle(context.l10n.securityUnlockSection),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
@@ -115,30 +101,14 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       const SizedBox(height: LockspireSpacing.md),
                       const Center(child: CircularProgressIndicator()),
                     ],
-                    if (available) ...[
+                    // Sin huella siempre se pide la contraseña: el
+                    // recordatorio solo tiene sentido con ella activada.
+                    if (available && enabled) ...[
                       const SizedBox(height: LockspireSpacing.md),
                       const _MasterPasswordReminderSection(),
                     ],
-                    const SizedBox(height: LockspireSpacing.lg),
-                    const Divider(),
-                    const SizedBox(height: LockspireSpacing.md),
-                    const _SiteIconsSection(),
-                    if (ref.watch(platformCapabilitiesProvider).isAndroid) ...[
-                      const SizedBox(height: LockspireSpacing.lg),
-                      const Divider(),
-                      const SizedBox(height: LockspireSpacing.md),
-                      Text(
-                        context.l10n.securityAutofill,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: LockspireSpacing.sm),
-                      Text(context.l10n.securityAutofillHint),
-                      const SizedBox(height: LockspireSpacing.md),
-                      OutlinedButton(
-                        onPressed: _openAutofillServiceSettings,
-                        child: Text(context.l10n.securityAutofillButton),
-                      ),
-                    ],
+                    const _SectionDivider(),
+                    const _AutoLockSection(),
                   ],
                 ),
               );
@@ -248,8 +218,7 @@ class _AutoLockSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(context.l10n.securityAutoLock, style: textTheme.titleMedium),
-        const SizedBox(height: LockspireSpacing.sm),
+        _SectionTitle(context.l10n.securityAutoLock),
         Text(
           ref.watch(platformCapabilitiesProvider).isAndroid
               ? context.l10n.securityAutoLockHintAndroid
@@ -284,45 +253,26 @@ class _AutoLockSection extends ConsumerWidget {
   }
 }
 
-/// Íconos de los sitios (ADR 0029): opcional porque descargarlos le avisa a
-/// cada sitio de una visita desde esta conexión.
-class _SiteIconsSection extends ConsumerWidget {
-  const _SiteIconsSection();
+/// Título de un grupo de Seguridad: todos con el mismo estilo (revisión de
+/// ajustes 2026-09-30).
+class _SectionTitle extends StatelessWidget {
+  final String text;
+
+  const _SectionTitle(this.text);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = ref.watch(siteIconsEnabledProvider).value ?? false;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(context.l10n.securitySiteIcons),
-          subtitle: Text(context.l10n.securitySiteIconsHint),
-          value: enabled,
-          onChanged: (value) =>
-              ref.read(siteIconsEnabledProvider.notifier).set(value),
-        ),
-        if (enabled)
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(context.l10n.securitySiteIconsFallback),
-            subtitle: Text(context.l10n.securitySiteIconsFallbackHint),
-            value: ref.watch(siteIconsFallbackEnabledProvider).value ?? false,
-            onChanged: (value) =>
-                ref.read(siteIconsFallbackEnabledProvider.notifier).set(value),
-          ),
-        if (enabled)
-          TextButton.icon(
-            onPressed: () async {
-              final controller = ref.read(siteIconsControllerProvider);
-              await controller.retryMissing();
-              await controller.refresh();
-            },
-            icon: const Icon(Icons.refresh),
-            label: Text(context.l10n.securitySiteIconsRetry),
-          ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: LockspireSpacing.sm),
+    child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+  );
+}
+
+class _SectionDivider extends StatelessWidget {
+  const _SectionDivider();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: LockspireSpacing.md),
+    child: Divider(),
+  );
 }

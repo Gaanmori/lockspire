@@ -73,8 +73,8 @@ void main() {
     expect(find.text('Usar la huella'), findsNothing);
   });
 
-  testWidgets('en Seguridad se desactiva la huella y se elige cada cuánto '
-      'pedir la contraseña', (tester) async {
+  testWidgets('en Seguridad se elige cada cuánto pedir la contraseña; al '
+      'desactivar la huella esa opción desaparece', (tester) async {
     final app = _withFingerprint();
     final robot = await _createVault(tester, app, choice: 'Activar');
 
@@ -87,15 +87,17 @@ void main() {
           .value,
       isTrue,
     );
-    await robot.tapText('Desbloquear con la huella');
-    expect(await app.biometric.hasStoredKey(), isFalse);
-
     await robot.reveal(find.text('30 días'));
     await robot.tapText('30 días');
     expect(
       app.container.read(masterPasswordReminderSettingProvider).value,
       MasterPasswordReminder.thirtyDays,
     );
+
+    await robot.tapText('Desbloquear con la huella');
+    expect(await app.biometric.hasStoredKey(), isFalse);
+    // Sin huella siempre se pide la contraseña: el recordatorio sobra.
+    expect(find.text('30 días'), findsNothing);
   });
 
   testWidgets('sin huella configurada en el sistema, Seguridad explica cómo '

@@ -18,11 +18,14 @@ Future<(TestApp, AppRobot)> _androidUnlocked(WidgetTester tester) async {
 /// Lo propio de Android: el servicio de autocompletado del sistema y el
 /// ícono del lanzador según el tema.
 void main() {
-  testWidgets('Seguridad lleva a los ajustes para activar Lockspire como '
-      'autocompletado', (tester) async {
+  testWidgets('Ajustes → Integraciones → Autocompletado lleva a los ajustes '
+      'del sistema para activar Lockspire', (tester) async {
     final (app, robot) = await _androidUnlocked(tester);
 
-    await robot.tapText('Seguridad');
+    await robot.openSettings();
+    expect(find.text('Integraciones'), findsOneWidget);
+    expect(find.text('Navegador'), findsNothing, reason: 'es de escritorio');
+    await robot.tapText('Autocompletado');
     await robot.tapText('Activar como autocompletado');
 
     expect(app.autofillSettings.opened, 1);
@@ -34,7 +37,10 @@ void main() {
     final (app, robot) = await _androidUnlocked(tester);
     app.autofillSettings.canOpen = false;
 
-    await robot.tapText('Seguridad');
+    await robot.openSettings();
+    expect(find.text('Integraciones'), findsOneWidget);
+    expect(find.text('Navegador'), findsNothing, reason: 'es de escritorio');
+    await robot.tapText('Autocompletado');
     await robot.tapText('Activar como autocompletado');
 
     expect(find.text('No se pudo abrir la configuración.'), findsOneWidget);

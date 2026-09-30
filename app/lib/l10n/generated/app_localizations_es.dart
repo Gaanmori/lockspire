@@ -790,7 +790,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get commonAdd => 'Agregar';
 
   @override
-  String get securityOpenSettingsFailed => 'No se pudo abrir la configuración.';
+  String get autofillSettingsOpenFailed => 'No se pudo abrir la configuración.';
 
   @override
   String get securityTitle => 'Seguridad';
@@ -810,14 +810,14 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get securityAutofill => 'Autocompletado';
+  String get autofillSettingsTitle => 'Autocompletado';
 
   @override
-  String get securityAutofillHint =>
+  String get autofillSettingsHint =>
       'Active Lockspire como servicio de autocompletado para que aparezca como opción al iniciar sesión en otras apps — incluye logins dentro de un navegador embebido (ej. WebView).';
 
   @override
-  String get securityAutofillButton => 'Activar como autocompletado';
+  String get autofillSettingsButton => 'Activar como autocompletado';
 
   @override
   String securityBiometricNotSetUp(Object method) {
@@ -849,22 +849,21 @@ class AppLocalizationsEs extends AppLocalizations {
       'Más cómodo, pero la bóveda queda abierta más tiempo si se aleja del equipo.';
 
   @override
-  String get securitySiteIcons => 'Íconos de los sitios';
+  String get siteIconsTitle => 'Íconos de los sitios';
 
   @override
-  String get securitySiteIconsHint =>
+  String get siteIconsHint =>
       'Descarga el ícono de cada sitio guardado directamente del sitio, sin servicios de terceros, y lo guarda cifrado en su bóveda. Cada sitio ve una visita desde su conexión. Sin activarlo, se muestra la inicial.';
 
   @override
-  String get securitySiteIconsFallback =>
-      'Completar los que falten con DuckDuckGo';
+  String get siteIconsFallback => 'Completar los que falten con DuckDuckGo';
 
   @override
-  String get securitySiteIconsFallbackHint =>
+  String get siteIconsFallbackHint =>
       'Para los sitios que no ofrecen ícono, se lo pide a DuckDuckGo. DuckDuckGo recibe solo esos dominios, nunca sus usuarios ni contraseñas.';
 
   @override
-  String get securitySiteIconsRetry => 'Volver a buscar los que faltan';
+  String get siteIconsRetry => 'Volver a buscar los que faltan';
 
   @override
   String get vaultNoResults => 'No se encontraron resultados';
@@ -1511,7 +1510,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsTitle => 'Ajustes';
 
   @override
-  String get settingsAppearanceHint => 'Idioma, tema claro u oscuro y colores';
+  String get settingsAppearanceHint => 'Idioma, tema e íconos de los sitios';
 
   @override
   String get settingsImportHint =>
@@ -1529,6 +1528,24 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settingsAboutHint => 'Versión, licencia y código fuente';
+
+  @override
+  String get settingsGeneral => 'General';
+
+  @override
+  String get settingsIntegrations => 'Integraciones';
+
+  @override
+  String get settingsData => 'Datos';
+
+  @override
+  String get settingsAutofillHint => 'Rellenar sus contraseñas en otras apps';
+
+  @override
+  String get securityMasterPasswordSection => 'Contraseña maestra';
+
+  @override
+  String get securityUnlockSection => 'Desbloqueo';
 
   @override
   String get trayOpen => 'Abrir Lockspire';

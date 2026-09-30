@@ -1262,11 +1262,11 @@ abstract class AppLocalizations {
   /// **'Agregar'**
   String get commonAdd;
 
-  /// No description provided for @securityOpenSettingsFailed.
+  /// No description provided for @autofillSettingsOpenFailed.
   ///
   /// In es, this message translates to:
   /// **'No se pudo abrir la configuración.'**
-  String get securityOpenSettingsFailed;
+  String get autofillSettingsOpenFailed;
 
   /// No description provided for @securityTitle.
   ///
@@ -1292,23 +1292,23 @@ abstract class AppLocalizations {
   /// **'Use {method} en vez de escribir la contraseña maestra cada vez.'**
   String securityUnlockWithHint(Object method);
 
-  /// No description provided for @securityAutofill.
+  /// No description provided for @autofillSettingsTitle.
   ///
   /// In es, this message translates to:
   /// **'Autocompletado'**
-  String get securityAutofill;
+  String get autofillSettingsTitle;
 
-  /// No description provided for @securityAutofillHint.
+  /// No description provided for @autofillSettingsHint.
   ///
   /// In es, this message translates to:
   /// **'Active Lockspire como servicio de autocompletado para que aparezca como opción al iniciar sesión en otras apps — incluye logins dentro de un navegador embebido (ej. WebView).'**
-  String get securityAutofillHint;
+  String get autofillSettingsHint;
 
-  /// No description provided for @securityAutofillButton.
+  /// No description provided for @autofillSettingsButton.
   ///
   /// In es, this message translates to:
   /// **'Activar como autocompletado'**
-  String get securityAutofillButton;
+  String get autofillSettingsButton;
 
   /// No description provided for @securityBiometricNotSetUp.
   ///
@@ -1352,35 +1352,35 @@ abstract class AppLocalizations {
   /// **'Más cómodo, pero la bóveda queda abierta más tiempo si se aleja del equipo.'**
   String get securityAutoLock15Warning;
 
-  /// No description provided for @securitySiteIcons.
+  /// No description provided for @siteIconsTitle.
   ///
   /// In es, this message translates to:
   /// **'Íconos de los sitios'**
-  String get securitySiteIcons;
+  String get siteIconsTitle;
 
-  /// No description provided for @securitySiteIconsHint.
+  /// No description provided for @siteIconsHint.
   ///
   /// In es, this message translates to:
   /// **'Descarga el ícono de cada sitio guardado directamente del sitio, sin servicios de terceros, y lo guarda cifrado en su bóveda. Cada sitio ve una visita desde su conexión. Sin activarlo, se muestra la inicial.'**
-  String get securitySiteIconsHint;
+  String get siteIconsHint;
 
-  /// No description provided for @securitySiteIconsFallback.
+  /// No description provided for @siteIconsFallback.
   ///
   /// In es, this message translates to:
   /// **'Completar los que falten con DuckDuckGo'**
-  String get securitySiteIconsFallback;
+  String get siteIconsFallback;
 
-  /// No description provided for @securitySiteIconsFallbackHint.
+  /// No description provided for @siteIconsFallbackHint.
   ///
   /// In es, this message translates to:
   /// **'Para los sitios que no ofrecen ícono, se lo pide a DuckDuckGo. DuckDuckGo recibe solo esos dominios, nunca sus usuarios ni contraseñas.'**
-  String get securitySiteIconsFallbackHint;
+  String get siteIconsFallbackHint;
 
-  /// No description provided for @securitySiteIconsRetry.
+  /// No description provided for @siteIconsRetry.
   ///
   /// In es, this message translates to:
   /// **'Volver a buscar los que faltan'**
-  String get securitySiteIconsRetry;
+  String get siteIconsRetry;
 
   /// No description provided for @vaultNoResults.
   ///
@@ -2309,7 +2309,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAppearanceHint.
   ///
   /// In es, this message translates to:
-  /// **'Idioma, tema claro u oscuro y colores'**
+  /// **'Idioma, tema e íconos de los sitios'**
   String get settingsAppearanceHint;
 
   /// No description provided for @settingsImportHint.
@@ -2341,6 +2341,42 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Versión, licencia y código fuente'**
   String get settingsAboutHint;
+
+  /// No description provided for @settingsGeneral.
+  ///
+  /// In es, this message translates to:
+  /// **'General'**
+  String get settingsGeneral;
+
+  /// No description provided for @settingsIntegrations.
+  ///
+  /// In es, this message translates to:
+  /// **'Integraciones'**
+  String get settingsIntegrations;
+
+  /// No description provided for @settingsData.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos'**
+  String get settingsData;
+
+  /// No description provided for @settingsAutofillHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Rellenar sus contraseñas en otras apps'**
+  String get settingsAutofillHint;
+
+  /// No description provided for @securityMasterPasswordSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña maestra'**
+  String get securityMasterPasswordSection;
+
+  /// No description provided for @securityUnlockSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloqueo'**
+  String get securityUnlockSection;
 
   /// No description provided for @trayOpen.
   ///

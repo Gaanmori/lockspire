@@ -93,7 +93,8 @@ void main() {
       'antes no estaban', (tester) async {
     final (app, robot) = await _unlocked(tester);
     await robot.addPassword(title: 'Banco', url: 'https://banco.ejemplo');
-    await robot.tapText('Seguridad');
+    await robot.openSettings();
+    await robot.tapText('Apariencia');
     await robot.reveal(find.text('Íconos de los sitios'));
     await robot.tapText('Íconos de los sitios');
     expect(app.siteIcons.asked, ['banco.ejemplo']);
@@ -104,6 +105,7 @@ void main() {
     await robot.tapText('Volver a buscar los que faltan');
 
     expect(app.siteIcons.asked, ['banco.ejemplo', 'banco.ejemplo']);
+    await robot.systemBack();
     await robot.tapText('Bóveda');
     expect(find.byType(Image), findsOneWidget);
   });

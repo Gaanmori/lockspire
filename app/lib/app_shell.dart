@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'shared/platform_capabilities.dart';
 import 'features/about/presentation/screens/about_screen.dart';
 import 'features/appearance/presentation/screens/appearance_screen.dart';
+import 'features/autofill/presentation/screens/autofill_settings_screen.dart';
 import 'features/browser_bridge/presentation/screens/browser_integration_screen.dart';
 import 'features/home/presentation/home_destination.dart';
 import 'features/home/presentation/navigation_layout.dart';
@@ -20,6 +21,7 @@ import 'features/vault/presentation/screens/export_screen.dart';
 import 'features/vault/presentation/screens/import_screen.dart';
 import 'features/vault/presentation/screens/security_screen.dart';
 import 'features/vault/presentation/screens/vault_unlocked_screen.dart';
+import 'features/vault/presentation/widgets/site_icons_settings_section.dart';
 import 'features/vault/presentation/vault_session_controller.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
@@ -67,41 +69,74 @@ class AppShell extends ConsumerWidget {
           label: context.l10n.settingsTitle,
           icon: Icons.settings_outlined,
           selectedIcon: Icons.settings,
-          builder: (_, _) => SettingsScreen(
-            items: [
-              SettingsItem(
-                icon: Icons.palette_outlined,
-                title: context.l10n.appearanceTitle,
-                subtitle: context.l10n.settingsAppearanceHint,
-                builder: (_) => const AppearanceScreen(),
-              ),
-              SettingsItem(
-                icon: Icons.upload_file_outlined,
-                title: context.l10n.importTitle,
-                subtitle: context.l10n.settingsImportHint,
-                builder: (_) => const ImportScreen(),
-              ),
-              SettingsItem(
-                icon: Icons.download_outlined,
-                title: context.l10n.exportTitle,
-                subtitle: context.l10n.settingsExportHint,
-                builder: (_) => const ExportScreen(),
-              ),
-              if (ref.watch(platformCapabilitiesProvider).isDesktop)
-                SettingsItem(
-                  icon: Icons.extension_outlined,
-                  title: context.l10n.browserTitle,
-                  subtitle: context.l10n.settingsBrowserHint,
-                  builder: (_) => const BrowserIntegrationScreen(),
+          builder: (_, _) {
+            final platform = ref.watch(platformCapabilitiesProvider);
+            return SettingsScreen(
+              sections: [
+                SettingsSection(
+                  title: context.l10n.settingsGeneral,
+                  items: [
+                    SettingsItem(
+                      icon: Icons.palette_outlined,
+                      title: context.l10n.appearanceTitle,
+                      subtitle: context.l10n.settingsAppearanceHint,
+                      builder: (_) => const AppearanceScreen(
+                        extraSections: [SiteIconsSettingsSection()],
+                      ),
+                    ),
+                  ],
                 ),
-              SettingsItem(
-                icon: Icons.info_outline,
-                title: context.l10n.aboutTitle,
-                subtitle: context.l10n.settingsAboutHint,
-                builder: (_) => const AboutScreen(),
-              ),
-            ],
-          ),
+                // Cómo se usa Lockspire fuera de la app: autocompletado en
+                // Android, la extensión en escritorio.
+                SettingsSection(
+                  title: context.l10n.settingsIntegrations,
+                  items: [
+                    if (platform.isAndroid)
+                      SettingsItem(
+                        icon: Icons.password_outlined,
+                        title: context.l10n.autofillSettingsTitle,
+                        subtitle: context.l10n.settingsAutofillHint,
+                        builder: (_) => const AutofillSettingsScreen(),
+                      ),
+                    if (platform.isDesktop)
+                      SettingsItem(
+                        icon: Icons.extension_outlined,
+                        title: context.l10n.browserTitle,
+                        subtitle: context.l10n.settingsBrowserHint,
+                        builder: (_) => const BrowserIntegrationScreen(),
+                      ),
+                  ],
+                ),
+                SettingsSection(
+                  title: context.l10n.settingsData,
+                  items: [
+                    SettingsItem(
+                      icon: Icons.upload_file_outlined,
+                      title: context.l10n.importTitle,
+                      subtitle: context.l10n.settingsImportHint,
+                      builder: (_) => const ImportScreen(),
+                    ),
+                    SettingsItem(
+                      icon: Icons.download_outlined,
+                      title: context.l10n.exportTitle,
+                      subtitle: context.l10n.settingsExportHint,
+                      builder: (_) => const ExportScreen(),
+                    ),
+                  ],
+                ),
+                SettingsSection(
+                  items: [
+                    SettingsItem(
+                      icon: Icons.info_outline,
+                      title: context.l10n.aboutTitle,
+                      subtitle: context.l10n.settingsAboutHint,
+                      builder: (_) => const AboutScreen(),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
       ],
     );

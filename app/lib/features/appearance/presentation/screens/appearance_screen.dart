@@ -14,10 +14,17 @@ import '../appearance_theme.dart';
 import '../providers/system_accent_color_provider.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
-/// Elegir idioma (ADR 0032), familia de colores (Lineage, Pixel, Ubuntu, Linux Mint, Windows 11) y modo (según el
-/// sistema, claro u oscuro). El cambio se aplica al instante.
+/// Elegir idioma (ADR 0032), familia de colores (Lineage, Pixel, Ubuntu,
+/// Linux Mint, Windows 11) y modo (según el sistema, claro u oscuro). El
+/// cambio se aplica al instante.
+///
+/// [extraSections] van al final, cada una tras un separador: secciones de
+/// otras features que también son de apariencia, como los íconos de los
+/// sitios. Las pone `app_shell.dart`, así esta pantalla no depende de ellas.
 class AppearanceScreen extends ConsumerWidget {
-  const AppearanceScreen({super.key});
+  final List<Widget> extraSections;
+
+  const AppearanceScreen({super.key, this.extraSections = const []});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -124,6 +131,10 @@ class AppearanceScreen extends ConsumerWidget {
                   onTap: () => controller.setFamily(family),
                 ),
                 const SizedBox(height: LockspireSpacing.smMd),
+              ],
+              for (final section in extraSections) ...[
+                const Divider(height: LockspireSpacing.xl),
+                section,
               ],
             ],
           ),

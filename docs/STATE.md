@@ -688,6 +688,20 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
 
+### Organización de Ajustes y Seguridad (2026-09-30, pedido del usuario)
+
+- **Ajustes** va en grupos, y un grupo sin opciones en la plataforma no se muestra (`SettingsSection`):
+  - **General:** Apariencia;
+  - **Integraciones:** Autocompletado en Android y Navegador en escritorio;
+  - **Datos:** Importar y Exportar;
+  - Acerca de, sin título.
+- **Seguridad** tiene solo seguridad, con títulos iguales: Contraseña maestra, Desbloqueo (huella y cada cuánto pedir la contraseña) y Bloqueo automático.
+  - "Pedir la contraseña cada…" solo aparece con la huella activada, porque sin ella siempre se pide.
+  - El autocompletado de Android pasó a su propia pantalla (`AutofillSettingsScreen`, feature `autofill`). Así la feature `vault` deja de importar la de `autofill`.
+- **Íconos de los sitios** pasaron a Apariencia (`SiteIconsSettingsSection`, de `vault`). La conecta `app_shell.dart` con `AppearanceScreen(extraSections:)`, así Apariencia no depende de la bóveda.
+- Las claves de texto se renombraron según dónde viven ahora (`autofillSettings*`, `siteIcons*`).
+- **Tests:** `settings_organization_flow_test` (nuevo) y los flujos ajustados. 627 tests.
+
 ### Revisión general (2026-09-30) — `docs/reviews/2026-09-30-revision-general.md`
 
 - **Hecho, el mismo día:** todos los hallazgos, cada uno con su test, salvo S19 (borrar la clave al bloquear), que se decidió no hacer porque es peligroso con una sync en curso. El detalle está en la sección "Resolución" de la revisión.

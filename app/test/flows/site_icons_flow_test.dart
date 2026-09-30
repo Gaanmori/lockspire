@@ -24,10 +24,14 @@ Future<(TestApp, AppRobot)> _withEntries(WidgetTester tester) async {
   return (app, robot);
 }
 
+/// Los íconos se activan en Ajustes → Apariencia (revisión de ajustes
+/// 2026-09-30).
 Future<void> _turnOn(AppRobot robot, String option) async {
-  await robot.tapText('Seguridad');
+  await robot.openSettings();
+  await robot.tapText('Apariencia');
   await robot.reveal(find.text(option));
   await robot.tapText(option);
+  await robot.systemBack();
   await robot.tapText('Bóveda');
 }
 

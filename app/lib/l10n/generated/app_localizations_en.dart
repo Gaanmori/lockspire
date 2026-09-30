@@ -776,7 +776,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonAdd => 'Add';
 
   @override
-  String get securityOpenSettingsFailed => 'Could not open the settings.';
+  String get autofillSettingsOpenFailed => 'Could not open the settings.';
 
   @override
   String get securityTitle => 'Security';
@@ -796,14 +796,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get securityAutofill => 'Autofill';
+  String get autofillSettingsTitle => 'Autofill';
 
   @override
-  String get securityAutofillHint =>
+  String get autofillSettingsHint =>
       'Turn on Lockspire as the autofill service so it shows up as an option when you sign in to other apps, including sign-ins inside an embedded browser (e.g. WebView).';
 
   @override
-  String get securityAutofillButton => 'Set as autofill service';
+  String get autofillSettingsButton => 'Set as autofill service';
 
   @override
   String securityBiometricNotSetUp(Object method) {
@@ -834,22 +834,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'More convenient, but the vault stays open longer if you step away from the device.';
 
   @override
-  String get securitySiteIcons => 'Site icons';
+  String get siteIconsTitle => 'Site icons';
 
   @override
-  String get securitySiteIconsHint =>
+  String get siteIconsHint =>
       'Downloads each saved site\'s icon directly from the site, without third-party services, and stores it encrypted in your vault. Each site sees a visit from your connection. When off, the initial is shown.';
 
   @override
-  String get securitySiteIconsFallback =>
-      'Fill in the missing ones with DuckDuckGo';
+  String get siteIconsFallback => 'Fill in the missing ones with DuckDuckGo';
 
   @override
-  String get securitySiteIconsFallbackHint =>
+  String get siteIconsFallbackHint =>
       'For sites that don\'t offer an icon, it asks DuckDuckGo. DuckDuckGo only receives those domains, never your usernames or passwords.';
 
   @override
-  String get securitySiteIconsRetry => 'Look again for the missing ones';
+  String get siteIconsRetry => 'Look again for the missing ones';
 
   @override
   String get vaultNoResults => 'No results found';
@@ -1496,8 +1495,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
-  String get settingsAppearanceHint =>
-      'Language, light or dark theme and colors';
+  String get settingsAppearanceHint => 'Language, theme and site icons';
 
   @override
   String get settingsImportHint =>
@@ -1515,6 +1513,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAboutHint => 'Version, license and source code';
+
+  @override
+  String get settingsGeneral => 'General';
+
+  @override
+  String get settingsIntegrations => 'Integrations';
+
+  @override
+  String get settingsData => 'Data';
+
+  @override
+  String get settingsAutofillHint => 'Fill in your passwords in other apps';
+
+  @override
+  String get securityMasterPasswordSection => 'Master password';
+
+  @override
+  String get securityUnlockSection => 'Unlock';
 
   @override
   String get trayOpen => 'Open Lockspire';

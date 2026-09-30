@@ -151,7 +151,8 @@ void main() {
     expect(find.text('uno: 1'), findsOneWidget);
   });
 
-  testWidgets('Ajustes abre la pantalla de cada opción', (tester) async {
+  testWidgets('Ajustes agrupa las opciones con su título, oculta los grupos '
+      'vacíos y abre la pantalla de cada opción', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('es'),
@@ -159,17 +160,27 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
 
         home: SettingsScreen(
-          items: [
-            SettingsItem(
-              icon: Icons.palette_outlined,
-              title: 'Apariencia',
-              subtitle: 'Tema',
-              builder: (_) => const Scaffold(body: Text('pantalla apariencia')),
+          sections: [
+            SettingsSection(
+              title: 'General',
+              items: [
+                SettingsItem(
+                  icon: Icons.palette_outlined,
+                  title: 'Apariencia',
+                  subtitle: 'Tema',
+                  builder: (_) =>
+                      const Scaffold(body: Text('pantalla apariencia')),
+                ),
+              ],
             ),
+            const SettingsSection(title: 'Sin opciones', items: []),
           ],
         ),
       ),
     );
+    expect(find.text('General'), findsOneWidget);
+    expect(find.text('Sin opciones'), findsNothing);
+
     await tester.tap(find.text('Apariencia'));
     await tester.pumpAndSettle();
     expect(find.text('pantalla apariencia'), findsOneWidget);
