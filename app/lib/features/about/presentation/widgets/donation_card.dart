@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lockspire/features/vault/presentation/auto_lock_controller.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
 import '../../../../design/lockspire_spacing.dart';
@@ -28,7 +29,10 @@ class _DonationCardState extends ConsumerState<DonationCard> {
     setState(() => _busy = true);
     final DonationOutcome outcome;
     try {
-      outcome = await port.donate(tier);
+      // El pago abre la ventana de la tienda (ver whileInSystemUi).
+      outcome = await ref
+          .read(autoLockControllerProvider)
+          .whileInSystemUi(() => port.donate(tier));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

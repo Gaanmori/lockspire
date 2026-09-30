@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import 'package:lockspire/features/vault/presentation/auto_lock_controller.dart';
 import 'package:lockspire/features/vault/presentation/providers/crypto_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/providers/vault_storage_port_provider.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
@@ -10,6 +11,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../application/move_vault_to_provider_use_case.dart';
 import '../application/sync_vault_use_case.dart';
 import '../domain/ports/active_sync_provider_port.dart';
+import '../domain/ports/cloud_sign_in_port.dart';
 import '../domain/ports/google_drive_account_port.dart';
 import '../domain/ports/one_drive_account_port.dart';
 import '../domain/ports/sync_credentials_port.dart';
@@ -49,12 +51,21 @@ class SyncAccountsController {
     await _activate(SyncProviderId.webdav);
   }
 
+  /// El login abre el selector de cuentas o el navegador: sin bloquear
+  /// la bóveda mientras tanto, o se perdería la respuesta.
+  Future<CloudSignIn> _signIn(ProviderListenable<CloudSignInPort> port) {
+    final signIn = _ref.read(port);
+    return _ref
+        .read(autoLockControllerProvider)
+        .whileInSystemUi(signIn.connect);
+  }
+
   /// Conexión interactiva con Google Drive — dispara el flujo nativo en
   /// Android (`google_sign_in`) o abre el navegador en escritorio — Windows
   /// y Linux (loopback OAuth). Elegir Google Drive acá implica "usar
   /// Google Drive" — pasa a ser el proveedor activo.
   Future<void> connectGoogleDrive() async {
-    final connection = await _ref.read(googleDriveSignInPortProvider).connect();
+    final connection = await _signIn(googleDriveSignInPortProvider);
     await _ref
         .read(googleDriveAccountPortProvider)
         .saveGoogleDriveAccount(
@@ -80,7 +91,7 @@ class SyncAccountsController {
   /// todas las plataformas (ver `microsoft_oauth_auth.dart`). Elegir
   /// OneDrive acá implica "usar OneDrive" — pasa a ser el proveedor activo.
   Future<void> connectOneDrive() async {
-    final connection = await _ref.read(oneDriveSignInPortProvider).connect();
+    final connection = await _signIn(oneDriveSignInPortProvider);
     final refreshToken = connection.refreshToken;
     // Sin refresh token no se podría volver a conectar en cada sync.
     if (refreshToken == null) {

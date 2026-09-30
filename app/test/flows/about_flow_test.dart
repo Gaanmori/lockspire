@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/about/domain/ports/donation_port.dart';
 
 import '../support/app_robot.dart';
+import '../support/other_activity.dart';
 import '../support/test_app.dart';
 
 Future<(TestApp, AppRobot)> _about(
@@ -88,6 +89,19 @@ void main() {
 
       expect(app.donations.donated, [DonationTier.coffeeAndCake]);
       expect(find.text('¡Gracias por su apoyo!'), findsOneWidget);
+    });
+
+    // Regresión (2026-09-30): el pago de Google Play es otra Activity.
+    testWidgets('pagar no bloquea la bóveda aunque Android mande la app a '
+        'segundo plano', (tester) async {
+      final (app, robot) = await _about(tester);
+      app.donations.whileOpen = () => simulateOtherActivity(tester);
+
+      await robot.reveal(find.text('Invíteme un café'));
+      await robot.tapText('Café y pastel');
+
+      expect(find.text('¡Gracias por su apoyo!'), findsOneWidget);
+      expect(find.text('Desbloquear'), findsNothing);
     });
 
     testWidgets('un pago cancelado no dice nada; uno fallido lo '

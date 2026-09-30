@@ -28,6 +28,10 @@ class FakeFileTransfer implements FileTransferPort {
   Object? saveError;
   final saved = <SavedFile>[];
 
+  /// Se llama con el selector "abierto". En Android es otra Activity: los
+  /// tests lo usan para mandar la app a segundo plano en ese momento.
+  void Function()? whileOpen;
+
   /// Prepara la próxima elección con un archivo de texto.
   void willPickText(String name, String content) => nextPick = PickedFile(
     name: name,
@@ -40,6 +44,7 @@ class FakeFileTransfer implements FileTransferPort {
 
   @override
   Future<PickedFile?> pickFile({required List<String> extensions}) async {
+    whileOpen?.call();
     if (pickError case final error?) throw error;
     return nextPick;
   }
@@ -52,6 +57,7 @@ class FakeFileTransfer implements FileTransferPort {
     required String mimeType,
     required String extension,
   }) async {
+    whileOpen?.call();
     if (saveError case final error?) throw error;
     if (cancelSave) return false;
     saved.add(SavedFile(fileName, bytes));

@@ -11,6 +11,7 @@ import '../../application/prepare_import_use_case.dart';
 import '../../application/vault_transfer_use_cases.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../../domain/vault_import_merge.dart';
+import '../auto_lock_controller.dart';
 import '../providers/file_transfer_port_provider.dart';
 import '../providers/vault_import_source_provider.dart';
 import '../vault_entries_controller.dart';
@@ -78,9 +79,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     });
 
     try {
+      final files = ref.read(fileTransferPortProvider);
       final picked = await ref
-          .read(fileTransferPortProvider)
-          .pickFile(extensions: _extensions);
+          .read(autoLockControllerProvider)
+          .whileInSystemUi(() => files.pickFile(extensions: _extensions));
       if (picked == null) {
         setState(() => _busy = false);
         return;

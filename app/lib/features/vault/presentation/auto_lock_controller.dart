@@ -43,6 +43,9 @@ class AutoLockController {
   Timer? _timer;
   bool _unlocked = false;
 
+  /// Ventanas del sistema abiertas desde Lockspire (ver [whileInSystemUi]).
+  int _systemUiOpen = 0;
+
   AutoLockController._(this._ref);
 
   /// Reinicia el plazo de inactividad. Sin bóveda desbloqueada no hace
@@ -63,7 +66,28 @@ class AutoLockController {
     final backgrounded =
         lifecycleState == AppLifecycleState.paused ||
         lifecycleState == AppLifecycleState.hidden;
-    if (backgrounded && _unlocked) _lock(keepClipboard: true);
+    if (backgrounded && _unlocked && _systemUiOpen == 0) {
+      _lock(keepClipboard: true);
+    }
+  }
+
+  /// Ejecuta [action] sin bloquear al pasar a segundo plano. Es para
+  /// ventanas del sistema que abre Lockspire y de las que espera
+  /// respuesta: el selector de archivos, el login de una nube, el pago de
+  /// la tienda. En Android abren otra Activity, y bloquear ahí perdía la
+  /// respuesta: importar y exportar eran imposibles (encontrado el
+  /// 2026-09-30 al preparar las capturas de Google Play).
+  ///
+  /// Solo se suspende el bloqueo por segundo plano; el de inactividad
+  /// sigue corriendo, así que una ventana olvidada abierta no deja la
+  /// bóveda desbloqueada más que el tiempo elegido en Seguridad.
+  Future<T> whileInSystemUi<T>(Future<T> Function() action) async {
+    _systemUiOpen++;
+    try {
+      return await action();
+    } finally {
+      _systemUiOpen--;
+    }
   }
 
   void _onSession(VaultSessionState? session) {

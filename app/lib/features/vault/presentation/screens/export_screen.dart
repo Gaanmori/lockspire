@@ -11,6 +11,7 @@ import '../../../../design/lockspire_spacing.dart';
 import '../../application/vault_transfer_use_cases.dart';
 import '../../domain/entities/vault_entry.dart';
 import '../../domain/ports/vault_exporter.dart';
+import '../auto_lock_controller.dart';
 import '../providers/file_transfer_port_provider.dart';
 import '../providers/crypto_port_provider.dart';
 import '../providers/vault_import_source_provider.dart';
@@ -127,14 +128,18 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
       final today = DateTime.now().toIso8601String().substring(0, 10);
       if (!mounted) return;
+      final files = ref.read(fileTransferPortProvider);
+      final dialogTitle = context.l10n.exportSaveDialogTitle;
       final saved = await ref
-          .read(fileTransferPortProvider)
-          .saveFile(
-            dialogTitle: context.l10n.exportSaveDialogTitle,
-            fileName: 'lockspire-$today.$extension',
-            bytes: bytes,
-            mimeType: mimeType,
-            extension: extension,
+          .read(autoLockControllerProvider)
+          .whileInSystemUi(
+            () => files.saveFile(
+              dialogTitle: dialogTitle,
+              fileName: 'lockspire-$today.$extension',
+              bytes: bytes,
+              mimeType: mimeType,
+              extension: extension,
+            ),
           );
       _passwordController.clear();
       if (!mounted) return;

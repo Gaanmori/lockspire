@@ -10,6 +10,7 @@ import 'package:lockspire/shared/domain/app_problem.dart';
 
 import '../support/app_robot.dart';
 import '../support/fakes/sync_fakes.dart';
+import '../support/other_activity.dart';
 import '../support/test_app.dart';
 
 const _master = 'correcto caballo batería grapa';
@@ -65,6 +66,21 @@ void main() {
 
     expect(clouds.googleDrive.disconnected, isTrue);
     expect(find.text('Conectar con Google'), findsOneWidget);
+  });
+
+  // Regresión (2026-09-30): en Android el selector de cuentas de Google y
+  // el navegador de OneDrive son otra Activity. Bloquear la bóveda ahí
+  // perdía la conexión.
+  testWidgets('conectar una nube no bloquea la bóveda aunque Android mande '
+      'la app a segundo plano', (tester) async {
+    final (clouds, robot) = await _atSync(tester);
+    clouds.googleDrive.whileOpen = () => simulateOtherActivity(tester);
+
+    await robot.tapText('Google Drive');
+    await robot.tapText('Conectar con Google');
+
+    expect(find.text('Conectado como ana@gmail.ejemplo'), findsOneWidget);
+    expect(find.text('Desbloquear'), findsNothing);
   });
 
   testWidgets('pasar de Google Drive a OneDrive pide confirmar la mudanza y '

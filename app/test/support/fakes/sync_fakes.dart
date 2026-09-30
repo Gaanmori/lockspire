@@ -94,10 +94,15 @@ class FakeCloudSignIn implements CloudSignInPort {
   Object? error;
   bool disconnected = false;
 
+  /// Se llama con el selector de cuentas o el navegador "abierto" (ver
+  /// `simulateOtherActivity`).
+  void Function()? whileOpen;
+
   FakeCloudSignIn(this.account);
 
   @override
   Future<CloudSignIn> connect() async {
+    whileOpen?.call();
     if (error case final e?) throw e;
     disconnected = false;
     return account;

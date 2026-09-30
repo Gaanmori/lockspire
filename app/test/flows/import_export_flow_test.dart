@@ -4,6 +4,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/app_robot.dart';
+import '../support/other_activity.dart';
 import '../support/test_app.dart';
 
 const _master = 'correcto caballo batería grapa';
@@ -58,6 +59,28 @@ void main() {
       await robot.tapText('Bóveda');
       expect(find.text('Banco'), findsOneWidget);
       expect(find.text('Correo'), findsOneWidget);
+    });
+
+    // Regresión (2026-09-30, encontrada al preparar las capturas de Google
+    // Play): en Android el selector de archivos es otra Activity. La app
+    // pasaba a segundo plano, la bóveda se bloqueaba y el archivo elegido
+    // se perdía: importar era imposible.
+    testWidgets('abrir el selector no bloquea la bóveda aunque Android mande '
+        'la app a segundo plano', (tester) async {
+      final (app, robot) = await _unlocked(tester);
+      app.files.willPickText('Chrome Passwords.csv', _chromeCsv);
+      app.files.whileOpen = () => simulateOtherActivity(tester);
+
+      await _openImport(robot);
+      await robot.tapText('Elegir archivo');
+      expect(find.text('Se importarán 2 entradas'), findsOneWidget);
+      await robot.tapButton('Importar');
+      expect(find.text('Importación completada'), findsOneWidget);
+
+      // Fuera del selector, salir de la app sí bloquea.
+      simulateOtherActivity(tester);
+      await robot.settle();
+      expect(find.text('Desbloquear'), findsOneWidget);
     });
 
     // Regresión (2026-09-29, encontrada por este test): si la bóveda se
@@ -148,6 +171,20 @@ void main() {
   });
 
   group('Exportar', () {
+    testWidgets('guardar el archivo no bloquea la bóveda aunque Android '
+        'mande la app a segundo plano', (tester) async {
+      final (app, robot) = await _unlocked(tester);
+      app.files.whileOpen = () => simulateOtherActivity(tester);
+
+      await _openExport(robot);
+      await robot.type('Contraseña maestra', _master);
+      await robot.tapButton('Exportar');
+      expect(find.text('Exportación lista'), findsOneWidget);
+      expect(app.files.saved, hasLength(1));
+      await robot.tapText('Entendido');
+      expect(find.text('Desbloquear'), findsNothing);
+    });
+
     testWidgets('pide la contraseña maestra: una incorrecta no exporta nada', (
       tester,
     ) async {

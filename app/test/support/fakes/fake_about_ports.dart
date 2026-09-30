@@ -42,11 +42,15 @@ class FakeDonations implements DonationPort {
   DonationOutcome outcome = DonationOutcome.paid;
   final donated = <DonationTier>[];
 
+  /// Se llama con la ventana de pago "abierta" (ver `simulateOtherActivity`).
+  void Function()? whileOpen;
+
   @override
   Future<List<DonationOffer>> offers() async => available;
 
   @override
   Future<DonationOutcome> donate(DonationTier tier) async {
+    whileOpen?.call();
     donated.add(tier);
     return outcome;
   }
