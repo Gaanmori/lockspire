@@ -41,6 +41,14 @@ THEMES = {
     'ubuntu': (_hex('#E95420'), _hex('#FAFAFA'), _hex('#C7461A')),
     'mint': (_hex('#35A854'), _hex('#F8F8F9'), _hex('#2C8C46')),
     'windows': (_hex('#005FB8'), _hex('#F3F3F3'), _hex('#1A6FC0')),
+    # Ícono principal de Android (android:icon de la app): lo usan el diálogo
+    # de la huella e "Información de la aplicación", que no siguen al tema
+    # elegido (solo el lanzador lo hace, con los alias de ADR 0031). Grafito
+    # sobrio para que combine con cualquier tema (pedido del usuario,
+    # 2026-09-30).
+    # Es también el ícono del tema Grafito (ADR 0036): mismos colores que
+    # LockspireIconColors.fromPalette(LockspirePalettes.grafito).
+    'neutral': (_hex('#2B2E32'), _hex('#F7F7F8'), _hex('#1A1C1F')),
 }
 SUPERSAMPLE = 4
 

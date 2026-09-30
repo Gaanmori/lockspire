@@ -8,6 +8,7 @@
  * en sincronía con `app/lib/design/lockspire_colors.dart`).
  */
 export const ICON_COLORS: Record<string, readonly [string, string, string]> = {
+  grafito: ['#2b2e32', '#f7f7f8', '#1a1c1f'],
   lineage: ['#167c80', '#f6fafa', '#324b4c'],
   pixel: ['#445e91', '#f9f9ff', '#3e5480'],
   ubuntu: ['#e95420', '#fafafa', '#c7461a'],
@@ -15,9 +16,12 @@ export const ICON_COLORS: Record<string, readonly [string, string, string]> = {
   windows: ['#005fb8', '#f3f3f3', '#1a6fc0'],
 };
 
-/** Los del tema, o los de Lineage ("Colores del sistema" o desconocido). */
+/**
+ * Los del tema, o los de Grafito (el tema por defecto) para "Colores del
+ * sistema", "Personalizado" o uno desconocido.
+ */
 export function iconColorsFor(family: string): readonly [string, string, string] {
-  return ICON_COLORS[family] ?? ICON_COLORS['lineage']!;
+  return ICON_COLORS[family] ?? ICON_COLORS['grafito']!;
 }
 
 /**

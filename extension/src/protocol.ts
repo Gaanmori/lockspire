@@ -32,7 +32,16 @@ export interface CredentialSummary {
   username: string;
 }
 
-export const THEME_FAMILIES = ['lineage', 'pixel', 'ubuntu', 'mint', 'windows', 'sistema'] as const;
+export const THEME_FAMILIES = [
+  'grafito',
+  'personalizado',
+  'sistema',
+  'lineage',
+  'pixel',
+  'ubuntu',
+  'mint',
+  'windows',
+] as const;
 export const THEME_MODES = ['system', 'light', 'dark'] as const;
 
 export interface AppTheme {

@@ -15,6 +15,11 @@ class FakeNativeMessaging implements NativeMessagingRegistrationPort {
   Set<SupportedBrowser> registeredIn = {};
   Set<SupportedBrowser> registeredSystemWideIn = {};
 
+  /// Registros que apuntan a otra copia de Lockspire (p. ej. un Debug
+  /// viejo). Registrar esta copia los reemplaza.
+  Set<SupportedBrowser> otherCopyIn = {};
+  Set<SupportedBrowser> otherCopySystemWideIn = {};
+
   /// El usuario cancela el permiso de administrador.
   bool cancelElevation = false;
 
@@ -24,11 +29,15 @@ class FakeNativeMessaging implements NativeMessagingRegistrationPort {
     registeredIn: registeredIn,
     registeredSystemWideIn: registeredSystemWideIn,
     systemWideSupported: systemWideSupported,
+    otherCopyIn: otherCopyIn,
+    otherCopySystemWideIn: otherCopySystemWideIn,
   );
 
   @override
-  Future<Set<SupportedBrowser>> register() async =>
-      registeredIn = {...installed};
+  Future<Set<SupportedBrowser>> register() async {
+    otherCopyIn = {};
+    return registeredIn = {...installed};
+  }
 
   @override
   Future<void> unregister() async => registeredIn = {};
@@ -38,9 +47,13 @@ class FakeNativeMessaging implements NativeMessagingRegistrationPort {
     if (cancelElevation) {
       throw const AppProblem(AppProblemCode.nativeHostElevationCancelled);
     }
+    otherCopySystemWideIn = {};
     registeredSystemWideIn = {...installed};
   }
 
   @override
-  Future<void> unregisterSystemWide() async => registeredSystemWideIn = {};
+  Future<void> unregisterSystemWide() async {
+    otherCopySystemWideIn = {};
+    registeredSystemWideIn = {};
+  }
 }

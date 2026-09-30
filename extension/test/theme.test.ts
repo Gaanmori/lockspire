@@ -14,8 +14,11 @@ test('themeName: modo fijo ignora el sistema; system lo sigue', () => {
   assert.equal(themeName({ family: 'ubuntu', mode: 'system' }, false), 'ubuntu-light');
 });
 
-test('"Colores del sistema" se muestra como Lineage en el popup', () => {
-  assert.equal(themeName({ family: 'sistema', mode: 'dark' }, false), 'lineage-dark');
+test('"Colores del sistema" y "Personalizado" se muestran como Grafito en el '
+  + 'popup (ADR 0036)', () => {
+  assert.equal(themeName({ family: 'sistema', mode: 'dark' }, false), 'grafito-dark');
+  assert.equal(themeName({ family: 'personalizado', mode: 'light' }, true), 'grafito-light');
+  assert.equal(themeName({ family: 'grafito', mode: 'system' }, true), 'grafito-dark');
   assert.equal(themeName({ family: 'lineage', mode: 'light' }, true), 'lineage-light');
   assert.equal(themeName({ family: 'pixel', mode: 'system' }, true), 'pixel-dark');
 });
@@ -34,9 +37,12 @@ test('PONG con tema válido lo expone; desconocido o ausente se ignora', () => {
   }
 });
 
-test('iconColorsFor: cada tema con su acento; sistema y desconocidos, Lineage', async () => {
+test('iconColorsFor: cada tema con su acento; los generados y desconocidos, '
+  + 'Grafito', async () => {
   const { iconColorsFor } = await import('../src/icon.ts');
   assert.deepEqual(iconColorsFor('ubuntu'), ['#e95420', '#fafafa', '#c7461a']);
-  assert.deepEqual(iconColorsFor('sistema'), iconColorsFor('lineage'));
-  assert.deepEqual(iconColorsFor('neon'), iconColorsFor('lineage'));
+  assert.deepEqual(iconColorsFor('grafito'), ['#2b2e32', '#f7f7f8', '#1a1c1f']);
+  for (const family of ['sistema', 'personalizado', 'neon']) {
+    assert.deepEqual(iconColorsFor(family), iconColorsFor('grafito'), family);
+  }
 });

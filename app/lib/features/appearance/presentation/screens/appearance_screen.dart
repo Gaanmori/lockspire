@@ -12,11 +12,12 @@ import '../../domain/appearance_preference.dart';
 import '../appearance_controller.dart';
 import '../appearance_theme.dart';
 import '../providers/system_accent_color_provider.dart';
+import '../widgets/custom_color_picker.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
-/// Elegir idioma (ADR 0032), familia de colores (Lineage, Pixel, Ubuntu,
-/// Linux Mint, Windows 11) y modo (según el sistema, claro u oscuro). El
-/// cambio se aplica al instante.
+/// Elegir idioma (ADR 0032), tema (ADR 0036: Grafito, Personalizado, Colores
+/// del sistema y los inspirados en un sistema operativo) y modo (según el
+/// sistema, claro u oscuro). El cambio se aplica al instante.
 ///
 /// [extraSections] van al final, cada una tras un separador: secciones de
 /// otras features que también son de apariencia, como los íconos de los
@@ -114,23 +115,50 @@ class AppearanceScreen extends ConsumerWidget {
                   style: textTheme.bodySmall,
                 ),
               ],
-              const SizedBox(height: LockspireSpacing.sm),
-              for (final family in ThemeFamilyId.values) ...[
-                _FamilyCard(
-                  title: _titleFor(context.l10n, family),
-                  subtitle: _subtitleFor(
-                    context.l10n,
-                    family,
-                    systemArgb,
-                    isAndroid: ref
-                        .watch(platformCapabilitiesProvider)
-                        .isAndroid,
+              // Por grupos (ADR 0036): los de Lockspire, el automático y los
+              // inspirados en un sistema operativo.
+              for (final group in ThemeGroup.values) ...[
+                Padding(
+                  padding: const EdgeInsets.only(
+                    top: LockspireSpacing.md,
+                    bottom: LockspireSpacing.sm,
                   ),
-                  palettes: palettesFor(family, systemArgb),
-                  selected: preference.family == family,
-                  onTap: () => controller.setFamily(family),
+                  child: Text(
+                    _groupTitle(context.l10n, group),
+                    style: textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: LockspireSpacing.smMd),
+                for (final family in ThemeFamilyId.values.where(
+                  group.families.contains,
+                )) ...[
+                  _FamilyCard(
+                    title: _titleFor(context.l10n, family),
+                    subtitle: _subtitleFor(
+                      context.l10n,
+                      family,
+                      systemArgb,
+                      isAndroid: ref
+                          .watch(platformCapabilitiesProvider)
+                          .isAndroid,
+                    ),
+                    palettes: palettesFor(
+                      family,
+                      systemArgb: systemArgb,
+                      customArgb: preference.customColorArgb,
+                    ),
+                    selected: preference.family == family,
+                    onTap: () => controller.setFamily(family),
+                  ),
+                  if (family == ThemeFamilyId.personalizado &&
+                      preference.family == ThemeFamilyId.personalizado)
+                    CustomColorPicker(
+                      selected: preference.customColorArgb,
+                      onPick: controller.setCustomColor,
+                    ),
+                  const SizedBox(height: LockspireSpacing.smMd),
+                ],
               ],
               for (final section in extraSections) ...[
                 const Divider(height: LockspireSpacing.xl),
@@ -144,9 +172,17 @@ class AppearanceScreen extends ConsumerWidget {
   }
 }
 
+String _groupTitle(AppLocalizations l10n, ThemeGroup group) => switch (group) {
+  ThemeGroup.lockspire => l10n.themeGroupLockspire,
+  ThemeGroup.automatic => l10n.themeGroupAutomatic,
+  ThemeGroup.operatingSystems => l10n.themeGroupOperatingSystems,
+};
+
 String _titleFor(AppLocalizations l10n, ThemeFamilyId family) =>
     switch (family) {
       ThemeFamilyId.sistema => l10n.themeSystemColors,
+      ThemeFamilyId.personalizado => l10n.themeCustom,
+      ThemeFamilyId.grafito ||
       ThemeFamilyId.lineage ||
       ThemeFamilyId.pixel ||
       ThemeFamilyId.ubuntu ||
@@ -164,6 +200,8 @@ String? _subtitleFor(
   ThemeFamilyId.sistema when systemArgb == null => l10n.themeSystemUnavailable,
   ThemeFamilyId.sistema =>
     isAndroid ? l10n.themeSystemAndroid : l10n.themeSystemDesktop,
+  ThemeFamilyId.grafito => l10n.themeGrafitoHint,
+  ThemeFamilyId.personalizado => l10n.themeCustomHint,
   _ => null,
 };
 

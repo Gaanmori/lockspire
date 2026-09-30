@@ -28,11 +28,21 @@ class NativeMessagingStatus {
   /// `true` si la plataforma admite el registro para todo el equipo.
   final bool systemWideSupported;
 
+  /// Navegadores con un registro de Lockspire que apunta a **otra copia**
+  /// (p. ej. un build de Debug o una instalación vieja): el navegador usa
+  /// ese host y no esta app (encontrado por el usuario, 2026-09-30).
+  final Set<SupportedBrowser> otherCopyIn;
+
+  /// Lo mismo, en el registro para todo el equipo.
+  final Set<SupportedBrowser> otherCopySystemWideIn;
+
   const NativeMessagingStatus({
     required this.hostBinaryFound,
     required this.registeredIn,
     this.registeredSystemWideIn = const {},
     this.systemWideSupported = false,
+    this.otherCopyIn = const {},
+    this.otherCopySystemWideIn = const {},
   });
 
   bool get isRegistered => registeredIn.isNotEmpty;

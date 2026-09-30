@@ -1,8 +1,37 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-/* Tokens de docs/design/README.md. Mismos 10 temas que la app
-   (app/lib/design/lockspire_colors.dart); la app indica cuál en la
-   respuesta a PING y src/theme.ts fija data-theme en <html>. */
+/* Tokens de docs/design/README.md. Los mismos temas fijos que la app
+   (app/lib/design/lockspire_colors.dart), en claro y oscuro; la app indica
+   cuál en la respuesta a PING y src/theme.ts fija data-theme en <html>.
+   Grafito es el tema por defecto (ADR 0036): el de :root sin data-theme. */
 :root,
+:root[data-theme='grafito-light'] {
+  --bg-page: #f7f7f8;
+  --bg-surface: #ffffff;
+  --bg-subtle: #e6e7ea;
+  --bg-input: #eeeff1;
+  --text-primary: #1c1e21;
+  --text-secondary: #5c6168;
+  --accent: #2b2e32;
+  --accent-hover: #1a1c1f;
+  --on-accent: #ffffff;
+  --danger: #c23b3b;
+  --radius-md: 16px;
+  --radius-pill: 999px;
+}
+
+:root[data-theme='grafito-dark'] {
+  --bg-page: #121314;
+  --bg-surface: #1c1d1f;
+  --bg-subtle: #2b2e32;
+  --bg-input: #232427;
+  --text-primary: #e8e9eb;
+  --text-secondary: #a4a9af;
+  --accent: #d9dce0;
+  --accent-hover: #c4c8cd;
+  --on-accent: #1c1e21;
+  --danger: #e5605f;
+}
+
 :root[data-theme='lineage-light'] {
   --bg-page: #f6fafa;
   --bg-surface: #ffffff;

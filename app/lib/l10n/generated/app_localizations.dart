@@ -158,6 +158,60 @@ abstract class AppLocalizations {
   /// **'Colores del sistema'**
   String get themeSystemColors;
 
+  /// No description provided for @themeGroupLockspire.
+  ///
+  /// In es, this message translates to:
+  /// **'Lockspire'**
+  String get themeGroupLockspire;
+
+  /// No description provided for @themeGroupAutomatic.
+  ///
+  /// In es, this message translates to:
+  /// **'Automático'**
+  String get themeGroupAutomatic;
+
+  /// No description provided for @themeGroupOperatingSystems.
+  ///
+  /// In es, this message translates to:
+  /// **'Inspirados en sistemas operativos'**
+  String get themeGroupOperatingSystems;
+
+  /// No description provided for @themeGrafitoHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Sobrio, combina con todo. El predeterminado.'**
+  String get themeGrafitoHint;
+
+  /// No description provided for @themeCustom.
+  ///
+  /// In es, this message translates to:
+  /// **'Personalizado'**
+  String get themeCustom;
+
+  /// No description provided for @themeCustomHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Elija cualquier color: Lockspire arma la paleta clara y oscura.'**
+  String get themeCustomHint;
+
+  /// No description provided for @themeCustomHex.
+  ///
+  /// In es, this message translates to:
+  /// **'Color en hexadecimal'**
+  String get themeCustomHex;
+
+  /// No description provided for @themeCustomApply.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar este color'**
+  String get themeCustomApply;
+
+  /// No description provided for @themeCustomInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Escriba un color como #6750A4.'**
+  String get themeCustomInvalid;
+
   /// No description provided for @themeSystemUnavailable.
   ///
   /// In es, this message translates to:
@@ -2119,6 +2173,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Falta el componente \"lockspire-native-host\" junto a la app. Ver native-host/README.md.'**
   String get browserHostMissing;
+
+  /// No description provided for @browserOtherCopy.
+  ///
+  /// In es, this message translates to:
+  /// **'En {browsers} está registrada otra copia de Lockspire (por ejemplo, una versión vieja), y el navegador usa esa. Pulse \"Conectar con Chrome/Edge\" para que use esta.'**
+  String browserOtherCopy(String browsers);
+
+  /// No description provided for @browserOtherCopySystemWide.
+  ///
+  /// In es, this message translates to:
+  /// **'El registro para todo el equipo apunta a otra copia de Lockspire, y el navegador puede estar usándola en vez de esta. Vuelva a registrarlo o quítelo.'**
+  String get browserOtherCopySystemWide;
 
   /// No description provided for @browserReconnect.
   ///

@@ -11,6 +11,7 @@ import io.flutter.plugin.common.MethodChannel
 
 /** Tema → alias del manifiesto con su ícono (ADR 0031). */
 private val launcherAliases = mapOf(
+    "grafito" to ".LauncherGrafito",
     "lineage" to ".LauncherLineage",
     "pixel" to ".LauncherPixel",
     "ubuntu" to ".LauncherUbuntu",
@@ -21,7 +22,8 @@ private val launcherAliases = mapOf(
 /**
  * Deja activo solo el alias del lanzador del tema elegido, para que el
  * ícono de Lockspire en el lanzador siga al tema (ADR 0031). Un tema sin
- * ícono propio ("Colores del sistema") usa el de Lineage. Si ya está
+ * ícono propio ("Colores del sistema", "Personalizado") usa el de Grafito,
+ * el tema por defecto (ADR 0036). Si ya está
  * activo no toca nada: cambiar componentes hace que algunos lanzadores
  * quiten el acceso directo.
  */
@@ -32,16 +34,16 @@ fun registerLauncherIconChannel(context: Context, messenger: BinaryMessenger) {
                 result.notImplemented()
                 return@setMethodCallHandler
             }
-            val theme = call.argument<String>("theme") ?: "lineage"
-            val wanted = launcherAliases[theme] ?: launcherAliases.getValue("lineage")
+            val theme = call.argument<String>("theme") ?: "grafito"
+            val wanted = launcherAliases[theme] ?: launcherAliases.getValue("grafito")
             val pm = context.packageManager
             fun component(alias: String) = ComponentName(context.packageName, context.packageName + alias)
             fun isEnabled(alias: String): Boolean =
                 when (pm.getComponentEnabledSetting(component(alias))) {
                     PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
                     PackageManager.COMPONENT_ENABLED_STATE_DISABLED -> false
-                    // Por defecto: lo que dice el manifiesto (solo Lineage).
-                    else -> alias == ".LauncherLineage"
+                    // Por defecto: lo que dice el manifiesto (solo Grafito).
+                    else -> alias == ".LauncherGrafito"
                 }
             val active = launcherAliases.values.filter(::isEnabled)
             if (active == listOf(wanted)) {

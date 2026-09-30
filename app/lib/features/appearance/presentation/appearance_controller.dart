@@ -27,6 +27,14 @@ class AppearanceController extends _$AppearanceController {
   Future<void> setLanguage(AppLanguage language) =>
       _update(_current.copyWith(language: language));
 
+  /// Elige el color del tema Personalizado y lo activa.
+  Future<void> setCustomColor(int argb) => _update(
+    _current.copyWith(
+      family: ThemeFamilyId.personalizado,
+      customColorArgb: 0xFF000000 | (argb & 0xFFFFFF),
+    ),
+  );
+
   AppearancePreference get _current =>
       state.value ?? AppearancePreference.defaults;
 

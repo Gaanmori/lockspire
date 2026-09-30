@@ -36,9 +36,30 @@ enum BrowserBridgeStatus {
   unsupported,
 }
 
+/// Arranca el servidor IPC de la extensión (ADR 0013). Separado para que
+/// los tests no abran pipes ni sockets reales.
+typedef BridgeServerStarter =
+    Future<BridgeServer> Function(BridgeRequestHandler handler);
+
+@Riverpod(keepAlive: true)
+BridgeServerStarter bridgeServerStarter(Ref ref) =>
+    (handler) => BridgeServer.start(
+      location: IpcLocation.forCurrentUser(),
+      handler: handler,
+    );
+
+/// Cada cuánto se vuelve a intentar tomar el canal mientras otra instancia
+/// lo tiene.
+@Riverpod(keepAlive: true)
+Duration bridgeRetryDelay(Ref ref) => const Duration(seconds: 5);
+
 /// Arranca el servidor IPC una vez por proceso y lo mantiene vivo. Las
 /// peticiones leen la sesión de la bóveda en el momento en que llegan —
 /// con la bóveda bloqueada no hay nada que devolver (`UNLOCK_REQUIRED`).
+///
+/// Si otra instancia tiene el canal, reintenta cada [bridgeRetryDelay]:
+/// cuando esa instancia se cierra, esta toma su lugar sola, sin tener que
+/// reiniciarla (encontrado por el usuario, 2026-09-30).
 @Riverpod(keepAlive: true)
 Future<BrowserBridgeStatus> browserBridge(Ref ref) async {
   if (!ref.watch(isDesktopShellProvider)) {
@@ -48,13 +69,17 @@ Future<BrowserBridgeStatus> browserBridge(Ref ref) async {
   final handle = ref.watch(bridgeRequestHandlerProvider);
 
   try {
-    final server = await BridgeServer.start(
-      location: IpcLocation.forCurrentUser(),
-      handler: (request, client) async => handle(request),
+    final server = await ref.watch(bridgeServerStarterProvider)(
+      (request, client) async => handle(request),
     );
     ref.onDispose(server.close);
     return BrowserBridgeStatus.running;
   } on BridgeServerAlreadyRunningException {
+    final retry = Timer(
+      ref.watch(bridgeRetryDelayProvider),
+      ref.invalidateSelf,
+    );
+    ref.onDispose(retry.cancel);
     return BrowserBridgeStatus.anotherInstance;
   } catch (_) {
     return BrowserBridgeStatus.unavailable;

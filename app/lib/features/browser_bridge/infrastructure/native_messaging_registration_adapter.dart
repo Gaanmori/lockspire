@@ -75,38 +75,47 @@ class NativeMessagingRegistrationAdapter
   @override
   Future<NativeMessagingStatus> status() async {
     final registered = <SupportedBrowser>{};
+    final otherCopy = <SupportedBrowser>{};
     if (_isWindows) {
+      // La clave de cada navegador apunta a un manifest, y el manifest al
+      // host: cuenta como de esta app solo si las dos cosas coinciden.
       final manifestPath = _windowsManifestPath();
+      final oursHere = _manifestPointsHere(manifestPath);
       for (final browser in SupportedBrowser.values) {
         final value = await _regQueryDefault(_windowsRegistryKey(browser));
-        if (value != null && p.equals(value, manifestPath)) {
+        if (value == null) continue;
+        if (p.equals(value, manifestPath) && oursHere) {
           registered.add(browser);
+        } else {
+          otherCopy.add(browser);
         }
       }
     } else if (_isLinux) {
       for (final browser in SupportedBrowser.values) {
         final file = File(_linuxManifestPath(browser));
-        if (file.existsSync() && _pointsToThisHost(file.readAsStringSync())) {
+        if (!file.existsSync()) continue;
+        if (_pointsToThisHost(file.readAsStringSync())) {
           registered.add(browser);
+        } else {
+          otherCopy.add(browser);
         }
       }
     }
     final registeredSystemWide = <SupportedBrowser>{};
+    final otherCopySystemWide = <SupportedBrowser>{};
     if (_isWindows) {
       final manifestPath = _windowsSystemManifestPath();
-      final manifest = File(manifestPath);
-      final pointsHere =
-          manifest.existsSync() &&
-          _pointsToThisHost(manifest.readAsStringSync());
-      if (pointsHere) {
-        for (final browser in SupportedBrowser.values) {
-          final value = await _regQueryDefault(
-            _windowsRegistryKey(browser, root: 'HKLM'),
-            extraArgs: const ['/reg:64'],
-          );
-          if (value != null && p.equals(value, manifestPath)) {
-            registeredSystemWide.add(browser);
-          }
+      final oursHere = _manifestPointsHere(manifestPath);
+      for (final browser in SupportedBrowser.values) {
+        final value = await _regQueryDefault(
+          _windowsRegistryKey(browser, root: 'HKLM'),
+          extraArgs: const ['/reg:64'],
+        );
+        if (value == null) continue;
+        if (p.equals(value, manifestPath) && oursHere) {
+          registeredSystemWide.add(browser);
+        } else {
+          otherCopySystemWide.add(browser);
         }
       }
     }
@@ -115,7 +124,15 @@ class NativeMessagingRegistrationAdapter
       registeredIn: registered,
       registeredSystemWideIn: registeredSystemWide,
       systemWideSupported: _isWindows,
+      otherCopyIn: otherCopy,
+      otherCopySystemWideIn: otherCopySystemWide,
     );
+  }
+
+  bool _manifestPointsHere(String manifestPath) {
+    final manifest = File(manifestPath);
+    return manifest.existsSync() &&
+        _pointsToThisHost(manifest.readAsStringSync());
   }
 
   bool _pointsToThisHost(String manifest) {

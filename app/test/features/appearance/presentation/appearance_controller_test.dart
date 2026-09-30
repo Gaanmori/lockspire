@@ -52,7 +52,7 @@ Future<AppThemes> _themes(ProviderContainer container) async {
 }
 
 void main() {
-  test('sin nada guardado: Lineage, según el sistema', () async {
+  test('sin nada guardado: Grafito, según el sistema (ADR 0036)', () async {
     final container = _container(_FakePort());
     final themes = await _themes(container);
     expect(
@@ -60,8 +60,8 @@ void main() {
       AppearancePreference.defaults,
     );
     expect(themes.mode, ThemeMode.system);
-    expect(_palette(themes.light), LockspirePalettes.lineage);
-    expect(_palette(themes.dark), LockspirePalettes.lineageOscuro);
+    expect(_palette(themes.light), LockspirePalettes.grafito);
+    expect(_palette(themes.dark), LockspirePalettes.grafitoOscuro);
   });
 
   test('carga lo guardado', () async {
@@ -120,7 +120,7 @@ void main() {
       expect(_palette(themes.dark)!.isDark, isTrue);
     });
 
-    test('sin color del sistema, usa Lineage', () async {
+    test('sin color del sistema, usa Grafito', () async {
       final container = _container(
         _FakePort(
           const AppearancePreference(
@@ -130,7 +130,7 @@ void main() {
         ),
       );
       final themes = await _themes(container);
-      expect(_palette(themes.light), LockspirePalettes.lineage);
+      expect(_palette(themes.light), LockspirePalettes.grafito);
     });
 
     test('dos paletas del mismo color son iguales (la caché de temas '
@@ -140,9 +140,59 @@ void main() {
         LockspirePalette.fromSeed(const Color(blue), Brightness.dark),
       );
       expect(
-        palettesFor(ThemeFamilyId.sistema, blue),
-        palettesFor(ThemeFamilyId.sistema, blue),
+        palettesFor(ThemeFamilyId.sistema, systemArgb: blue),
+        palettesFor(ThemeFamilyId.sistema, systemArgb: blue),
       );
+    });
+  });
+
+  group('Personalizado (ADR 0036)', () {
+    const red = 0xFFD32F2F;
+
+    test(
+      'elegir un color activa el tema y la paleta sale de ese color',
+      () async {
+        final port = _FakePort();
+        final container = _container(port);
+        await container.read(appearanceControllerProvider.future);
+
+        await container
+            .read(appearanceControllerProvider.notifier)
+            .setCustomColor(red);
+
+        expect(port.stored.family, ThemeFamilyId.personalizado);
+        expect(port.stored.customColorArgb, red);
+        final themes = await _themes(container);
+        expect(
+          _palette(themes.light),
+          LockspirePalette.fromSeed(const Color(red), Brightness.light),
+        );
+      },
+    );
+
+    test('un color con transparencia se guarda opaco', () async {
+      final port = _FakePort();
+      final container = _container(port);
+      await container.read(appearanceControllerProvider.future);
+
+      await container
+          .read(appearanceControllerProvider.notifier)
+          .setCustomColor(0x80D32F2F);
+
+      expect(port.stored.customColorArgb, red);
+    });
+
+    test('el color se conserva al pasar a otro tema y volver', () async {
+      final port = _FakePort();
+      final container = _container(port);
+      await container.read(appearanceControllerProvider.future);
+      final controller = container.read(appearanceControllerProvider.notifier);
+
+      await controller.setCustomColor(red);
+      await controller.setFamily(ThemeFamilyId.grafito);
+      await controller.setFamily(ThemeFamilyId.personalizado);
+
+      expect(port.stored.customColorArgb, red);
     });
   });
 }

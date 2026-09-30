@@ -9,8 +9,13 @@ import 'lockspire_spacing.dart';
 /// Familias de tema: cada una con versión clara y oscura (ver
 /// docs/design/README.md).
 enum LockspireThemeFamily {
+  grafito(
+    'Grafito',
+    LockspirePalettes.grafito,
+    LockspirePalettes.grafitoOscuro,
+  ),
   lineage(
-    'Lineage',
+    'LineageOS',
     LockspirePalettes.lineage,
     LockspirePalettes.lineageOscuro,
   ),

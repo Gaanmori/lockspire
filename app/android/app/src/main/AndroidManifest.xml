@@ -8,10 +8,16 @@
          Android. La copia de la bóveda es la sync, con cifrado propio; una
          restauración de Android dejaría el almacenamiento seguro (claves
          del Keystore, que no se copian) inconsistente con los datos. -->
+    <!-- android:icon es el ícono de la app para el sistema: el diálogo de la
+         huella, "Información de la aplicación", autocompletado y Credential
+         Manager. Android no deja cambiarlo en ejecución, así que no puede
+         seguir al tema elegido (eso solo lo hace el lanzador, con los alias
+         de abajo, ADR 0031): es un grafito sobrio que combina con cualquier
+         tema (pedido del usuario, 2026-09-30). -->
     <application
         android:label="Lockspire"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_launcher_neutral"
         android:allowBackup="false"
         android:fullBackupContent="false">
         <activity
@@ -33,12 +39,24 @@
               />
         </activity>
         <!-- Ícono del lanzador según el tema (ADR 0031): un alias por tema y
-             solo uno activo (LauncherIcon.kt). Lineage viene activo. -->
+             solo uno activo (LauncherIcon.kt). Grafito, el tema por defecto,
+             viene activo (ADR 0036). -->
+        <activity-alias
+            android:name=".LauncherGrafito"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_launcher_neutral"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
         <activity-alias
             android:name=".LauncherLineage"
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/ic_launcher"
-            android:enabled="true"
+            android:enabled="false"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

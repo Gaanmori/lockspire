@@ -50,7 +50,7 @@ void main() {
     tester,
   ) async {
     final (app, robot) = await _androidUnlocked(tester);
-    expect(app.launcherIcon.themes, [ThemeFamilyId.lineage]);
+    expect(app.launcherIcon.themes, [ThemeFamilyId.grafito]);
 
     await robot.openSettings();
     await robot.tapText('Apariencia');

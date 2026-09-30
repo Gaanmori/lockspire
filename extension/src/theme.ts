@@ -6,15 +6,19 @@ import type { AppTheme } from './protocol.ts';
 
 const STORAGE_KEY = 'lockspire.theme';
 
+/** Temas cuya paleta calcula la app a partir de un color. */
+const GENERATED: ReadonlySet<string> = new Set(['sistema', 'personalizado']);
+
 /**
  * Nombre del tema CSS (`data-theme` del `<html>`, ver popup.css) para un
  * tema de la app. En modo `system` decide [prefersDark].
  */
 export function themeName(theme: AppTheme, prefersDark: boolean): string {
   const dark = theme.mode === 'dark' || (theme.mode === 'system' && prefersDark);
-  // "Colores del sistema" se genera en la app con el algoritmo tonal de
-  // Material 3; el popup todavía no lo replica y usa Lineage, el tema principal.
-  const family = theme.family === 'sistema' ? 'lineage' : theme.family;
+  // "Colores del sistema" y "Personalizado" se generan en la app con el
+  // algoritmo tonal de Material 3; el popup no lo replica y usa Grafito, el
+  // tema por defecto (ADR 0036).
+  const family = GENERATED.has(theme.family) ? 'grafito' : theme.family;
   return `${family}-${dark ? 'dark' : 'light'}`;
 }
 

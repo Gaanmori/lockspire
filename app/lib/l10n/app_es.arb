@@ -10,6 +10,15 @@
   "appearanceTheme": "Tema",
   "appearanceLauncherIconNote": "El ícono de Lockspire en el teléfono también cambia al tema elegido, en unos segundos. Algunos lanzadores quitan el acceso directo de la pantalla de inicio al cambiarlo: vuelva a agregarlo desde la lista de apps.",
   "themeSystemColors": "Colores del sistema",
+  "themeGroupLockspire": "Lockspire",
+  "themeGroupAutomatic": "Automático",
+  "themeGroupOperatingSystems": "Inspirados en sistemas operativos",
+  "themeGrafitoHint": "Sobrio, combina con todo. El predeterminado.",
+  "themeCustom": "Personalizado",
+  "themeCustomHint": "Elija cualquier color: Lockspire arma la paleta clara y oscura.",
+  "themeCustomHex": "Color en hexadecimal",
+  "themeCustomApply": "Usar este color",
+  "themeCustomInvalid": "Escriba un color como #6750A4.",
   "themeSystemUnavailable": "No disponible en este equipo: se usa Lineage.",
   "themeSystemAndroid": "Material You: colores de su fondo de pantalla.",
   "themeSystemDesktop": "Color de acento del sistema.",
@@ -915,6 +924,15 @@
   },
   "browserNotConnected": "No conectado con ningún navegador",
   "browserHostMissing": "Falta el componente \"lockspire-native-host\" junto a la app. Ver native-host/README.md.",
+  "browserOtherCopy": "En {browsers} está registrada otra copia de Lockspire (por ejemplo, una versión vieja), y el navegador usa esa. Pulse \"Conectar con Chrome/Edge\" para que use esta.",
+  "@browserOtherCopy": {
+    "placeholders": {
+      "browsers": {
+        "type": "String"
+      }
+    }
+  },
+  "browserOtherCopySystemWide": "El registro para todo el equipo apunta a otra copia de Lockspire, y el navegador puede estar usándola en vez de esta. Vuelva a registrarlo o quítelo.",
   "browserReconnect": "Volver a conectar",
   "browserConnect": "Conectar con Chrome/Edge",
   "browserSystemWide": "Para todo el equipo",

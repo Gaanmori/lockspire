@@ -41,6 +41,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeSystemColors => 'System colors';
 
   @override
+  String get themeGroupLockspire => 'Lockspire';
+
+  @override
+  String get themeGroupAutomatic => 'Automatic';
+
+  @override
+  String get themeGroupOperatingSystems => 'Inspired by operating systems';
+
+  @override
+  String get themeGrafitoHint =>
+      'Understated, goes with everything. The default.';
+
+  @override
+  String get themeCustom => 'Custom';
+
+  @override
+  String get themeCustomHint =>
+      'Choose any color: Lockspire builds the light and dark palette.';
+
+  @override
+  String get themeCustomHex => 'Hex color';
+
+  @override
+  String get themeCustomApply => 'Use this color';
+
+  @override
+  String get themeCustomInvalid => 'Enter a color like #6750A4.';
+
+  @override
   String get themeSystemUnavailable =>
       'Not available on this device: Lineage is used instead.';
 
@@ -1381,6 +1410,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get browserHostMissing =>
       'The \"lockspire-native-host\" component is missing next to the app. See native-host/README.md.';
+
+  @override
+  String browserOtherCopy(String browsers) {
+    return 'Another copy of Lockspire (for example, an old version) is registered in $browsers, and the browser uses that one. Press \"Connect with Chrome/Edge\" so it uses this one.';
+  }
+
+  @override
+  String get browserOtherCopySystemWide =>
+      'The computer-wide registration points to another copy of Lockspire, and the browser may be using it instead of this one. Register it again or remove it.';
 
   @override
   String get browserReconnect => 'Reconnect';

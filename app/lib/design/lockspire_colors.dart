@@ -120,11 +120,50 @@ class LockspirePalette extends ThemeExtension<LockspirePalette> {
 extension LockspirePaletteContext on BuildContext {
   /// Paleta del tema activo (ver `LockspireTheme.build`).
   LockspirePalette get palette =>
-      Theme.of(this).extension<LockspirePalette>() ?? LockspirePalettes.lineage;
+      Theme.of(this).extension<LockspirePalette>() ?? LockspirePalettes.grafito;
 }
 
-/// Las 6 paletas: 3 familias, cada una en claro y oscuro.
+/// Las paletas fijas: cada familia en claro y oscuro.
 abstract final class LockspirePalettes {
+  // --- Grafito (tema por defecto desde el 2026-09-30, ADR 0036) ------------
+  //
+  // Sobrio y neutro, para que combine con cualquier fondo de pantalla o
+  // tema del sistema: grises casi sin color y el acento grafito del ícono
+  // principal de Android (#2B2E32). En oscuro el acento se invierte a un gris
+  // claro, con el texto de los botones en grafito.
+
+  static const grafito = LockspirePalette(
+    brightness: Brightness.light,
+    bgPage: Color(0xFFF7F7F8),
+    bgSurface: Color(0xFFFFFFFF),
+    bgSurfaceSubtle: Color(0xFFE6E7EA),
+    bgInput: Color(0xFFEEEFF1),
+    textPrimary: Color(0xFF1C1E21),
+    textSecondary: Color(0xFF5C6168),
+    textPlaceholder: Color(0xFF9AA0A6),
+    accentDefault: Color(0xFF2B2E32),
+    accentHover: Color(0xFF1A1C1F),
+    accentSecondary: Color(0xFF5C6168),
+    onAccent: Color(0xFFFFFFFF),
+    danger: Color(0xFFC23B3B),
+  );
+
+  static const grafitoOscuro = LockspirePalette(
+    brightness: Brightness.dark,
+    bgPage: Color(0xFF121314),
+    bgSurface: Color(0xFF1C1D1F),
+    bgSurfaceSubtle: Color(0xFF2B2E32),
+    bgInput: Color(0xFF232427),
+    textPrimary: Color(0xFFE8E9EB),
+    textSecondary: Color(0xFFA4A9AF),
+    textPlaceholder: Color(0xFF6E737A),
+    accentDefault: Color(0xFFD9DCE0),
+    accentHover: Color(0xFFC4C8CD),
+    accentSecondary: Color(0xFFA4A9AF),
+    onAccent: Color(0xFF1C1E21),
+    danger: Color(0xFFE5605F),
+  );
+
   // --- Lineage (tema principal y por defecto, 2026-09-27) ----------------
   //
   // Basado en el tema por defecto de LineageOS. Claro: su paleta de marca

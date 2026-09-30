@@ -88,6 +88,32 @@ void main() {
       );
     });
 
+    testWidgets('avisa si el navegador tiene registrada otra copia de '
+        'Lockspire, y conectar la reemplaza (2026-09-30)', (tester) async {
+      final (app, robot) = await _desktopUnlocked(tester);
+      app.nativeMessaging
+        ..otherCopyIn = {SupportedBrowser.chrome}
+        ..otherCopySystemWideIn = {SupportedBrowser.chrome};
+      await _openBrowser(robot);
+
+      expect(
+        find.textContaining('En Google Chrome está registrada otra copia'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('El registro para todo el equipo apunta a otra'),
+        findsOneWidget,
+      );
+      // Con un registro ajeno para todo el equipo, se puede quitar.
+      await robot.reveal(find.text('Quitar registro'));
+      expect(find.text('Quitar registro'), findsOneWidget);
+
+      await robot.tapText('Conectar con Chrome/Edge');
+      await robot.tapText('Quitar registro');
+
+      expect(find.textContaining('otra copia'), findsNothing);
+    });
+
     testWidgets('registrar para todo el equipo, y si se cancela el permiso de '
         'administrador lo explica (ADR 0014)', (tester) async {
       final (app, robot) = await _desktopUnlocked(tester);

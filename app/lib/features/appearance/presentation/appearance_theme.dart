@@ -10,10 +10,21 @@ import '../domain/appearance_preference.dart';
 /// Paletas clara y oscura de una familia.
 typedef PalettePair = ({LockspirePalette light, LockspirePalette dark});
 
-/// Paletas para [family]. [systemArgb] es el color del sistema; solo lo usa
-/// [ThemeFamilyId.sistema]. Si no hay color del sistema, se usa Lineage.
-PalettePair palettesFor(ThemeFamilyId family, int? systemArgb) {
+/// Paletas para [family]. [systemArgb] es el color del sistema: solo lo usa
+/// [ThemeFamilyId.sistema], y sin él se usa Grafito. [customArgb] es el color
+/// que eligió el usuario para [ThemeFamilyId.personalizado] (ADR 0036).
+PalettePair palettesFor(
+  ThemeFamilyId family, {
+  int? systemArgb,
+  int customArgb = AppearancePreference.defaultCustomColorArgb,
+}) {
   switch (family) {
+    case ThemeFamilyId.personalizado:
+      final seed = Color(customArgb);
+      return (
+        light: LockspirePalette.fromSeed(seed, Brightness.light),
+        dark: LockspirePalette.fromSeed(seed, Brightness.dark),
+      );
     case ThemeFamilyId.sistema when systemArgb != null:
       final seed = Color(systemArgb);
       return (
@@ -22,10 +33,11 @@ PalettePair palettesFor(ThemeFamilyId family, int? systemArgb) {
       );
     case ThemeFamilyId.sistema:
       return (
-        light: LockspirePalettes.lineage,
-        dark: LockspirePalettes.lineageOscuro,
+        light: LockspirePalettes.grafito,
+        dark: LockspirePalettes.grafitoOscuro,
       );
-    case ThemeFamilyId.lineage ||
+    case ThemeFamilyId.grafito ||
+        ThemeFamilyId.lineage ||
         ThemeFamilyId.pixel ||
         ThemeFamilyId.ubuntu ||
         ThemeFamilyId.mint ||
@@ -41,7 +53,11 @@ typedef AppThemes = ({ThemeData light, ThemeData dark, ThemeMode mode});
 /// Traduce la preferencia de dominio (sin Flutter) a tipos de Flutter. El
 /// dominio no conoce `ThemeData`; esta es la única frontera entre ambos.
 AppThemes resolveAppThemes(AppearancePreference preference, int? systemArgb) {
-  final palettes = palettesFor(preference.family, systemArgb);
+  final palettes = palettesFor(
+    preference.family,
+    systemArgb: systemArgb,
+    customArgb: preference.customColorArgb,
+  );
   return (
     light: LockspireTheme.of(palettes.light),
     dark: LockspireTheme.of(palettes.dark),

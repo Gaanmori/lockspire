@@ -128,7 +128,47 @@ void main() {
       installHost('lockspire-native-host.exe');
       windows.registry[_chromeKey('HKCU')] = r'C:\otra\instalacion.json';
 
-      expect((await adapter.status()).registeredIn, isEmpty);
+      final status = await adapter.status();
+      expect(status.registeredIn, isEmpty);
+      expect(status.otherCopyIn, {SupportedBrowser.chrome});
+    });
+
+    test('si otra copia reescribió el manifest, el navegador usa esa: se '
+        'avisa aunque la clave apunte al manifest de siempre', () async {
+      installHost('lockspire-native-host.exe');
+      await adapter.register();
+      final manifest = File(windows.registry[_chromeKey('HKCU')]!);
+      manifest.writeAsStringSync(
+        jsonEncode({'path': r'C:\build\Debug\lockspire-native-host.exe'}),
+      );
+
+      final status = await adapter.status();
+
+      expect(status.registeredIn, isEmpty);
+      expect(status.otherCopyIn, SupportedBrowser.values.toSet());
+    });
+
+    test('un registro para todo el equipo de otra copia (p. ej. Debug) se '
+        'avisa (encontrado por el usuario, 2026-09-30)', () async {
+      installHost('lockspire-native-host.exe');
+      final systemManifest = File(
+        p.join(
+          tmp.path,
+          'programdata',
+          'Lockspire',
+          'native-messaging',
+          'com.lockspire.native_host.json',
+        ),
+      )..createSync(recursive: true);
+      systemManifest.writeAsStringSync(
+        jsonEncode({'path': r'C:\build\Debug\lockspire-native-host.exe'}),
+      );
+      windows.registry[_chromeKey('HKLM')] = systemManifest.path;
+
+      final status = await adapter.status();
+
+      expect(status.registeredSystemWideIn, isEmpty);
+      expect(status.otherCopySystemWideIn, {SupportedBrowser.chrome});
     });
 
     test('para todo el equipo pide permisos de administrador; si se cancelan, '
@@ -211,6 +251,7 @@ void main() {
           'com.lockspire.native_host.json',
         ),
       )..writeAsStringSync(jsonEncode({'path': '/opt/otra/host'}));
+      expect((await adapter.status()).otherCopyIn, {SupportedBrowser.chromium});
       await adapter.unregister();
 
       expect(foreign.existsSync(), isTrue);

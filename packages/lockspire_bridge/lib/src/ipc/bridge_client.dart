@@ -69,8 +69,16 @@ class BridgeClient {
       try {
         token = readSessionToken(location.tokenPath);
       } on FileSystemException catch (e) {
+        // La ruta y qué hay en la carpeta (nombres, nunca el contenido):
+        // para distinguir "la app no escribió el token" de "este proceso
+        // ve otra carpeta" (2026-09-30).
+        final dir = Directory(location.directory);
+        final seen = dir.existsSync()
+            ? dir.listSync().map((f) => f.uri.pathSegments.last).join(', ')
+            : '(la carpeta no existe)';
         throw AppNotRunningException(
-          'no se pudo leer el token: ${e.osError?.message ?? e.message}',
+          'no se pudo leer el token en ${location.tokenPath}: '
+          '${e.osError?.message ?? e.message}; en la carpeta: $seen',
         );
       }
       final reply = await connection.exchange(

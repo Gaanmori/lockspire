@@ -27,14 +27,14 @@ void main() {
     },
   };
 
-  test('hay 10 temas: 5 claros y 5 oscuros', () {
-    expect(all, hasLength(10));
-    expect(all.values.where((p) => !p.isDark), hasLength(5));
-    expect(all.values.where((p) => p.isDark), hasLength(5));
+  test('hay 12 temas fijos: 6 claros y 6 oscuros', () {
+    expect(all, hasLength(12));
+    expect(all.values.where((p) => !p.isDark), hasLength(6));
+    expect(all.values.where((p) => p.isDark), hasLength(6));
   });
 
-  test('Lineage es la primera familia (tema principal)', () {
-    expect(LockspireThemeFamily.values.first, LockspireThemeFamily.lineage);
+  test('Grafito es la primera familia (tema por defecto, ADR 0036)', () {
+    expect(LockspireThemeFamily.values.first, LockspireThemeFamily.grafito);
   });
 
   test('cada ThemeData lleva su paleta y el brillo correcto', () {

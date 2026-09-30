@@ -688,6 +688,36 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
 
+### Temas: Grafito por defecto, Personalizado y grupos (ADR 0036, 2026-09-30)
+
+- **Hecho:**
+  - **Temas en grupos:** Lockspire (Grafito y Personalizado), Automático (Colores del sistema) e Inspirados en sistemas operativos (LineageOS, Pixel, Ubuntu, Linux Mint y Windows 11).
+  - **Grafito** es el tema por defecto, con paleta fija y el alias `LauncherGrafito` activo por defecto en Android.
+  - **Personalizado:** 14 colores sugeridos o cualquiera en hexadecimal (`CustomColorPicker`); la paleta sale de `fromSeed`.
+  - **Extensión:** Grafito con sus colores; Personalizado y Colores del sistema se muestran como Grafito.
+  - **Tests:** `appearance_flow_test`, `secure_storage_appearance_adapter_test` (nuevo), los del controller, `lockspire_theme_test` (contraste WCAG también en Grafito) y los de la extensión.
+- **Pendiente:** que el usuario lo vea en el Redmi y en Windows.
+
+### Ícono de la app en Android: grafito sobrio (2026-09-30, pedido del usuario)
+
+- **Problema:** el diálogo de la huella, "Información de la aplicación", el autocompletado y Credential Manager usan `android:icon` de la app. Android no deja cambiarlo en ejecución, así que no puede seguir al tema. Solo el lanzador lo sigue, con los alias de ADR 0031.
+- **Hecho:** ícono `ic_launcher_neutral`, el mismo candado sobre grafito `#2B2E32` con el candado `#F5F5F5`. Lo genera `tools/generate_icons.py` (tema `neutral`) y es el `android:icon` de la app. Los alias del lanzador siguen con el color de cada tema.
+- **Pendiente:** que el usuario lo vea en el Redmi (huella e Información de la aplicación).
+
+### Extensión: "Abra Lockspire" con la app abierta (2026-09-30, encontrado por el usuario)
+
+- **Causa:** no era un fallo de Lockspire.
+  - Claude para Windows está instalado como app empaquetada (MSIX), y todo lo que lanza hereda su copia virtual de `AppData\Local`, incluso fuera de su sandbox.
+  - La app que abrió el asistente escribió `ipc.token`, y hasta el manifest de "Volver a conectar", en `AppData\Local\Packages\Claude_…\LocalCache\Local\Lockspire`. El native host lanzado por Chrome veía la carpeta real vacía. El pipe sí funcionaba, porque no se virtualiza.
+  - **Confirmado por el usuario:** abriendo la app él mismo, la extensión muestra las cuentas.
+  - **Regla:** para probar la extensión, el asistente compila pero no abre la app; la abre el usuario.
+- **Fallo real que salió a la luz y se corrigió:** si otra instancia tenía el canal, esta nunca lo tomaba al cerrarse aquella. `browserBridgeProvider` ahora reintenta cada 5 s (`bridgeRetryDelayProvider`), y el arranque del servidor va detrás de `bridgeServerStarterProvider`. Test: `browser_bridge_provider_test`.
+- **Diagnóstico nuevo:** si no encuentra el token, el native host anota en su log la ruta y qué hay en la carpeta (solo nombres).
+- **Registro viejo:** había un registro para todo el equipo que apuntaba al host de Debug del 24/09. El usuario lo volvió a registrar hacia Release.
+- **Hecho:** la pantalla Navegador avisa cuando hay un registro, del usuario o para todo el equipo, que apunta a **otra copia** de Lockspire (`otherCopyIn` y `otherCopySystemWideIn`), y permite reemplazarlo o quitarlo.
+  - Además, un registro solo cuenta como de esta app si la clave **y** el contenido del manifest apuntan a ella. Antes bastaba con la clave, así que otra copia podía reescribir el manifest y la pantalla seguía diciendo "Conectado".
+  - Tests: el adaptador, con el registro de Windows simulado, y `browser_flow_test`.
+
 ### Organización de Ajustes y Seguridad (2026-09-30, pedido del usuario)
 
 - **Ajustes** va en grupos, y un grupo sin opciones en la plataforma no se muestra (`SettingsSection`):

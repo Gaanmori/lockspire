@@ -135,6 +135,14 @@ class _BrowserIntegrationScreenState
                           ? null
                           : Text(context.l10n.browserHostMissing),
                     ),
+                    if (status.otherCopyIn.isNotEmpty)
+                      _OtherCopyWarning(
+                        context.l10n.browserOtherCopy(
+                          status.otherCopyIn
+                              .map((b) => b.displayName)
+                              .join(', '),
+                        ),
+                      ),
                     const SizedBox(height: LockspireSpacing.md),
                     Wrap(
                       spacing: LockspireSpacing.md,
@@ -178,6 +186,10 @@ class _BrowserIntegrationScreenState
                               : context.l10n.browserSystemWideOff,
                         ),
                       ),
+                      if (status.otherCopySystemWideIn.isNotEmpty)
+                        _OtherCopyWarning(
+                          context.l10n.browserOtherCopySystemWide,
+                        ),
                       Wrap(
                         spacing: LockspireSpacing.md,
                         runSpacing: LockspireSpacing.sm,
@@ -190,12 +202,14 @@ class _BrowserIntegrationScreenState
                                 ? null
                                 : _registerSystemWide,
                             label: Text(
-                              status.isRegisteredSystemWide
+                              status.isRegisteredSystemWide ||
+                                      status.otherCopySystemWideIn.isNotEmpty
                                   ? context.l10n.browserReregister
                                   : context.l10n.browserRegisterSystemWide,
                             ),
                           ),
-                          if (status.isRegisteredSystemWide)
+                          if (status.isRegisteredSystemWide ||
+                              status.otherCopySystemWideIn.isNotEmpty)
                             OutlinedButton(
                               onPressed: _busy ? null : _unregisterSystemWide,
                               child: Text(
@@ -293,4 +307,22 @@ class _NeverSaveSites extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// Un registro que apunta a otra copia de Lockspire: el navegador usa esa
+/// y la extensión falla aunque esta app esté abierta (2026-09-30).
+class _OtherCopyWarning extends StatelessWidget {
+  final String text;
+
+  const _OtherCopyWarning(this.text);
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    contentPadding: EdgeInsets.zero,
+    leading: Icon(
+      Icons.warning_amber_rounded,
+      color: Theme.of(context).colorScheme.error,
+    ),
+    title: Text(text),
+  );
 }
