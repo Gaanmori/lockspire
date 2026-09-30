@@ -32,6 +32,10 @@ El uso que hace Lockspire de la información recibida de las API de Google cumpl
 - **La extensión para Chrome y Edge** habla únicamente con la app de Lockspire instalada en su propio equipo (native messaging). No envía nada a internet.
 - **Guardar contraseñas desde el navegador.** Cuando usted envía un formulario con una contraseña, la extensión lee el usuario y la contraseña de ese formulario para ofrecerle guardarlos. Solo se los pasa a la app de su equipo. Si no responde en 3 minutos, los olvida. No guarda nada en disco ni lee nada de las páginas en otro momento. La lista de sitios donde eligió "Nunca en este sitio" queda cifrada en su equipo.
 
+## Íconos de los sitios (opcional)
+
+Viene desactivado. Si usted lo activa, Lockspire descarga el ícono de cada sitio guardado **directamente de ese sitio**: el sitio ve una visita normal desde su conexión, sin cookies ni ningún dato de su bóveda. Si además activa "Completar los que falten con DuckDuckGo", para los sitios sin ícono se lo pide a DuckDuckGo, que recibe **solo el dominio** (por ejemplo `ejemplo.com`), nunca sus usuarios ni contraseñas. Los íconos se guardan cifrados dentro de la bóveda.
+
 ## Lo que Lockspire no hace
 
 - No tiene publicidad.
@@ -82,6 +86,10 @@ Lockspire's use of information received from Google APIs will adhere to the [Goo
 - **On Android,** the autofill service reads the screen structure (which field is the username or password, and which app or site asks for it) only to offer your accounts. That information never leaves your device.
 - **The Chrome and Edge extension** talks only to the Lockspire app installed on your own computer (native messaging). It sends nothing to the internet.
 - **Saving passwords from the browser.** When you submit a form with a password, the extension reads that form's username and password to offer saving them. It passes them only to the app on your computer. If you don't answer within 3 minutes, it forgets them. It stores nothing on disk and reads nothing from pages at any other time. The list of sites where you chose "Never on this site" is kept encrypted on your computer.
+
+## Site icons (optional)
+
+Off by default. If you turn it on, Lockspire downloads each saved site's icon **directly from that site**: the site sees a normal visit from your connection, with no cookies and no data from your vault. If you also turn on "Fill in the missing ones with DuckDuckGo", icons for sites without one are requested from DuckDuckGo, which receives **only the domain** (e.g. `example.com`), never your usernames or passwords. Icons are stored encrypted inside the vault.
 
 ## What Lockspire does not do
 

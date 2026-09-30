@@ -962,7 +962,7 @@ Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome W
 5. [ ] **Microsoft Store:** ~~MSIX y native host~~ verificado en local (ADR 0037); falta Partner Center y el envío.
 6. [ ] **Linux:** verificar en Linux Mint (bandeja, bloqueo, extensión, native host) y generar AppImage; después Snap (confinamiento y native host) y Flathub.
 7. [ ] **Extensión:** publicarla en Chrome Web Store y Edge Add-ons (justificar `nativeMessaging`, política de privacidad).
-8. [ ] **Fichas de cada tienda:** capturas, descripción, imagen destacada 1024×500, seguridad de datos y clasificación de contenido.
+8. [ ] **Fichas de cada tienda:** Google Play preparada en `docs/store/google-play.md` (2026-09-30): nombre, descripciones ES/EN, ícono 512 e imagen destacada 1024×500 en grafito (`tools/generate_store_assets.py`), respuestas de contenido de la app y seguridad de los datos ("no recoge ni comparte datos"). La política de privacidad ahora cubre los íconos de sitios (DuckDuckGo). Faltan: capturas con una bóveda de demostración, y las fichas de Microsoft Store y de la extensión.
 9. [ ] Pruebas manuales pendientes (autofill sin URL, restaurar desde la nube, aviso de mudanza, exportar/importar).
 
 ### Google Drive en Android sin Play Services — hallazgo (2026-09-28)

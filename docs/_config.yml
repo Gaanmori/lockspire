@@ -6,5 +6,7 @@ exclude:
   - adr
   - design
   - reviews
+  - store
+  - release-android.md
   - STATE.md
   - THREAT_MODEL.md
