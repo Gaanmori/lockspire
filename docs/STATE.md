@@ -944,9 +944,7 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - El manifest (`app/windows/packaging/AppxManifest.xml`) desactiva la virtualización y declara un alias de ejecución para el native host.
   - El registro apunta al alias cuando la app corre desde `WindowsApps`, con test en `native_messaging_registration_platforms_test`.
 - **Verificado por el usuario** con `Lockspire.Prueba` 1.0.2.0 instalado: la extensión mostró la cuenta y autocompletó.
-- **Limpieza pendiente en el equipo del usuario:**
-  - desinstalar `Lockspire.Prueba`;
-  - quitar el certificado "CN=Lockspire Prueba" (huella 552145094302A8D48B8F25739A5523E7F61C70FC) de CurrentUser\Root, CurrentUser\CA, CurrentUser\My y LocalMachine\TrustedPeople.
+- **Limpieza hecha (2026-09-30):** paquete `Lockspire.Prueba` desinstalado y certificado de prueba borrado de todos los almacenes.
 - **Falta para publicar:**
   - la cuenta de Partner Center;
   - la identidad real del producto (`-Identity` y `-Publisher`);
