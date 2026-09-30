@@ -951,6 +951,28 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - justificar `unvirtualizedResources` en el envío;
   - probar las donaciones con los complementos de la Store.
 
+### Android: ventanas del sistema bloqueaban la bóveda (2026-09-30, encontrado al preparar las capturas)
+
+- **Fallo:** en Android, el selector de archivos, el selector de cuentas de Google, el navegador de OneDrive y el pago de Google Play abren otra Activity. La app pasaba a segundo plano, `AutoLockController` bloqueaba la bóveda y se perdía la respuesta.
+  - Consecuencia: importar y exportar eran imposibles en Android.
+  - Conectar una nube o donar con la bóveda abierta también fallaba.
+- **Corrección:** `AutoLockController.whileInSystemUi(action)` suspende solo el bloqueo por segundo plano mientras dura esa ventana. El de inactividad sigue corriendo, así que una ventana olvidada no deja la bóveda abierta más del tiempo elegido.
+  - Se usa en importar, exportar, `SyncAccountsController._signIn` y la tarjeta de donación.
+- **Tests:**
+  - `auto_lock_system_ui_test`: 4 tests (no bloquea con la ventana abierta y vuelve a bloquear al cerrarla, errores, dos ventanas a la vez, la inactividad sigue).
+  - 4 tests de flujo (importar, exportar, conectar Google Drive, donar) con `simulateOtherActivity`.
+  - Todos fallan sin la corrección (comprobado). 650 tests en total.
+- **Verificado en el emulador:** después del selector, la app sigue desbloqueada e importa.
+- **Pendiente:** instalar en el Redmi el APK release con la corrección (el Redmi no estaba conectado) y probar importar y exportar ahí.
+
+### Capturas para Google Play (2026-09-30)
+
+- 6 capturas en `docs/store/assets/screenshots/es-0N-*.png` (1080×2400): lista, entrada con generador, tarjeta, sincronización, temas y lista en oscuro.
+- Hechas en un emulador (`lockspire_capturas`, Android 16) con una bóveda de demostración: 13 entradas inventadas con dominios `.example`, importadas desde un JSON de Bitwarden.
+- Se usó un APK profile, porque el release bloquea capturas con FLAG_SECURE.
+- No hay capturas en inglés: Play usa las del idioma predeterminado.
+- Se evitó mostrar los temas con nombres de marcas (Pixel, Ubuntu, Windows) en las capturas.
+
 ### MVP — canales y checklist (ADR 0028, decidido 2026-09-28)
 
 Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome Web Store y Edge Add-ons. **F-Droid fuera por ahora.** Costo total: US$30 (Play US$25, Chrome US$5).
@@ -962,7 +984,7 @@ Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome W
 5. [ ] **Microsoft Store:** ~~MSIX y native host~~ verificado en local (ADR 0037); falta Partner Center y el envío.
 6. [ ] **Linux:** verificar en Linux Mint (bandeja, bloqueo, extensión, native host) y generar AppImage; después Snap (confinamiento y native host) y Flathub.
 7. [ ] **Extensión:** publicarla en Chrome Web Store y Edge Add-ons (justificar `nativeMessaging`, política de privacidad).
-8. [ ] **Fichas de cada tienda:** Google Play preparada en `docs/store/google-play.md` (2026-09-30): nombre, descripciones ES/EN, ícono 512 e imagen destacada 1024×500 en grafito (`tools/generate_store_assets.py`), respuestas de contenido de la app y seguridad de los datos ("no recoge ni comparte datos"). La política de privacidad ahora cubre los íconos de sitios (DuckDuckGo). Faltan: capturas con una bóveda de demostración, y las fichas de Microsoft Store y de la extensión.
+8. [ ] **Fichas de cada tienda:** Google Play preparada en `docs/store/google-play.md` (2026-09-30): nombre, descripciones ES/EN, ícono 512 e imagen destacada 1024×500 en grafito (`tools/generate_store_assets.py`), respuestas de contenido de la app y seguridad de los datos ("no recoge ni comparte datos"). La política de privacidad ahora cubre los íconos de sitios (DuckDuckGo). Capturas hechas (ver "Capturas para Google Play"). Faltan las fichas de Microsoft Store y de la extensión.
 9. [ ] Pruebas manuales pendientes (autofill sin URL, restaurar desde la nube, aviso de mudanza, exportar/importar).
 
 ### Google Drive en Android sin Play Services — hallazgo (2026-09-28)

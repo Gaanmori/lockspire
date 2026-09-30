@@ -52,7 +52,7 @@ SINCRONIZACIÓN EN SU PROPIA NUBE (OPCIONAL)
 ORGANIZADO Y CÓMODO
 • Generador de contraseñas y de frases de contraseña.
 • Historial de cada contraseña: recupere la anterior si la cambió por error.
-• Importa desde SafeInCloud, Bitwarden y archivos CSV (por ejemplo, de Chrome). Exporta a Bitwarden y Chrome, o como copia cifrada.
+• Importa desde SafeInCloud, Bitwarden, KeePassXC y archivos CSV (por ejemplo, de Chrome o Firefox). Exporta a Bitwarden y Chrome, o como copia cifrada.
 • Temas claro y oscuro, colores de varios sistemas operativos o el color que usted elija.
 • En español y en inglés.
 
@@ -88,7 +88,7 @@ SYNC WITH YOUR OWN CLOUD (OPTIONAL)
 ORGANIZED AND CONVENIENT
 • Password and passphrase generator.
 • History for every password: get the old one back if you changed it by mistake.
-• Imports from SafeInCloud, Bitwarden and CSV files (for example, from Chrome). Exports to Bitwarden and Chrome, or as an encrypted backup.
+• Imports from SafeInCloud, Bitwarden, KeePassXC and CSV files (for example, from Chrome or Firefox). Exports to Bitwarden and Chrome, or as an encrypted backup.
 • Light and dark themes, colors from several operating systems, or any color you choose.
 • In English and Spanish.
 
@@ -107,13 +107,15 @@ Source code: github.com/Gaanmori/lockspire
 
 - **Ícono (512 × 512):** `assets/play-icon-512.png`.
 - **Imagen destacada (1024 × 500):** `assets/feature-graphic-1024x500-es.png` y `-en.png`.
-- **Capturas del teléfono:** entre 2 y 8, de 1080 × 1920 o más. Hacerlas con una **bóveda de demostración**, nunca con la real. Propuesta:
+- **Capturas del teléfono:** `assets/screenshots/es-01` a `es-06` (1080 × 2400), en este orden:
   1. la lista de la bóveda;
-  2. una entrada abierta, con la contraseña oculta;
-  3. el generador;
-  4. el autocompletado en una app;
-  5. la sincronización;
-  6. los temas.
+  2. una entrada con el generador;
+  3. una tarjeta;
+  4. la sincronización;
+  5. los temas;
+  6. la lista en modo oscuro.
+- Se hicieron con una bóveda de demostración en un emulador, nunca con la real. Sirven también para la ficha en inglés.
+- No usar en las capturas los temas con nombres de marcas (Pixel, Ubuntu, Windows): Google puede objetarlo.
 
 ## Contenido de la app (Política de la app)
 
