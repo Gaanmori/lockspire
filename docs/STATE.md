@@ -973,6 +973,30 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - No hay capturas en inglés: Play usa las del idioma predeterminado.
 - Se evitó mostrar los temas con nombres de marcas (Pixel, Ubuntu, Windows) en las capturas.
 
+### Perfiles: varias bóvedas en el mismo dispositivo (2026-09-30, ADR 0039)
+
+- **Pedido del usuario:** que su esposa use Lockspire en el mismo Windows sin pisarle la bóveda. También sirve para una bóveda de demostración para las capturas de la Store.
+- **Hecho:** feature `profiles` (dominio, puertos, adaptadores, controlador, pantallas).
+  - Cada perfil tiene su bóveda y sus ajustes. `ProfileScopedSecureStorage` pone el prefijo `profile.<id>.` a las claves; la bóveda va en `profiles/<id>/vault.lockspire`.
+  - El perfil principal conserva su ruta y sus claves, así que actualizar no mueve nada.
+  - Cambiar de perfil reconstruye todo el `ProviderContainer` (`ProfileHost` en `main.dart`): se bloquea y se descarta todo lo del perfil anterior.
+  - Si hay más de uno, los perfiles aparecen en una lista al desbloquear o crear la bóveda.
+  - Ajustes → General → Perfiles: agregar, cambiar el nombre, abrir otro y eliminar el abierto (nunca el principal).
+  - En escritorio vienen activos; en Android, desactivados, con un interruptor.
+- **Arreglo de paso:** la escritura atómica de la bóveda crea la carpeta si no existe (lo necesita un perfil nuevo).
+- **Tests:** 18 nuevos:
+  - dominio;
+  - almacenamiento aislado;
+  - lista guardada;
+  - borrado, que encontró un borrado de claves durante la iteración, ya corregido;
+  - `ProfileHost`;
+  - 8 flujos: bóvedas y contraseñas separadas, el tema por perfil, validación de nombres, eliminar y el interruptor de Android.
+  - 678 tests en total, con la cobertura por encima del 90 %.
+- **Pendiente:**
+  - verificación manual del usuario en Windows: agregar un perfil "Demo", cambiar entre perfiles y que la extensión atienda al perfil abierto;
+  - hacer las capturas de la Store con el perfil Demo;
+  - volver a armar el MSIX de la Store con esta versión.
+
 ### MVP — canales y checklist (ADR 0028, decidido 2026-09-28)
 
 Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome Web Store y Edge Add-ons. **F-Droid fuera por ahora.** Costo total: US$30 (Play US$25, Chrome US$5).
@@ -981,7 +1005,7 @@ Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome W
 2. [x] **Pantalla "Acerca de"** (`features/about`: versión, AGPLv3, código fuente, política, licencias de terceros) y **política de privacidad** (`docs/privacy-policy.md`, ES + EN, con la declaración de uso limitado de Google). **Publicada (2026-09-28):** el repositorio ya es público y GitHub Pages sirve desde `main:/docs` solo la política (`docs/_config.yml` excluye el resto). Dirección: `https://gaanmori.github.io/lockspire/privacy-policy`, verificada con HTTP 200.
 3. [ ] **Android release:** ~~clave de firma~~ Gradle firma con la clave de subida de `android/key.properties` (2026-09-30, guía en `docs/release-android.md`; sin el archivo cae a la de depuración y Play lo rechaza). El AAB compila (59.6 MB). Clave de subida creada por el usuario el 2026-09-30 (SHA-1 `B5:2B:73:C1:2F:4C:C7:47:4B:57:D6:2B:71:4B:0A:07:AC:DC:15:63`); el AAB y el APK release salen firmados con ella. Cliente OAuth Android con la SHA-1 de subida creado en Google Cloud ("Lockspire Android (clave de subida)"); el APK firmado instalado en el Redmi restauró la bóveda desde Google Drive (verificado por el usuario 2026-09-30). Falta: el APK firmado probado en el Redmi (S5, R8 con libsodium y el autofill), y el cliente OAuth Android con la SHA-1 de Play App Signing.
 4. [ ] **Google Cloud a producción:** verificar la pantalla de consentimiento (nombre, logo, dominio, política); quizá revisión del permiso `drive.appdata`.
-5. [ ] **Microsoft Store:** ~~MSIX y native host~~ verificado en local (ADR 0037); falta Partner Center y el envío.
+5. [ ] **Microsoft Store:** ~~MSIX y native host~~ verificado en local (ADR 0037). Cuenta individual de Partner Center creada y nombre "Lockspire" reservado (2026-09-30, Store ID `9NXFLQH9LMQN`, identidad `gaanmori.Lockspire` / `CN=194EE10D-AF31-4B74-BEA3-A850550FE34B` / `gaanmori`, PFN `gaanmori.Lockspire_x5n222ajnteqj`, enlace `https://apps.microsoft.com/detail/9NXFLQH9LMQN`). `tools/build_msix.ps1 -Store` usa esa identidad. Falta: la identidad del producto en `build_msix.ps1`, los complementos de donación, la ficha y el envío.
 6. [ ] **Linux:** AppImage y .deb por GitHub Actions (ADR 0038, 2026-09-30): `.github/workflows/linux-packages.yml` + `packaging/linux/build_packages.sh`; en AppImage la app copia el native host a `~/.local/share/lockspire/bin/` (test en `native_messaging_registration_platforms_test`). **Falta:** que el usuario cargue los secretos `GOOGLE_OAUTH_SECRETS_JSON` y `MICROSOFT_OAUTH_SECRETS_JSON` en GitHub, lanzar el flujo, y verificar los dos paquetes en Linux Mint (bandeja, bloqueo, extensión, native host). Snap y Flathub después del MVP (confinamiento).
 7. [ ] **Extensión:** publicarla en Chrome Web Store y Edge Add-ons (justificar `nativeMessaging`, política de privacidad). Versión 1.0.0; `npm run package` arma `lockspire-extension-1.0.0.zip` sin la `key` de desarrollo (test `store_manifest.test.ts`). Falta: cuentas (Chrome US$5; Partner Center gratis, sirve también para Microsoft Store), ficha y capturas, y añadir los IDs de las tiendas a `allowedExtensionIds`.
 8. [ ] **Fichas de cada tienda:** Google Play preparada en `docs/store/google-play.md` (2026-09-30): nombre, descripciones ES/EN, ícono 512 e imagen destacada 1024×500 en grafito (`tools/generate_store_assets.py`), respuestas de contenido de la app y seguridad de los datos ("no recoge ni comparte datos"). La política de privacidad ahora cubre los íconos de sitios (DuckDuckGo). Capturas hechas (ver "Capturas para Google Play"). Faltan las fichas de Microsoft Store y de la extensión.

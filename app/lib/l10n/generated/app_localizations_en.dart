@@ -1736,4 +1736,89 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get biometricPromptReason =>
       'Verify your identity to unlock Lockspire';
+
+  @override
+  String get errorProfileNameEmpty => 'Enter a name for the profile.';
+
+  @override
+  String get errorProfileNameTooLong =>
+      'The name can have up to 30 characters.';
+
+  @override
+  String get errorProfileNameTaken =>
+      'There\'s already a profile with that name.';
+
+  @override
+  String get errorProfileMainNotRemovable =>
+      'The main profile can\'t be deleted.';
+
+  @override
+  String get errorProfilesInUse =>
+      'To turn profiles off, delete the others first: only one can remain.';
+
+  @override
+  String get profilesTitle => 'Profiles';
+
+  @override
+  String get profilesSubtitle => 'Several vaults on this device';
+
+  @override
+  String get profilesIntro =>
+      'Each profile has its own vault, with its own master password, and its own settings: cloud, fingerprint, lock, theme and language. Use them if someone else uses Lockspire on this device.';
+
+  @override
+  String get profilesEnable => 'Use several profiles';
+
+  @override
+  String get profilesEnableHint =>
+      'They\'re off by default because sharing a phone is unusual.';
+
+  @override
+  String get profilesMainName => 'Main';
+
+  @override
+  String get profilesInUse => 'In use';
+
+  @override
+  String get profilesMainTag => 'Main';
+
+  @override
+  String get profilesAdd => 'Add profile';
+
+  @override
+  String get profilesAddTitle => 'New profile';
+
+  @override
+  String get profilesAddBody =>
+      'It opens empty: there you can create your vault or restore it from the cloud.';
+
+  @override
+  String get profilesNameLabel => 'Name';
+
+  @override
+  String get profilesRename => 'Rename';
+
+  @override
+  String get profilesRenameTitle => 'Profile name';
+
+  @override
+  String get profilesDelete => 'Delete this profile';
+
+  @override
+  String profilesDeleteTitle(String name) {
+    return 'Delete the profile $name?';
+  }
+
+  @override
+  String get profilesDeleteBody =>
+      'This profile\'s vault and settings are deleted from this device. Anything synced to the cloud is not touched. This can\'t be undone.';
+
+  @override
+  String get profilesSwitch => 'Open';
+
+  @override
+  String get profilesPickerLabel => 'Profile';
+
+  @override
+  String get profilesOpening => 'Opening the profile…';
 }

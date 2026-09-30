@@ -8,8 +8,11 @@
   Toma el build release (`flutter build windows --release`), le agrega el
   manifiesto de app/windows/packaging y lo empaqueta con makeappx.
 
-  - Para la Store: -Identity y -Publisher son los que asigna Partner Center
-    ("Identidad del producto"), sin -Sign: la Store firma el paquete.
+  - Para la Store: -Store usa la identidad que asigna Partner Center
+    (Lockspire, Store ID 9NXFLQH9LMQN, "Product identity"). Sin -Sign: la
+    Store firma el paquete. El build release tiene que estar compilado con
+    --dart-define=LOCKSPIRE_STORE=msstore (donaciones con la Store, ADR 0035)
+    y las credenciales OAuth.
   - Para probar en este equipo: -Sign crea (o reutiliza) un certificado de
     prueba en el almacén del usuario y firma con él. Para instalarlo, hay que
     confiar en ese certificado (Personas de confianza del equipo, pide
@@ -17,13 +20,26 @@
 
 .EXAMPLE
   powershell -File tools/build_msix.ps1 -Sign
+.EXAMPLE
+  powershell -File tools/build_msix.ps1 -Store -Version 1.0.0.0
 #>
 param(
   [string]$Version = '1.0.0.0',
   [string]$Identity = 'Lockspire.Prueba',
   [string]$Publisher = 'CN=Lockspire Prueba',
+  [string]$PublisherDisplayName = 'Lockspire (prueba)',
+  [switch]$Store,
   [switch]$Sign
 )
+
+if ($Store) {
+  if ($Sign) { throw "-Store no se firma: lo firma la Store" }
+  # Partner Center → Lockspire → Product identity. No son secretos: van
+  # dentro del paquete publicado.
+  $Identity = 'gaanmori.Lockspire'
+  $Publisher = 'CN=194EE10D-AF31-4B74-BEA3-A850550FE34B'
+  $PublisherDisplayName = 'gaanmori'
+}
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
@@ -48,6 +64,7 @@ Copy-Item (Join-Path $release '*') $stage -Recurse
 Copy-Item (Join-Path $packaging 'Assets') $stage -Recurse
 $manifest = (Get-Content (Join-Path $packaging 'AppxManifest.xml') -Raw -Encoding UTF8).
   Replace('{IDENTITY}', $Identity).
+  Replace('{PUBLISHER_DISPLAY_NAME}', $PublisherDisplayName).
   Replace('{PUBLISHER}', $Publisher).
   Replace('{VERSION}', $Version)
 [IO.File]::WriteAllText((Join-Path $stage 'AppxManifest.xml'), $manifest, [Text.UTF8Encoding]::new($false))

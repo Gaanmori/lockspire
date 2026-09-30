@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import 'features/profiles/presentation/screens/profiles_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -83,6 +84,14 @@ class AppShell extends ConsumerWidget {
                       builder: (_) => const AppearanceScreen(
                         extraSections: [SiteIconsSettingsSection()],
                       ),
+                    ),
+                    // Varias bóvedas en el dispositivo (ADR 0039). En
+                    // Android se activan ahí mismo.
+                    SettingsItem(
+                      icon: Icons.people_outline,
+                      title: context.l10n.profilesTitle,
+                      subtitle: context.l10n.profilesSubtitle,
+                      builder: (_) => const ProfilesScreen(),
                     ),
                   ],
                 ),

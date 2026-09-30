@@ -35,6 +35,11 @@ enum AppProblemCode {
   importCsvUnclosedQuote,
   importCsvEmpty,
   importCsvNoPasswordColumn,
+  profileNameEmpty,
+  profileNameTooLong,
+  profileNameTaken,
+  profileMainNotRemovable,
+  profilesInUse,
 }
 
 class AppProblem implements Exception {

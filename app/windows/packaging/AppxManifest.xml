@@ -3,7 +3,8 @@
      Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
      Manifiesto del paquete MSIX para Microsoft Store (ADR 0028, 0035).
-     tools/build_msix.ps1 reemplaza {IDENTITY}, {PUBLISHER} y {VERSION}.
+     tools/build_msix.ps1 reemplaza {IDENTITY}, {PUBLISHER},
+     {PUBLISHER_DISPLAY_NAME} y {VERSION}.
 
      Sin virtualización de archivos ni de registro (desktop6 +
      unvirtualizedResources): la app escribe el token del canal IPC en
@@ -29,7 +30,7 @@
 
   <Properties>
     <DisplayName>Lockspire</DisplayName>
-    <PublisherDisplayName>Gabriel Ángel Montoya Rico</PublisherDisplayName>
+    <PublisherDisplayName>{PUBLISHER_DISPLAY_NAME}</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
     <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
     <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>

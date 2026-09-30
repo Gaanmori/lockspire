@@ -15,6 +15,7 @@ import '../providers/password_changed_elsewhere_port_provider.dart';
 import '../providers/vault_auth_attempt_provider.dart';
 import '../vault_session_controller.dart';
 import '../widgets/auth_card.dart';
+import '../widgets/headered_card.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
 import 'package:lockspire/l10n/localized_values.dart';
@@ -25,7 +26,15 @@ class UnlockVaultScreen extends ConsumerStatefulWidget {
   /// descargar la bóveda en cada relleno solo gasta datos y tiempo.
   final bool checkCloudForPasswordChange;
 
-  const UnlockVaultScreen({super.key, this.checkCloudForPasswordChange = true});
+  /// Encima de la tarjeta, p. ej. la lista de perfiles (ADR 0039). La pone
+  /// la raíz de la app: esta feature no conoce los perfiles.
+  final Widget? header;
+
+  const UnlockVaultScreen({
+    super.key,
+    this.checkCloudForPasswordChange = true,
+    this.header,
+  });
 
   @override
   ConsumerState<UnlockVaultScreen> createState() => _UnlockVaultScreenState();
@@ -200,161 +209,167 @@ class _UnlockVaultScreenState extends ConsumerState<UnlockVaultScreen> {
             padding: const EdgeInsets.all(LockspireSpacing.lg),
             child: Form(
               key: _formKey,
-              child: AuthCard(
-                icon: Icons.lock_outline,
-                brand: true,
-                title: context.l10n.unlockWelcomeBack,
-                subtitle: context.l10n.unlockPrompt,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_askNewPassword) ...[
-                      Text(
-                        context.l10n.unlockPasswordChangedElsewhere(
-                          context.l10n.biometricName(
-                            ref
-                                .watch(platformCapabilitiesProvider)
-                                .biometricMethod,
-                          ),
-                        ),
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: LockspireSpacing.md),
-                    ] else if (_passwordRequiredByReminder) ...[
-                      Text(
-                        context.l10n.unlockPeriodicReminder(
-                          context.l10n.biometricName(
-                            ref
-                                .watch(platformCapabilitiesProvider)
-                                .biometricMethod,
-                          ),
-                        ),
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: LockspireSpacing.md),
-                    ],
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscure,
-                      autofocus: true,
-                      enabled: !isLoading,
-                      decoration: InputDecoration(
-                        labelText: _askNewPassword
-                            ? context.l10n.pwChangedDialogTitle
-                            : context.l10n.commonMasterPassword,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscure ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed: () => setState(() => _obscure = !_obscure),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return context.l10n.commonMasterPasswordRequired;
-                        }
-                        return null;
-                      },
-                      onFieldSubmitted: (_) => isLoading ? null : _submit(),
-                    ),
-                    if (_askNewPassword && _needsPrevious) ...[
-                      const SizedBox(height: LockspireSpacing.md),
-                      TextFormField(
-                        controller: _previousPasswordController,
-                        obscureText: _obscure,
-                        enabled: !isLoading,
-                        decoration: InputDecoration(
-                          labelText: context.l10n.unlockPreviousPassword,
-                        ),
-                        validator: (value) => value == null || value.isEmpty
-                            ? context.l10n.unlockPreviousPasswordRequired
-                            : null,
-                        onFieldSubmitted: (_) => isLoading ? null : _submit(),
-                      ),
-                    ],
-                    const SizedBox(height: LockspireSpacing.lg),
-                    if (isLoading)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: LockspireSpacing.md,
-                        ),
-                        child: Column(
-                          children: [
-                            const ClipRRect(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(4),
-                              ),
-                              child: LinearProgressIndicator(),
+              child: HeaderedCard(
+                header: widget.header,
+                card: AuthCard(
+                  icon: Icons.lock_outline,
+                  brand: true,
+                  title: context.l10n.unlockWelcomeBack,
+                  subtitle: context.l10n.unlockPrompt,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_askNewPassword) ...[
+                        Text(
+                          context.l10n.unlockPasswordChangedElsewhere(
+                            context.l10n.biometricName(
+                              ref
+                                  .watch(platformCapabilitiesProvider)
+                                  .biometricMethod,
                             ),
-                            const SizedBox(height: LockspireSpacing.smMd),
-                            Text(
-                              context.l10n.unlockUnlocking,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      )
-                    else if (attempt.hasError)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: LockspireSpacing.md,
-                        ),
-                        child: Text(
-                          _errorText(attempt.error),
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
                           ),
+                          style: Theme.of(context).textTheme.bodySmall,
                           textAlign: TextAlign.center,
                         ),
-                      ),
-                    if (!isLoading)
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: _submit,
-                          child: Text(context.l10n.unlockButton),
+                        const SizedBox(height: LockspireSpacing.md),
+                      ] else if (_passwordRequiredByReminder) ...[
+                        Text(
+                          context.l10n.unlockPeriodicReminder(
+                            context.l10n.biometricName(
+                              ref
+                                  .watch(platformCapabilitiesProvider)
+                                  .biometricMethod,
+                            ),
+                          ),
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                    if (!isLoading && _changedElsewhere) ...[
-                      const SizedBox(height: LockspireSpacing.sm),
-                      TextButton(
-                        onPressed: () => setState(() {
-                          _usePreviousInstead = !_usePreviousInstead;
-                          _needsPrevious = false;
-                          ref.read(vaultAuthAttemptProvider.notifier).state =
-                              const AsyncData(null);
-                        }),
-                        child: Text(
-                          _usePreviousInstead
-                              ? context.l10n.unlockEnterNewPassword
-                              : context.l10n.unlockNoNewPassword,
+                        const SizedBox(height: LockspireSpacing.md),
+                      ],
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscure,
+                        autofocus: true,
+                        enabled: !isLoading,
+                        decoration: InputDecoration(
+                          labelText: _askNewPassword
+                              ? context.l10n.pwChangedDialogTitle
+                              : context.l10n.commonMasterPassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscure
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () =>
+                                setState(() => _obscure = !_obscure),
+                          ),
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return context.l10n.commonMasterPasswordRequired;
+                          }
+                          return null;
+                        },
+                        onFieldSubmitted: (_) => isLoading ? null : _submit(),
                       ),
-                    ],
-                    if (!isLoading &&
-                        _biometricAvailable &&
-                        !_changedElsewhere) ...[
-                      const SizedBox(height: LockspireSpacing.sm),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _submitWithBiometrics,
-                          icon: const Icon(Icons.fingerprint),
-                          label: Text(
-                            context.l10n.unlockUseBiometric(
-                              context.l10n.biometricName(
-                                ref
-                                    .watch(platformCapabilitiesProvider)
-                                    .biometricMethod,
+                      if (_askNewPassword && _needsPrevious) ...[
+                        const SizedBox(height: LockspireSpacing.md),
+                        TextFormField(
+                          controller: _previousPasswordController,
+                          obscureText: _obscure,
+                          enabled: !isLoading,
+                          decoration: InputDecoration(
+                            labelText: context.l10n.unlockPreviousPassword,
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? context.l10n.unlockPreviousPasswordRequired
+                              : null,
+                          onFieldSubmitted: (_) => isLoading ? null : _submit(),
+                        ),
+                      ],
+                      const SizedBox(height: LockspireSpacing.lg),
+                      if (isLoading)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: LockspireSpacing.md,
+                          ),
+                          child: Column(
+                            children: [
+                              const ClipRRect(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(4),
+                                ),
+                                child: LinearProgressIndicator(),
+                              ),
+                              const SizedBox(height: LockspireSpacing.smMd),
+                              Text(
+                                context.l10n.unlockUnlocking,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )
+                      else if (attempt.hasError)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: LockspireSpacing.md,
+                          ),
+                          child: Text(
+                            _errorText(attempt.error),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      if (!isLoading)
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: _submit,
+                            child: Text(context.l10n.unlockButton),
+                          ),
+                        ),
+                      if (!isLoading && _changedElsewhere) ...[
+                        const SizedBox(height: LockspireSpacing.sm),
+                        TextButton(
+                          onPressed: () => setState(() {
+                            _usePreviousInstead = !_usePreviousInstead;
+                            _needsPrevious = false;
+                            ref.read(vaultAuthAttemptProvider.notifier).state =
+                                const AsyncData(null);
+                          }),
+                          child: Text(
+                            _usePreviousInstead
+                                ? context.l10n.unlockEnterNewPassword
+                                : context.l10n.unlockNoNewPassword,
+                          ),
+                        ),
+                      ],
+                      if (!isLoading &&
+                          _biometricAvailable &&
+                          !_changedElsewhere) ...[
+                        const SizedBox(height: LockspireSpacing.sm),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _submitWithBiometrics,
+                            icon: const Icon(Icons.fingerprint),
+                            label: Text(
+                              context.l10n.unlockUseBiometric(
+                                context.l10n.biometricName(
+                                  ref
+                                      .watch(platformCapabilitiesProvider)
+                                      .biometricMethod,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),

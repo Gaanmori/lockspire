@@ -40,6 +40,8 @@ class AtomicFileVaultStorageAdapter implements VaultStoragePort {
     final bytes = VaultFileCodec.encode(file);
 
     final target = File(path);
+    // Un perfil nuevo (ADR 0039) todavía no tiene su carpeta.
+    await target.parent.create(recursive: true);
     final tempPath = '$path.tmp-${DateTime.now().microsecondsSinceEpoch}';
     final tempFile = File(tempPath);
 

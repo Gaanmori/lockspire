@@ -2719,6 +2719,156 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Verifíquese para desbloquear Lockspire'**
   String get biometricPromptReason;
+
+  /// No description provided for @errorProfileNameEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Escriba un nombre para el perfil.'**
+  String get errorProfileNameEmpty;
+
+  /// No description provided for @errorProfileNameTooLong.
+  ///
+  /// In es, this message translates to:
+  /// **'El nombre puede tener hasta 30 caracteres.'**
+  String get errorProfileNameTooLong;
+
+  /// No description provided for @errorProfileNameTaken.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya hay un perfil con ese nombre.'**
+  String get errorProfileNameTaken;
+
+  /// No description provided for @errorProfileMainNotRemovable.
+  ///
+  /// In es, this message translates to:
+  /// **'El perfil principal no se puede borrar.'**
+  String get errorProfileMainNotRemovable;
+
+  /// No description provided for @errorProfilesInUse.
+  ///
+  /// In es, this message translates to:
+  /// **'Para desactivar los perfiles, primero borre los demás: solo puede quedar uno.'**
+  String get errorProfilesInUse;
+
+  /// No description provided for @profilesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Perfiles'**
+  String get profilesTitle;
+
+  /// No description provided for @profilesSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Varias bóvedas en este dispositivo'**
+  String get profilesSubtitle;
+
+  /// No description provided for @profilesIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada perfil tiene su propia bóveda, con su propia contraseña maestra, y sus propios ajustes: nube, huella, bloqueo, tema e idioma. Úselos si otra persona usa Lockspire en este dispositivo.'**
+  String get profilesIntro;
+
+  /// No description provided for @profilesEnable.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar varios perfiles'**
+  String get profilesEnable;
+
+  /// No description provided for @profilesEnableHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Vienen desactivados porque es raro compartir el teléfono.'**
+  String get profilesEnableHint;
+
+  /// No description provided for @profilesMainName.
+  ///
+  /// In es, this message translates to:
+  /// **'Principal'**
+  String get profilesMainName;
+
+  /// No description provided for @profilesInUse.
+  ///
+  /// In es, this message translates to:
+  /// **'En uso'**
+  String get profilesInUse;
+
+  /// No description provided for @profilesMainTag.
+  ///
+  /// In es, this message translates to:
+  /// **'Principal'**
+  String get profilesMainTag;
+
+  /// No description provided for @profilesAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar perfil'**
+  String get profilesAdd;
+
+  /// No description provided for @profilesAddTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo perfil'**
+  String get profilesAddTitle;
+
+  /// No description provided for @profilesAddBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Se abrirá vacío: ahí podrá crear su bóveda o restaurarla desde la nube.'**
+  String get profilesAddBody;
+
+  /// No description provided for @profilesNameLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre'**
+  String get profilesNameLabel;
+
+  /// No description provided for @profilesRename.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar nombre'**
+  String get profilesRename;
+
+  /// No description provided for @profilesRenameTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del perfil'**
+  String get profilesRenameTitle;
+
+  /// No description provided for @profilesDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar este perfil'**
+  String get profilesDelete;
+
+  /// No description provided for @profilesDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar el perfil {name}?'**
+  String profilesDeleteTitle(String name);
+
+  /// No description provided for @profilesDeleteBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Se eliminan de este dispositivo su bóveda y sus ajustes. Lo que haya sincronizado en la nube no se toca. No se puede deshacer.'**
+  String get profilesDeleteBody;
+
+  /// No description provided for @profilesSwitch.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir'**
+  String get profilesSwitch;
+
+  /// No description provided for @profilesPickerLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Perfil'**
+  String get profilesPickerLabel;
+
+  /// No description provided for @profilesOpening.
+  ///
+  /// In es, this message translates to:
+  /// **'Abriendo el perfil…'**
+  String get profilesOpening;
 }
 
 class _AppLocalizationsDelegate

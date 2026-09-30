@@ -93,5 +93,10 @@ String _problem(AppLocalizations l10n, AppProblemCode code, String? detail) {
     AppProblemCode.importCsvEmpty => l10n.errorImportCsvEmpty,
     AppProblemCode.importCsvNoPasswordColumn =>
       l10n.errorImportCsvNoPasswordColumn,
+    AppProblemCode.profileNameEmpty => l10n.errorProfileNameEmpty,
+    AppProblemCode.profileNameTooLong => l10n.errorProfileNameTooLong,
+    AppProblemCode.profileNameTaken => l10n.errorProfileNameTaken,
+    AppProblemCode.profileMainNotRemovable => l10n.errorProfileMainNotRemovable,
+    AppProblemCode.profilesInUse => l10n.errorProfilesInUse,
   };
 }

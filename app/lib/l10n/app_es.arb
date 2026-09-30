@@ -1127,5 +1127,35 @@
       }
     }
   },
-  "biometricPromptReason": "Verifíquese para desbloquear Lockspire"
+  "biometricPromptReason": "Verifíquese para desbloquear Lockspire",
+  "errorProfileNameEmpty": "Escriba un nombre para el perfil.",
+  "errorProfileNameTooLong": "El nombre puede tener hasta 30 caracteres.",
+  "errorProfileNameTaken": "Ya hay un perfil con ese nombre.",
+  "errorProfileMainNotRemovable": "El perfil principal no se puede borrar.",
+  "errorProfilesInUse": "Para desactivar los perfiles, primero borre los demás: solo puede quedar uno.",
+  "profilesTitle": "Perfiles",
+  "profilesSubtitle": "Varias bóvedas en este dispositivo",
+  "profilesIntro": "Cada perfil tiene su propia bóveda, con su propia contraseña maestra, y sus propios ajustes: nube, huella, bloqueo, tema e idioma. Úselos si otra persona usa Lockspire en este dispositivo.",
+  "profilesEnable": "Usar varios perfiles",
+  "profilesEnableHint": "Vienen desactivados porque es raro compartir el teléfono.",
+  "profilesMainName": "Principal",
+  "profilesInUse": "En uso",
+  "profilesMainTag": "Principal",
+  "profilesAdd": "Agregar perfil",
+  "profilesAddTitle": "Nuevo perfil",
+  "profilesAddBody": "Se abrirá vacío: ahí podrá crear su bóveda o restaurarla desde la nube.",
+  "profilesNameLabel": "Nombre",
+  "profilesRename": "Cambiar nombre",
+  "profilesRenameTitle": "Nombre del perfil",
+  "profilesDelete": "Eliminar este perfil",
+  "profilesDeleteTitle": "¿Eliminar el perfil {name}?",
+  "@profilesDeleteTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "profilesDeleteBody": "Se eliminan de este dispositivo su bóveda y sus ajustes. Lo que haya sincronizado en la nube no se toca. No se puede deshacer.",
+  "profilesSwitch": "Abrir",
+  "profilesPickerLabel": "Perfil",
+  "profilesOpening": "Abriendo el perfil…"
 }

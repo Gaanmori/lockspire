@@ -20,11 +20,17 @@ import 'features/browser_bridge/presentation/providers/browser_bridge_provider.d
 import 'features/browser_bridge/presentation/widgets/link_request_listener.dart';
 import 'features/browser_bridge/presentation/widgets/browser_login_save_listener.dart';
 import 'features/desktop/presentation/widgets/desktop_shell.dart';
+import 'features/profiles/presentation/profile_switcher.dart';
+import 'features/profiles/presentation/providers/profile_providers.dart';
+import 'features/profiles/presentation/start_profile.dart';
+import 'features/profiles/presentation/widgets/profile_host.dart';
+import 'features/profiles/presentation/widgets/profile_widgets.dart';
 import 'features/sync/presentation/screens/restore_vault_screen.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
 import 'features/vault/presentation/vault_session_controller.dart';
 import 'features/vault/presentation/vault_session_state.dart';
 import 'features/vault/presentation/widgets/activity_and_lifecycle_watcher.dart';
+import 'shared/secure_storage_provider.dart';
 
 Future<void> main() async {
   // WidgetsBinding.instance no existe hasta que se inicializa el binding
@@ -40,26 +46,46 @@ Future<void> main() async {
   final isAutofill =
       WidgetsBinding.instance.platformDispatcher.defaultRouteName ==
       '/autofill';
-  final container = ProviderContainer(overrides: appOverrides());
-  await startApp(container, isAutofill: isAutofill);
-  if (Platform.isWindows || Platform.isLinux) {
+  final isDesktop = Platform.isWindows || Platform.isLinux;
+  if (isDesktop) {
     // DesktopShell (ADR 0012) usa window_manager, que exige inicializarse
     // antes de runApp().
     await windowManager.ensureInitialized();
-    // El canal de la extensión (ADR 0013) arranca antes de la UI: si otra
-    // instancia ya lo tiene, se le pide que muestre su ventana y esta
-    // termina sin llegar a abrir la suya (instancia única, ADR 0012). Si
-    // la otra no responde (colgada, o el canal no es de confianza), esta
-    // sigue arrancando sin canal — la pantalla "Navegador" lo indica.
-    final bridge = await container.read(browserBridgeProvider.future);
-    if (bridge == BrowserBridgeStatus.anotherInstance &&
-        await signalExistingInstance()) {
-      exit(0);
-    }
+  }
+
+  // Cada perfil tiene su propio contenedor (ADR 0039): se abre el último
+  // usado, y cambiar de perfil crea otro con `boot`.
+  Future<ProviderContainer> boot(String profileId, ProfileSwitcher s) async {
+    final container = ProviderContainer(
+      overrides: [
+        ...appOverrides(),
+        activeProfileIdProvider.overrideWithValue(profileId),
+        profileSwitcherProvider.overrideWithValue(s),
+      ],
+    );
+    await startApp(container, isAutofill: isAutofill);
+    // El canal de la extensión (ADR 0013) arranca antes de la UI.
+    if (isDesktop) await container.read(browserBridgeProvider.future);
+    return container;
+  }
+
+  final handle = ProfileSwitchHandle();
+  final container = await boot(await startProfileId(), handle);
+  // Si otra instancia ya tiene el canal, se le pide que muestre su ventana
+  // y esta termina sin llegar a abrir la suya (instancia única, ADR 0012).
+  // Si la otra no responde (colgada, o el canal no es de confianza), esta
+  // sigue arrancando sin canal — la pantalla "Navegador" lo indica.
+  if (isDesktop &&
+      container.read(browserBridgeProvider).value ==
+          BrowserBridgeStatus.anotherInstance &&
+      await signalExistingInstance()) {
+    exit(0);
   }
   runApp(
-    UncontrolledProviderScope(
-      container: container,
+    ProfileHost(
+      handle: handle,
+      initialContainer: container,
+      boot: boot,
       child: isAutofill ? const AutofillApp() : const MyApp(),
     ),
   );
@@ -132,6 +158,8 @@ class _MyAppState extends ConsumerState<MyApp> {
                 child: VaultGateScreen(
                   unlockedBuilder: (vault) => AppShell(vault: vault),
                   restoreVaultBuilder: (_) => const RestoreVaultScreen(),
+                  // Con varios perfiles, se elige al abrir (ADR 0039).
+                  lockedHeader: const ProfilePicker(),
                 ),
               ),
             ),

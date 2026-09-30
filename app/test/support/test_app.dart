@@ -43,6 +43,13 @@ import 'fakes/fake_autofill_host.dart';
 import 'fakes/fake_desktop_ports.dart';
 import 'fakes/fake_file_transfer.dart';
 import 'fakes/fake_native_messaging.dart';
+import 'package:lockspire/features/profiles/domain/ports/profile_data_port.dart';
+import 'package:lockspire/features/profiles/domain/profile.dart';
+import 'package:lockspire/features/profiles/presentation/profile_switcher.dart';
+import 'package:lockspire/features/profiles/presentation/providers/profile_providers.dart';
+import 'package:lockspire/features/profiles/presentation/widgets/profile_host.dart';
+import 'package:lockspire/shared/secure_storage_provider.dart';
+
 import 'fakes/fake_site_icons.dart';
 import 'fakes/fake_system_accent.dart';
 import 'fakes/fake_secure_clipboard.dart';
@@ -143,6 +150,32 @@ class TestApp {
   final List<Override> extraOverrides;
   final Map<String, String> secureStorage = {};
 
+  final _profileStorages = <String, FakeVaultStoragePort>{};
+  final _profileAncestors = <String, FakeVaultStoragePort>{};
+
+  /// La bóveda en disco de un perfil (ADR 0039).
+  FakeVaultStoragePort storageFor(String profileId) =>
+      profileId == mainProfileId
+      ? storage
+      : _profileStorages.putIfAbsent(profileId, FakeVaultStoragePort.new);
+
+  FakeVaultStoragePort ancestorFor(String profileId) =>
+      profileId == mainProfileId
+      ? ancestor
+      : _profileAncestors.putIfAbsent(profileId, FakeVaultStoragePort.new);
+
+  /// El perfil con que arranca (lo que `main()` lee de la lista guardada).
+  String startProfile = mainProfileId;
+
+  /// Los perfiles cuyos datos se borraron (ADR 0039). Borrar uno también
+  /// vacía su bóveda en memoria.
+  late final profileData = FakeProfileData(
+    onErase: (id) {
+      _profileStorages.remove(id);
+      _profileAncestors.remove(id);
+    },
+  );
+
   TestApp({
     FakeCryptoPort? crypto,
     FakeVaultStoragePort? storage,
@@ -175,8 +208,13 @@ class TestApp {
     // La misma raíz de composición que main() (ADR 0018, 0024).
     ...appOverrides(),
     cryptoPortProvider.overrideWith((ref) async => crypto),
-    vaultStoragePortProvider.overrideWith((ref) async => storage),
-    syncAncestorStoragePortProvider.overrideWith((ref) async => ancestor),
+    // Cada perfil con su bóveda (ADR 0039); el principal, [storage].
+    vaultStoragePortProvider.overrideWith(
+      (ref) async => storageFor(ref.watch(activeProfileIdProvider)),
+    ),
+    syncAncestorStoragePortProvider.overrideWith(
+      (ref) async => ancestorFor(ref.watch(activeProfileIdProvider)),
+    ),
     biometricAuthPortProvider.overrideWith((ref) => biometric),
     secureClipboardPortProvider.overrideWithValue(clipboard),
     fileTransferPortProvider.overrideWithValue(files),
@@ -208,6 +246,7 @@ class TestApp {
       (ref) async => BrowserBridgeStatus.running,
     ),
     platformCapabilitiesProvider.overrideWithValue(platform),
+    profileDataPortProvider.overrideWithValue(profileData),
     if (cloud case final cloud?)
       syncPortForProvider(
         SyncProviderId.webdav,
@@ -256,48 +295,38 @@ class TestApp {
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
 
     // El mismo arranque que main(): tema, tiempo de bloqueo y servicios en
-    // segundo plano (bloqueo automático, sync, íconos, lanzador).
-    container = ProviderContainer(overrides: overrides);
-    await startApp(container, isAutofill: isAutofill);
+    // segundo plano (bloqueo automático, sync, íconos, lanzador), con un
+    // contenedor por perfil (ADR 0039).
+    Future<ProviderContainer> boot(String profileId, ProfileSwitcher s) async {
+      final booted = ProviderContainer(
+        overrides: [
+          ...overrides,
+          activeProfileIdProvider.overrideWithValue(profileId),
+          profileSwitcherProvider.overrideWithValue(s),
+        ],
+      );
+      await startApp(booted, isAutofill: isAutofill);
+      return booted;
+    }
+
+    final handle = ProfileSwitchHandle();
+    container = await boot(startProfile, handle);
 
     await tester.pumpWidget(
-      // Key nueva en cada arranque: si no, Flutter reusa el scope anterior y
-      // "volver a abrir la app" no reinicia nada.
-      _OwnedContainerScope(key: UniqueKey(), container: container, child: app),
+      // Key nueva en cada arranque: si no, Flutter reusa el host anterior y
+      // "volver a abrir la app" no reinicia nada. Al desmontarse, el host
+      // descarta su contenedor, como al cerrar el proceso.
+      ProfileHost(
+        key: UniqueKey(),
+        handle: handle,
+        initialContainer: container,
+        boot: boot,
+        onContainer: (next) => container = next,
+        child: app,
+      ),
     );
     await tester.pumpAndSettle();
   }
-}
-
-/// Como `ProviderScope`, descarta su contenedor al desmontarse: "cerrar la
-/// app" (montar otra, o terminar el test) apaga sus servicios y
-/// temporizadores, como al cerrar el proceso.
-class _OwnedContainerScope extends StatefulWidget {
-  final ProviderContainer container;
-  final Widget child;
-
-  const _OwnedContainerScope({
-    super.key,
-    required this.container,
-    required this.child,
-  });
-
-  @override
-  State<_OwnedContainerScope> createState() => _OwnedContainerScopeState();
-}
-
-class _OwnedContainerScopeState extends State<_OwnedContainerScope> {
-  @override
-  void dispose() {
-    widget.container.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => UncontrolledProviderScope(
-    container: widget.container,
-    child: widget.child,
-  );
 }
 
 /// Monta [screen] sola, con los textos en [locale] y el tamaño de un
@@ -333,3 +362,17 @@ Future<void> pumpScreen(
 /// en el siguiente nunca se completa (p. ej. la lista de palabras del
 /// generador): cada test arranca con la caché vacía.
 void _clearAssetCache() => rootBundle.clear();
+
+/// Borrado de los datos de un perfil, en memoria.
+class FakeProfileData implements ProfileDataPort {
+  final void Function(String id) onErase;
+  final erased = <String>[];
+
+  FakeProfileData({required this.onErase});
+
+  @override
+  Future<void> erase(String id) async {
+    erased.add(id);
+    onErase(id);
+  }
+}

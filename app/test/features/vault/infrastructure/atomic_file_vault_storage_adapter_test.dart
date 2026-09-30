@@ -61,6 +61,22 @@ void main() {
       expect(read.encryptedPayload, payload);
     });
 
+    test('la primera escritura de un perfil nuevo crea su carpeta '
+        '(ADR 0039)', () async {
+      final path = '${tempDir.path}/profiles/p2/vault.lockspire';
+      final adapter = AtomicFileVaultStorageAdapter(path);
+
+      await adapter.write(
+        VaultFile(
+          header: _sampleHeader(),
+          encryptedPayload: Uint8List.fromList([1, 2, 3]),
+        ),
+      );
+
+      expect(await adapter.exists(), isTrue);
+      expect((await adapter.read()).encryptedPayload, [1, 2, 3]);
+    });
+
     test('no deja archivo temporal huérfano tras un write exitoso', () async {
       final path = '${tempDir.path}/vault.lockspire';
       final adapter = AtomicFileVaultStorageAdapter(path);

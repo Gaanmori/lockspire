@@ -26,10 +26,15 @@ class VaultGateScreen extends ConsumerWidget {
   /// Ver `CreateVaultScreen.restoreVaultBuilder`.
   final WidgetBuilder? restoreVaultBuilder;
 
+  /// Encima de las pantallas de crear y desbloquear, p. ej. la lista de
+  /// perfiles (ADR 0039).
+  final Widget? lockedHeader;
+
   const VaultGateScreen({
     super.key,
     required this.unlockedBuilder,
     this.restoreVaultBuilder,
+    this.lockedHeader,
   });
 
   @override
@@ -66,8 +71,9 @@ class VaultGateScreen extends ConsumerWidget {
       data: (state) => switch (state) {
         VaultSessionNoVault() => CreateVaultScreen(
           restoreVaultBuilder: restoreVaultBuilder,
+          header: lockedHeader,
         ),
-        VaultSessionLocked() => const UnlockVaultScreen(),
+        VaultSessionLocked() => UnlockVaultScreen(header: lockedHeader),
         VaultSessionUnlocked(:final vault) => unlockedBuilder(vault),
       },
     );

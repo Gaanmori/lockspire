@@ -1749,4 +1749,88 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get biometricPromptReason => 'Verifíquese para desbloquear Lockspire';
+
+  @override
+  String get errorProfileNameEmpty => 'Escriba un nombre para el perfil.';
+
+  @override
+  String get errorProfileNameTooLong =>
+      'El nombre puede tener hasta 30 caracteres.';
+
+  @override
+  String get errorProfileNameTaken => 'Ya hay un perfil con ese nombre.';
+
+  @override
+  String get errorProfileMainNotRemovable =>
+      'El perfil principal no se puede borrar.';
+
+  @override
+  String get errorProfilesInUse =>
+      'Para desactivar los perfiles, primero borre los demás: solo puede quedar uno.';
+
+  @override
+  String get profilesTitle => 'Perfiles';
+
+  @override
+  String get profilesSubtitle => 'Varias bóvedas en este dispositivo';
+
+  @override
+  String get profilesIntro =>
+      'Cada perfil tiene su propia bóveda, con su propia contraseña maestra, y sus propios ajustes: nube, huella, bloqueo, tema e idioma. Úselos si otra persona usa Lockspire en este dispositivo.';
+
+  @override
+  String get profilesEnable => 'Usar varios perfiles';
+
+  @override
+  String get profilesEnableHint =>
+      'Vienen desactivados porque es raro compartir el teléfono.';
+
+  @override
+  String get profilesMainName => 'Principal';
+
+  @override
+  String get profilesInUse => 'En uso';
+
+  @override
+  String get profilesMainTag => 'Principal';
+
+  @override
+  String get profilesAdd => 'Agregar perfil';
+
+  @override
+  String get profilesAddTitle => 'Nuevo perfil';
+
+  @override
+  String get profilesAddBody =>
+      'Se abrirá vacío: ahí podrá crear su bóveda o restaurarla desde la nube.';
+
+  @override
+  String get profilesNameLabel => 'Nombre';
+
+  @override
+  String get profilesRename => 'Cambiar nombre';
+
+  @override
+  String get profilesRenameTitle => 'Nombre del perfil';
+
+  @override
+  String get profilesDelete => 'Eliminar este perfil';
+
+  @override
+  String profilesDeleteTitle(String name) {
+    return '¿Eliminar el perfil $name?';
+  }
+
+  @override
+  String get profilesDeleteBody =>
+      'Se eliminan de este dispositivo su bóveda y sus ajustes. Lo que haya sincronizado en la nube no se toca. No se puede deshacer.';
+
+  @override
+  String get profilesSwitch => 'Abrir';
+
+  @override
+  String get profilesPickerLabel => 'Perfil';
+
+  @override
+  String get profilesOpening => 'Abriendo el perfil…';
 }
