@@ -688,6 +688,21 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
 
+### Tests: adaptadores de infraestructura, grupo 2 (2026-09-30)
+
+- **Hecho:** infraestructura pasó de 57,9 % a 75,5 %. 509 tests pasan en `test/`. Aplicación 95,0 %, dominio 94,8 %, presentación 90,1 %. Infraestructura sigue sin piso en la CI.
+  - **Nubes:** Google Drive (`appDataFolder`, crear y luego actualizar el mismo archivo, subida multipart) y OneDrive (`approot`, 404 → `remoteVaultMissing`, 507 → `remoteUploadFailed`). Ambos con un servidor HTTP simulado (`MockClient`).
+  - **Inicio de sesión de Microsoft:** PKCE, loopback con CSP, permiso rechazado, navegador que no abre, canje fallido, cuenta sin correo, `userPrincipalName`, redirección propia en Android y renovación del token.
+  - **Native messaging, Windows y Linux:** registro de Windows simulado (`reg`), elevación con PowerShell y su cancelación, manifests en `XDG_CONFIG_HOME` sin tocar los ajenos.
+  - **Almacenamiento seguro:** cuentas de Google y OneDrive, WebDAV, nube activa, recordatorio de la contraseña maestra y último desbloqueo con contraseña.
+- **Cambios en la app para poder probar** (sin cambio de comportamiento):
+  - `MicrosoftOAuthAuth` recibe `openBrowser` (por defecto `launchUrl`).
+  - `NativeMessagingRegistrationAdapter` recibe `HostPlatform` y `ProcessRunner` (por defecto la plataforma actual y `Process.run`).
+- **Bugs encontrados y corregidos:**
+  1. **OneDrive en escritorio:** si el navegador no abría, la espera del código quedaba con un error asíncrono sin manejar. Ahora se descarta (`codeFuture.ignore()`) antes de lanzar `oauthBrowserFailed`.
+  2. **OneDrive en escritorio:** un error en la vuelta del loopback (por ejemplo, permiso rechazado) llegaba como `StateError` en inglés. Ahora es `AppProblem(oauthNoCode)`, traducible.
+- **Pendiente:** verificar a mano en Windows "Conectar con Chrome/Edge" (normal y para todo el equipo) y conectar OneDrive, porque se tocaron esos adaptadores.
+
 ### Tests: cobertura de pantallas al 90 % y puertos para todo plugin (2026-09-29)
 
 - **Hecho:**
