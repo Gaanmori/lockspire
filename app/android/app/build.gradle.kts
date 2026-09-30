@@ -1,8 +1,20 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Clave de subida para Google Play (Play App Signing: Google firma lo que
+// llega a los usuarios con su propia clave). Vive fuera del repositorio;
+// android/key.properties dice dónde está y está en .gitignore. Ver
+// docs/release-android.md.
+val keyProperties = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val hasUploadKey = keyProperties.getProperty("storeFile") != null
 
 android {
     namespace = "com.lockspire.lockspire"
@@ -28,11 +40,28 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasUploadKey) {
+            create("upload") {
+                storeFile = file(keyProperties.getProperty("storeFile"))
+                storePassword = keyProperties.getProperty("storePassword")
+                keyAlias = keyProperties.getProperty("keyAlias")
+                keyPassword = keyProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Sin key.properties (CI, otros equipos) se firma con la clave de
+            // depuración para poder probar el build release; Google Play
+            // rechaza ese paquete, así que no puede publicarse por error.
+            signingConfig = if (hasUploadKey) {
+                signingConfigs.getByName("upload")
+            } else {
+                logger.warn("Lockspire: sin android/key.properties, release se firma con la clave de depuración.")
+                signingConfigs.getByName("debug")
+            }
             // Reglas propias de R8 además de las de Flutter (ver el archivo).
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
