@@ -32,6 +32,13 @@ class LockspireIconColors {
         keyhole: light.accentHover,
       );
 
+  /// El del tema por defecto (ADR 0036), y el de respaldo.
+  static const grafito = LockspireIconColors(
+    background: Color(0xFF2B2E32),
+    glyph: Color(0xFFF7F7F8),
+    keyhole: Color(0xFF1A1C1F),
+  );
+
   static const lineage = LockspireIconColors(
     background: Color(0xFF167C80),
     glyph: Color(0xFFF6FAFA),
@@ -113,7 +120,7 @@ class LockspireIconPainter extends CustomPainter {
 
 /// Colores del ícono del tema elegido, para toda la app. Los calcula quien
 /// arma la app (a partir del tema claro de la familia elegida) y los pone
-/// por encima de `MaterialApp`; sin él, el ícono de Lineage.
+/// por encima de `MaterialApp`; sin él, el de Grafito (ADR 0036).
 class LockspireBrand extends InheritedWidget {
   final LockspireIconColors colors;
 
@@ -121,7 +128,7 @@ class LockspireBrand extends InheritedWidget {
 
   static LockspireIconColors of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<LockspireBrand>()?.colors ??
-      LockspireIconColors.lineage;
+      LockspireIconColors.grafito;
 
   @override
   bool updateShouldNotify(LockspireBrand old) => old.colors != colors;

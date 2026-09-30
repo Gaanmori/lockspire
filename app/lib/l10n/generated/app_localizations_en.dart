@@ -71,7 +71,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeSystemUnavailable =>
-      'Not available on this device: Lineage is used instead.';
+      'Not available on this device: Grafito is used instead.';
 
   @override
   String get themeSystemAndroid => 'Material You: colors from your wallpaper.';

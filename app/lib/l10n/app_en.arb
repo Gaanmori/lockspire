@@ -19,7 +19,7 @@
   "themeCustomHex": "Hex color",
   "themeCustomApply": "Use this color",
   "themeCustomInvalid": "Enter a color like #6750A4.",
-  "themeSystemUnavailable": "Not available on this device: Lineage is used instead.",
+  "themeSystemUnavailable": "Not available on this device: Grafito is used instead.",
   "themeSystemAndroid": "Material You: colors from your wallpaper.",
   "themeSystemDesktop": "System accent color.",
   "appearanceThemeSemantics": "Theme {title}",

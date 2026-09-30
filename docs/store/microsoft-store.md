@@ -57,7 +57,14 @@ Lockspire en Partner Center:
 - **Packages:** subir el `.msix`.
 - **Store listings:** español (España) e inglés (Estados Unidos).
   - La descripción es la de `google-play.md` con dos cambios: la sección "AUTOCOMPLETADO" pasa a hablar de la extensión de Chrome y Edge, y "TAMBIÉN EN SU ORDENADOR" pasa a "TAMBIÉN EN SU TELÉFONO" (Android).
-  - **Capturas de escritorio:** al menos una, de 1366 × 768 o más. **Pendientes:** hacerlas con una bóveda de demostración, nunca con la real.
+  - **Capturas de escritorio:** `assets/screenshots/windows/es-01` a `es-06` (1920 × 1080), en este orden:
+    1. la bóveda;
+    2. una entrada con el generador;
+    3. Seguridad, con Windows Hello y el bloqueo automático;
+    4. los temas;
+    5. el desbloqueo con dos perfiles;
+    6. una entrada en modo oscuro.
+  - Se generan con la interfaz real y una bóveda de demostración (`app/tool/store_screenshots/`), sin tocar ninguna bóveda. Para rehacerlas después de cambiar la interfaz, desde `app/`: `flutter test --update-goldens tool/store_screenshots/windows_screenshots_test.dart`.
 
 ### Descripción breve para Windows
 

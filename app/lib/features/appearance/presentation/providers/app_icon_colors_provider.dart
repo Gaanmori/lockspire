@@ -17,6 +17,6 @@ LockspireIconColors appIconColors(Ref ref) {
   final light = ref.watch(appThemesProvider).light;
   final palette = light.extension<LockspirePalette>();
   return palette == null
-      ? LockspireIconColors.lineage
+      ? LockspireIconColors.grafito
       : LockspireIconColors.fromPalette(palette);
 }

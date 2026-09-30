@@ -70,7 +70,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get themeSystemUnavailable =>
-      'No disponible en este equipo: se usa Lineage.';
+      'No disponible en este equipo: se usa Grafito.';
 
   @override
   String get themeSystemAndroid =>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import '../../../../design/readable_width.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/l10n/l10n.dart';
@@ -26,19 +27,21 @@ class AutofillSettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.autofillSettingsTitle)),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(LockspireSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(context.l10n.autofillSettingsHint),
-              const SizedBox(height: LockspireSpacing.lg),
-              FilledButton(
-                onPressed: () => _openSystemSettings(context, ref),
-                child: Text(context.l10n.autofillSettingsButton),
-              ),
-            ],
+      body: ReadableWidth(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(LockspireSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(context.l10n.autofillSettingsHint),
+                const SizedBox(height: LockspireSpacing.lg),
+                FilledButton(
+                  onPressed: () => _openSystemSettings(context, ref),
+                  child: Text(context.l10n.autofillSettingsButton),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import '../../../../design/readable_width.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/shared/platform_capabilities.dart';
@@ -53,66 +54,69 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.securityTitle)),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(LockspireSpacing.lg),
-          child: FutureBuilder<(BiometricAvailability, bool)>(
-            future: ref.watch(biometricStatusProvider.future),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final (availability, enabled) = snapshot.data!;
-              final available = availability == BiometricAvailability.available;
+      body: ReadableWidth(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(LockspireSpacing.lg),
+            child: FutureBuilder<(BiometricAvailability, bool)>(
+              future: ref.watch(biometricStatusProvider.future),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final (availability, enabled) = snapshot.data!;
+                final available =
+                    availability == BiometricAvailability.available;
 
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _SectionTitle(context.l10n.securityMasterPasswordSection),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.password),
-                      title: Text(context.l10n.changePwTitle),
-                      subtitle: Text(context.l10n.securityChangePwHint),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: _openChangeMasterPassword,
-                    ),
-                    const _SectionDivider(),
-                    _SectionTitle(context.l10n.securityUnlockSection),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        context.l10n.securityUnlockWith(
-                          _biometricMethodName(context, ref),
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SectionTitle(context.l10n.securityMasterPasswordSection),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.password),
+                        title: Text(context.l10n.changePwTitle),
+                        subtitle: Text(context.l10n.securityChangePwHint),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: _openChangeMasterPassword,
+                      ),
+                      const _SectionDivider(),
+                      _SectionTitle(context.l10n.securityUnlockSection),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          context.l10n.securityUnlockWith(
+                            _biometricMethodName(context, ref),
+                          ),
                         ),
+                        subtitle: Text(
+                          available
+                              ? context.l10n.securityUnlockWithHint(
+                                  _biometricMethodName(context, ref),
+                                )
+                              : _unavailableReason(availability),
+                        ),
+                        value: enabled,
+                        onChanged: (available && !_busy) ? _toggle : null,
                       ),
-                      subtitle: Text(
-                        available
-                            ? context.l10n.securityUnlockWithHint(
-                                _biometricMethodName(context, ref),
-                              )
-                            : _unavailableReason(availability),
-                      ),
-                      value: enabled,
-                      onChanged: (available && !_busy) ? _toggle : null,
-                    ),
-                    if (_busy) ...[
-                      const SizedBox(height: LockspireSpacing.md),
-                      const Center(child: CircularProgressIndicator()),
+                      if (_busy) ...[
+                        const SizedBox(height: LockspireSpacing.md),
+                        const Center(child: CircularProgressIndicator()),
+                      ],
+                      // Sin huella siempre se pide la contraseña: el
+                      // recordatorio solo tiene sentido con ella activada.
+                      if (available && enabled) ...[
+                        const SizedBox(height: LockspireSpacing.md),
+                        const _MasterPasswordReminderSection(),
+                      ],
+                      const _SectionDivider(),
+                      const _AutoLockSection(),
                     ],
-                    // Sin huella siempre se pide la contraseña: el
-                    // recordatorio solo tiene sentido con ella activada.
-                    if (available && enabled) ...[
-                      const SizedBox(height: LockspireSpacing.md),
-                      const _MasterPasswordReminderSection(),
-                    ],
-                    const _SectionDivider(),
-                    const _AutoLockSection(),
-                  ],
-                ),
-              );
-            },
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),

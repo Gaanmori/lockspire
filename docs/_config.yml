@@ -1,6 +1,7 @@
-# GitHub Pages (ADR 0028): solo se publica la política de privacidad.
-# El resto de docs/ es documentación interna del proyecto y se lee en el
-# repositorio, no en el sitio.
+# GitHub Pages (ADR 0028): solo se publican la página de inicio (index.md,
+# con sus imágenes en assets/site) y la política de privacidad; Google las
+# pide para verificar la pantalla de consentimiento. El resto de docs/ es
+# documentación interna del proyecto y se lee en el repositorio.
 title: Lockspire
 exclude:
   - adr

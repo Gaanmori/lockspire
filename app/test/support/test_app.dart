@@ -238,7 +238,7 @@ class TestApp {
     themedIconFilePortProvider.overrideWithValue(FakeThemedIconFile()),
     osSessionEventsPortProvider.overrideWithValue(osSession),
     // El plugin de color del sistema no responde en tests: sin color de
-    // acento, "Colores del sistema" usa Lineage.
+    // acento, "Colores del sistema" usa Grafito (ADR 0036).
     systemAccentColorPortProvider.overrideWithValue(const FakeSystemAccent()),
     systemAutofillSettingsPortProvider.overrideWithValue(autofillSettings),
     launcherIconPortProvider.overrideWithValue(launcherIcon),

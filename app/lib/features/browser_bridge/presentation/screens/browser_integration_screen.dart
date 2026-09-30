@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import '../../../../design/readable_width.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -98,139 +99,141 @@ class _BrowserIntegrationScreenState
 
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.browserTitle)),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(LockspireSpacing.lg),
-          child: FutureBuilder<NativeMessagingStatus>(
-            future: _statusFuture,
-            builder: (context, snapshot) {
-              final status = snapshot.data;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(context.l10n.browserIntro),
-                  const SizedBox(height: LockspireSpacing.lg),
-                  _BridgeStatusTile(status: bridge),
-                  const SizedBox(height: LockspireSpacing.md),
-                  if (status == null)
-                    const Center(child: CircularProgressIndicator())
-                  else ...[
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        status.isRegistered
-                            ? Icons.check_circle_outline
-                            : Icons.link_off,
-                      ),
-                      title: Text(
-                        status.isRegistered
-                            ? context.l10n.browserConnectedWith(
-                                status.registeredIn
-                                    .map((b) => b.displayName)
-                                    .join(', '),
-                              )
-                            : context.l10n.browserNotConnected,
-                      ),
-                      subtitle: status.hostBinaryFound
-                          ? null
-                          : Text(context.l10n.browserHostMissing),
-                    ),
-                    if (status.otherCopyIn.isNotEmpty)
-                      _OtherCopyWarning(
-                        context.l10n.browserOtherCopy(
-                          status.otherCopyIn
-                              .map((b) => b.displayName)
-                              .join(', '),
-                        ),
-                      ),
+      body: ReadableWidth(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(LockspireSpacing.lg),
+            child: FutureBuilder<NativeMessagingStatus>(
+              future: _statusFuture,
+              builder: (context, snapshot) {
+                final status = snapshot.data;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(context.l10n.browserIntro),
+                    const SizedBox(height: LockspireSpacing.lg),
+                    _BridgeStatusTile(status: bridge),
                     const SizedBox(height: LockspireSpacing.md),
-                    Wrap(
-                      spacing: LockspireSpacing.md,
-                      runSpacing: LockspireSpacing.sm,
-                      children: [
-                        FilledButton(
-                          onPressed: (_busy || !status.hostBinaryFound)
-                              ? null
-                              : _register,
-                          child: Text(
-                            status.isRegistered
-                                ? context.l10n.browserReconnect
-                                : context.l10n.browserConnect,
-                          ),
-                        ),
-                        if (status.isRegistered)
-                          OutlinedButton(
-                            onPressed: _busy ? null : _unregister,
-                            child: Text(context.l10n.cloudDisconnect),
-                          ),
-                      ],
-                    ),
-                    if (status.systemWideSupported) ...[
-                      const SizedBox(height: LockspireSpacing.xl),
-                      Text(
-                        context.l10n.browserSystemWide,
-                        style: textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: LockspireSpacing.sm),
-                      Text(context.l10n.browserSystemWideHint),
+                    if (status == null)
+                      const Center(child: CircularProgressIndicator())
+                    else ...[
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
-                          status.isRegisteredSystemWide
+                          status.isRegistered
                               ? Icons.check_circle_outline
                               : Icons.link_off,
                         ),
                         title: Text(
-                          status.isRegisteredSystemWide
-                              ? context.l10n.browserSystemWideOn
-                              : context.l10n.browserSystemWideOff,
+                          status.isRegistered
+                              ? context.l10n.browserConnectedWith(
+                                  status.registeredIn
+                                      .map((b) => b.displayName)
+                                      .join(', '),
+                                )
+                              : context.l10n.browserNotConnected,
                         ),
+                        subtitle: status.hostBinaryFound
+                            ? null
+                            : Text(context.l10n.browserHostMissing),
                       ),
-                      if (status.otherCopySystemWideIn.isNotEmpty)
+                      if (status.otherCopyIn.isNotEmpty)
                         _OtherCopyWarning(
-                          context.l10n.browserOtherCopySystemWide,
+                          context.l10n.browserOtherCopy(
+                            status.otherCopyIn
+                                .map((b) => b.displayName)
+                                .join(', '),
+                          ),
                         ),
+                      const SizedBox(height: LockspireSpacing.md),
                       Wrap(
                         spacing: LockspireSpacing.md,
                         runSpacing: LockspireSpacing.sm,
                         children: [
-                          OutlinedButton.icon(
-                            icon: const Icon(
-                              Icons.admin_panel_settings_outlined,
-                            ),
+                          FilledButton(
                             onPressed: (_busy || !status.hostBinaryFound)
                                 ? null
-                                : _registerSystemWide,
-                            label: Text(
-                              status.isRegisteredSystemWide ||
-                                      status.otherCopySystemWideIn.isNotEmpty
-                                  ? context.l10n.browserReregister
-                                  : context.l10n.browserRegisterSystemWide,
+                                : _register,
+                            child: Text(
+                              status.isRegistered
+                                  ? context.l10n.browserReconnect
+                                  : context.l10n.browserConnect,
                             ),
                           ),
-                          if (status.isRegisteredSystemWide ||
-                              status.otherCopySystemWideIn.isNotEmpty)
+                          if (status.isRegistered)
                             OutlinedButton(
-                              onPressed: _busy ? null : _unregisterSystemWide,
-                              child: Text(
-                                context.l10n.browserRemoveRegistration,
-                              ),
+                              onPressed: _busy ? null : _unregister,
+                              child: Text(context.l10n.cloudDisconnect),
                             ),
                         ],
                       ),
+                      if (status.systemWideSupported) ...[
+                        const SizedBox(height: LockspireSpacing.xl),
+                        Text(
+                          context.l10n.browserSystemWide,
+                          style: textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: LockspireSpacing.sm),
+                        Text(context.l10n.browserSystemWideHint),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            status.isRegisteredSystemWide
+                                ? Icons.check_circle_outline
+                                : Icons.link_off,
+                          ),
+                          title: Text(
+                            status.isRegisteredSystemWide
+                                ? context.l10n.browserSystemWideOn
+                                : context.l10n.browserSystemWideOff,
+                          ),
+                        ),
+                        if (status.otherCopySystemWideIn.isNotEmpty)
+                          _OtherCopyWarning(
+                            context.l10n.browserOtherCopySystemWide,
+                          ),
+                        Wrap(
+                          spacing: LockspireSpacing.md,
+                          runSpacing: LockspireSpacing.sm,
+                          children: [
+                            OutlinedButton.icon(
+                              icon: const Icon(
+                                Icons.admin_panel_settings_outlined,
+                              ),
+                              onPressed: (_busy || !status.hostBinaryFound)
+                                  ? null
+                                  : _registerSystemWide,
+                              label: Text(
+                                status.isRegisteredSystemWide ||
+                                        status.otherCopySystemWideIn.isNotEmpty
+                                    ? context.l10n.browserReregister
+                                    : context.l10n.browserRegisterSystemWide,
+                              ),
+                            ),
+                            if (status.isRegisteredSystemWide ||
+                                status.otherCopySystemWideIn.isNotEmpty)
+                              OutlinedButton(
+                                onPressed: _busy ? null : _unregisterSystemWide,
+                                child: Text(
+                                  context.l10n.browserRemoveRegistration,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
                     ],
+                    const SizedBox(height: LockspireSpacing.xl),
+                    Text(
+                      context.l10n.browserInstallExtension,
+                      style: textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: LockspireSpacing.sm),
+                    Text(context.l10n.browserInstallExtensionHint),
+                    const _NeverSaveSites(),
                   ],
-                  const SizedBox(height: LockspireSpacing.xl),
-                  Text(
-                    context.l10n.browserInstallExtension,
-                    style: textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: LockspireSpacing.sm),
-                  Text(context.l10n.browserInstallExtensionHint),
-                  const _NeverSaveSites(),
-                ],
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),

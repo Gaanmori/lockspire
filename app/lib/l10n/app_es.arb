@@ -19,7 +19,7 @@
   "themeCustomHex": "Color en hexadecimal",
   "themeCustomApply": "Usar este color",
   "themeCustomInvalid": "Escriba un color como #6750A4.",
-  "themeSystemUnavailable": "No disponible en este equipo: se usa Lineage.",
+  "themeSystemUnavailable": "No disponible en este equipo: se usa Grafito.",
   "themeSystemAndroid": "Material You: colores de su fondo de pantalla.",
   "themeSystemDesktop": "Color de acento del sistema.",
   "appearanceThemeSemantics": "Tema {title}",

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import '../../../../design/readable_width.dart';
 import 'package:flutter/material.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
@@ -45,32 +46,34 @@ class SettingsScreen extends StatelessWidget {
     ];
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.settingsTitle)),
-      body: ListView(
-        children: [
-          for (final (index, section) in visible.indexed) ...[
-            if (index > 0) const Divider(),
-            if (section.title case final title?)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
+      body: ReadableWidth(
+        child: ListView(
+          children: [
+            for (final (index, section) in visible.indexed) ...[
+              if (index > 0) const Divider(),
+              if (section.title case final title?)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                 ),
-              ),
-            for (final item in section.items)
-              ListTile(
-                leading: Icon(item.icon),
-                title: Text(item.title),
-                subtitle: Text(item.subtitle),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: item.builder)),
-              ),
+              for (final item in section.items)
+                ListTile(
+                  leading: Icon(item.icon),
+                  title: Text(item.title),
+                  subtitle: Text(item.subtitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: item.builder)),
+                ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

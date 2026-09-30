@@ -215,7 +215,7 @@ abstract class AppLocalizations {
   /// No description provided for @themeSystemUnavailable.
   ///
   /// In es, this message translates to:
-  /// **'No disponible en este equipo: se usa Lineage.'**
+  /// **'No disponible en este equipo: se usa Grafito.'**
   String get themeSystemUnavailable;
 
   /// No description provided for @themeSystemAndroid.

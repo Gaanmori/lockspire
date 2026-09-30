@@ -1,0 +1,178 @@
+{
+ "encrypted": false,
+ "folders": [],
+ "items": [
+  {
+   "type": 1,
+   "name": "Correo personal",
+   "notes": null,
+   "login": {
+    "username": "ana.demo@correo.example",
+    "password": "7H-mUkaLnJgl722IDA6L",
+    "uris": [
+     {
+      "uri": "https://correo.example"
+     }
+    ]
+   }
+  },
+  {
+   "type": 1,
+   "name": "Banco del Parque",
+   "notes": "Clave de la app y de la web.",
+   "login": {
+    "username": "ana.demo",
+    "password": "l%HTKLRiMyd+@IfrIiYo",
+    "uris": [
+     {
+      "uri": "https://bancodelparque.example"
+     }
+    ]
+   }
+  },
+  {
+   "type": 1,
+   "name": "Nube de fotos",
+   "notes": null,
+   "login": {
+    "username": "ana.demo@correo.example",
+    "password": "YWM63NY1+VQv6UiSpcik",
+    "uris": [
+     {
+      "uri": "https://fotos.example"
+     }
+    ]
+   }
+  },
+  {
+   "type": 1,
+   "name": "Red social",
+   "notes": null,
+   "login": {
+    "username": "@ana_demo",
+    "password": "YRNaRlKbWQ#@Fk0FCpp#",
+    "uris": [
+     {
+      "uri": "https://social.example"
+     }
+    ]
+   }
+  },
+  {
+   "type": 1,
+   "name": "Tienda en línea",
+   "notes": null,
+   "login": {
+    "username": "ana.demo@correo.example",
+    "password": "F9&vVkz$L0EIyT2vH2oc",
+    "uris": [
+     {
+      "uri": "https://tienda.example"
+     }
+    ]
+   }
+  },
+  {
+   "type": 1,
+   "name": "Wifi de casa",
+   "notes": "Router del salón.",
+   "login": {
+    "username": "CasaDemo_5G",
+    "password": "AxnswS?*X5qKz0u5w!GW",
+    "uris": [
+     {
+      "uri": ""
+     }
+    ]
+   }
+  },
+  {
+   "type": 1,
+   "name": "Música",
+   "notes": null,
+   "login": {
+    "username": "ana.demo",
+    "password": "$v?bBfKRY0oAsmkK1XI2",
+    "uris": [
+     {
+      "uri": "https://musica.example"
+     }
+    ]
+   }
+  },
+  {
+   "type": 1,
+   "name": "Trabajo — intranet",
+   "notes": null,
+   "login": {
+    "username": "ana.demo",
+    "password": "&&jw@03g=?q6jhytt29?",
+    "uris": [
+     {
+      "uri": "https://intranet.empresa.example"
+     }
+    ]
+   }
+  },
+  {
+   "type": 1,
+   "name": "Aerolínea",
+   "notes": null,
+   "login": {
+    "username": "AD1234567",
+    "password": "#c3%chFa$s6Wjh@k2M8$",
+    "uris": [
+     {
+      "uri": "https://vuelos.example"
+     }
+    ]
+   }
+  },
+  {
+   "type": 1,
+   "name": "Foro de fotografía",
+   "notes": null,
+   "login": {
+    "username": "ana_fotos",
+    "password": "Ieiuvs&18rJC-*l#jyND",
+    "uris": [
+     {
+      "uri": "https://foro.example"
+     }
+    ]
+   }
+  },
+  {
+   "type": 3,
+   "name": "Tarjeta de débito",
+   "notes": null,
+   "card": {
+    "cardholderName": "ANA DEMO",
+    "brand": "Visa",
+    "number": "4111111111111111",
+    "expMonth": "08",
+    "expYear": "2029",
+    "code": "123"
+   }
+  },
+  {
+   "type": 2,
+   "name": "Códigos de recuperación",
+   "notes": "4F7K-2QXM\n9HDT-6PLW\nR3ZC-8NVB",
+   "secureNote": {
+    "type": 0
+   }
+  },
+  {
+   "type": 4,
+   "name": "Pasaporte",
+   "notes": null,
+   "identity": {
+    "firstName": "Ana",
+    "lastName": "Demo",
+    "passportNumber": "XDA123456",
+    "country": "ES"
+   }
+  }
+ ]
+}

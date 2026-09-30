@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import '../../../../design/readable_width.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/shared/platform_capabilities.dart';
@@ -38,133 +39,138 @@ class AppearanceScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.appearanceTitle)),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(LockspireSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                context.l10n.appearanceLanguage,
-                style: textTheme.titleMedium,
-              ),
-              const SizedBox(height: LockspireSpacing.sm),
-              SegmentedButton<AppLanguage>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: AppLanguage.system,
-                    icon: const Icon(Icons.language_outlined),
-                    label: Text(context.l10n.appearanceModeSystem),
-                  ),
-                  // Los idiomas se muestran en su propio idioma, para que se
-                  // encuentren aunque la app esté en otro.
-                  const ButtonSegment(
-                    value: AppLanguage.es,
-                    label: Text('Español'),
-                  ),
-                  const ButtonSegment(
-                    value: AppLanguage.en,
-                    label: Text('English'),
-                  ),
-                ],
-                selected: {preference.language},
-                onSelectionChanged: (selection) =>
-                    controller.setLanguage(selection.first),
-              ),
-              const SizedBox(height: LockspireSpacing.lg),
-              Text(context.l10n.appearanceMode, style: textTheme.titleMedium),
-              const SizedBox(height: LockspireSpacing.sm),
-              SegmentedButton<AppearanceMode>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: AppearanceMode.system,
-                    icon: Icon(Icons.brightness_auto_outlined),
-                    label: Text(context.l10n.appearanceModeSystem),
-                  ),
-                  ButtonSegment(
-                    value: AppearanceMode.light,
-                    icon: Icon(Icons.light_mode_outlined),
-                    label: Text(context.l10n.appearanceModeLight),
-                  ),
-                  ButtonSegment(
-                    value: AppearanceMode.dark,
-                    icon: Icon(Icons.dark_mode_outlined),
-                    label: Text(context.l10n.appearanceModeDark),
-                  ),
-                ],
-                selected: {preference.mode},
-                onSelectionChanged: (selection) =>
-                    controller.setMode(selection.first),
-              ),
-              const SizedBox(height: LockspireSpacing.xs),
-              Text(
-                preference.mode == AppearanceMode.system
-                    ? context.l10n.appearanceModeSystemHint
-                    : ' ',
-                style: textTheme.bodySmall,
-              ),
-              const SizedBox(height: LockspireSpacing.lg),
-              Text(context.l10n.appearanceTheme, style: textTheme.titleMedium),
-              if (ref.watch(platformCapabilitiesProvider).isAndroid) ...[
-                const SizedBox(height: LockspireSpacing.xs),
-                // ADR 0031: el ícono del lanzador sigue al tema.
+      body: ReadableWidth(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(LockspireSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  context.l10n.appearanceLauncherIconNote,
+                  context.l10n.appearanceLanguage,
+                  style: textTheme.titleMedium,
+                ),
+                const SizedBox(height: LockspireSpacing.sm),
+                SegmentedButton<AppLanguage>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: AppLanguage.system,
+                      icon: const Icon(Icons.language_outlined),
+                      label: Text(context.l10n.appearanceModeSystem),
+                    ),
+                    // Los idiomas se muestran en su propio idioma, para que se
+                    // encuentren aunque la app esté en otro.
+                    const ButtonSegment(
+                      value: AppLanguage.es,
+                      label: Text('Español'),
+                    ),
+                    const ButtonSegment(
+                      value: AppLanguage.en,
+                      label: Text('English'),
+                    ),
+                  ],
+                  selected: {preference.language},
+                  onSelectionChanged: (selection) =>
+                      controller.setLanguage(selection.first),
+                ),
+                const SizedBox(height: LockspireSpacing.lg),
+                Text(context.l10n.appearanceMode, style: textTheme.titleMedium),
+                const SizedBox(height: LockspireSpacing.sm),
+                SegmentedButton<AppearanceMode>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: AppearanceMode.system,
+                      icon: Icon(Icons.brightness_auto_outlined),
+                      label: Text(context.l10n.appearanceModeSystem),
+                    ),
+                    ButtonSegment(
+                      value: AppearanceMode.light,
+                      icon: Icon(Icons.light_mode_outlined),
+                      label: Text(context.l10n.appearanceModeLight),
+                    ),
+                    ButtonSegment(
+                      value: AppearanceMode.dark,
+                      icon: Icon(Icons.dark_mode_outlined),
+                      label: Text(context.l10n.appearanceModeDark),
+                    ),
+                  ],
+                  selected: {preference.mode},
+                  onSelectionChanged: (selection) =>
+                      controller.setMode(selection.first),
+                ),
+                const SizedBox(height: LockspireSpacing.xs),
+                Text(
+                  preference.mode == AppearanceMode.system
+                      ? context.l10n.appearanceModeSystemHint
+                      : ' ',
                   style: textTheme.bodySmall,
                 ),
-              ],
-              // Por grupos (ADR 0036): los de Lockspire, el automático y los
-              // inspirados en un sistema operativo.
-              for (final group in ThemeGroup.values) ...[
-                Padding(
-                  padding: const EdgeInsets.only(
-                    top: LockspireSpacing.md,
-                    bottom: LockspireSpacing.sm,
-                  ),
-                  child: Text(
-                    _groupTitle(context.l10n, group),
-                    style: textTheme.labelLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
+                const SizedBox(height: LockspireSpacing.lg),
+                Text(
+                  context.l10n.appearanceTheme,
+                  style: textTheme.titleMedium,
                 ),
-                for (final family in ThemeFamilyId.values.where(
-                  group.families.contains,
-                )) ...[
-                  _FamilyCard(
-                    title: _titleFor(context.l10n, family),
-                    subtitle: _subtitleFor(
-                      context.l10n,
-                      family,
-                      systemArgb,
-                      isAndroid: ref
-                          .watch(platformCapabilitiesProvider)
-                          .isAndroid,
-                    ),
-                    palettes: palettesFor(
-                      family,
-                      systemArgb: systemArgb,
-                      customArgb: preference.customColorArgb,
-                    ),
-                    selected: preference.family == family,
-                    onTap: () => controller.setFamily(family),
+                if (ref.watch(platformCapabilitiesProvider).isAndroid) ...[
+                  const SizedBox(height: LockspireSpacing.xs),
+                  // ADR 0031: el ícono del lanzador sigue al tema.
+                  Text(
+                    context.l10n.appearanceLauncherIconNote,
+                    style: textTheme.bodySmall,
                   ),
-                  if (family == ThemeFamilyId.personalizado &&
-                      preference.family == ThemeFamilyId.personalizado)
-                    CustomColorPicker(
-                      selected: preference.customColorArgb,
-                      onPick: controller.setCustomColor,
+                ],
+                // Por grupos (ADR 0036): los de Lockspire, el automático y los
+                // inspirados en un sistema operativo.
+                for (final group in ThemeGroup.values) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      top: LockspireSpacing.md,
+                      bottom: LockspireSpacing.sm,
                     ),
-                  const SizedBox(height: LockspireSpacing.smMd),
+                    child: Text(
+                      _groupTitle(context.l10n, group),
+                      style: textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  for (final family in ThemeFamilyId.values.where(
+                    group.families.contains,
+                  )) ...[
+                    _FamilyCard(
+                      title: _titleFor(context.l10n, family),
+                      subtitle: _subtitleFor(
+                        context.l10n,
+                        family,
+                        systemArgb,
+                        isAndroid: ref
+                            .watch(platformCapabilitiesProvider)
+                            .isAndroid,
+                      ),
+                      palettes: palettesFor(
+                        family,
+                        systemArgb: systemArgb,
+                        customArgb: preference.customColorArgb,
+                      ),
+                      selected: preference.family == family,
+                      onTap: () => controller.setFamily(family),
+                    ),
+                    if (family == ThemeFamilyId.personalizado &&
+                        preference.family == ThemeFamilyId.personalizado)
+                      CustomColorPicker(
+                        selected: preference.customColorArgb,
+                        onPick: controller.setCustomColor,
+                      ),
+                    const SizedBox(height: LockspireSpacing.smMd),
+                  ],
+                ],
+                for (final section in extraSections) ...[
+                  const Divider(height: LockspireSpacing.xl),
+                  section,
                 ],
               ],
-              for (final section in extraSections) ...[
-                const Divider(height: LockspireSpacing.xl),
-                section,
-              ],
-            ],
+            ),
           ),
         ),
       ),
