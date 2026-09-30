@@ -73,8 +73,26 @@ class NativeMessagingRegistrationAdapter
       _isWindows &&
       p.split(_appDirectory).any((part) => part.toLowerCase() == 'windowsapps');
 
-  /// La ruta que lanza el navegador. En MSIX es el alias de ejecución que
-  /// declara el paquete (AppxManifest.xml), que no cambia entre versiones.
+  /// Como AppImage, la app corre desde un montaje temporal
+  /// (`/tmp/.mount_…`) que cambia en cada arranque y desaparece al cerrarla:
+  /// el navegador no puede apuntar ahí. El runtime de AppImage define
+  /// `APPIMAGE` con la ruta del archivo.
+  bool get _isAppImage =>
+      _isLinux && (_environment['APPIMAGE'] ?? '').isNotEmpty;
+
+  /// Copia del host fuera del montaje, en los datos del usuario.
+  String get _appImageHostCopyPath => p.join(
+    _environment['XDG_DATA_HOME'] ??
+        p.join(_environment['HOME'] ?? '', '.local', 'share'),
+    'lockspire',
+    'bin',
+    'lockspire-native-host',
+  );
+
+  /// La ruta que lanza el navegador:
+  /// - MSIX: el alias de ejecución que declara el paquete
+  ///   (AppxManifest.xml), que no cambia entre versiones (ADR 0037).
+  /// - AppImage: la copia de [_appImageHostCopyPath] (ADR 0038).
   String get _hostBinaryPath => _isMsixPackage
       ? p.join(
           _environment['LOCALAPPDATA'] ?? '',
@@ -82,7 +100,21 @@ class NativeMessagingRegistrationAdapter
           'WindowsApps',
           _windowsHostName,
         )
+      : _isAppImage
+      ? _appImageHostCopyPath
       : _bundledHostPath;
+
+  /// Copia el host del AppImage a [_appImageHostCopyPath], reemplazándolo
+  /// de forma atómica (temporal + rename): así una versión nueva del
+  /// AppImage actualiza el host al volver a conectar. `File.copy` conserva
+  /// el permiso de ejecución.
+  void _installAppImageHostCopy() {
+    final target = File(_appImageHostCopyPath);
+    target.parent.createSync(recursive: true);
+    final temp = '${target.path}.tmp';
+    File(_bundledHostPath).copySync(temp);
+    File(temp).renameSync(target.path);
+  }
 
   String _manifestJson() => const JsonEncoder.withIndent('  ').convert({
     'name': nativeHostName,
@@ -194,6 +226,7 @@ class NativeMessagingRegistrationAdapter
         if (result.exitCode == 0) registered.add(browser);
       }
     } else if (_isLinux) {
+      if (_isAppImage) _installAppImageHostCopy();
       for (final browser in SupportedBrowser.values) {
         // Solo en navegadores instalados (su directorio de configuración
         // existe): no se crean carpetas de navegadores ajenos.
@@ -222,6 +255,10 @@ class NativeMessagingRegistrationAdapter
         if (file.existsSync() && _pointsToThisHost(file.readAsStringSync())) {
           file.deleteSync();
         }
+      }
+      if (_isAppImage) {
+        final copy = File(_appImageHostCopyPath);
+        if (copy.existsSync()) copy.deleteSync();
       }
     }
   }

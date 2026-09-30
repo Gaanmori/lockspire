@@ -291,6 +291,52 @@ void main() {
       expect((await adapter.status()).registeredIn, isEmpty);
     });
 
+    test('como AppImage copia el host fuera del montaje temporal y apunta '
+        'ahí; desregistrar borra la copia', () async {
+      Directory(p.join(config, 'google-chrome')).createSync(recursive: true);
+      final data = p.join(tmp.path, 'data');
+      final appImage = NativeMessagingRegistrationAdapter(
+        appDirectory: appDir,
+        environment: {
+          'XDG_CONFIG_HOME': config,
+          'XDG_DATA_HOME': data,
+          'APPIMAGE': '/home/ana/Lockspire.AppImage',
+        },
+        platform: HostPlatform.linux,
+        runProcess: (_, _) async => fail('en Linux no se ejecuta nada'),
+      );
+
+      await appImage.register();
+
+      final copy = File(
+        p.join(data, 'lockspire', 'bin', 'lockspire-native-host'),
+      );
+      expect(copy.readAsStringSync(), 'binario');
+      final manifest = File(
+        p.join(
+          config,
+          'google-chrome',
+          'NativeMessagingHosts',
+          'com.lockspire.native_host.json',
+        ),
+      );
+      expect(
+        (jsonDecode(manifest.readAsStringSync()) as Map)['path'],
+        copy.path,
+      );
+      expect((await appImage.status()).registeredIn, {SupportedBrowser.chrome});
+
+      // Una versión nueva del AppImage reemplaza la copia al reconectar.
+      installHost('lockspire-native-host');
+      File(p.join(appDir, 'lockspire-native-host')).writeAsStringSync('v2');
+      await appImage.register();
+      expect(copy.readAsStringSync(), 'v2');
+
+      await appImage.unregister();
+      expect(copy.existsSync(), isFalse);
+      expect(manifest.existsSync(), isFalse);
+    });
+
     test('para todo el equipo solo existe en Windows', () async {
       await expectLater(
         adapter.registerSystemWide(),

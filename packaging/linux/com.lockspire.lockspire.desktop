@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Lockspire
+GenericName=Password Manager
+GenericName[es]=Gestor de contraseñas
+Comment=Encrypted passwords on your device
+Comment[es]=Contraseñas cifradas en su dispositivo
+Exec=lockspire
+Icon=com.lockspire.lockspire
+Terminal=false
+Categories=Utility;Security;
+Keywords=password;vault;security;contraseña;bóveda;
+StartupWMClass=lockspire

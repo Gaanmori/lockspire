@@ -222,6 +222,11 @@ def main():
                      ('Square150x150Logo', 150)]:
         save(render(px, colors=grafito), msix / f'{name}.png')
 
+    print('Linux (AppImage y .deb)')
+    linux = ROOT / 'packaging/linux/icons'
+    for px in [48, 128, 256, 512]:
+        save(render(px, colors=grafito), linux / f'{px}x{px}.png')
+
     print('Web')
     web = APP / 'web'
     save(render(32), web / 'favicon.png')

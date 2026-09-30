@@ -1,0 +1,115 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Gabriel Ángel Montoya Rico
+#
+# AppImage y .deb de Lockspire para Linux (ADR 0038).
+# - Al publicar una etiqueta v* (p. ej. v1.0.0): los adjunta a la release
+#   de GitHub con ese nombre.
+# - A mano (Actions → Linux packages → Run workflow): solo los deja como
+#   artefactos del run, para probarlos.
+name: Linux packages
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+
+      # Ubuntu 22.04 (glibc 2.35): lo que se compila aquí corre en esa
+      # versión y en las posteriores (Mint 21 y 22, Ubuntu 22.04 y 24.04).
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev build-essential \
+            libsecret-1-dev libayatana-appindicator3-dev
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.2"
+          channel: stable
+
+      - name: Version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=$(grep '^version:' app/pubspec.yaml | sed 's/version: *//; s/+.*//')" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Credenciales OAuth de Google y Microsoft para apps de escritorio. No
+      # están en el repositorio: vienen de los secretos del repositorio
+      # (Settings → Secrets and variables → Actions). Sin ellos, la app
+      # compila igual pero sin conexión con Google Drive ni OneDrive.
+      - name: OAuth credentials
+        working-directory: app
+        env:
+          GOOGLE_OAUTH_SECRETS_JSON: ${{ secrets.GOOGLE_OAUTH_SECRETS_JSON }}
+          MICROSOFT_OAUTH_SECRETS_JSON: ${{ secrets.MICROSOFT_OAUTH_SECRETS_JSON }}
+        run: |
+          defines=""
+          if [ -n "$GOOGLE_OAUTH_SECRETS_JSON" ]; then
+            printf '%s' "$GOOGLE_OAUTH_SECRETS_JSON" > google_oauth_secrets.json
+            defines="$defines --dart-define-from-file=google_oauth_secrets.json"
+          else
+            echo "::warning::Sin GOOGLE_OAUTH_SECRETS_JSON: Google Drive no va a funcionar"
+          fi
+          if [ -n "$MICROSOFT_OAUTH_SECRETS_JSON" ]; then
+            printf '%s' "$MICROSOFT_OAUTH_SECRETS_JSON" > microsoft_oauth_secrets.json
+            defines="$defines --dart-define-from-file=microsoft_oauth_secrets.json"
+          else
+            echo "::warning::Sin MICROSOFT_OAUTH_SECRETS_JSON: OneDrive no va a funcionar"
+          fi
+          echo "OAUTH_DEFINES=$defines" >> "$GITHUB_ENV"
+
+      - name: Build Linux (release)
+        working-directory: app
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build linux --release $OAUTH_DEFINES
+
+      - name: Native host
+        working-directory: native-host
+        run: |
+          dart pub get
+          dart compile exe bin/lockspire_native_host.dart \
+            -o ../app/build/linux/x64/release/bundle/lockspire-native-host
+
+      - name: appimagetool
+        run: |
+          curl -fsSL -o /usr/local/bin/appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x /usr/local/bin/appimagetool
+
+      - name: AppImage and .deb
+        # Sin FUSE en el runner: appimagetool se extrae y se ejecuta.
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: packaging/linux/build_packages.sh "${{ steps.version.outputs.value }}"
+
+      - name: Check the .deb
+        run: |
+          deb=build/linux-packages/lockspire_*_amd64.deb
+          dpkg-deb --info $deb
+          dpkg-deb --contents $deb | grep -E 'opt/lockspire/(lockspire|lockspire-native-host)$'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lockspire-linux-${{ steps.version.outputs.value }}
+          path: build/linux-packages/*
+          retention-days: 30
+
+      - name: Attach to the GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/linux-packages/*

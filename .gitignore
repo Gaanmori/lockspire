@@ -48,3 +48,6 @@ Thumbs.db
 
 # Grafo de conocimiento generado por /graphify (se regenera, no se versiona)
 graphify-out/
+
+# Paquetes de la extensión para las tiendas (npm run package)
+extension/lockspire-extension-*.zip
