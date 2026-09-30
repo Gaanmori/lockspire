@@ -4,6 +4,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:lockspire/features/desktop/domain/ports/tray_port.dart';
 import 'package:lockspire/features/desktop/infrastructure/tray_manager_adapter.dart';
 import 'package:lockspire/features/desktop/infrastructure/window_manager_adapter.dart';
@@ -129,17 +130,18 @@ void main() {
     test('ocultar, cambiar el ícono y destruir llegan a la '
         'ventana', () async {
       await window.hide();
-      await window.setIcon(r'C:\iconos\lockspire.ico');
+      // Absoluta en el sistema donde corre el test: window_manager antepone
+      // la carpeta de assets a una ruta relativa, y `C:\...` no es
+      // absoluta en Linux (así falló en la CI, 2026-09-30).
+      final icon = p.join(Directory.systemTemp.path, 'lockspire.ico');
+      await window.setIcon(icon);
       await window.destroy();
 
       expect(
         native.methods,
         containsAllInOrder(['hide', 'setIcon', 'destroy']),
       );
-      expect(
-        (native.argumentsOf('setIcon') as Map)['iconPath'],
-        r'C:\iconos\lockspire.ico',
-      );
+      expect((native.argumentsOf('setIcon') as Map)['iconPath'], icon);
     });
   });
 }

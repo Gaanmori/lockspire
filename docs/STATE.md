@@ -692,6 +692,7 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 
 - **Hecho, el mismo día:** todos los hallazgos, cada uno con su test, salvo S19 (borrar la clave al bloquear), que se decidió no hacer porque es peligroso con una sync en curso. El detalle está en la sección "Resolución" de la revisión.
 - **Bug encontrado al hacerlo:** bloquear mientras se guardaba volvía a abrir la sesión al terminar. Corregido, con test.
+- **CI:** los dos últimos pipelines fallaron por un test mío que usaba una ruta de Windows (`C:\iconos\...`). En Linux esa ruta no es absoluta y `window_manager` le antepone la carpeta de assets. Corregido con una ruta absoluta del sistema donde corre. La app no tenía el problema: en Windows la ruta real sí es absoluta.
 - **Resultado:** 625 tests de la app y 36 de la extensión. Cobertura: presentación 92,8 %, todas las capas sobre 90 %.
 - **Pendiente:**
   - medir en el Redmi cuánto tarda un guardado con una bóveda grande (P2);
@@ -738,7 +739,7 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
     - íconos de sitios: el camino exitoso;
     - Google Drive: inicio de sesión en escritorio (loopback) y en Android (sin ventanas en la sync);
     - `file_picker`, Acerca de, y los casos de Bitwarden que faltaban.
-  - **Linux D-Bus:** `LinuxOsSessionEventsAdapter` recibe los buses. El test (`@TestOn('linux')`) arma logind y los salvapantallas en un `DBusServer` en memoria. En Windows no corre, porque el servidor de prueba usa `RawSocket.readMessage`, que es solo de Unix. **No se vio pasar todavía: se verá en la CI de Linux.**
+  - **Linux D-Bus:** `LinuxOsSessionEventsAdapter` recibe los buses. El test (`@TestOn('linux')`) arma logind y los salvapantallas en un `DBusServer` en memoria. En Windows no corre, porque el servidor de prueba usa `RawSocket.readMessage`, que es solo de Unix. **Confirmado en la CI de Linux (2026-09-30):** los 4 pasan.
 - **Bug encontrado y corregido:** Google Drive en escritorio esperaba para siempre si el navegador no abría. Ahora da `oauthBrowserFailed`, como OneDrive. `GoogleDriveDesktopAuth` recibe `openBrowser` y `baseClient`.
 - **Pendiente:**
   - confirmar en GitHub el test de D-Bus y el piso de 90 % medido en Linux;
