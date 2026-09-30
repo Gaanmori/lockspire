@@ -20,7 +20,8 @@ import 'package:lockspire/shared/domain/app_problem.dart';
 ///   `~/.config/<navegador>/NativeMessagingHosts/` de cada navegador cuyo
 ///   directorio de configuración exista.
 ///
-/// El binario del host se busca junto al ejecutable de la app.
+/// El binario del host se busca junto al ejecutable de la app; en MSIX,
+/// el manifest apunta a su alias de ejecución.
 /// El sistema donde se registra el host: la rama de Windows (registro) o la
 /// de Linux (archivos en la configuración del navegador).
 enum HostPlatform { windows, linux, other }
@@ -57,10 +58,31 @@ class NativeMessagingRegistrationAdapter
   bool get _isWindows => _platform == HostPlatform.windows;
   bool get _isLinux => _platform == HostPlatform.linux;
 
-  String get _hostBinaryPath => p.join(
+  static const _windowsHostName = 'lockspire-native-host.exe';
+
+  /// El binario del host tal como viene con la app.
+  String get _bundledHostPath => p.join(
     _appDirectory,
-    _isWindows ? 'lockspire-native-host.exe' : 'lockspire-native-host',
+    _isWindows ? _windowsHostName : 'lockspire-native-host',
   );
+
+  /// Instalada como paquete MSIX (Microsoft Store, ADR 0035), la app vive en
+  /// `C:\Program Files\WindowsApps`, donde Chrome y Edge no pueden ejecutar
+  /// nada (acceso denegado).
+  bool get _isMsixPackage =>
+      _isWindows &&
+      p.split(_appDirectory).any((part) => part.toLowerCase() == 'windowsapps');
+
+  /// La ruta que lanza el navegador. En MSIX es el alias de ejecución que
+  /// declara el paquete (AppxManifest.xml), que no cambia entre versiones.
+  String get _hostBinaryPath => _isMsixPackage
+      ? p.join(
+          _environment['LOCALAPPDATA'] ?? '',
+          'Microsoft',
+          'WindowsApps',
+          _windowsHostName,
+        )
+      : _bundledHostPath;
 
   String _manifestJson() => const JsonEncoder.withIndent('  ').convert({
     'name': nativeHostName,
@@ -120,7 +142,7 @@ class NativeMessagingRegistrationAdapter
       }
     }
     return NativeMessagingStatus(
-      hostBinaryFound: File(_hostBinaryPath).existsSync(),
+      hostBinaryFound: File(_bundledHostPath).existsSync(),
       registeredIn: registered,
       registeredSystemWideIn: registeredSystemWide,
       systemWideSupported: _isWindows,
@@ -146,10 +168,10 @@ class NativeMessagingRegistrationAdapter
 
   @override
   Future<Set<SupportedBrowser>> register() async {
-    if (!File(_hostBinaryPath).existsSync()) {
+    if (!File(_bundledHostPath).existsSync()) {
       throw AppProblem(
         AppProblemCode.nativeHostMissing,
-        detail: _hostBinaryPath,
+        detail: _bundledHostPath,
       );
     }
     final registered = <SupportedBrowser>{};
@@ -209,10 +231,10 @@ class NativeMessagingRegistrationAdapter
     if (!_isWindows) {
       throw const AppProblem(AppProblemCode.nativeHostWindowsOnly);
     }
-    if (!File(_hostBinaryPath).existsSync()) {
+    if (!File(_bundledHostPath).existsSync()) {
       throw AppProblem(
         AppProblemCode.nativeHostMissing,
-        detail: _hostBinaryPath,
+        detail: _bundledHostPath,
       );
     }
     await _runElevated(_systemWideScript(install: true));

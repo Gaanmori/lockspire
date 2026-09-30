@@ -937,6 +937,22 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - prueba cerrada de 12 personas durante 14 días;
   - decidir si las donaciones van desde el inicio. El perfil de pagos puede hacer pública la dirección en la ficha.
 
+### Microsoft Store: MSIX y extensión (2026-09-30, ADR 0037)
+
+- **Hecho:**
+  - `tools/build_msix.ps1` arma el MSIX desde el build Release; con `-Sign`, lo firma con un certificado de prueba.
+  - El manifest (`app/windows/packaging/AppxManifest.xml`) desactiva la virtualización y declara un alias de ejecución para el native host.
+  - El registro apunta al alias cuando la app corre desde `WindowsApps`, con test en `native_messaging_registration_platforms_test`.
+- **Verificado por el usuario** con `Lockspire.Prueba` 1.0.2.0 instalado: la extensión mostró la cuenta y autocompletó.
+- **Limpieza pendiente en el equipo del usuario:**
+  - desinstalar `Lockspire.Prueba`;
+  - quitar el certificado "CN=Lockspire Prueba" (huella 552145094302A8D48B8F25739A5523E7F61C70FC) de CurrentUser\Root, CurrentUser\CA, CurrentUser\My y LocalMachine\TrustedPeople.
+- **Falta para publicar:**
+  - la cuenta de Partner Center;
+  - la identidad real del producto (`-Identity` y `-Publisher`);
+  - justificar `unvirtualizedResources` en el envío;
+  - probar las donaciones con los complementos de la Store.
+
 ### MVP — canales y checklist (ADR 0028, decidido 2026-09-28)
 
 Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome Web Store y Edge Add-ons. **F-Droid fuera por ahora.** Costo total: US$30 (Play US$25, Chrome US$5).
@@ -945,7 +961,7 @@ Canales: Google Play, Microsoft Store, AppImage + Snap Store + Flathub, Chrome W
 2. [x] **Pantalla "Acerca de"** (`features/about`: versión, AGPLv3, código fuente, política, licencias de terceros) y **política de privacidad** (`docs/privacy-policy.md`, ES + EN, con la declaración de uso limitado de Google). **Publicada (2026-09-28):** el repositorio ya es público y GitHub Pages sirve desde `main:/docs` solo la política (`docs/_config.yml` excluye el resto). Dirección: `https://gaanmori.github.io/lockspire/privacy-policy`, verificada con HTTP 200.
 3. [ ] **Android release:** clave de firma propia (hoy release firma con la de depuración), build release probado en el Redmi (S5, R8 con libsodium y el autofill), targetSdk vigente.
 4. [ ] **Google Cloud a producción:** verificar la pantalla de consentimiento (nombre, logo, dominio, política); quizá revisión del permiso `drive.appdata`.
-5. [ ] **Microsoft Store:** MSIX y comprobar que Chrome/Edge encuentran el native host con la app instalada desde la tienda.
+5. [ ] **Microsoft Store:** ~~MSIX y native host~~ verificado en local (ADR 0037); falta Partner Center y el envío.
 6. [ ] **Linux:** verificar en Linux Mint (bandeja, bloqueo, extensión, native host) y generar AppImage; después Snap (confinamiento y native host) y Flathub.
 7. [ ] **Extensión:** publicarla en Chrome Web Store y Edge Add-ons (justificar `nativeMessaging`, política de privacidad).
 8. [ ] **Fichas de cada tienda:** capturas, descripción, imagen destacada 1024×500, seguridad de datos y clasificación de contenido.

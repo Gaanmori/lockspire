@@ -123,6 +123,39 @@ void main() {
       expect((await adapter.status()).registeredIn, isEmpty);
     });
 
+    test('instalada como MSIX, el manifest apunta al alias de ejecución: '
+        'el navegador no puede lanzar nada dentro de WindowsApps', () async {
+      final packageDir = p.join(tmp.path, 'WindowsApps', 'Lockspire_1_x64');
+      Directory(packageDir).createSync(recursive: true);
+      File(
+        p.join(packageDir, 'lockspire-native-host.exe'),
+      ).writeAsStringSync('binario');
+      final packaged = NativeMessagingRegistrationAdapter(
+        appDirectory: packageDir,
+        environment: {'LOCALAPPDATA': p.join(tmp.path, 'local')},
+        platform: HostPlatform.windows,
+        runProcess: windows.run,
+      );
+
+      await packaged.register();
+
+      final manifestPath = windows.registry[_chromeKey('HKCU')]!;
+      final manifest = jsonDecode(File(manifestPath).readAsStringSync()) as Map;
+      expect(
+        manifest['path'],
+        p.join(
+          tmp.path,
+          'local',
+          'Microsoft',
+          'WindowsApps',
+          'lockspire-native-host.exe',
+        ),
+      );
+      final status = await packaged.status();
+      expect(status.hostBinaryFound, isTrue);
+      expect(status.registeredIn, SupportedBrowser.values.toSet());
+    });
+
     test('un registro que apunta a otra instalación no cuenta como '
         'conectado', () async {
       installHost('lockspire-native-host.exe');
