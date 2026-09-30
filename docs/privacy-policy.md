@@ -45,7 +45,7 @@ Si usted exporta su bóveda en un formato **sin cifrar** (CSV o JSON), el archiv
 
 ## Donaciones
 
-"Invíteme un café", en Acerca de, es opcional y solo existe en la versión de Google Play. El pago lo procesa Google Play: Lockspire solo recibe si el pago se completó, no ve ningún dato del pago y no guarda nada. Se aplica la política de privacidad de Google Play.
+"Invíteme un café", en Acerca de, es opcional y solo existe en las versiones de Google Play y de Microsoft Store. El pago lo procesa la tienda: Lockspire solo recibe si el pago se completó, no ve ningún dato del pago y no guarda nada. Se aplica la política de privacidad de Google Play o de Microsoft.
 
 ## Cambios y contacto
 
@@ -96,7 +96,7 @@ If you export your vault in an **unencrypted** format (CSV or JSON), the file st
 
 ## Donations
 
-"Buy me a coffee", in About, is optional and only exists in the Google Play version. Google Play processes the payment: Lockspire only receives whether the payment went through, sees no payment data and stores nothing. Google Play's privacy policy applies.
+"Buy me a coffee", in About, is optional and only exists in the Google Play and Microsoft Store versions. The store processes the payment: Lockspire only receives whether the payment went through, sees no payment data and stores nothing. Google Play's or Microsoft's privacy policy applies.
 
 ## Changes and contact
 

@@ -6,8 +6,12 @@
 #include <flutter/method_channel.h>
 #include <flutter/encodable_value.h>
 
+#include <deque>
+#include <functional>
 #include <memory>
+#include <mutex>
 
+#include "store_donations.h"
 #include "win32_window.h"
 
 // A window that does nothing but host a Flutter view.
@@ -29,6 +33,10 @@ class FlutterWindow : public Win32Window {
   // bloquea al bloquear la sesión o antes de suspender el equipo.
   void NotifyOsSessionEvent(const char* method);
 
+  // Corre |task| en el hilo de la interfaz, desde cualquier hilo (ver
+  // store_donations.h).
+  void RunOnUi(std::function<void()> task);
+
   // The project to run.
   flutter::DartProject project_;
 
@@ -44,6 +52,12 @@ class FlutterWindow : public Win32Window {
   // lib/features/clipboard/infrastructure/windows_secure_clipboard_adapter.dart).
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
       clipboard_channel_;
+
+  // Canal `com.lockspire.lockspire/store_donations` (ADR 0035).
+  std::unique_ptr<store_donations::StoreDonationsChannel> store_donations_;
+
+  std::mutex ui_tasks_mutex_;
+  std::deque<std::function<void()>> ui_tasks_;
 
   bool session_notifications_registered_ = false;
 };

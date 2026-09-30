@@ -8,6 +8,7 @@ import '../../domain/ports/app_info_port.dart';
 import '../../domain/ports/donation_port.dart';
 import '../../domain/ports/external_link_port.dart';
 import '../../infrastructure/donation_config.dart';
+import '../../infrastructure/microsoft_store_donation_adapter.dart';
 import '../../infrastructure/package_info_adapter.dart';
 import '../../infrastructure/play_billing_donation_adapter.dart';
 import '../../infrastructure/url_launcher_link_adapter.dart';
@@ -25,13 +26,17 @@ ExternalLinkPort externalLinkPort(Ref ref) => const UrlLauncherLinkAdapter();
 Future<AppVersion> appVersion(Ref ref) =>
     ref.watch(appInfoPortProvider).version();
 
-/// Cómo se dona (ADR 0033): solo con la facturación de Google Play, en la
-/// versión de Play; `null` en las demás. Se crea al arrancar para confirmar
-/// los pagos de Play que quedaron pendientes.
+/// Cómo se dona: con el pago de la tienda de esta compilación, Google Play
+/// (ADR 0033) o Microsoft Store (ADR 0035); `null` en las demás. Se crea al
+/// arrancar para confirmar los pagos que quedaron pendientes.
 @Riverpod(keepAlive: true)
-DonationPort? donationPort(Ref ref) => isGooglePlayBuild
-    ? PlayBillingDonationAdapter(InAppPurchase.instance)
-    : null;
+DonationPort? donationPort(Ref ref) {
+  if (isGooglePlayBuild) {
+    return PlayBillingDonationAdapter(InAppPurchase.instance);
+  }
+  if (isMicrosoftStoreBuild) return MicrosoftStoreDonationAdapter();
+  return null;
+}
 
 /// Los montos para donar, con su precio; vacía si no se puede donar.
 @Riverpod(keepAlive: true)

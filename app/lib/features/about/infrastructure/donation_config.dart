@@ -3,8 +3,11 @@
 
 import 'dart:io' show Platform;
 
-/// La versión que se publica en Google Play se compila con
-/// `--dart-define=LOCKSPIRE_STORE=play`; ahí se dona con su facturación.
+/// La tienda de esta compilación: `--dart-define=LOCKSPIRE_STORE=play` en
+/// Google Play y `=msstore` en Microsoft Store. Ahí se dona con el pago de
+/// cada tienda (ADR 0033, 0035); en las demás compilaciones no se ofrece.
 const _store = String.fromEnvironment('LOCKSPIRE_STORE');
 
 bool get isGooglePlayBuild => _store == 'play' && Platform.isAndroid;
+
+bool get isMicrosoftStoreBuild => _store == 'msstore' && Platform.isWindows;

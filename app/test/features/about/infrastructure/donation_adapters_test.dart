@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:lockspire/features/about/domain/ports/donation_port.dart';
+import 'package:lockspire/features/about/infrastructure/donation_products.dart';
 import 'package:lockspire/features/about/infrastructure/play_billing_donation_adapter.dart';
 
 ProductDetails _product(String id, String price) => ProductDetails(
@@ -35,7 +36,7 @@ PurchaseDetails _purchase(String productId, PurchaseStatus status) =>
 class _FakePlay implements InAppPurchase {
   final _purchases = StreamController<List<PurchaseDetails>>.broadcast();
   bool available = true;
-  Set<String> listed = PlayBillingDonationAdapter.productIds.values.toSet();
+  Set<String> listed = donationProductIds.values.toSet();
   PurchaseStatus? answer = PurchaseStatus.purchased;
   Object? buyError;
   final bought = <String>[];

@@ -10,6 +10,7 @@ add_executable(${BINARY_NAME} WIN32
   "flutter_window.cpp"
   "main.cpp"
   "secure_clipboard.cpp"
+  "store_donations.cpp"
   "utils.cpp"
   "win32_window.cpp"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
@@ -38,6 +39,9 @@ target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
 # WTSRegisterSessionNotification — bloqueo de la bóveda al bloquear la
 # sesión de Windows (ADR 0012).
 target_link_libraries(${BINARY_NAME} PRIVATE "wtsapi32.lib")
+# Windows.Services.Store (C++/WinRT) — donaciones con complementos de la
+# Microsoft Store (ADR 0035).
+target_link_libraries(${BINARY_NAME} PRIVATE "windowsapp.lib")
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
 # Run the Flutter tool portions of the build. This must not be removed.

@@ -8,6 +8,14 @@
 #include "flutter/generated_plugin_registrant.h"
 #include "secure_clipboard.h"
 
+namespace {
+
+// Mensaje propio para correr tareas en el hilo de la interfaz (RunOnUi).
+// Registrado, no WM_APP + n: así no choca con el de ningún plugin.
+const UINT kRunOnUiMessage = RegisterWindowMessageW(L"Lockspire.RunOnUi");
+
+}  // namespace
+
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
 
@@ -69,6 +77,10 @@ bool FlutterWindow::OnCreate() {
         }
       });
 
+  store_donations_ = std::make_unique<store_donations::StoreDonationsChannel>(
+      flutter_controller_->engine()->messenger(), GetHandle(),
+      [this](std::function<void()> task) { RunOnUi(std::move(task)); });
+
   // Sin esto Windows no envía WM_WTSSESSION_CHANGE a la ventana. Si falla,
   // quedan la inactividad y el bloqueo manual (ADR 0012).
   session_notifications_registered_ =
@@ -93,6 +105,11 @@ void FlutterWindow::OnDestroy() {
   }
   os_session_channel_ = nullptr;
   clipboard_channel_ = nullptr;
+  store_donations_ = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(ui_tasks_mutex_);
+    ui_tasks_.clear();
+  }
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -112,6 +129,18 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     NotifyOsSessionEvent("suspending");
   }
 
+  if (message == kRunOnUiMessage) {
+    std::deque<std::function<void()>> tasks;
+    {
+      std::lock_guard<std::mutex> lock(ui_tasks_mutex_);
+      tasks.swap(ui_tasks_);
+    }
+    for (auto& task : tasks) {
+      task();
+    }
+    return 0;
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
@@ -129,6 +158,14 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
 
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);
+}
+
+void FlutterWindow::RunOnUi(std::function<void()> task) {
+  {
+    std::lock_guard<std::mutex> lock(ui_tasks_mutex_);
+    ui_tasks_.push_back(std::move(task));
+  }
+  PostMessage(GetHandle(), kRunOnUiMessage, 0, 0);
 }
 
 void FlutterWindow::NotifyOsSessionEvent(const char* method) {

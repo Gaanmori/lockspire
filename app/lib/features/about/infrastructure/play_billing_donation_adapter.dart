@@ -6,19 +6,13 @@ import 'dart:async';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../domain/ports/donation_port.dart';
+import 'donation_products.dart';
 
 /// Donaciones con la facturación de Google Play (ADR 0033), solo en la
 /// versión de Play: su política no permite enlazar pagos externos para
 /// apoyar al desarrollador. Cada monto es un producto consumible, así que se
 /// puede donar más de una vez. La app solo ve el resultado del pago.
 class PlayBillingDonationAdapter implements DonationPort {
-  /// Los productos que hay que crear en Play Console, con esos ids.
-  static const productIds = {
-    DonationTier.coffee: 'donation_coffee',
-    DonationTier.coffeeAndCake: 'donation_coffee_and_cake',
-    DonationTier.lunch: 'donation_lunch',
-  };
-
   final InAppPurchase _store;
   final _updates = StreamController<PurchaseDetails>.broadcast();
   var _products = <DonationTier, ProductDetails>{};
@@ -43,11 +37,11 @@ class PlayBillingDonationAdapter implements DonationPort {
   Future<List<DonationOffer>> offers() async {
     if (!await _store.isAvailable()) return const [];
     final response = await _store.queryProductDetails(
-      productIds.values.toSet(),
+      donationProductIds.values.toSet(),
     );
     final byId = {for (final p in response.productDetails) p.id: p};
     _products = {
-      for (final MapEntry(key: tier, value: id) in productIds.entries)
+      for (final MapEntry(key: tier, value: id) in donationProductIds.entries)
         tier: ?byId[id],
     };
     return [

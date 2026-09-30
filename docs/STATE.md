@@ -712,7 +712,13 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 ### Donaciones "Invíteme un café" (ADR 0033, 2026-09-30)
 
 - **Hecho:** en Acerca de hay tres montos, solo en la versión de Google Play (`--dart-define=LOCKSPIRE_STORE=play`), con Play Billing (`in_app_purchase`). Los productos son `donation_coffee`, `donation_coffee_and_cake` y `donation_lunch`. Ko-fi se probó y se quitó el mismo día, a pedido del usuario.
-- **Pendiente:** crear los tres productos consumibles en Play Console y probar desde la pista de pruebas.
+- **Microsoft Store (ADR 0035, mismo día):** los mismos tres montos, con complementos consumibles de la Store.
+  - El canal nativo es `windows/runner/store_donations.cpp`, en C++/WinRT.
+  - El adaptador es `MicrosoftStoreDonationAdapter`.
+  - Se compila con `--dart-define=LOCKSPIRE_STORE=msstore`.
+- **Pendiente:**
+  - crear los tres productos en Play Console (consumibles) y en Partner Center (consumibles manejados por el desarrollador), con los ids `donation_coffee`, `donation_coffee_and_cake` y `donation_lunch`;
+  - probar en la pista de pruebas de Play y con el MSIX instalado desde la Store.
 
 ### Tests: infraestructura al 90 % (2026-09-30)
 
