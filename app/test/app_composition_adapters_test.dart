@@ -66,6 +66,10 @@ void main() {
     expect(container.read(wordListPortProvider), isA<AssetWordListAdapter>());
   });
 
+  test('fuera de Google Play no se ofrece donar (ADR 0033)', () {
+    expect(container.read(donationPortProvider), isNull);
+  });
+
   test('los íconos de sitios van directo al sitio y el respaldo a '
       'DuckDuckGo (ADR 0029, 0030)', () {
     expect(

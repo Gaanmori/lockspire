@@ -137,6 +137,19 @@ void main() {
           origin: 'https://www.facebook.com',
           entryId: '3f2c9a1e-0000-4000-8000-000000000000',
         ),
+        const CheckLoginRequest(
+          'r8',
+          origin: 'https://banco.example',
+          username: 'ana',
+          password: 'Secreta-1',
+        ),
+        const SaveLoginRequest(
+          'r9',
+          origin: 'https://banco.example',
+          username: '',
+          password: 'Secreta-1',
+        ),
+        const NeverSaveForOriginRequest('r10', origin: 'https://banco.example'),
       ];
       for (final request in requests) {
         final parsed = BridgeRequest.parse(request.toJson());
@@ -255,6 +268,49 @@ void main() {
         throwsA(isA<BridgeProtocolException>()),
       );
       expectResponseEnvelope(okResponse('r1'), requestId: 'r1');
+    });
+  });
+
+  group('guardar inicios de sesión (ADR 0034)', () {
+    Map<String, Object?> login(String type, {Object? password = 'p'}) => {
+      'v': protocolVersion,
+      'id': 'r1',
+      'type': type,
+      'origin': 'https://banco.example',
+      'username': 'ana',
+      'password': password,
+    };
+
+    test('rechaza contraseña vacía, campos gigantes y claves extra', () {
+      for (final bad in [
+        login(MessageType.checkLogin, password: ''),
+        login(MessageType.saveLogin, password: 'x' * (maxLoginFieldLength + 1)),
+        login(MessageType.saveLogin, password: 42),
+        {...login(MessageType.checkLogin), 'entry_id': 'e1'},
+        {
+          ...login(MessageType.saveLogin),
+          'origin': 'https://banco.example/login',
+        },
+      ]) {
+        expect(
+          () => BridgeRequest.parse(bad),
+          throwsA(isA<BridgeProtocolException>()),
+          reason: '$bad',
+        );
+      }
+    });
+
+    test('LOGIN_STATUS lleva el título solo al actualizar', () {
+      expect(loginStatusResponse('r1', LoginStatus.newLogin), {
+        'v': protocolVersion,
+        'id': 'r1',
+        'type': 'LOGIN_STATUS',
+        'status': 'new',
+      });
+      expect(
+        loginStatusResponse('r1', LoginStatus.update, title: 'Banco')['title'],
+        'Banco',
+      );
     });
   });
 }

@@ -10,6 +10,8 @@ import '../providers/browser_bridge_provider.dart';
 import '../providers/native_messaging_registration_port_provider.dart';
 import 'package:lockspire/shared/domain/app_problem.dart';
 import 'package:lockspire/l10n/l10n.dart';
+
+import '../providers/browser_login_providers.dart';
 import 'package:lockspire/l10n/localized_error.dart';
 
 /// Conectar Lockspire con la extensión de Chrome/Edge (ADR 0013). El
@@ -211,6 +213,7 @@ class _BrowserIntegrationScreenState
                   ),
                   const SizedBox(height: LockspireSpacing.sm),
                   Text(context.l10n.browserInstallExtensionHint),
+                  const _NeverSaveSites(),
                 ],
               );
             },
@@ -251,6 +254,43 @@ class _BridgeStatusTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon),
       title: Text(text),
+    );
+  }
+}
+
+/// Los sitios donde el usuario eligió "Nunca en este sitio" en el aviso de
+/// la extensión (ADR 0034), para volver a ofrecer guardar. No aparece si no
+/// hay ninguno.
+class _NeverSaveSites extends ConsumerWidget {
+  const _NeverSaveSites();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sites = ref.watch(loginSaveExclusionsProvider).value ?? const [];
+    if (sites.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: LockspireSpacing.xl),
+        Text(
+          context.l10n.browserNeverSaveTitle,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        for (final site in sites)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.block),
+            title: Text(site),
+            trailing: IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: context.l10n.browserNeverSaveRemove(site),
+              onPressed: () async {
+                await ref.read(loginSaveExclusionsPortProvider).include(site);
+                ref.invalidate(loginSaveExclusionsProvider);
+              },
+            ),
+          ),
+      ],
     );
   }
 }

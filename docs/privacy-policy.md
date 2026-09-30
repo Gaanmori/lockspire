@@ -4,7 +4,7 @@ title: Lockspire — Política de privacidad / Privacy Policy
 
 # Política de privacidad de Lockspire
 
-_Última actualización: 28 de septiembre de 2026_
+_Última actualización: 30 de septiembre de 2026_
 
 Lockspire es un gestor de contraseñas de código abierto (AGPLv3) que funciona en su dispositivo. **No tenemos servidores y no recogemos ningún dato suyo.**
 
@@ -30,6 +30,7 @@ El uso que hace Lockspire de la información recibida de las API de Google cumpl
 
 - **En Android,** el servicio de autocompletado lee la estructura de la pantalla (qué campo es usuario y cuál contraseña, y qué app o sitio los pide) solo para ofrecerle sus cuentas. Esa información no sale de su dispositivo.
 - **La extensión para Chrome y Edge** habla únicamente con la app de Lockspire instalada en su propio equipo (native messaging). No envía nada a internet.
+- **Guardar contraseñas desde el navegador.** Cuando usted envía un formulario con una contraseña, la extensión lee el usuario y la contraseña de ese formulario para ofrecerle guardarlos. Solo se los pasa a la app de su equipo. Si no responde en 3 minutos, los olvida. No guarda nada en disco ni lee nada de las páginas en otro momento. La lista de sitios donde eligió "Nunca en este sitio" queda cifrada en su equipo.
 
 ## Lo que Lockspire no hace
 
@@ -42,6 +43,10 @@ El uso que hace Lockspire de la información recibida de las API de Google cumpl
 
 Si usted exporta su bóveda en un formato **sin cifrar** (CSV o JSON), el archivo queda donde usted lo guarde. Lockspire se lo advierte antes y le recuerda borrarlo.
 
+## Donaciones
+
+"Invíteme un café", en Acerca de, es opcional y solo existe en la versión de Google Play. El pago lo procesa Google Play: Lockspire solo recibe si el pago se completó, no ve ningún dato del pago y no guarda nada. Se aplica la política de privacidad de Google Play.
+
 ## Cambios y contacto
 
 Si esta política cambia, la nueva versión se publica en esta misma dirección, con la fecha arriba. Para preguntas, abra un _issue_ en [github.com/Gaanmori/lockspire](https://github.com/Gaanmori/lockspire/issues).
@@ -50,7 +55,7 @@ Si esta política cambia, la nueva versión se publica en esta misma dirección,
 
 # Lockspire Privacy Policy
 
-_Last updated: September 28, 2026_
+_Last updated: September 30, 2026_
 
 Lockspire is an open-source (AGPLv3) password manager that runs on your device. **We have no servers and we collect no data about you.**
 
@@ -76,6 +81,7 @@ Lockspire's use of information received from Google APIs will adhere to the [Goo
 
 - **On Android,** the autofill service reads the screen structure (which field is the username or password, and which app or site asks for it) only to offer your accounts. That information never leaves your device.
 - **The Chrome and Edge extension** talks only to the Lockspire app installed on your own computer (native messaging). It sends nothing to the internet.
+- **Saving passwords from the browser.** When you submit a form with a password, the extension reads that form's username and password to offer saving them. It passes them only to the app on your computer. If you don't answer within 3 minutes, it forgets them. It stores nothing on disk and reads nothing from pages at any other time. The list of sites where you chose "Never on this site" is kept encrypted on your computer.
 
 ## What Lockspire does not do
 
@@ -87,6 +93,10 @@ Lockspire's use of information received from Google APIs will adhere to the [Goo
 ## Exports
 
 If you export your vault in an **unencrypted** format (CSV or JSON), the file stays wherever you save it. Lockspire warns you beforehand and reminds you to delete it.
+
+## Donations
+
+"Buy me a coffee", in About, is optional and only exists in the Google Play version. Google Play processes the payment: Lockspire only receives whether the payment went through, sees no payment data and stores nothing. Google Play's privacy policy applies.
 
 ## Changes and contact
 

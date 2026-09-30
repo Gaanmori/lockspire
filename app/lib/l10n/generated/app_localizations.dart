@@ -2264,6 +2264,30 @@ abstract class AppLocalizations {
   /// **'No se pudo guardar el vínculo.'**
   String get linkSaveFailed;
 
+  /// No description provided for @browserLoginSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Se guardó la contraseña de {site}.'**
+  String browserLoginSaved(String site);
+
+  /// No description provided for @browserLoginSaveFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar la contraseña de {site}.'**
+  String browserLoginSaveFailed(String site);
+
+  /// No description provided for @browserNeverSaveTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sitios donde no se ofrece guardar contraseñas'**
+  String get browserNeverSaveTitle;
+
+  /// No description provided for @browserNeverSaveRemove.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a ofrecer en {site}'**
+  String browserNeverSaveRemove(String site);
+
   /// No description provided for @navVault.
   ///
   /// In es, this message translates to:
@@ -2407,6 +2431,54 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Copyright (C) 2026 {author}. Distribuido bajo la GNU AGPL v3 o posterior.'**
   String aboutLegalese(Object author);
+
+  /// No description provided for @aboutDonateTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Invíteme un café'**
+  String get aboutDonateTitle;
+
+  /// No description provided for @aboutDonateBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Lockspire es gratis, sin publicidad y de código abierto. Si le resulta útil, puede apoyar su desarrollo con una donación.'**
+  String get aboutDonateBody;
+
+  /// No description provided for @aboutDonateCoffee.
+  ///
+  /// In es, this message translates to:
+  /// **'Un café'**
+  String get aboutDonateCoffee;
+
+  /// No description provided for @aboutDonateCoffeeAndCake.
+  ///
+  /// In es, this message translates to:
+  /// **'Café y pastel'**
+  String get aboutDonateCoffeeAndCake;
+
+  /// No description provided for @aboutDonateLunch.
+  ///
+  /// In es, this message translates to:
+  /// **'Un almuerzo'**
+  String get aboutDonateLunch;
+
+  /// No description provided for @aboutDonateThanks.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Gracias por su apoyo!'**
+  String get aboutDonateThanks;
+
+  /// No description provided for @aboutDonatePending.
+  ///
+  /// In es, this message translates to:
+  /// **'Su pago quedó pendiente. ¡Gracias por su apoyo!'**
+  String get aboutDonatePending;
+
+  /// No description provided for @aboutDonateFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo completar la donación. Inténtelo de nuevo más tarde.'**
+  String get aboutDonateFailed;
 
   /// No description provided for @autofillWrongSiteTitle.
   ///

@@ -94,7 +94,7 @@ const plainPlatform = PlatformCapabilities(
 ///   entre varios [TestApp] para simular varios dispositivos. WebDAV se
 ///   configura desde la pantalla, como lo haría el usuario.
 /// - [files]: el selector de archivos del sistema, en memoria; [links]: los
-///   enlaces que se abrirían en el navegador.
+///   enlaces que se abrirían en el navegador; [donations]: donar (ADR 0033).
 /// - Sin canal con la extensión ni biometría disponible. La bandeja y la
 ///   ventana de escritorio (ADR 0012) solo con [desktop], en memoria.
 ///
@@ -109,6 +109,7 @@ class TestApp {
   final FakeSyncPort? cloud;
   final FakeFileTransfer files;
   final FakeExternalLinks links = FakeExternalLinks();
+  final FakeDonations donations = FakeDonations();
 
   /// Escritorio: ventana, bandeja y sesión del sistema en memoria. Solo se
   /// usan con [desktop] (la bandeja de ADR 0012 activa).
@@ -181,6 +182,7 @@ class TestApp {
     fileTransferPortProvider.overrideWithValue(files),
     appInfoPortProvider.overrideWithValue(const FakeAppInfo()),
     externalLinkPortProvider.overrideWithValue(links),
+    donationPortProvider.overrideWithValue(donations),
     passwordUnlockHistoryPortProvider.overrideWithValue(
       FakePasswordUnlockHistoryPort(),
     ),

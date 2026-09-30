@@ -9,15 +9,19 @@ import { cpSync, rmSync } from 'node:fs';
 rmSync('dist', { recursive: true, force: true });
 cpSync('public', 'dist', { recursive: true });
 
-await build({
-  entryPoints: ['src/popup.ts'],
-  bundle: true,
-  format: 'iife',
-  target: 'chrome120',
-  outfile: 'dist/popup.js',
-  // Sin sourcemaps en el paquete: no hacen falta y engordan la revisión.
-  sourcemap: false,
-  legalComments: 'none',
-});
+// Popup, service worker y content script (ADR 0034), cada uno en un solo
+// archivo: el content script no puede cargar módulos.
+for (const name of ['popup', 'background', 'capture']) {
+  await build({
+    entryPoints: [`src/${name}.ts`],
+    bundle: true,
+    format: 'iife',
+    target: 'chrome120',
+    outfile: `dist/${name}.js`,
+    // Sin sourcemaps en el paquete: no hacen falta y engordan la revisión.
+    sourcemap: false,
+    legalComments: 'none',
+  });
+}
 
 console.log('extension/dist listo');

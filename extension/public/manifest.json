@@ -6,7 +6,12 @@
   "default_locale": "en",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp+CBHLsamaFU+Mp1GUVOyXIieChXgLRvWoE15jzB82YZNBBxUdsnTvWD59bJ3EHEyghRB5r9nHI73Qw6v4U1CfW9I9SOH7Z34dbVyGnuqTGton5oywXUFSz9AwuU8XWGrevPpXxmMpI3+nyEd/wCKVb/R6yl9YuUVMK59YbOOwDf1PRoYi3v7bKFsRZIaS+G8cz4GNQ9a71XC77A188TDeJDQuIhKau6TPN5q4HaaxNi129e2rK5Z/GeHCUHjoERprc4Jzfn+Jy3uPAF2g7oeEobqgazRUIitlX4i3FY6aylauJ+DmdTkcZnnYRmS00LTR2uiqbck8s/MA9TU5OpywIDAQAB",
   "minimum_chrome_version": "120",
-  "permissions": ["nativeMessaging", "activeTab", "scripting"],
+  "permissions": [
+    "nativeMessaging",
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
   "action": {
     "default_title": "Lockspire",
     "default_popup": "popup.html",
@@ -21,5 +26,21 @@
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
-  }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "capture.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
 }

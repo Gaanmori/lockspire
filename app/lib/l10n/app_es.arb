@@ -963,6 +963,31 @@
     }
   },
   "linkSaveFailed": "No se pudo guardar el vínculo.",
+  "browserLoginSaved": "Se guardó la contraseña de {site}.",
+  "@browserLoginSaved": {
+    "placeholders": {
+      "site": {
+        "type": "String"
+      }
+    }
+  },
+  "browserLoginSaveFailed": "No se pudo guardar la contraseña de {site}.",
+  "@browserLoginSaveFailed": {
+    "placeholders": {
+      "site": {
+        "type": "String"
+      }
+    }
+  },
+  "browserNeverSaveTitle": "Sitios donde no se ofrece guardar contraseñas",
+  "browserNeverSaveRemove": "Volver a ofrecer en {site}",
+  "@browserNeverSaveRemove": {
+    "placeholders": {
+      "site": {
+        "type": "String"
+      }
+    }
+  },
   "navVault": "Bóveda",
   "settingsTitle": "Ajustes",
   "settingsAppearanceHint": "Idioma, tema claro u oscuro y colores",
@@ -1011,6 +1036,14 @@
       }
     }
   },
+  "aboutDonateTitle": "Invíteme un café",
+  "aboutDonateBody": "Lockspire es gratis, sin publicidad y de código abierto. Si le resulta útil, puede apoyar su desarrollo con una donación.",
+  "aboutDonateCoffee": "Un café",
+  "aboutDonateCoffeeAndCake": "Café y pastel",
+  "aboutDonateLunch": "Un almuerzo",
+  "aboutDonateThanks": "¡Gracias por su apoyo!",
+  "aboutDonatePending": "Su pago quedó pendiente. ¡Gracias por su apoyo!",
+  "aboutDonateFailed": "No se pudo completar la donación. Inténtelo de nuevo más tarde.",
   "autofillWrongSiteTitle": "¿Es el sitio correcto?",
   "autofillWrongSiteBody": "\"{title}\" es de {entrySite}, pero la página que la pide es {pageHost}.\n\nSi no esperaba este sitio, puede ser una página falsa que intenta robar su contraseña (phishing).",
   "@autofillWrongSiteBody": {

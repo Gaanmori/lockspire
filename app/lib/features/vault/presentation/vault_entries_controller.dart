@@ -57,6 +57,21 @@ class VaultEntriesController {
     ),
   );
 
+  /// Cambia un campo y guarda el valor anterior en su historial, ver
+  /// `Vault.withFieldReplaced`.
+  Future<void> replaceField({
+    required String id,
+    required String field,
+    required String value,
+  }) => _save(
+    (vault) => vault.withFieldReplaced(
+      id: id,
+      field: field,
+      value: value,
+      now: _now(),
+    ),
+  );
+
   /// Borrado suave (tombstone), ver `Vault.withEntryDeleted`.
   Future<void> deleteEntry(String id) =>
       _save((vault) => vault.withEntryDeleted(id, now: _now()));

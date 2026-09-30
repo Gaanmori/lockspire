@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/browser_bridge/application/handle_bridge_request.dart';
 import 'package:lockspire/features/browser_bridge/domain/ports/native_messaging_registration_port.dart';
+import 'package:lockspire/features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
 import 'package:lockspire/features/browser_bridge/presentation/providers/pending_link_request_provider.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
+import 'package:lockspire/features/vault/domain/entities/vault_entry.dart';
 import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
+import 'package:lockspire_bridge/lockspire_bridge.dart';
 
 import '../support/app_robot.dart';
 import '../support/test_app.dart';
@@ -148,6 +153,147 @@ void main() {
 
       await robot.openEntry('Banco');
       expect(find.text('https://banco.ejemplo'), findsNothing);
+    });
+  });
+
+  group('Guardar contraseñas desde el navegador (ADR 0034)', () {
+    Future<Map<String, Object?>> fromExtension(
+      TestApp app,
+      WidgetTester tester,
+      BridgeRequest request,
+    ) async {
+      // La respuesta llega mientras corre el reloj de la prueba (guardar la
+      // bóveda es asíncrono).
+      Map<String, Object?>? response;
+      unawaited(
+        app.container
+            .read(bridgeRequestHandlerProvider)(request)
+            .then((r) => response = r),
+      );
+      final robot = AppRobot(tester);
+      for (var i = 0; i < 50 && response == null; i++) {
+        await robot.settle();
+      }
+      return response!;
+    }
+
+    SaveLoginRequest save(String password) => SaveLoginRequest(
+      'a',
+      origin: 'https://www.banco.ejemplo',
+      username: 'ana',
+      password: password,
+    );
+
+    VaultEntry entryNamed(TestApp app, String title) =>
+        (app.container.read(vaultSessionControllerProvider).value!
+                as VaultSessionUnlocked)
+            .vault
+            .entries
+            .firstWhere((e) => e.title == title);
+
+    testWidgets('un inicio de sesión nuevo queda como entrada del sitio', (
+      tester,
+    ) async {
+      final (app, _) = await _desktopUnlocked(tester);
+
+      final check = await fromExtension(
+        app,
+        tester,
+        const CheckLoginRequest(
+          'c',
+          origin: 'https://www.banco.ejemplo',
+          username: 'ana',
+          password: 'Secreta-1',
+        ),
+      );
+      expect(check['status'], 'new');
+      expect(
+        await fromExtension(app, tester, save('Secreta-1')),
+        okResponse('a'),
+      );
+
+      expect(find.text('banco.ejemplo'), findsOneWidget);
+      final entry = entryNamed(app, 'banco.ejemplo');
+      expect(entry.fields, {
+        'username': 'ana',
+        'password': 'Secreta-1',
+        'url': 'https://banco.ejemplo',
+      });
+    });
+
+    testWidgets('actualizar cambia la contraseña y guarda la anterior en el '
+        'historial', (tester) async {
+      final (app, robot) = await _desktopUnlocked(tester);
+      await robot.addPassword(
+        title: 'Banco',
+        username: 'ana',
+        password: 'Vieja-1',
+        url: 'https://banco.ejemplo',
+      );
+
+      await fromExtension(app, tester, save('Nueva-2'));
+
+      final entry = entryNamed(app, 'Banco');
+      expect(entry.fields['password'], 'Nueva-2');
+      expect(entry.fieldHistory['password']!.single.value, 'Vieja-1');
+    });
+
+    testWidgets('con la bóveda bloqueada, se guarda al desbloquear y lo '
+        'avisa', (tester) async {
+      final (app, robot) = await _desktopUnlocked(tester);
+      await robot.lock();
+      app.window.visible = false;
+
+      expect(
+        await fromExtension(app, tester, save('Secreta-1')),
+        unlockRequiredResponse('a'),
+      );
+      expect(app.window.visible, isTrue, reason: 'la app sale al frente');
+
+      await robot.unlock(_master);
+
+      expect(
+        find.text('Se guardó la contraseña de banco.ejemplo.'),
+        findsOneWidget,
+      );
+      expect(entryNamed(app, 'banco.ejemplo').fields['password'], 'Secreta-1');
+    });
+
+    testWidgets('"Nunca en este sitio" aparece en Navegador y se puede '
+        'quitar', (tester) async {
+      final (app, robot) = await _desktopUnlocked(tester);
+      await fromExtension(
+        app,
+        tester,
+        const NeverSaveForOriginRequest(
+          'n',
+          origin: 'https://www.banco.ejemplo',
+        ),
+      );
+
+      await _openBrowser(robot);
+      await robot.reveal(find.text('banco.ejemplo'));
+      expect(
+        find.text('Sitios donde no se ofrece guardar contraseñas'),
+        findsOneWidget,
+      );
+
+      final remove = find.byTooltip('Volver a ofrecer en banco.ejemplo');
+      await tester.ensureVisible(remove);
+      await robot.tapTooltip('Volver a ofrecer en banco.ejemplo');
+
+      expect(find.text('banco.ejemplo'), findsNothing);
+      final check = await fromExtension(
+        app,
+        tester,
+        const CheckLoginRequest(
+          'c',
+          origin: 'https://banco.ejemplo',
+          username: 'ana',
+          password: 'x',
+        ),
+      );
+      expect(check['status'], 'new');
     });
   });
 }

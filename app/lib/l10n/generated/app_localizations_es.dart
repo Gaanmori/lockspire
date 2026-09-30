@@ -1483,6 +1483,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get linkSaveFailed => 'No se pudo guardar el vínculo.';
 
   @override
+  String browserLoginSaved(String site) {
+    return 'Se guardó la contraseña de $site.';
+  }
+
+  @override
+  String browserLoginSaveFailed(String site) {
+    return 'No se pudo guardar la contraseña de $site.';
+  }
+
+  @override
+  String get browserNeverSaveTitle =>
+      'Sitios donde no se ofrece guardar contraseñas';
+
+  @override
+  String browserNeverSaveRemove(String site) {
+    return 'Volver a ofrecer en $site';
+  }
+
+  @override
   String get navVault => 'Bóveda';
 
   @override
@@ -1566,6 +1585,33 @@ class AppLocalizationsEs extends AppLocalizations {
   String aboutLegalese(Object author) {
     return 'Copyright (C) 2026 $author. Distribuido bajo la GNU AGPL v3 o posterior.';
   }
+
+  @override
+  String get aboutDonateTitle => 'Invíteme un café';
+
+  @override
+  String get aboutDonateBody =>
+      'Lockspire es gratis, sin publicidad y de código abierto. Si le resulta útil, puede apoyar su desarrollo con una donación.';
+
+  @override
+  String get aboutDonateCoffee => 'Un café';
+
+  @override
+  String get aboutDonateCoffeeAndCake => 'Café y pastel';
+
+  @override
+  String get aboutDonateLunch => 'Un almuerzo';
+
+  @override
+  String get aboutDonateThanks => '¡Gracias por su apoyo!';
+
+  @override
+  String get aboutDonatePending =>
+      'Su pago quedó pendiente. ¡Gracias por su apoyo!';
+
+  @override
+  String get aboutDonateFailed =>
+      'No se pudo completar la donación. Inténtelo de nuevo más tarde.';
 
   @override
   String get autofillWrongSiteTitle => '¿Es el sitio correcto?';

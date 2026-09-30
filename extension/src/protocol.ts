@@ -17,7 +17,14 @@ export type Request =
   | { type: 'GENERATE_PASSWORD'; length: number }
   | { type: 'SHOW_APP' }
   | { type: 'LIST_CREDENTIALS' }
-  | { type: 'REQUEST_LINK_ORIGIN'; origin: string; entry_id: string };
+  | { type: 'REQUEST_LINK_ORIGIN'; origin: string; entry_id: string }
+  // Guardar inicios de sesión (ADR 0034).
+  | { type: 'CHECK_LOGIN'; origin: string; username: string; password: string }
+  | { type: 'SAVE_LOGIN'; origin: string; username: string; password: string }
+  | { type: 'NEVER_SAVE_FOR_ORIGIN'; origin: string };
+
+export const LOGIN_STATUSES = ['new', 'update', 'saved', 'never'] as const;
+export type LoginStatus = (typeof LOGIN_STATUSES)[number];
 
 export interface CredentialSummary {
   entryId: string;
@@ -38,6 +45,7 @@ export type Response =
   | { type: 'CREDENTIALS'; entries: CredentialSummary[] }
   | { type: 'CREDENTIAL_SECRET'; username: string; password: string }
   | { type: 'GENERATED_PASSWORD'; password: string }
+  | { type: 'LOGIN_STATUS'; status: LoginStatus; title?: string }
   | { type: 'OK' }
   | { type: 'UNLOCK_REQUIRED' }
   | { type: 'ERROR'; code: string; detail?: string };
@@ -96,6 +104,15 @@ export function parseResponse(raw: unknown, requestId: string): Response {
       return { type, username: str(raw, 'username'), password: str(raw, 'password') };
     case 'GENERATED_PASSWORD':
       return { type, password: str(raw, 'password') };
+    case 'LOGIN_STATUS': {
+      const status = str(raw, 'status');
+      if (!(LOGIN_STATUSES as readonly string[]).includes(status)) {
+        throw new ProtocolError('status');
+      }
+      const title = raw['title'];
+      if (title !== undefined && typeof title !== 'string') throw new ProtocolError('title');
+      return { type, status: status as LoginStatus, ...(title !== undefined ? { title } : {}) };
+    }
     case 'OK':
     case 'UNLOCK_REQUIRED':
       return { type };

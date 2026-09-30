@@ -15,6 +15,7 @@ import '../../../vault/application/password_generator.dart';
 import '../../../vault/presentation/vault_session_controller.dart';
 import '../../../vault/presentation/vault_session_state.dart';
 import '../../application/handle_bridge_request.dart';
+import 'browser_login_providers.dart';
 import 'pending_link_request_provider.dart';
 
 part 'browser_bridge_provider.g.dart';
@@ -43,22 +44,7 @@ Future<BrowserBridgeStatus> browserBridge(Ref ref) async {
     return BrowserBridgeStatus.unsupported;
   }
 
-  final handle = HandleBridgeRequest(
-    currentVault: () {
-      final session = ref.read(vaultSessionControllerProvider).value;
-      return session is VaultSessionUnlocked ? session.vault : null;
-    },
-    showApp: () => unawaited(ref.read(desktopWindowPortProvider).show()),
-    generatePassword: (length) => generatePassword(length: length),
-    requestLink: (request) {
-      ref.read(pendingLinkRequestProvider.notifier).set(request);
-      unawaited(ref.read(desktopWindowPortProvider).show());
-    },
-    currentAppearance: () =>
-        ref.read(appearanceControllerProvider).value ??
-        AppearancePreference.defaults,
-    currentLanguage: () => ref.read(appL10nProvider).localeName,
-  );
+  final handle = ref.watch(bridgeRequestHandlerProvider);
 
   try {
     final server = await BridgeServer.start(
@@ -73,3 +59,31 @@ Future<BrowserBridgeStatus> browserBridge(Ref ref) async {
     return BrowserBridgeStatus.unavailable;
   }
 }
+
+/// Responde las peticiones de la extensión con la app real (ADR 0013,
+/// 0015, 0034). Separado del servidor IPC para que los tests de flujo le
+/// hablen como lo haría la extensión.
+@Riverpod(keepAlive: true)
+HandleBridgeRequest bridgeRequestHandler(Ref ref) => HandleBridgeRequest(
+  currentVault: () {
+    final session = ref.read(vaultSessionControllerProvider).value;
+    return session is VaultSessionUnlocked ? session.vault : null;
+  },
+  showApp: () => unawaited(ref.read(desktopWindowPortProvider).show()),
+  generatePassword: (length) => generatePassword(length: length),
+  requestLink: (request) {
+    ref.read(pendingLinkRequestProvider.notifier).set(request);
+    unawaited(ref.read(desktopWindowPortProvider).show());
+  },
+  currentAppearance: () =>
+      ref.read(appearanceControllerProvider).value ??
+      AppearancePreference.defaults,
+  currentLanguage: () => ref.read(appL10nProvider).localeName,
+  saveLogin: (login, match) =>
+      ref.read(browserLoginSaverProvider)(login, match),
+  saveAfterUnlock: (login) {
+    ref.read(pendingBrowserLoginsProvider.notifier).add(login);
+    unawaited(ref.read(desktopWindowPortProvider).show());
+  },
+  exclusions: ref.read(loginSaveExclusionsPortProvider),
+);

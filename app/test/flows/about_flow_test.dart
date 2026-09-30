@@ -3,12 +3,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lockspire/features/about/domain/ports/donation_port.dart';
 
 import '../support/app_robot.dart';
 import '../support/test_app.dart';
 
-Future<(TestApp, AppRobot)> _about(WidgetTester tester) async {
+Future<(TestApp, AppRobot)> _about(
+  WidgetTester tester, {
+  void Function(TestApp app)? before,
+}) async {
   final app = TestApp();
+  before?.call(app);
   await app.pump(tester);
   final robot = AppRobot(tester);
   await robot.createVault('correcto caballo batería grapa');
@@ -70,5 +75,44 @@ void main() {
     await robot.tapText('Licencias de terceros');
 
     expect(find.byType(LicensePage), findsOneWidget);
+  });
+
+  group('Invíteme un café (ADR 0033)', () {
+    testWidgets('con Google Play: tres montos con su precio, y agradece al '
+        'pagar', (tester) async {
+      final (app, robot) = await _about(tester);
+
+      await robot.reveal(find.text('Invíteme un café'));
+      expect(find.text(r'$ 5.000'), findsOneWidget);
+      await robot.tapText('Café y pastel');
+
+      expect(app.donations.donated, [DonationTier.coffeeAndCake]);
+      expect(find.text('¡Gracias por su apoyo!'), findsOneWidget);
+    });
+
+    testWidgets('un pago cancelado no dice nada; uno fallido lo '
+        'avisa', (tester) async {
+      final (app, robot) = await _about(tester);
+      await robot.reveal(find.text('Un almuerzo'));
+
+      app.donations.outcome = DonationOutcome.cancelled;
+      await robot.tapText('Un almuerzo');
+      expect(find.byType(SnackBar), findsNothing);
+
+      app.donations.outcome = DonationOutcome.failed;
+      await robot.tapText('Un almuerzo');
+      expect(
+        find.text(
+          'No se pudo completar la donación. Inténtelo de nuevo más tarde.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('si no hay cómo donar, la sección no aparece', (tester) async {
+      await _about(tester, before: (app) => app.donations.available = []);
+
+      expect(find.text('Invíteme un café'), findsNothing);
+    });
   });
 }

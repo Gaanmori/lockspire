@@ -4,6 +4,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override, ProviderListenable;
 
+import 'features/about/presentation/providers/about_providers.dart';
 import 'features/appearance/presentation/appearance_controller.dart';
 import 'features/appearance/presentation/launcher_icon_sync.dart';
 import 'features/appearance/presentation/providers/system_accent_color_provider.dart';
@@ -62,6 +63,8 @@ Future<void> startApp(
     _keepRunning(container, siteIconsControllerProvider);
     // Ícono del lanzador de Android según el tema (ADR 0031).
     _keepRunning(container, launcherIconSyncProvider);
+    // Confirma los pagos de Google Play que quedaron pendientes (ADR 0033).
+    _keepRunning(container, donationPortProvider);
   }
 }
 

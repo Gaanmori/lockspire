@@ -9,6 +9,10 @@ const protocolVersion = 1;
 const minGeneratedLength = 16;
 const maxGeneratedLength = 64;
 
+/// Largo máximo de un usuario o una contraseña que manda la extensión al
+/// ofrecer guardarla (ADR 0034).
+const maxLoginFieldLength = 1024;
+
 final _idPattern = RegExp(r'^[A-Za-z0-9_-]{1,64}$');
 final _entryIdPattern = RegExp(r'^[A-Za-z0-9-]{1,64}$');
 // Exactamente lo que produce `new URL(...).origin` para http/https:
@@ -34,12 +38,16 @@ abstract final class MessageType {
   static const showApp = 'SHOW_APP';
   static const listCredentials = 'LIST_CREDENTIALS';
   static const requestLinkOrigin = 'REQUEST_LINK_ORIGIN';
+  static const checkLogin = 'CHECK_LOGIN';
+  static const saveLogin = 'SAVE_LOGIN';
+  static const neverSaveForOrigin = 'NEVER_SAVE_FOR_ORIGIN';
 
   // Respuestas (app → extensión).
   static const pong = 'PONG';
   static const credentials = 'CREDENTIALS';
   static const credentialSecret = 'CREDENTIAL_SECRET';
   static const generatedPassword = 'GENERATED_PASSWORD';
+  static const loginStatus = 'LOGIN_STATUS';
   static const ok = 'OK';
   static const unlockRequired = 'UNLOCK_REQUIRED';
   static const error = 'ERROR';
@@ -204,6 +212,37 @@ sealed class BridgeRequest {
           origin: _origin(json),
           entryId: _entryId(json),
         );
+      case MessageType.checkLogin || MessageType.saveLogin:
+        _expectKeys(
+          json,
+          required: {'v', 'id', 'type', 'origin', 'username', 'password'},
+        );
+        _expectVersion(json);
+        final login = (
+          origin: _origin(json),
+          username: _loginField(json, 'username'),
+          password: _loginField(json, 'password'),
+        );
+        if (login.password.isEmpty) {
+          throw const BridgeProtocolException('password vacío');
+        }
+        return type == MessageType.checkLogin
+            ? CheckLoginRequest(
+                _id(json),
+                origin: login.origin,
+                username: login.username,
+                password: login.password,
+              )
+            : SaveLoginRequest(
+                _id(json),
+                origin: login.origin,
+                username: login.username,
+                password: login.password,
+              );
+      case MessageType.neverSaveForOrigin:
+        _expectKeys(json, required: {'v', 'id', 'type', 'origin'});
+        _expectVersion(json);
+        return NeverSaveForOriginRequest(_id(json), origin: _origin(json));
       default:
         throw const BridgeProtocolException('type desconocido');
     }
@@ -292,9 +331,84 @@ class RequestLinkOriginRequest extends BridgeRequest {
   Map<String, Object?> _fields() => {'origin': origin, 'entry_id': entryId};
 }
 
+/// Un inicio de sesión que la extensión vio enviar en [origin] (ADR 0034).
+sealed class LoginRequest extends BridgeRequest {
+  final String origin;
+  final String username;
+  final String password;
+  const LoginRequest(
+    super.id, {
+    required this.origin,
+    required this.username,
+    required this.password,
+  });
+  @override
+  Map<String, Object?> _fields() => {
+    'origin': origin,
+    'username': username,
+    'password': password,
+  };
+}
+
+/// ¿Hay que ofrecer guardar este inicio de sesión? Responde
+/// `LOGIN_STATUS`, o `UNLOCK_REQUIRED` con la bóveda bloqueada. No cambia
+/// nada.
+class CheckLoginRequest extends LoginRequest {
+  const CheckLoginRequest(
+    super.id, {
+    required super.origin,
+    required super.username,
+    required super.password,
+  });
+  @override
+  String get type => MessageType.checkLogin;
+}
+
+/// El usuario eligió "Guardar" en el aviso de la página. Con la bóveda
+/// bloqueada, la app lo guarda al desbloquear y responde `UNLOCK_REQUIRED`.
+class SaveLoginRequest extends LoginRequest {
+  const SaveLoginRequest(
+    super.id, {
+    required super.origin,
+    required super.username,
+    required super.password,
+  });
+  @override
+  String get type => MessageType.saveLogin;
+}
+
+/// "No volver a preguntar en este sitio".
+class NeverSaveForOriginRequest extends BridgeRequest {
+  final String origin;
+  const NeverSaveForOriginRequest(super.id, {required this.origin});
+  @override
+  String get type => MessageType.neverSaveForOrigin;
+  @override
+  Map<String, Object?> _fields() => {'origin': origin};
+}
+
 // ---------------------------------------------------------------------
 // Respuestas
 // ---------------------------------------------------------------------
+
+/// Qué hacer con un inicio de sesión recién enviado (ADR 0034).
+enum LoginStatus {
+  /// No está en la bóveda: ofrecer guardarlo.
+  newLogin('new'),
+
+  /// Hay una entrada del sitio con ese usuario y otra contraseña: ofrecer
+  /// actualizarla.
+  update('update'),
+
+  /// Ya está guardado tal cual: no preguntar.
+  saved('saved'),
+
+  /// El usuario pidió no preguntar en este sitio.
+  never('never');
+
+  final String wire;
+  const LoginStatus(this.wire);
+}
 
 /// Resumen de una credencial para el popup — sin contraseña (ADR 0013).
 class CredentialSummary {
@@ -358,6 +472,16 @@ Map<String, Object?> credentialSecretResponse(
 
 Map<String, Object?> generatedPasswordResponse(String id, String password) =>
     _response(id, MessageType.generatedPassword, {'password': password});
+
+/// [title]: la entrada que se actualizaría, solo con [LoginStatus.update].
+Map<String, Object?> loginStatusResponse(
+  String id,
+  LoginStatus status, {
+  String? title,
+}) => _response(id, MessageType.loginStatus, {
+  'status': status.wire,
+  'title': ?title,
+});
 
 Map<String, Object?> okResponse(String id) => _response(id, MessageType.ok);
 
@@ -440,6 +564,14 @@ String _entryId(Map<String, Object?> json) {
     throw const BridgeProtocolException('entry_id inválido');
   }
   return entryId;
+}
+
+String _loginField(Map<String, Object?> json, String key) {
+  final value = _string(json, key);
+  if (value.length > maxLoginFieldLength) {
+    throw BridgeProtocolException('"$key" demasiado largo');
+  }
+  return value;
 }
 
 String _origin(Map<String, Object?> json) {

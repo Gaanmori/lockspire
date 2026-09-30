@@ -6,7 +6,9 @@ import 'package:lockspire_bridge/lockspire_bridge.dart';
 import '../../appearance/domain/appearance_preference.dart';
 import '../../vault/domain/entities/vault.dart';
 import '../../vault/domain/entities/vault_entry.dart';
+import '../domain/browser_login.dart';
 import '../domain/origin_matcher.dart';
+import '../domain/ports/login_save_exclusions_port.dart';
 
 /// Petición pendiente de vincular un sitio a una entrada (ADR 0015). La
 /// confirma el usuario en la ventana de la app, nunca la extensión.
@@ -51,11 +53,24 @@ class HandleBridgeRequest {
   /// mismo (ADR 0032). `null` si no se conoce.
   final String? Function() currentLanguage;
 
+  /// Guarda un inicio de sesión que el usuario aceptó en la página (ADR
+  /// 0034): una entrada nueva, o la contraseña nueva de [LoginMatch].
+  final Future<void> Function(BrowserLogin login, LoginMatch match) saveLogin;
+
+  /// Con la bóveda bloqueada: la app lo guarda al desbloquear.
+  final void Function(BrowserLogin login) saveAfterUnlock;
+
+  /// Sitios donde el usuario pidió no ofrecer guardar.
+  final LoginSaveExclusionsPort exclusions;
+
   const HandleBridgeRequest({
     required this.currentVault,
     required this.showApp,
     required this.generatePassword,
     required this.requestLink,
+    required this.saveLogin,
+    required this.saveAfterUnlock,
+    required this.exclusions,
     this.currentAppearance = _defaultAppearance,
     this.currentLanguage = _noLanguage,
   });
@@ -64,6 +79,12 @@ class HandleBridgeRequest {
 
   static AppearancePreference _defaultAppearance() =>
       AppearancePreference.defaults;
+
+  static BrowserLogin _login(LoginRequest request) => BrowserLogin(
+    origin: request.origin,
+    username: request.username,
+    password: request.password,
+  );
 
   static Iterable<VaultEntry> _passwordEntries(Vault vault) => vault.entries
       .where((e) => !e.deleted && e.type == VaultEntryType.password);
@@ -81,7 +102,7 @@ class HandleBridgeRequest {
     ];
   }
 
-  Map<String, Object?> call(BridgeRequest request) {
+  Future<Map<String, Object?>> call(BridgeRequest request) async {
     switch (request) {
       case PingRequest():
         final appearance = currentAppearance();
@@ -138,6 +159,40 @@ class HandleBridgeRequest {
             currentUrl: entry.fields['url'] ?? '',
             newUrl: linkedUrlForOrigin(request.origin),
           ),
+        );
+        return okResponse(request.id);
+
+      case CheckLoginRequest():
+        final login = _login(request);
+        if (await exclusions.isExcluded(login.site)) {
+          return loginStatusResponse(request.id, LoginStatus.never);
+        }
+        final vault = currentVault();
+        if (vault == null) return unlockRequiredResponse(request.id);
+        return switch (matchLogin(vault, login)) {
+          NewLogin() => loginStatusResponse(request.id, LoginStatus.newLogin),
+          ChangedPassword(:final entry) => loginStatusResponse(
+            request.id,
+            LoginStatus.update,
+            title: entry.title,
+          ),
+          AlreadySaved() => loginStatusResponse(request.id, LoginStatus.saved),
+        };
+
+      case SaveLoginRequest():
+        final login = _login(request);
+        final vault = currentVault();
+        if (vault == null) {
+          saveAfterUnlock(login);
+          return unlockRequiredResponse(request.id);
+        }
+        final match = matchLogin(vault, login);
+        if (match is! AlreadySaved) await saveLogin(login, match);
+        return okResponse(request.id);
+
+      case NeverSaveForOriginRequest():
+        await exclusions.exclude(
+          BrowserLogin(origin: request.origin, username: '', password: '').site,
         );
         return okResponse(request.id);
 

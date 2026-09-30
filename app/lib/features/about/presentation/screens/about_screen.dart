@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../design/lockspire_icon.dart';
 import '../../../../design/lockspire_spacing.dart';
 import '../providers/about_providers.dart';
+import '../widgets/donation_card.dart';
 import 'package:lockspire/l10n/l10n.dart';
 
 const _sourceUrl = 'https://github.com/Gaanmori/lockspire';
@@ -110,6 +111,7 @@ class AboutScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+              const DonationCard(),
               const SizedBox(height: LockspireSpacing.md),
               Card(
                 child: Column(

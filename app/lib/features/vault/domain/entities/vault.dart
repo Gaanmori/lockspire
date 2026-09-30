@@ -88,6 +88,32 @@ class Vault {
     (e) => e.copyWith(title: title, fields: fields, modifiedAt: now),
   );
 
+  /// Cambia un campo y guarda el valor anterior en su historial (el más
+  /// reciente primero, hasta [maxFieldHistoryPerField]), para que se pueda
+  /// recuperar. Lo usa "actualizar la contraseña" desde el navegador (ADR
+  /// 0034): un error de tipeo en la página no debe borrar la buena.
+  Vault withFieldReplaced({
+    required String id,
+    required String field,
+    required String value,
+    required DateTime now,
+  }) => _mapEntry(id, (e) {
+    final previous = e.fields[field];
+    if (previous == value) return e;
+    return e.copyWith(
+      fields: {...e.fields, field: value},
+      fieldHistory: {
+        ...e.fieldHistory,
+        if (previous != null && previous.isNotEmpty)
+          field: [
+            FieldHistoryRecord(value: previous, replacedAt: now),
+            ...?e.fieldHistory[field],
+          ].take(maxFieldHistoryPerField).toList(),
+      },
+      modifiedAt: now,
+    );
+  });
+
   /// Borrado suave (tombstone): la entrada queda en la lista marcada como
   /// borrada, para que el merge (ADR 0006) propague el borrado a los demás
   /// dispositivos en vez de resucitarla.

@@ -18,6 +18,7 @@ import 'features/autofill/presentation/autofill_app.dart';
 import 'features/browser_bridge/infrastructure/single_instance.dart';
 import 'features/browser_bridge/presentation/providers/browser_bridge_provider.dart';
 import 'features/browser_bridge/presentation/widgets/link_request_listener.dart';
+import 'features/browser_bridge/presentation/widgets/browser_login_save_listener.dart';
 import 'features/desktop/presentation/widgets/desktop_shell.dart';
 import 'features/sync/presentation/screens/restore_vault_screen.dart';
 import 'features/vault/presentation/screens/vault_gate_screen.dart';
@@ -126,10 +127,12 @@ class _MyAppState extends ConsumerState<MyApp> {
         // mostrar el aviso de "sigue en la bandeja" al cerrar la ventana.
         home: DesktopShell(
           child: LinkRequestListener(
-            child: ActivityAndLifecycleWatcher(
-              child: VaultGateScreen(
-                unlockedBuilder: (vault) => AppShell(vault: vault),
-                restoreVaultBuilder: (_) => const RestoreVaultScreen(),
+            child: BrowserLoginSaveListener(
+              child: ActivityAndLifecycleWatcher(
+                child: VaultGateScreen(
+                  unlockedBuilder: (vault) => AppShell(vault: vault),
+                  restoreVaultBuilder: (_) => const RestoreVaultScreen(),
+                ),
               ),
             ),
           ),

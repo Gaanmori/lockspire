@@ -40,6 +40,19 @@ const es = {
   originChanged: 'La página cambió de sitio; no se rellenó nada.',
   noPasswordField: 'No se encontró un campo de contraseña en esta página.',
   generateFailed: 'No se pudo generar la contraseña.',
+  // Guardar inicios de sesión en la página (ADR 0034).
+  savePrompt: '¿Guardar la contraseña de {site} en Lockspire?',
+  updatePrompt: '¿Actualizar la contraseña de "{title}" en Lockspire?',
+  savePromptLocked: 'Lockspire está bloqueado: se guardará al desbloquearlo.',
+  save: 'Guardar',
+  update: 'Actualizar',
+  notNow: 'Ahora no',
+  neverHere: 'Nunca en este sitio',
+  savedInLockspire: 'Guardada en Lockspire.',
+  savedAfterUnlock: 'Desbloquee Lockspire para terminar de guardarla.',
+  saveFailed: 'No se pudo guardar en Lockspire.',
+  neverSaved: 'Lockspire no volverá a preguntar en {site}.',
+  closePrompt: 'Cerrar',
 } as const;
 
 export type MessageKey = keyof typeof es;
@@ -77,6 +90,18 @@ const en: Record<MessageKey, string> = {
   originChanged: 'The page changed site; nothing was filled in.',
   noPasswordField: 'No password field was found on this page.',
   generateFailed: 'Could not generate the password.',
+  savePrompt: 'Save the password for {site} in Lockspire?',
+  updatePrompt: 'Update the password for "{title}" in Lockspire?',
+  savePromptLocked: 'Lockspire is locked: it will be saved when you unlock it.',
+  save: 'Save',
+  update: 'Update',
+  notNow: 'Not now',
+  neverHere: 'Never on this site',
+  savedInLockspire: 'Saved in Lockspire.',
+  savedAfterUnlock: 'Unlock Lockspire to finish saving it.',
+  saveFailed: 'Could not save it in Lockspire.',
+  neverSaved: "Lockspire won't ask again on {site}.",
+  closePrompt: 'Close',
 };
 
 export const MESSAGES = { es, en } as const;

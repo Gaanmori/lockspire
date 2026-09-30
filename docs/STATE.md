@@ -688,6 +688,32 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
 
+### Guardar contraseñas desde el navegador (ADR 0034, 2026-09-30)
+
+- **Hecho:** la extensión detecta el envío de un formulario con contraseña y muestra en la página "¿Guardar la contraseña de sitio.com en Lockspire?". Las opciones son Guardar o Actualizar, Ahora no, y Nunca en este sitio.
+  - **Extensión:**
+    - `capture.ts` es el content script, y dibuja el aviso en un Shadow DOM cerrado;
+    - `background.ts` es el service worker: toma el origen de la pestaña y guarda lo pendiente en `storage.session` durante 3 minutos;
+    - `login_fields.ts` y `save_prompt.ts` tienen la lógica pura.
+    - Permisos nuevos: `storage` y un content script en todos los sitios `http` y `https`.
+  - **Protocolo:** `CHECK_LOGIN`, `SAVE_LOGIN` y `NEVER_SAVE_FOR_ORIGIN`, que responden `LOGIN_STATUS`.
+  - **App:**
+    - `matchLogin` decide si es nuevo, si cambió o si ya está guardado;
+    - actualizar conserva la contraseña anterior en el historial (`Vault.withFieldReplaced`);
+    - con la bóveda bloqueada, se guarda al desbloquear (`BrowserLoginSaveListener`);
+    - "Nunca en este sitio" se guarda en el almacenamiento seguro y se puede quitar en Navegador.
+  - `HandleBridgeRequest` ahora es asíncrono. `bridgeRequestHandlerProvider` lo separa del servidor IPC, y los tests de flujo le hablan como la extensión.
+  - La política de privacidad lo explica.
+- **Hallazgo:** editar una contraseña a mano en la app **no** guarda la anterior en el historial; solo lo hacen el merge y ahora el navegador. Queda como mejora posible.
+- **Pendiente:**
+  - verificarlo a mano en Chrome y Edge; hace falta recompilar el native host y recargar la extensión;
+  - justificar el permiso de "todos los sitios" en la ficha de Chrome Web Store.
+
+### Donaciones "Invíteme un café" (ADR 0033, 2026-09-30)
+
+- **Hecho:** en Acerca de hay tres montos, solo en la versión de Google Play (`--dart-define=LOCKSPIRE_STORE=play`), con Play Billing (`in_app_purchase`). Los productos son `donation_coffee`, `donation_coffee_and_cake` y `donation_lunch`. Ko-fi se probó y se quitó el mismo día, a pedido del usuario.
+- **Pendiente:** crear los tres productos consumibles en Play Console y probar desde la pista de pruebas.
+
 ### Tests: infraestructura al 90 % (2026-09-30)
 
 - **Hecho:** infraestructura pasó de 75,5 % a **92,4 %** medido en Windows. 567 tests. La CI ahora exige 90 % también en infraestructura (`tool/check_coverage.dart`).

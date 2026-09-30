@@ -72,4 +72,42 @@ void main() {
       expect(entries.single.modifiedAt, _created);
     });
   });
+
+  group('withFieldReplaced (ADR 0034)', () {
+    test('cambia el campo y guarda el valor anterior, el más reciente '
+        'primero y hasta 3', () {
+      var vault = _vault([_entry('a'), _entry('b')]);
+      for (final (i, value) in ['v1', 'v2', 'v3', 'v4'].indexed) {
+        vault = vault.withFieldReplaced(
+          id: 'a',
+          field: 'password',
+          value: value,
+          now: _now.add(Duration(minutes: i)),
+        );
+      }
+
+      final entry = vault.entries.first;
+      expect(entry.fields['password'], 'v4');
+      expect(entry.fields['username'], 'yo');
+      expect(entry.fieldHistory['password']!.map((r) => r.value), [
+        'v3',
+        'v2',
+        'v1',
+      ]);
+      expect(entry.modifiedAt, _now.add(const Duration(minutes: 3)));
+      expect(vault.entries.last.fields['password'], 'viejo');
+    });
+
+    test('el mismo valor no deja historial ni cambia la fecha', () {
+      final vault = _vault([_entry('a')]).withFieldReplaced(
+        id: 'a',
+        field: 'password',
+        value: 'viejo',
+        now: _now,
+      );
+
+      expect(vault.entries.single.fieldHistory, isEmpty);
+      expect(vault.entries.single.modifiedAt, _created);
+    });
+  });
 }
