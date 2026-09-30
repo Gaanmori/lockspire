@@ -994,6 +994,11 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - 678 tests en total, con la cobertura por encima del 90 %.
 - **Ajuste pedido por el usuario (2026-09-30):** con varios perfiles, la huella o Windows Hello ya no se abren solos al desbloquear: primero se elige el perfil, y luego la huella con su botón. Con un solo perfil, igual que siempre. Se hace con `UnlockVaultScreen.autoPromptBiometric`, que `main.dart` apaga cuando se muestra la lista; `startApp` espera a los perfiles antes del primer cuadro. 2 tests de flujo.
 - **Verificado por el usuario:** el perfil de su esposa funciona en Windows.
+- **Revisión de seguridad, SOLID y código limpio** (`docs/reviews/2026-09-30-revision-perfiles.md`): 9 hallazgos corregidos con sus tests.
+  - Un fallo real: los adaptadores de la bandeja y la ventana seguían escuchando tras cambiar de perfil.
+  - Seguridad: validación de ids contra rutas manipuladas, y rechazo de claves reservadas.
+  - Diseño: `ProfileHost` sin dependencia de la bóveda, `bootProfile` y `leaveProfile` compartidos, y la regla del nombre del principal en el dominio.
+  - 686 tests en verde.
 - **Pendiente:**
   - verificación manual del usuario en Windows: agregar un perfil "Demo", cambiar entre perfiles y que la extensión atienda al perfil abierto;
   - hacer las capturas de la Store con el perfil Demo;

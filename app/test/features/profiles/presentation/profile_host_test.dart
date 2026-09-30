@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/profiles/domain/profile.dart';
 import 'package:lockspire/features/profiles/presentation/profile_switcher.dart';
 import 'package:lockspire/features/profiles/presentation/widgets/profile_host.dart';
-import 'package:lockspire/shared/secure_storage_provider.dart';
+import 'package:lockspire/shared/active_profile_provider.dart';
 
 class _ActiveProfile extends ConsumerWidget {
   const _ActiveProfile();
@@ -37,11 +37,13 @@ void main() {
     final handle = ProfileSwitchHandle();
     final first = await boot('p2', handle);
     final seen = <ProviderContainer>[];
+    final left = <ProviderContainer>[];
     await tester.pumpWidget(
       ProfileHost(
         handle: handle,
         initialContainer: first,
         boot: boot,
+        onLeave: left.add,
         onContainer: seen.add,
         child: const _ActiveProfile(),
       ),
@@ -61,6 +63,7 @@ void main() {
     expect(booted, ['p2', 'roto', mainProfileId]);
     expect(find.text(mainProfileId), findsOneWidget);
     expect(seen, hasLength(1));
+    expect(left, [first]);
     // El contenedor anterior quedó descartado.
     expect(() => first.read(activeProfileIdProvider), throwsStateError);
   });

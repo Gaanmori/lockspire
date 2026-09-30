@@ -449,7 +449,6 @@
   "profilesEnableHint": "They're off by default because sharing a phone is unusual.",
   "profilesMainName": "Main",
   "profilesInUse": "In use",
-  "profilesMainTag": "Main",
   "profilesAdd": "Add profile",
   "profilesAddTitle": "New profile",
   "profilesAddBody": "It opens empty: there you can create your vault or restore it from the cloud.",

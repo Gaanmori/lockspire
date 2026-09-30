@@ -63,8 +63,16 @@ class TrayManagerAdapter with TrayListener implements TrayPort {
 
   @override
   Future<void> destroy() async {
+    await dispose();
+    await trayManager.destroy();
+  }
+
+  /// Deja de escuchar la bandeja sin quitarla. `trayManager` es global: al
+  /// cambiar de perfil se crea otro adaptador (ADR 0039), y si este siguiera
+  /// escuchando, cada clic derecho abriría el menú una vez por perfil
+  /// abierto antes.
+  Future<void> dispose() async {
     trayManager.removeListener(this);
     await _actions.close();
-    await trayManager.destroy();
   }
 }

@@ -4,15 +4,10 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'active_profile_provider.dart';
 import 'profile_scoped_secure_storage.dart';
 
 part 'secure_storage_provider.g.dart';
-
-/// El perfil abierto (ADR 0039). Cada `ProviderContainer` es de un solo
-/// perfil: `main()` lo fija con un override al crearlo, y cambiar de
-/// perfil crea otro contenedor. Sin override, el principal.
-@Riverpod(keepAlive: true)
-String activeProfileId(Ref ref) => mainProfileKeyId;
 
 /// Único punto donde se crea el almacenamiento seguro del sistema (Keystore
 /// en Android, DPAPI en Windows, libsecret en Linux). Todos los adaptadores

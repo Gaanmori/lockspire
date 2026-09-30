@@ -3,11 +3,13 @@
 
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:lockspire/features/desktop/domain/ports/tray_port.dart';
 import 'package:lockspire/features/desktop/infrastructure/tray_manager_adapter.dart';
 import 'package:lockspire/features/desktop/infrastructure/window_manager_adapter.dart';
+import 'package:lockspire/features/desktop/presentation/providers/desktop_ports_providers.dart';
 
 import '../../../support/fake_method_channel.dart';
 
@@ -84,6 +86,25 @@ void main() {
       expect(actions, [TrayAction.quit, TrayAction.open]);
     });
 
+    test('al cambiar de perfil, el adaptador viejo deja de escuchar y el '
+        'ícono se queda (ADR 0039)', () async {
+      final next = TrayManagerAdapter();
+      addTearDown(next.dispose);
+
+      await tray.dispose();
+      await native.emit('onTrayIconRightMouseDown');
+      await pumpEventQueue();
+
+      expect(native.methods, isNot(contains('destroy')));
+      // Un solo menú: el del adaptador nuevo.
+      expect(
+        native.methods.where((m) => m == 'popUpContextMenu'),
+        hasLength(1),
+      );
+      await native.emit('onTrayIconMouseDown');
+      expect(actions, isEmpty);
+    });
+
     test('al cerrar la app el ícono desaparece', () async {
       await tray.destroy();
 
@@ -117,6 +138,20 @@ void main() {
       await window.destroy();
     });
 
+    test('al cambiar de perfil, el adaptador viejo deja de escuchar sin '
+        'cerrar la ventana (ADR 0039)', () async {
+      var requests = 0;
+      final subscription = window.closeRequests.listen((_) => requests++);
+      addTearDown(subscription.cancel);
+
+      await window.dispose();
+      await native.emit('onEvent', {'eventName': 'close'});
+      await pumpEventQueue();
+
+      expect(requests, 0);
+      expect(native.methods, isNot(contains('destroy')));
+    });
+
     test('mostrar restaura la ventana minimizada y le da el foco', () async {
       await window.show();
 
@@ -143,5 +178,26 @@ void main() {
       );
       expect((native.argumentsOf('setIcon') as Map)['iconPath'], icon);
     });
+  });
+
+  // Regresión (revisión 2026-09-30 de ADR 0039): cada perfil crea sus
+  // adaptadores; si el contenedor viejo no los soltaba, seguían escuchando.
+  test('descartar el contenedor de un perfil suelta la bandeja y la '
+      'ventana', () async {
+    final tray = FakeMethodChannel('tray_manager');
+    final window = FakeMethodChannel('window_manager');
+    final container = ProviderContainer();
+    final closes = <void>[];
+    container.read(desktopWindowPortProvider).closeRequests.listen(closes.add);
+    container.read(trayPortProvider);
+
+    container.dispose();
+    await pumpEventQueue();
+    await tray.emit('onTrayIconRightMouseDown');
+    await window.emit('onEvent', {'eventName': 'close'});
+    await pumpEventQueue();
+
+    expect(tray.methods, isNot(contains('popUpContextMenu')));
+    expect(closes, isEmpty);
   });
 }

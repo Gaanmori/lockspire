@@ -1792,9 +1792,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profilesInUse => 'En uso';
 
   @override
-  String get profilesMainTag => 'Principal';
-
-  @override
   String get profilesAdd => 'Agregar perfil';
 
   @override

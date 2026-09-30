@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lockspire/features/appearance/domain/appearance_preference.dart';
 import 'package:lockspire/features/appearance/presentation/appearance_controller.dart';
 import 'package:lockspire/features/profiles/domain/profile.dart';
-import 'package:lockspire/shared/secure_storage_provider.dart';
+import 'package:lockspire/shared/active_profile_provider.dart';
 
 import 'package:lockspire/features/vault/domain/ports/biometric_auth_port.dart';
 

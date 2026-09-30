@@ -8,7 +8,6 @@ import 'package:lockspire/shared/profile_paths.dart';
 import 'package:lockspire/shared/profile_scoped_secure_storage.dart';
 
 import '../domain/ports/profile_data_port.dart';
-import '../domain/profile.dart';
 
 /// Borra la carpeta y las claves de un perfil (ADR 0039).
 class LocalProfileDataAdapter implements ProfileDataPort {
@@ -20,11 +19,9 @@ class LocalProfileDataAdapter implements ProfileDataPort {
 
   @override
   Future<void> erase(String id) async {
-    // El principal no tiene prefijo ni carpeta propia: borrarlo así
-    // arrasaría con los datos de la app. Nunca se permite.
-    if (id == mainProfileId || id.isEmpty) {
-      throw ArgumentError.value(id, 'id', 'el principal no se borra');
-    }
+    // `profileDirectory` rechaza el principal (no tiene carpeta propia:
+    // borrarlo así arrasaría con los datos de la app) y los ids inválidos
+    // (un `../..` saldría de su carpeta), antes de tocar nada.
     final directory = Directory(
       profileDirectory(await _appDataDirectory(), id),
     );

@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
-import 'package:lockspire/shared/domain/app_problem.dart';
-import 'package:lockspire/shared/secure_storage_provider.dart';
+import 'package:lockspire/shared/active_profile_provider.dart';
 
 import '../../domain/profile.dart';
 import '../../domain/profile_registry.dart';
@@ -66,33 +65,10 @@ Future<void> addProfile(BuildContext context, WidgetRef ref) async {
       title: context.l10n.profilesAddTitle,
       body: context.l10n.profilesAddBody,
       confirm: context.l10n.commonAdd,
-      onSubmit: notMainName(context, ref, controller.add, forMain: false),
+      onSubmit: (name) =>
+          controller.add(name, mainDisplayName: context.l10n.profilesMainName),
     ),
   );
-}
-
-/// El principal sin nombre propio se muestra como "Principal" (en el
-/// idioma de la app): otro perfil no puede llamarse igual, o la lista
-/// tendría dos iguales. El dominio no conoce ese nombre traducido.
-///
-/// [forMain]: el nombre es el del propio principal (cambiarle el nombre).
-Future<void> Function(String name) notMainName(
-  BuildContext context,
-  WidgetRef ref,
-  Future<void> Function(String name) submit, {
-  required bool forMain,
-}) {
-  final mainName = context.l10n.profilesMainName.toLowerCase();
-  return (name) async {
-    final registry = ref.read(profilesControllerProvider).value;
-    if (!forMain &&
-        registry != null &&
-        registry.main.name.isEmpty &&
-        name.trim().toLowerCase() == mainName) {
-      throw const AppProblem(AppProblemCode.profileNameTaken);
-    }
-    await submit(name);
-  };
 }
 
 /// Diálogo con el nombre de un perfil. Muestra el error de validación
@@ -140,7 +116,9 @@ class _ProfileNameDialogState extends State<ProfileNameDialog> {
       // Agregar un perfil cambia de contenedor y desmonta toda la app, este
       // diálogo incluido: entonces ya no hay nada que cerrar.
       if (mounted) navigator.pop();
-    } on AppProblem catch (e) {
+    } catch (e) {
+      // Validación (AppProblem) o un fallo al guardar: el diálogo sigue
+      // abierto, con el motivo, para corregir o cancelar.
       if (!mounted) return;
       setState(() {
         _busy = false;

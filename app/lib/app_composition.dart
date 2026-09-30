@@ -8,11 +8,16 @@ import 'features/about/presentation/providers/about_providers.dart';
 import 'features/appearance/presentation/appearance_controller.dart';
 import 'features/appearance/presentation/launcher_icon_sync.dart';
 import 'features/appearance/presentation/providers/system_accent_color_provider.dart';
+import 'features/profiles/presentation/profile_switcher.dart';
 import 'features/profiles/presentation/profiles_controller.dart';
+import 'features/profiles/presentation/providers/profile_providers.dart';
 import 'features/sync/presentation/auto_sync_controller.dart';
 import 'features/vault/presentation/auto_lock_controller.dart';
 import 'features/vault/presentation/providers/auto_lock_timeout_setting_provider.dart';
 import 'features/vault/presentation/site_icons_controller.dart';
+import 'features/vault/presentation/vault_session_controller.dart';
+import 'features/vault/presentation/vault_session_state.dart';
+import 'shared/active_profile_provider.dart';
 
 import 'features/sync/presentation/providers/sync_master_password_change_replica_provider.dart';
 import 'features/sync/presentation/providers/sync_password_changed_elsewhere_provider.dart';
@@ -34,6 +39,35 @@ List<Override> appOverrides() => [
     (ref) => ref.watch(syncPasswordChangedElsewhereProvider.future),
   ),
 ];
+
+/// Crea y arranca el contenedor de un perfil (ADR 0039). Cada perfil tiene
+/// el suyo: [overrides] son los de la app (`appOverrides()`, o los de los
+/// tests) y aquí se suman el perfil y el [switcher] para cambiar a otro.
+Future<ProviderContainer> bootProfile({
+  required String profileId,
+  required ProfileSwitcher switcher,
+  required List<Override> overrides,
+  required bool isAutofill,
+}) async {
+  final container = ProviderContainer(
+    overrides: [
+      ...overrides,
+      activeProfileIdProvider.overrideWithValue(profileId),
+      profileSwitcherProvider.overrideWithValue(switcher),
+    ],
+  );
+  await startApp(container, isAutofill: isAutofill);
+  return container;
+}
+
+/// Antes de descartar el contenedor de un perfil: bloquear la bóveda, que
+/// descarta la clave y borra el portapapeles.
+void leaveProfile(ProviderContainer container) {
+  final session = container.read(vaultSessionControllerProvider).value;
+  if (session is VaultSessionUnlocked) {
+    container.read(vaultSessionControllerProvider.notifier).lock();
+  }
+}
 
 /// Lo que la app carga antes del primer cuadro y los servicios que corren en
 /// segundo plano. La usan `main()` y los tests de flujo, así prueban el

@@ -5,9 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockspire/l10n/l10n.dart';
 import 'package:lockspire/l10n/localized_error.dart';
-import 'package:lockspire/shared/domain/app_problem.dart';
 import 'package:lockspire/shared/platform_capabilities.dart';
-import 'package:lockspire/shared/secure_storage_provider.dart';
+import 'package:lockspire/shared/active_profile_provider.dart';
 
 import '../../../../design/lockspire_spacing.dart';
 import '../profiles_controller.dart';
@@ -54,7 +53,9 @@ class ProfilesScreen extends ConsumerWidget {
                 title: Text(profileDisplayName(context, profile)),
                 subtitle: Text(
                   [
-                    if (profile.isMain) l10n.profilesMainTag,
+                    // Con nombre propio, se aclara cuál es el principal.
+                    if (profile.isMain && profile.name.isNotEmpty)
+                      l10n.profilesMainName,
                     if (profile.id == activeId) l10n.profilesInUse,
                   ].join(' · '),
                 ),
@@ -81,11 +82,9 @@ class ProfilesScreen extends ConsumerWidget {
                     title: l10n.profilesRenameTitle,
                     confirm: l10n.commonSave,
                     initialName: profileDisplayName(context, active),
-                    onSubmit: notMainName(
-                      context,
-                      ref,
-                      controller.renameActive,
-                      forMain: active.isMain,
+                    onSubmit: (name) => controller.renameActive(
+                      name,
+                      mainDisplayName: l10n.profilesMainName,
                     ),
                   ),
                 ),
@@ -135,12 +134,15 @@ class ProfilesScreen extends ConsumerWidget {
         ],
       ),
     );
-    if (confirmed != true) return;
-    await ref.read(profilesControllerProvider.notifier).deleteActive();
+    if (confirmed != true || !context.mounted) return;
+    await _run(
+      context,
+      ref.read(profilesControllerProvider.notifier).deleteActive,
+    );
   }
 
-  /// Lo que puede rechazar el dominio (desactivar con varios perfiles) se
-  /// avisa abajo, sin cambiar nada.
+  /// Lo que rechace el dominio (desactivar con varios perfiles) o falle al
+  /// guardar se avisa abajo, sin cambiar nada.
   Future<void> _run(
     BuildContext context,
     Future<void> Function() action,
@@ -149,7 +151,7 @@ class ProfilesScreen extends ConsumerWidget {
     final l10n = context.l10n;
     try {
       await action();
-    } on AppProblem catch (e) {
+    } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(localizeError(l10n, e))));
     }
   }

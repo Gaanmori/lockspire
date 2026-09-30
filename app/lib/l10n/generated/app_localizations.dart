@@ -2792,12 +2792,6 @@ abstract class AppLocalizations {
   /// **'En uso'**
   String get profilesInUse;
 
-  /// No description provided for @profilesMainTag.
-  ///
-  /// In es, this message translates to:
-  /// **'Principal'**
-  String get profilesMainTag;
-
   /// No description provided for @profilesAdd.
   ///
   /// In es, this message translates to:

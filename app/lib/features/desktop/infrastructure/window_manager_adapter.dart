@@ -41,8 +41,14 @@ class WindowManagerAdapter with WindowListener implements DesktopWindowPort {
 
   @override
   Future<void> destroy() async {
+    await dispose();
+    await windowManager.destroy();
+  }
+
+  /// Deja de escuchar la ventana sin cerrarla. `windowManager` es global:
+  /// ver `TrayManagerAdapter.dispose`.
+  Future<void> dispose() async {
     windowManager.removeListener(this);
     await _closeRequests.close();
-    await windowManager.destroy();
   }
 }

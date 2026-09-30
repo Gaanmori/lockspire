@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
-import 'package:lockspire/shared/secure_storage_provider.dart';
+import 'package:lockspire/shared/active_profile_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -30,16 +30,24 @@ class ProfilesController extends _$ProfilesController {
   }
 
   /// Agrega un perfil vacío y lo abre: ahí se crea o restaura su bóveda.
-  Future<void> add(String name) async {
+  /// [mainDisplayName]: ver `ProfileRegistry.add`.
+  Future<void> add(String name, {required String mainDisplayName}) async {
     final switcher = ref.read(profileSwitcherProvider);
     final id = const Uuid().v4();
-    await _save((await future).add(id: id, name: name));
+    await _save(
+      (await future).add(id: id, name: name, mainDisplayName: mainDisplayName),
+    );
     await switcher.open(id);
   }
 
-  Future<void> renameActive(String name) async {
+  Future<void> renameActive(
+    String name, {
+    required String mainDisplayName,
+  }) async {
     final id = ref.read(activeProfileIdProvider);
-    await _save((await future).rename(id, name));
+    await _save(
+      (await future).rename(id, name, mainDisplayName: mainDisplayName),
+    );
   }
 
   Future<void> setEnabled(bool enabled) async {

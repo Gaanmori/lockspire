@@ -3,10 +3,7 @@
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Id del perfil que ya existía antes de los perfiles (ADR 0039). Igual a
-/// `mainProfileId` de la feature `profiles`; está aquí para que `shared` no
-/// dependa de una feature.
-const mainProfileKeyId = 'principal';
+import 'domain/profile_ids.dart';
 
 /// Prefijo de las claves del dispositivo (la lista de perfiles): no son de
 /// ningún perfil.
@@ -17,8 +14,9 @@ const profileKeyPrefix = 'profile.';
 
 /// Prefijo de las claves del perfil [profileId]; vacío en el principal, que
 /// conserva las claves de siempre.
-String profileKeysPrefix(String profileId) =>
-    profileId == mainProfileKeyId ? '' : '$profileKeyPrefix$profileId.';
+String profileKeysPrefix(String profileId) => profileId == mainProfileId
+    ? ''
+    : '$profileKeyPrefix${checkProfileId(profileId)}.';
 
 /// El almacenamiento seguro visto desde un perfil (ADR 0039): cada clave
 /// lleva el prefijo del perfil, así dos perfiles nunca leen ni pisan los
@@ -32,7 +30,15 @@ class ProfileScopedSecureStorage extends FlutterSecureStorage {
 
   String get _prefix => profileKeysPrefix(profileId);
 
-  String _scoped(String key) => '$_prefix$key';
+  /// Una clave que empiece por un prefijo reservado rompería el
+  /// aislamiento: en el principal se confundiría con la de otro perfil o
+  /// con la lista de perfiles. Ningún adaptador puede usarlas.
+  String _scoped(String key) {
+    if (key.startsWith(profileKeyPrefix) || key.startsWith(deviceKeyPrefix)) {
+      throw ArgumentError.value(key, 'key', 'usa un prefijo reservado');
+    }
+    return '$_prefix$key';
+  }
 
   /// Si una clave guardada es de este perfil. En el principal, las que no
   /// llevan el prefijo de otro perfil ni el del dispositivo.
@@ -51,7 +57,7 @@ class ProfileScopedSecureStorage extends FlutterSecureStorage {
     WebOptions? webOptions,
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
-  }) => super.write(
+  }) async => super.write(
     key: _scoped(key),
     value: value,
     iOptions: iOptions,
@@ -71,7 +77,7 @@ class ProfileScopedSecureStorage extends FlutterSecureStorage {
     WebOptions? webOptions,
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
-  }) => super.read(
+  }) async => super.read(
     key: _scoped(key),
     iOptions: iOptions,
     aOptions: aOptions,
@@ -90,7 +96,7 @@ class ProfileScopedSecureStorage extends FlutterSecureStorage {
     WebOptions? webOptions,
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
-  }) => super.containsKey(
+  }) async => super.containsKey(
     key: _scoped(key),
     iOptions: iOptions,
     aOptions: aOptions,
@@ -109,7 +115,7 @@ class ProfileScopedSecureStorage extends FlutterSecureStorage {
     WebOptions? webOptions,
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
-  }) => super.delete(
+  }) async => super.delete(
     key: _scoped(key),
     iOptions: iOptions,
     aOptions: aOptions,

@@ -22,7 +22,6 @@ import 'features/browser_bridge/presentation/widgets/browser_login_save_listener
 import 'features/desktop/presentation/widgets/desktop_shell.dart';
 import 'features/profiles/presentation/profile_switcher.dart';
 import 'features/profiles/presentation/profiles_controller.dart';
-import 'features/profiles/presentation/providers/profile_providers.dart';
 import 'features/profiles/presentation/start_profile.dart';
 import 'features/profiles/presentation/widgets/profile_host.dart';
 import 'features/profiles/presentation/widgets/profile_widgets.dart';
@@ -31,7 +30,6 @@ import 'features/vault/presentation/screens/vault_gate_screen.dart';
 import 'features/vault/presentation/vault_session_controller.dart';
 import 'features/vault/presentation/vault_session_state.dart';
 import 'features/vault/presentation/widgets/activity_and_lifecycle_watcher.dart';
-import 'shared/secure_storage_provider.dart';
 
 Future<void> main() async {
   // WidgetsBinding.instance no existe hasta que se inicializa el binding
@@ -57,14 +55,12 @@ Future<void> main() async {
   // Cada perfil tiene su propio contenedor (ADR 0039): se abre el último
   // usado, y cambiar de perfil crea otro con `boot`.
   Future<ProviderContainer> boot(String profileId, ProfileSwitcher s) async {
-    final container = ProviderContainer(
-      overrides: [
-        ...appOverrides(),
-        activeProfileIdProvider.overrideWithValue(profileId),
-        profileSwitcherProvider.overrideWithValue(s),
-      ],
+    final container = await bootProfile(
+      profileId: profileId,
+      switcher: s,
+      overrides: appOverrides(),
+      isAutofill: isAutofill,
     );
-    await startApp(container, isAutofill: isAutofill);
     // El canal de la extensión (ADR 0013) arranca antes de la UI.
     if (isDesktop) await container.read(browserBridgeProvider.future);
     return container;
@@ -87,6 +83,7 @@ Future<void> main() async {
       handle: handle,
       initialContainer: container,
       boot: boot,
+      onLeave: leaveProfile,
       child: isAutofill ? const AutofillApp() : const MyApp(),
     ),
   );

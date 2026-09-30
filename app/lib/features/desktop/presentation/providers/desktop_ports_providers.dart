@@ -14,11 +14,21 @@ part 'desktop_ports_providers.g.dart';
 
 /// Solo se leen en escritorio (`isDesktopShellProvider`): fuera de él los
 /// plugins no están inicializados.
+/// La ventana y la bandeja son del proceso, pero cada perfil tiene su
+/// contenedor (ADR 0039): al descartarlo, su adaptador deja de escuchar.
 @Riverpod(keepAlive: true)
-DesktopWindowPort desktopWindowPort(Ref ref) => WindowManagerAdapter();
+DesktopWindowPort desktopWindowPort(Ref ref) {
+  final window = WindowManagerAdapter();
+  ref.onDispose(window.dispose);
+  return window;
+}
 
 @Riverpod(keepAlive: true)
-TrayPort trayPort(Ref ref) => TrayManagerAdapter();
+TrayPort trayPort(Ref ref) {
+  final tray = TrayManagerAdapter();
+  ref.onDispose(tray.dispose);
+  return tray;
+}
 
 @Riverpod(keepAlive: true)
 ThemedIconFilePort themedIconFilePort(Ref ref) => const ThemedIconFileAdapter();

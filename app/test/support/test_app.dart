@@ -48,7 +48,7 @@ import 'package:lockspire/features/profiles/domain/profile.dart';
 import 'package:lockspire/features/profiles/presentation/profile_switcher.dart';
 import 'package:lockspire/features/profiles/presentation/providers/profile_providers.dart';
 import 'package:lockspire/features/profiles/presentation/widgets/profile_host.dart';
-import 'package:lockspire/shared/secure_storage_provider.dart';
+import 'package:lockspire/shared/active_profile_provider.dart';
 
 import 'fakes/fake_site_icons.dart';
 import 'fakes/fake_system_accent.dart';
@@ -302,17 +302,13 @@ class TestApp {
     // El mismo arranque que main(): tema, tiempo de bloqueo y servicios en
     // segundo plano (bloqueo automático, sync, íconos, lanzador), con un
     // contenedor por perfil (ADR 0039).
-    Future<ProviderContainer> boot(String profileId, ProfileSwitcher s) async {
-      final booted = ProviderContainer(
-        overrides: [
-          ...overrides,
-          activeProfileIdProvider.overrideWithValue(profileId),
-          profileSwitcherProvider.overrideWithValue(s),
-        ],
-      );
-      await startApp(booted, isAutofill: isAutofill);
-      return booted;
-    }
+    Future<ProviderContainer> boot(String profileId, ProfileSwitcher s) =>
+        bootProfile(
+          profileId: profileId,
+          switcher: s,
+          overrides: overrides,
+          isAutofill: isAutofill,
+        );
 
     final handle = ProfileSwitchHandle();
     container = await boot(startProfile, handle);
@@ -326,6 +322,7 @@ class TestApp {
         handle: handle,
         initialContainer: container,
         boot: boot,
+        onLeave: leaveProfile,
         onContainer: (next) => container = next,
         child: app,
       ),

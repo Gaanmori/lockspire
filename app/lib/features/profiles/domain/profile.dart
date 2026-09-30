@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
-/// Id del perfil que ya existía antes de los perfiles (ADR 0039): conserva
-/// la ruta de su bóveda y sus claves sin prefijo.
-const mainProfileId = 'principal';
+import 'package:lockspire/shared/domain/profile_ids.dart';
+
+export 'package:lockspire/shared/domain/profile_ids.dart'
+    show mainProfileId, isValidProfileId;
 
 /// Una bóveda del dispositivo con sus propios ajustes (ADR 0039).
 class Profile {

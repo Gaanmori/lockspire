@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Gabriel Ángel Montoya Rico
 
 import 'package:lockspire/shared/domain/app_problem.dart';
+import 'package:lockspire/shared/domain/profile_ids.dart';
 
 import 'profile.dart';
 
@@ -52,8 +53,17 @@ class ProfileRegistry {
 
   /// Agrega un perfil con [id] (lo genera quien llama) y lo deja como el
   /// último usado, para abrirlo enseguida.
-  ProfileRegistry add({required String id, required String name}) {
-    final clean = _validName(name);
+  ///
+  /// [mainDisplayName]: cómo se ve el principal mientras no tenga nombre
+  /// propio ("Principal", en el idioma de la app). Otro perfil no puede
+  /// llamarse igual, o la lista tendría dos iguales.
+  ProfileRegistry add({
+    required String id,
+    required String name,
+    String mainDisplayName = '',
+  }) {
+    checkProfileId(id);
+    final clean = _validName(name, mainDisplayName: mainDisplayName);
     if (byId(id) != null) throw ArgumentError.value(id, 'id', 'ya existe');
     return _copy(
       profiles: [
@@ -64,9 +74,18 @@ class ProfileRegistry {
     );
   }
 
-  ProfileRegistry rename(String id, String name) {
+  /// Ver [add] para [mainDisplayName].
+  ProfileRegistry rename(
+    String id,
+    String name, {
+    String mainDisplayName = '',
+  }) {
     _require(id);
-    final clean = _validName(name, ignoringId: id);
+    final clean = _validName(
+      name,
+      ignoringId: id,
+      mainDisplayName: mainDisplayName,
+    );
     return _copy(
       profiles: [for (final p in profiles) p.id == id ? p.renamed(clean) : p],
     );
@@ -105,7 +124,11 @@ class ProfileRegistry {
   Profile _require(String id) =>
       byId(id) ?? (throw ArgumentError.value(id, 'id', 'no existe'));
 
-  String _validName(String name, {String? ignoringId}) {
+  String _validName(
+    String name, {
+    String? ignoringId,
+    required String mainDisplayName,
+  }) {
     final clean = name.trim();
     if (clean.isEmpty) {
       throw const AppProblem(AppProblemCode.profileNameEmpty);
@@ -113,8 +136,11 @@ class ProfileRegistry {
     if (clean.length > maxProfileNameLength) {
       throw const AppProblem(AppProblemCode.profileNameTooLong);
     }
+    String shown(Profile p) =>
+        p.isMain && p.name.isEmpty ? mainDisplayName : p.name;
     final taken = profiles.any(
-      (p) => p.id != ignoringId && p.name.toLowerCase() == clean.toLowerCase(),
+      (p) =>
+          p.id != ignoringId && shown(p).toLowerCase() == clean.toLowerCase(),
     );
     if (taken) throw const AppProblem(AppProblemCode.profileNameTaken);
     return clean;
@@ -142,10 +168,12 @@ class ProfileRegistry {
     Map<String, Object?> json, {
     required String mainName,
   }) {
+    // Un id inválido (dato manipulado) se descarta: iría en una ruta de
+    // archivos.
     final list = [
       for (final p in (json['profiles'] as List? ?? const []))
         if (p is Map) Profile.fromJson(p.cast<String, Object?>()),
-    ];
+    ].where((p) => isValidProfileId(p.id)).toList();
     final main =
         list.where((p) => p.isMain).firstOrNull ??
         Profile(id: mainProfileId, name: mainName);

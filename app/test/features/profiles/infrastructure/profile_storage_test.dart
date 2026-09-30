@@ -43,6 +43,23 @@ void main() {
       expect(await maria.containsKey(key: 'otra'), isFalse);
     });
 
+    test('las claves con prefijo reservado y los ids inválidos se rechazan: '
+        'romperían el aislamiento', () async {
+      await expectLater(
+        main.write(key: 'device.profiles', value: 'x'),
+        throwsArgumentError,
+      );
+      await expectLater(
+        main.read(key: 'profile.p2.sync.webdav.password'),
+        throwsArgumentError,
+      );
+      await expectLater(
+        const ProfileScopedSecureStorage('../x').read(key: 'a'),
+        throwsArgumentError,
+      );
+      expect(stored, isEmpty);
+    });
+
     test('readAll y deleteAll ven solo lo del perfil: nunca lo de otro ni la '
         'lista de perfiles', () async {
       await main.write(key: 'a', value: '1');
@@ -113,10 +130,16 @@ void main() {
       expect(await raw(), {'profile.p3.k': '2', 'k': '3'});
     });
 
-    test('nunca borra el principal', () async {
+    test('nunca borra el principal ni sale de su carpeta con un id '
+        'manipulado', () async {
+      final outside = File(p.join(dir.path, 'no-tocar.txt'))
+        ..writeAsStringSync('x');
       final adapter = LocalProfileDataAdapter(device, () async => dir.path);
       await expectLater(adapter.erase(mainProfileId), throwsArgumentError);
       await expectLater(adapter.erase(''), throwsArgumentError);
+      await expectLater(adapter.erase('..'), throwsArgumentError);
+      await expectLater(adapter.erase('../..'), throwsArgumentError);
+      expect(outside.existsSync(), isTrue);
     });
   });
 

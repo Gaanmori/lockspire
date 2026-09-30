@@ -122,4 +122,53 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('el principal sin nombre propio se ve con el nombre traducido: otro '
+      'perfil no puede llamarse igual', () {
+    final unnamed = ProfileRegistry.initial(mainName: '');
+
+    expect(
+      () => unnamed.add(
+        id: 'p2',
+        name: 'principal',
+        mainDisplayName: 'Principal',
+      ),
+      _problem(AppProblemCode.profileNameTaken),
+    );
+    final registry = unnamed.add(
+      id: 'p2',
+      name: 'María',
+      mainDisplayName: 'Principal',
+    );
+    expect(
+      () => registry.rename('p2', 'PRINCIPAL', mainDisplayName: 'Principal'),
+      _problem(AppProblemCode.profileNameTaken),
+    );
+    // El propio principal sí puede tomar ese nombre.
+    expect(
+      registry
+          .rename(mainProfileId, 'Principal', mainDisplayName: 'Principal')
+          .main
+          .name,
+      'Principal',
+    );
+  });
+
+  test('los ids van en rutas: uno inválido se rechaza al agregar y se '
+      'descarta al leer', () {
+    for (final id in ['../..', 'a/b', r'a', '', 'p 2']) {
+      expect(
+        () => initial.add(id: id, name: 'X'),
+        throwsArgumentError,
+        reason: id,
+      );
+    }
+    final read = ProfileRegistry.fromJson({
+      'profiles': [
+        {'id': '../../Windows', 'name': 'Malo'},
+        {'id': 'p2', 'name': 'Bueno'},
+      ],
+    }, mainName: '');
+    expect(read.profiles.map((p) => p.id), [mainProfileId, 'p2']);
+  });
 }

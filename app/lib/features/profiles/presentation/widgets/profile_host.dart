@@ -3,8 +3,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lockspire/features/vault/presentation/vault_session_controller.dart';
-import 'package:lockspire/features/vault/presentation/vault_session_state.dart';
 
 import '../../domain/profile.dart';
 import '../profile_switcher.dart';
@@ -39,6 +37,10 @@ class ProfileHost extends StatefulWidget {
   final ProfileSwitchHandle handle;
   final ProviderContainer initialContainer;
   final BootProfile boot;
+
+  /// Lo que se hace con el perfil actual antes de descartarlo (bloquear la
+  /// bóveda). Lo pone la raíz de la app: esta feature no conoce la bóveda.
+  final void Function(ProviderContainer container) onLeave;
   final Widget child;
 
   /// Cada contenedor nuevo, para quien necesite leerlo (los tests).
@@ -49,6 +51,7 @@ class ProfileHost extends StatefulWidget {
     required this.handle,
     required this.initialContainer,
     required this.boot,
+    required this.onLeave,
     required this.child,
     this.onContainer,
   });
@@ -77,11 +80,7 @@ class _ProfileHostState extends State<ProfileHost> {
     try {
       final old = _container;
       if (old != null) {
-        // Bloquear primero: descarta la clave y borra el portapapeles.
-        final session = old.read(vaultSessionControllerProvider).value;
-        if (session is VaultSessionUnlocked) {
-          old.read(vaultSessionControllerProvider.notifier).lock();
-        }
+        widget.onLeave(old);
         // Desmontar la app antes de descartar su contenedor.
         setState(() => _container = null);
         await WidgetsBinding.instance.endOfFrame;
