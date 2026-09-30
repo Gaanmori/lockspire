@@ -688,6 +688,18 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
 - **Pendiente de confirmar en el Redmi.**
 - **Consecuencia y arreglo, el mismo día:** con token fresco en cada operación, la hoja "Iniciando sesión" de Google salía en cada sync. `GoogleDriveAndroidAuth.reconnectSilently(email:)` ahora pide primero el token a la API de autorización de Android (`clientAuthorizationTokensForScopes` con el correo guardado, sin preguntar), que no muestra nada si el permiso de Drive sigue dado. La autenticación con la hoja (`attemptLightweightAuthentication`) queda solo como respaldo. Se agregó `google_sign_in_platform_interface` como dependencia directa. La consulta previa al desbloqueo (ADR 0024) sigue desactivada con Google Drive en Android; podría reactivarse. **Confirmado por el usuario en el Redmi (2026-09-28): ya no aparece "Iniciando sesión".**
 
+### Revisión general (2026-09-30) — `docs/reviews/2026-09-30-revision-general.md`
+
+- Sin hallazgos altos. Todavía no hay nada corregido.
+- **Antes del lanzamiento:**
+  - **P1:** las escrituras simultáneas de la bóveda pueden perder un cambio; hace falta una cola y que se guarde el cambio en vez de la bóveda terminada;
+  - **S18:** los inicios de sesión que esperan el desbloqueo no vencen.
+- **Después:**
+  - S20: guardar el historial al editar a mano;
+  - S19: borrar la clave al bloquear;
+  - A11: dividir `HandleBridgeRequest`;
+  - T3: quitar las esperas de tiempo real en los tests.
+
 ### Guardar contraseñas desde el navegador (ADR 0034, 2026-09-30)
 
 - **Hecho:** la extensión detecta el envío de un formulario con contraseña y muestra en la página "¿Guardar la contraseña de sitio.com en Lockspire?". Las opciones son Guardar o Actualizar, Ahora no, y Nunca en este sitio.
