@@ -4,7 +4,25 @@ Gestor de contraseñas y Passkeys open source, multiplataforma y **local-first**
 
 Sin backend centralizado: la bóveda es un archivo local fuertemente cifrado que se sincroniza a través de las nubes personales del usuario (Google Drive, OneDrive, WebDAV). Estándar de seguridad Zero-Knowledge: la contraseña maestra nunca se almacena ni sale del dispositivo.
 
-> Estado: en desarrollo, repo privado. Pendiente de definir versión inicial pública.
+> Estado: versión 1.0 en preparación para Google Play y Microsoft Store. Ya se puede descargar desde GitHub (ver [Descarga](#descarga)).
+
+## Descarga
+
+[![Última versión](https://img.shields.io/github/v/release/Gaanmori/lockspire?label=%C3%BAltima%20versi%C3%B3n)](https://github.com/Gaanmori/lockspire/releases/latest)
+
+Los enlaces llevan siempre a la última versión publicada. Todas las versiones están en [Releases](https://github.com/Gaanmori/lockspire/releases).
+
+| Plataforma | Archivo | Cómo instalarlo |
+|---|---|---|
+| **Android** 7.0 o posterior | [Lockspire-android.apk](https://github.com/Gaanmori/lockspire/releases/latest/download/Lockspire-android.apk) | Ábralo en el teléfono. Android le pedirá permitir instalar apps desde el navegador o el gestor de archivos. |
+| **Windows** 10 y 11, 64 bits | [Lockspire-windows-x64.zip](https://github.com/Gaanmori/lockspire/releases/latest/download/Lockspire-windows-x64.zip) | Descomprímalo y abra `Lockspire/lockspire.exe`. Si SmartScreen avisa (el ejecutable aún no está firmado), pulse "Más información" → "Ejecutar de todas formas". |
+| **Linux** (Ubuntu 22.04, Linux Mint 21 o posteriores) | [lockspire_amd64.deb](https://github.com/Gaanmori/lockspire/releases/latest/download/lockspire_amd64.deb) | `sudo apt install ./lockspire_amd64.deb`, o doble clic. Queda en el menú de aplicaciones. |
+| **Linux**, cualquier distribución de 64 bits | [Lockspire-x86_64.AppImage](https://github.com/Gaanmori/lockspire/releases/latest/download/Lockspire-x86_64.AppImage) | Clic derecho → Propiedades → Permitir ejecutar, y doble clic. |
+| **Extensión** para Chrome y Edge | [Lockspire-extension.zip](https://github.com/Gaanmori/lockspire/releases/latest/download/Lockspire-extension.zip) | Descomprímala. En `chrome://extensions` (o `edge://extensions`), active "Modo de desarrollador" → "Cargar descomprimida" y elija la carpeta. Después, en la app: Ajustes → Navegador → Conectar con Chrome/Edge. |
+
+- **Verificar la descarga:** cada versión trae `SHA256SUMS.txt` con la huella de cada archivo.
+- **Próximamente:** Google Play, Microsoft Store, Chrome Web Store y Edge Add-ons. El APK de GitHub y el de Google Play van firmados con claves distintas: para pasar de uno a otro hay que desinstalar, así que sincronice o exporte su bóveda antes.
+- La versión de Windows de GitHub no se actualiza sola. La de la Microsoft Store sí, y es la que tendrá donaciones.
 
 ## Objetivos principales
 
@@ -12,7 +30,7 @@ Sin backend centralizado: la bóveda es un archivo local fuertemente cifrado que
 - **Propiedad de los datos:** sin servidores centralizados; el usuario decide dónde guardar su bóveda.
 - **Multiplataforma sin fricción:** una sola base de código Flutter para escritorio y móvil. Plataformas objetivo hoy: **Android, Windows y Linux** (Linux Mint como referencia); iOS y macOS quedan para más adelante (el scaffold existe, no se prueban ni se les da soporte todavía).
 - **Integración web:** extensión de navegador independiente para autocompletado de credenciales y Passkeys.
-- **Sin suscripciones:** venta a precio fijo en Play Store / App Store.
+- **Gratis y sin suscripciones:** todas las funciones son libres; quien quiera puede hacer una donación voluntaria desde la app.
 
 ## Principio rector
 
@@ -27,16 +45,18 @@ Verificado en dispositivo real (Windows desktop + Android):
 - **Auto-lock** por inactividad (5 min) y al pasar a segundo plano (ADR 0008).
 - **Desbloqueo biométrico** opt-in: huella en Android, Windows Hello en escritorio (ADR 0010).
 - **Sincronización** con WebDAV, Google Drive (`drive.appdata`) y OneDrive (carpeta de app), automática tras desbloquear/guardar, con merge automático por entrada y por campo, sin intervención del usuario (ADR 0006, 0009). Restaurar una bóveda existente en un dispositivo nuevo.
-- **Importar desde SafeInCloud** (XML).
+- **Importar** desde SafeInCloud (XML), Bitwarden (JSON y CSV), Chrome, Firefox y KeePassXC (CSV); **exportar** a Bitwarden, Chrome o un respaldo cifrado.
+- **Perfiles:** varias bóvedas en el mismo dispositivo, cada una con su contraseña maestra y sus ajustes (ADR 0039).
+- **Temas:** Grafito por defecto, un color a elección, colores del sistema o inspirados en sistemas operativos (ADR 0036).
 - **Autofill nativo en Android** vía Credential Manager + `AutofillService` legado (ADR 0011).
 
 Implementado, con tests automatizados, **pendiente de verificación manual**:
 
 - **Linux** (Linux Mint): mismas funciones que Windows salvo desbloqueo biométrico; compila en CI.
 - **Escritorio en la bandeja del sistema** (ADR 0012): cerrar la ventana la oculta; la bóveda se bloquea por inactividad, manualmente, al bloquear la sesión del SO o al suspender.
-- **Extensión de navegador para Chrome/Edge + native host** (ADR 0005, 0013): rellenar credenciales guardadas y generar contraseñas. El native host y el canal IPC ya se probaron de punta a punta en Windows; falta la prueba con el navegador.
+- **Extensión de navegador para Chrome/Edge + native host** (ADR 0005, 0013, 0034): rellenar credenciales, generar contraseñas y ofrecer guardar las que se escriben en un sitio. Verificada en Windows, también con la app instalada como paquete MSIX (ADR 0037).
 
-Pendiente de implementar: guardar credenciales desde la extensión, Firefox, Passkeys, iOS. El detalle de qué falta y qué está en verificación está en `docs/STATE.md`.
+Pendiente de implementar: Firefox, Passkeys, iOS. El detalle de qué falta y qué está en verificación está en `docs/STATE.md`.
 
 ## Stack
 
@@ -58,7 +78,7 @@ Pendiente de implementar: guardar credenciales desde la extensión, Firefox, Pas
 /docs
   STATE.md        # Estado actual del desarrollo — leer primero
   THREAT_MODEL.md # Modelo de amenazas (documento vivo)
-  adr/            # Architecture Decision Records (0001–0013)
+  adr/            # Architecture Decision Records (0001–0040)
   design/         # Sistema de diseño (tokens, tipografía, componentes)
 ```
 

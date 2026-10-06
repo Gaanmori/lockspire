@@ -53,3 +53,16 @@ flutter build appbundle --release --dart-define-from-file=google_oauth_secrets.j
 
 - El cliente de depuración que ya existe sigue sirviendo para `flutter run`.
 - OneDrive no depende de la firma: su redirección (`com.lockspire.lockspire://oauth2redirect`) es la misma en todos los builds.
+
+## 5. APK en GitHub (descarga directa)
+
+Además de Google Play, cada versión publica un APK en GitHub Releases (ADR 0040). Cuando `release.yml` termina de crear la release de la etiqueta, desde la raíz del repositorio:
+
+```powershell
+powershell -File tools/release_android.ps1 -Tag v1.0.0
+```
+
+- Lo firma la clave de subida, en este equipo; nunca en GitHub.
+- No lleva donaciones: Play Billing solo funciona en la app instalada desde Play.
+- No se actualiza con el de Google Play, porque Play lo firma con su propia clave.
+

@@ -1,0 +1,220 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Gabriel Ángel Montoya Rico
+#
+# Descargas de Lockspire en GitHub Releases (ADR 0038, 0040).
+# - Al publicar una etiqueta v* (p. ej. v1.0.0) crea la release con:
+#   AppImage y .deb de Linux, el .zip de Windows y la extensión de Chrome y
+#   Edge para instalar a mano, con nombres fijos (el README enlaza
+#   releases/latest/download/<nombre>) y SHA256SUMS.txt.
+# - El APK de Android NO se compila aquí: se firma con la clave de subida,
+#   que nunca sale del equipo del autor. Lo sube tools/release_android.ps1.
+# - A mano (Actions → Release → Run workflow): solo deja los paquetes como
+#   artefactos del run, para probarlos.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      value: ${{ steps.version.outputs.value }}
+    steps:
+      - uses: actions/checkout@v5
+      # La versión sale de pubspec.yaml. Con una etiqueta, tienen que
+      # coincidir: si no, la release diría una versión y la app otra.
+      - name: Version
+        id: version
+        run: |
+          pubspec="$(grep '^version:' app/pubspec.yaml | sed 's/version: *//; s/+.*//')"
+          if [[ "$GITHUB_REF" == refs/tags/v* && "${GITHUB_REF_NAME#v}" != "$pubspec" ]]; then
+            echo "::error::La etiqueta $GITHUB_REF_NAME no coincide con la versión $pubspec de app/pubspec.yaml"
+            exit 1
+          fi
+          echo "value=$pubspec" >> "$GITHUB_OUTPUT"
+
+  linux:
+    needs: version
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+
+      # Ubuntu 22.04 (glibc 2.35): lo que se compila aquí corre en esa
+      # versión y en las posteriores (Mint 21 y 22, Ubuntu 22.04 y 24.04).
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev build-essential \
+            libsecret-1-dev libayatana-appindicator3-dev
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.2"
+          channel: stable
+
+      # Credenciales OAuth de Google y Microsoft para apps de escritorio. No
+      # están en el repositorio: vienen de los secretos del repositorio
+      # (Settings → Secrets and variables → Actions). Sin ellos, la app
+      # compila igual pero sin conexión con Google Drive ni OneDrive.
+      - name: OAuth credentials
+        working-directory: app
+        env:
+          GOOGLE_OAUTH_SECRETS_JSON: ${{ secrets.GOOGLE_OAUTH_SECRETS_JSON }}
+          MICROSOFT_OAUTH_SECRETS_JSON: ${{ secrets.MICROSOFT_OAUTH_SECRETS_JSON }}
+        run: ../tools/ci_oauth_defines.sh
+
+      - name: Build Linux (release)
+        working-directory: app
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build linux --release $OAUTH_DEFINES
+
+      - name: Native host
+        working-directory: native-host
+        run: |
+          dart pub get
+          dart compile exe bin/lockspire_native_host.dart \
+            -o ../app/build/linux/x64/release/bundle/lockspire-native-host
+
+      - name: appimagetool
+        run: |
+          curl -fsSL -o /usr/local/bin/appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x /usr/local/bin/appimagetool
+
+      - name: AppImage and .deb
+        # Sin FUSE en el runner: appimagetool se extrae y se ejecuta.
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: packaging/linux/build_packages.sh "${{ needs.version.outputs.value }}"
+
+      - name: Check the .deb
+        run: |
+          deb=build/linux-packages/lockspire_*_amd64.deb
+          dpkg-deb --info $deb
+          dpkg-deb --contents $deb | grep -E 'opt/lockspire/(lockspire|lockspire-native-host)$'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lockspire-linux
+          path: build/linux-packages/*
+          retention-days: 30
+
+  windows:
+    needs: version
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.2"
+          channel: stable
+
+      - name: OAuth credentials
+        working-directory: app
+        env:
+          GOOGLE_OAUTH_SECRETS_JSON: ${{ secrets.GOOGLE_OAUTH_SECRETS_JSON }}
+          MICROSOFT_OAUTH_SECRETS_JSON: ${{ secrets.MICROSOFT_OAUTH_SECRETS_JSON }}
+        run: ../tools/ci_oauth_defines.sh
+
+      # Sin LOCKSPIRE_STORE: fuera de la Microsoft Store no hay donaciones.
+      - name: Build Windows (release)
+        working-directory: app
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build windows --release $OAUTH_DEFINES
+
+      - name: Native host
+        working-directory: native-host
+        run: |
+          dart pub get
+          dart compile exe bin/lockspire_native_host.dart \
+            -o ../app/build/windows/x64/runner/Release/lockspire-native-host.exe
+
+      # Todo dentro de una carpeta "Lockspire": al descomprimir no se
+      # desparraman los archivos.
+      - name: Zip
+        shell: pwsh
+        run: |
+          $stage = 'build/windows-package/stage/Lockspire'
+          New-Item -ItemType Directory -Force $stage | Out-Null
+          Copy-Item 'app/build/windows/x64/runner/Release/*' $stage -Recurse
+          Compress-Archive -Path $stage -DestinationPath 'build/windows-package/Lockspire-windows-x64.zip'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lockspire-windows
+          path: build/windows-package/Lockspire-windows-x64.zip
+          retention-days: 30
+
+  # La extensión para instalar a mano (Cargar descomprimida) mientras no esté
+  # en Chrome Web Store ni en Edge Add-ons. Es el build con la clave de
+  # desarrollo: su ID ya está en allowedExtensionIds y conecta con la app.
+  extension:
+    needs: version
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Zip
+        run: |
+          mkdir -p ../build/extension-package
+          cd dist && zip -r -q ../../build/extension-package/Lockspire-extension.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lockspire-extension
+          path: build/extension-package/Lockspire-extension.zip
+          retention-days: 30
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [version, linux, windows, extension]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      # Nombres sin versión: los enlaces releases/latest/download/<nombre> del
+      # README siempre llevan a la última. La versión está en el título.
+      - name: Stable names and checksums
+        working-directory: dist
+        run: |
+          mv Lockspire-*-x86_64.AppImage Lockspire-x86_64.AppImage
+          mv lockspire_*_amd64.deb lockspire_amd64.deb
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Lockspire ${{ needs.version.outputs.value }}
+          files: dist/*
+          generate_release_notes: true
+          body: |
+            Cómo instalar cada archivo: [Descarga en el README](https://github.com/Gaanmori/lockspire#descarga).
+            El APK de Android se añade a esta release desde el equipo del autor, que guarda la clave de firma.
+
+            How to install each file: [Download section of the README](https://github.com/Gaanmori/lockspire#descarga) (in Spanish).
+            The Android APK is added to this release from the author's computer, which holds the signing key.
