@@ -81,8 +81,15 @@ $apk = Join-Path $app 'build\app\outputs\flutter-apk\app-release.apk'
 $buildTools = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Android\Sdk\build-tools') -Directory |
   Sort-Object { [version]$_.Name } | Select-Object -Last 1
 $apksigner = Join-Path $buildTools.FullName 'apksigner.bat'
+# apksigner necesita Java. Flutter usa el de Android Studio aunque no esté
+# en el PATH; aquí se le indica el mismo.
+if (-not $env:JAVA_HOME -and -not (Get-Command java -ErrorAction SilentlyContinue)) {
+  $jbr = Join-Path $env:ProgramFiles 'Android\Android Studio\jbr'
+  if (-not (Test-Path $jbr)) { throw 'apksigner necesita Java: defina JAVA_HOME (por ejemplo, el jbr de Android Studio)' }
+  $env:JAVA_HOME = $jbr
+}
 $signer = Invoke-Native { & $apksigner verify --print-certs $apk 2>&1 }
-if ($LASTEXITCODE -ne 0) { throw 'apksigner: el APK no tiene una firma válida' }
+if ($LASTEXITCODE -ne 0) { throw "apksigner no pudo verificar la firma del APK: $signer" }
 if ($signer -match 'CN=Android Debug') { throw 'El APK está firmado con la clave de depuración: no se sube' }
 Write-Host ($signer | Select-String 'certificate DN|SHA-256 digest' | Select-Object -First 2)
 

@@ -1018,7 +1018,7 @@ El usuario revisó la lista completa de features de SafeInCloud (`safe-in-cloud.
   - La sección Descarga del README enlaza `releases/latest/download/<nombre>`, con una insignia de la última versión. El README también se puso al día: sin "repo privado" ni "venta a precio fijo"; con perfiles, temas, importar y exportar, y la extensión guardando contraseñas.
 - **Primera release publicada (2026-10-06):** `v1.0.0`, con el AppImage, el .deb, el .zip de Windows, la extensión y `SHA256SUMS.txt`. Los enlaces del README responden 200.
 - `release_android.ps1` se arregló para Windows PowerShell 5.1: un stderr de `gh` o `flutter` cortaba el script. Ahora además espera hasta 15 min a que exista la release.
-- **Pendiente:** subir el APK con `tools/release_android.ps1 -Tag v1.0.0`; hasta entonces, su enlace da 404.
+- **APK subido (2026-10-07):** firmado con la clave de subida (CN=Gabriel Montoya, SHA-256 del certificado `c967dc97…5792`), con su huella en `SHA256SUMS.txt`. Los seis enlaces del README responden 200. De paso, el script apunta `apksigner` al Java de Android Studio cuando no hay `JAVA_HOME`.
 
 ### MVP — canales y checklist (ADR 0028, decidido 2026-09-28)
 
